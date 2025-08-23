@@ -1,0 +1,103 @@
+'use client';
+
+import { DotsThreeIcon } from '@phosphor-icons/react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { useState } from 'react';
+import type { InvoiceWithCustomer } from '@/lib/data';
+import { cn } from '@/lib/utils';
+import { Button } from '@/ui/button';
+import { DataTable } from '@/ui/data-table';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/ui/dropdown-menu';
+import { formatCurrency, formatDateToLocal } from '../../lib/utils';
+import { UpdateInvoiceDialog } from './create-form';
+
+export const columns: ColumnDef<Omit<InvoiceWithCustomer, 'customerEmail'>>[] = [
+	{
+		accessorKey: 'customerName',
+		header: 'Name',
+	},
+	{
+		accessorKey: 'status',
+		header: 'Status',
+		cell: ({ row }) => {
+			const status: string = row.getValue('status');
+			return (
+				<span
+					className={cn(
+						'rounded px-2 py-1',
+						status === 'unpaid' && 'bg-rose-100 text-rose-950 dark:bg-rose-950 dark:text-rose-100',
+						status === 'paid' && 'bg-sky-100 text-sky-950 dark:bg-sky-950 dark:text-sky-100',
+					)}
+				>
+					{status.replace(/^./, char => char.toUpperCase())}
+				</span>
+			);
+		},
+	},
+	{
+		accessorKey: 'date',
+		header: 'Date',
+		cell: ({ row }) => formatDateToLocal(row.getValue('date')),
+	},
+	{
+		accessorKey: 'amount',
+		header: () => <div className='text-right'>Amount</div>,
+		cell: ({ row }) => {
+			return (
+				<div className='text-right font-medium tabular-nums'>
+					{formatCurrency(row.getValue('amount'))}
+				</div>
+			);
+		},
+	},
+	{
+		id: 'actions',
+		cell: function OverflowMenu({ row }) {
+			const invoice = row.original;
+			const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+
+			return (
+				<div className='-mr-2 text-right'>
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant='ghost' size='icon' className='ml-auto size-8 p-0'>
+								<span className='sr-only'>Open menu</span>
+								<DotsThreeIcon className='size-4' />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align='end'>
+							<DropdownMenuItem onClick={() => navigator.clipboard.writeText(invoice.id)}>
+								Copy payment ID
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem onClick={() => setIsUpdateDialogOpen(true)}>
+								Update invoice
+							</DropdownMenuItem>
+							<DropdownMenuItem disabled asChild>
+								<button type='submit'>Delete invoice</button>
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
+					<UpdateInvoiceDialog
+						invoice={invoice}
+						open={isUpdateDialogOpen}
+						onOpenChange={setIsUpdateDialogOpen}
+						// biome-ignore lint/correctness/noChildrenProp: Null trigger required to place dialog outside of mounted menu
+						// biome-ignore lint/complexity/noUselessFragments: Null trigger required to place dialog outside of mounted menu
+						children={<></>}
+					/>
+				</div>
+			);
+		},
+	},
+];
+
+export default function Table({ invoices }: { invoices: InvoiceWithCustomer[] }) {
+	return <DataTable columns={columns} data={invoices} />;
+}

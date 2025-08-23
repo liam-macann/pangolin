@@ -1,0 +1,66 @@
+/* biome-ignore-all lint/suspicious/noUnknownAtRules: Biome doesn't support Tailwind v4 */
+
+@import "tailwindcss";
+
+@import "tw-animate-css";
+
+@import "./colors.css";
+
+@theme {
+	--grid-template-columns-13: repeat(13, minmax(0, 1fr));
+
+	--font-system:
+		ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+		"Noto Color Emoji";
+
+	--font-sans: "Instrument Sans", var(--font-system);
+	--font-sans--font-variation-settings: "wdth" 94;
+	--font-sans--font-feature-settings: "liga", "ss04", "ss05";
+
+	--font-display: "Instrument Sans", var(--font-system);
+	--font-display--font-variation-settings: "wdth" 84;
+	--font-display--font-feature-settings: "liga", "ss04", "ss05";
+
+	--animate-shimmer: "shimmer 6s ease-in-out infinite alternate";
+
+	@keyframes shimmer {
+		0%,
+		20% {
+			mask-position: 0 0;
+			background-clip: text;
+			mask-image: linear-gradient(110deg, white 45%, rgba(0, 0, 0, 0.6) 55%, white);
+			mask-size: 250% 100%;
+		}
+		80%,
+		100% {
+			mask-position: -200% 0;
+			background-clip: text;
+			mask-image: linear-gradient(110deg, white 45%, rgba(0, 0, 0, 0.6) 55%, white);
+			mask-size: 250% 100%;
+		}
+	}
+}
+
+@custom-variant hocus (&:hover, &:focus);
+@custom-variant hocus-visible (&:hover, &:focus-visible);
+
+@layer base {
+	.font-display {
+		font-weight: var(--font-weight-bold);
+	}
+}
+
+input[type="number"] {
+	-moz-appearance: textfield;
+	appearance: textfield;
+}
+
+input[type="number"]::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+input[type="number"]::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
