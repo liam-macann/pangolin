@@ -24,7 +24,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 								<Button
 									variant='ghost'
 									aria-disabled
-									className='!bg-primary-4 relative size-8 animate-pulse cursor-pointer overflow-hidden rounded-full'
+									className='!bg-gray-4 relative size-8 animate-pulse cursor-pointer overflow-hidden rounded-full'
 								>
 									<div className='sr-only'>Account</div>
 								</Button>
@@ -51,7 +51,7 @@ async function AccountMenuContent() {
 			<DropdownMenuTrigger asChild>
 				<Button
 					variant='ghost'
-					className='!bg-primary-4 relative size-8 cursor-pointer overflow-hidden rounded-full'
+					className='!bg-gray-4 relative size-8 cursor-pointer overflow-hidden rounded-full'
 				>
 					<Avatar email={session.user.email || ''} />
 					<div className='sr-only'>Account</div>
