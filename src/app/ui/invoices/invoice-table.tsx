@@ -31,8 +31,8 @@ export const columns: ColumnDef<Omit<InvoiceWithCustomer, 'customerEmail'>>[] = 
 				<span
 					className={cn(
 						'rounded px-2 py-1',
-						status === 'unpaid' && 'bg-rose-100 text-rose-950 dark:bg-rose-950 dark:text-rose-100',
-						status === 'paid' && 'bg-sky-100 text-sky-950 dark:bg-sky-950 dark:text-sky-100',
+						status === 'unpaid' && 'border border-red-6 bg-red-3 text-red-12',
+						status === 'paid' && 'border border-blue-6 bg-blue-3 text-blue-12',
 					)}
 				>
 					{status.replace(/^./, char => char.toUpperCase())}

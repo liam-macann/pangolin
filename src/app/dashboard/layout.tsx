@@ -15,7 +15,7 @@ import {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
 	return (
-		<div className='min-h-screen bg-background text-foreground'>
+		<div className='min-h-screen text-foreground'>
 			<header className='gap-y-4 border-b py-4'>
 				<div className='mx-auto flex max-w-5xl flex-col px-6'>
 					<div className='self-end'>

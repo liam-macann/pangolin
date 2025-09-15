@@ -17,6 +17,7 @@ const defineColors = <T extends Record<string, [object, object, object]>>(
 const colors: Record<string, [Color, ...Color[]]> = defineColors({
 	gray: [radix.sandP3, radix.sandDarkP3, radix.sand],
 	red: [radix.redP3, radix.redDarkP3, radix.red],
+	blue: [radix.indigoP3, radix.indigoDarkP3, radix.indigo],
 });
 
 type Color = Record<string, string>;

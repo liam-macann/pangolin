@@ -87,6 +87,32 @@
 	--color-sidebar-ring: var(--sidebar-ring);
 }
 
+@theme {
+	/* Namespace unset fails */
+	--color-red-\*: initial;
+	--color-orange-\*: initial;
+	--color-amber-\*: initial;
+	--color-yellow-\*: initial;
+	--color-lime-\*: initial;
+	--color-green-\*: initial;
+	--color-emerald-\*: initial;
+	--color-teal-\*: initial;
+	--color-cyan-\*: initial;
+	--color-sky-\*: initial;
+	--color-blue-\*: initial;
+	--color-indigo-\*: initial;
+	--color-violet-\*: initial;
+	--color-purple-\*: initial;
+	--color-fuchsia-\*: initial;
+	--color-pink-\*: initial;
+	--color-rose-\*: initial;
+	--color-slate-\*: initial;
+	--color-gray-\*: initial;
+	--color-zinc-\*: initial;
+	--color-neutral-\*: initial;
+	--color-stone-\*: initial;
+}
+
 @layer base {
 	* {
 		@apply border-border outline-ring/50 ring-offset-background;
