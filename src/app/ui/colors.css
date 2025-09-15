@@ -1,24 +1,6 @@
 /* biome-ignore-all lint/suspicious/noUnknownAtRules: Biome doesn't support Tailwind v4 */
 
-@import "@radix-ui/colors/sand.css";
-@import "@radix-ui/colors/sand-dark.css";
-
-@theme {
-	--color-primary-1: var(--sand-1);
-	--color-primary-2: var(--sand-2);
-	--color-primary-3: var(--sand-3);
-	--color-primary-4: var(--sand-4);
-	--color-primary-5: var(--sand-5);
-	--color-primary-6: var(--sand-6);
-	--color-primary-7: var(--sand-7);
-	--color-primary-8: var(--sand-8);
-	--color-primary-9: var(--sand-9);
-	--color-primary-10: var(--sand-10);
-	--color-primary-11: var(--sand-11);
-	--color-primary-12: var(--sand-12);
-}
-
-/* Shadcn */
+/* Shadcn: semantic colors */
 
 @theme inline {
 	--radius-sm: calc(var(--radius) - 4px);
@@ -132,5 +114,16 @@
 @layer base {
 	* {
 		@apply border-border outline-ring/50 ring-offset-background;
+	}
+}
+
+/* CSS custom property based polyfill for light-dark(). See tailwind.config.ts */
+@layer components {
+	:root {
+		@variant dark {
+			color-scheme: dark;
+			--tw-light: ;
+			--tw-dark: initial;
+		}
 	}
 }

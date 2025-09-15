@@ -1,10 +1,9 @@
 /* biome-ignore-all lint/suspicious/noUnknownAtRules: Biome doesn't support Tailwind v4 */
 
 @import "tailwindcss";
-
 @import "tw-animate-css";
-
 @import "./colors.css";
+@config "../../../tailwind.config.ts";
 
 @theme {
 	--grid-template-columns-13: repeat(13, minmax(0, 1fr));
