@@ -47,6 +47,10 @@
 	.font-display {
 		font-weight: var(--font-weight-bold);
 	}
+
+	hr {
+		border-style: dotted;
+	}
 }
 
 input[type="number"] {
