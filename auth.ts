@@ -2,6 +2,8 @@ import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import bcrypt from 'bcrypt';
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
+import GitHub from 'next-auth/providers/github';
+import Google from 'next-auth/providers/google';
 import { z } from 'zod';
 import { db } from '@/db';
 import { accounts, authenticators, sessions, users } from '@/db/schema';
@@ -39,7 +41,45 @@ declare module 'next-auth/jwt' {
 	}
 }
 
-export const { auth, signIn, signOut } = NextAuth({
+import type { Provider } from 'next-auth/providers';
+
+const providers: Provider[] = [
+	GitHub,
+	Google,
+	Credentials({
+		async authorize(credentials) {
+			const parsedCredentials = z
+				.object({ email: z.email(), password: z.string().min(6) })
+				.safeParse(credentials);
+
+			if (parsedCredentials.success) {
+				const { email, password } = parsedCredentials.data;
+
+				const user = await getUser(email);
+				if (!user) return null;
+
+				const passwordsMatch = await bcrypt.compare(password, user.password);
+				if (passwordsMatch) return user;
+			}
+
+			console.log('Invalid credentials');
+			return null;
+		},
+	}),
+];
+
+export const providerMap = providers
+	.map(provider => {
+		if (typeof provider === 'function') {
+			const providerData = provider();
+			return { id: providerData.id, name: providerData.name };
+		} else {
+			return { id: provider.id, name: provider.name };
+		}
+	})
+	.filter(provider => provider.id !== 'credentials');
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
 	...authConfig,
 	adapter: DrizzleAdapter(db, {
 		usersTable: users,
@@ -55,26 +95,5 @@ export const { auth, signIn, signOut } = NextAuth({
 			return session;
 		},
 	},
-	providers: [
-		Credentials({
-			async authorize(credentials) {
-				const parsedCredentials = z
-					.object({ email: z.email(), password: z.string().min(6) })
-					.safeParse(credentials);
-
-				if (parsedCredentials.success) {
-					const { email, password } = parsedCredentials.data;
-
-					const user = await getUser(email);
-					if (!user) return null;
-
-					const passwordsMatch = await bcrypt.compare(password, user.password);
-					if (passwordsMatch) return user;
-				}
-
-				console.log('Invalid credentials');
-				return null;
-			},
-		}),
-	],
+	providers,
 });
