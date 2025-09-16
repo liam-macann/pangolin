@@ -17,7 +17,7 @@
 	--muted-foreground: var(--color-gray-11);
 	--accent: var(--secondary);
 	--accent-foreground: var(--secondary-foreground);
-	--destructive: var(--color-red-10);
+	--destructive: var(--color-red-11);
 	--border: var(--color-gray-6);
 	--input: var(--color-gray-5);
 	--ring: var(--color-gray-8); /* Focus ring */
