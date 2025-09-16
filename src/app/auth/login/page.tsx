@@ -65,50 +65,48 @@ export default async function LoginPage({
 			: { message: 'Something went wrong. Please try again later.' });
 
 	return (
-		<main className='flex min-h-screen items-center justify-center bg-gray-2'>
-			<div className='flex w-full max-w-[400px] flex-col items-stretch gap-4 px-2 py-4'>
-				{errorInfo && (
-					<Alert variant='destructive'>
-						<WarningCircleIcon className='text-destructive' />
-						<AlertTitle>{errorInfo.message}</AlertTitle>
-						{errorInfo.description && <AlertDescription>{errorInfo.description}</AlertDescription>}
-					</Alert>
-				)}
-				<div className='relative flex flex-col gap-y-4 rounded-md border bg-card p-4 py-8 shadow md:p-8'>
-					<h1 className={`-mt-2 mb-2 font-bold text-2xl`}>Login</h1>
+		<>
+			{errorInfo && (
+				<Alert variant='destructive'>
+					<WarningCircleIcon className='text-destructive' />
+					<AlertTitle>{errorInfo.message}</AlertTitle>
+					{errorInfo.description && <AlertDescription>{errorInfo.description}</AlertDescription>}
+				</Alert>
+			)}
+			<div className='relative flex flex-col gap-y-4 rounded-md border bg-card p-4 py-8 shadow md:p-8'>
+				<h1 className={`-mt-2 mb-2 font-bold text-2xl`}>Login</h1>
 
-					<section className='flex gap-2 max-md:flex-col'>
-						{Object.values(providerMap).map(provider => (
-							<form
-								className='grow'
-								key={provider.id}
-								action={async () => {
-									'use server';
-									try {
-										await signIn(provider.id, { redirectTo: callbackUrl });
-									} catch (error) {
-										if (error instanceof AuthError) {
-											console.log(error.message);
-											error.name;
-											return redirect(`?error=${error.name}`);
-										}
-
-										// Remember that redirect is a thrown error internally
-										throw error;
+				<section className='flex gap-2 max-md:flex-col'>
+					{Object.values(providerMap).map(provider => (
+						<form
+							className='grow'
+							key={provider.id}
+							action={async () => {
+								'use server';
+								try {
+									await signIn(provider.id, { redirectTo: callbackUrl });
+								} catch (error) {
+									if (error instanceof AuthError) {
+										console.log(error.message);
+										error.name;
+										return redirect(`?error=${error.name}`);
 									}
-								}}
-							>
-								<Button type='submit' className='w-full'>
-									<span>Sign in with {provider.name}</span>
-								</Button>
-							</form>
-						))}
-					</section>
-					<hr className='my-4' />
 
-					<LoginForm callbackUrl={callbackUrl} />
-				</div>
+									// Remember that redirect is a thrown error internally
+									throw error;
+								}
+							}}
+						>
+							<Button type='submit' className='w-full'>
+								<span>Sign in with {provider.name}</span>
+							</Button>
+						</form>
+					))}
+				</section>
+				<hr className='my-4' />
+
+				<LoginForm callbackUrl={callbackUrl} />
 			</div>
-		</main>
+		</>
 	);
 }
