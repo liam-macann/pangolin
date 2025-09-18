@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
 	boolean,
+	foreignKey,
 	integer,
 	numeric,
 	pgEnum,
@@ -8,32 +9,45 @@ import {
 	primaryKey,
 	text,
 	timestamp,
+	unique,
 	uuid,
 	varchar,
 } from 'drizzle-orm/pg-core';
 
 export const statusEnum = pgEnum('status', ['unpaid', 'paid']);
-export const invoices = pgTable('invoice', {
-	id: uuid().default(sql`uuid_generate_v4()`).primaryKey().notNull(),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id),
-	customerId: uuid('customer_id')
-		.notNull()
-		.references(() => customers.id),
-	amount: numeric({ precision: 15, scale: 4, mode: 'number' }).notNull(),
-	status: statusEnum().notNull(),
-	date: timestamp({ withTimezone: true, mode: 'string' }).notNull().defaultNow(),
-});
+export const invoices = pgTable(
+	'invoice',
+	{
+		id: uuid().default(sql`uuid_generate_v4()`).primaryKey().notNull(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id),
+		customerId: uuid('customer_id').notNull(),
+		amount: numeric({ precision: 15, scale: 4, mode: 'number' }).notNull(),
+		status: statusEnum().notNull(),
+		date: timestamp({ withTimezone: true, mode: 'string' }).notNull().defaultNow(),
+	},
+	table => [
+		foreignKey({
+			name: 'customer_fk',
+			columns: [table.customerId, table.userId],
+			foreignColumns: [customers.id, customers.userId],
+		}),
+	],
+);
 
-export const customers = pgTable('customer', {
-	id: uuid().default(sql`uuid_generate_v4()`).primaryKey().notNull(),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id),
-	name: varchar({ length: 255 }).notNull(),
-	email: varchar({ length: 255 }).notNull(),
-});
+export const customers = pgTable(
+	'customer',
+	{
+		id: uuid().default(sql`uuid_generate_v4()`).unique().notNull(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id),
+		name: varchar({ length: 255 }).notNull(),
+		email: varchar({ length: 255 }).notNull(),
+	},
+	t => [primaryKey({ name: 'customer_user_pk', columns: [t.id, t.userId] })],
+);
 
 // Auth.js Data
 

@@ -8,6 +8,20 @@
 			"when": 1758167081958,
 			"tag": "0000_violet_tarantula",
 			"breakpoints": true
+		},
+		{
+			"idx": 1,
+			"version": "7",
+			"when": 1758167426344,
+			"tag": "0001_lyrical_blade",
+			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "7",
+			"when": 1758167835037,
+			"tag": "0002_colossal_ultimo",
+			"breakpoints": true
 		}
 	]
 }
