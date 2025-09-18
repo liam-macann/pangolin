@@ -32,12 +32,7 @@ declare module 'next-auth' {
 	// Object is returned in Credentials authorize callback, from DB
 	interface User {
 		id: string;
-	}
-}
-
-declare module 'next-auth/jwt' {
-	interface JWT {
-		id: string;
+		email: string;
 	}
 }
 

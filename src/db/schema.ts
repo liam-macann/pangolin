@@ -49,6 +49,14 @@ export const customers = pgTable(
 	t => [primaryKey({ name: 'customer_user_pk', columns: [t.id, t.userId] })],
 );
 
+export const config = pgTable('config', {
+	userId: uuid('user_id')
+		.primaryKey()
+		.references(() => users.id),
+	// The time zone of record, for invoice dates and yearly sequencing. This should eventually reference a table of time zones.
+	timeZone: text().notNull().default('Australia/Sydney'),
+});
+
 // Auth.js Data
 
 import type { AdapterAccountType } from '@auth/core/adapters';

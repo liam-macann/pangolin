@@ -1,4 +1,5 @@
-import { SignOutIcon } from '@phosphor-icons/react/ssr';
+import { SignOutIcon, SlidersHorizontalIcon } from '@phosphor-icons/react/ssr';
+import Link from 'next/link';
 import { Suspense } from 'react';
 import { auth, signOut } from '@/auth';
 import SideNav from '@/src/app/ui/dashboard/topnav';
@@ -62,6 +63,13 @@ async function AccountMenuContent() {
 					<h2>{session.user.name}</h2>
 					<span className='font-normal text-muted-foreground text-sm'>{session.user.email}</span>
 				</DropdownMenuLabel>
+				<DropdownMenuSeparator />
+				<DropdownMenuItem asChild>
+					<Link href='/dashboard/settings'>
+						<SlidersHorizontalIcon />
+						Settings
+					</Link>
+				</DropdownMenuItem>
 				<DropdownMenuSeparator />
 				<DropdownMenuItem
 					onClick={async () => {

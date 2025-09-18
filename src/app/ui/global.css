@@ -53,6 +53,14 @@
 	}
 }
 
+@layer components {
+	.link {
+		text-decoration: underline;
+		text-decoration-style: dotted;
+		@apply font-medium;
+	}
+}
+
 input[type="number"] {
 	-moz-appearance: textfield;
 	appearance: textfield;

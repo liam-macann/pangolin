@@ -2,7 +2,7 @@
 
 import { desc, eq } from 'drizzle-orm';
 import { auth } from '@/auth';
-import { customers, invoices } from '@/db/schema';
+import { config, customers, invoices } from '@/db/schema';
 import { db } from '@/src/db';
 /**
  * Join customer details with invoice records for authenticated user
@@ -48,5 +48,27 @@ export async function fetchCustomers() {
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoices.');
+	}
+}
+
+export async function getUserConfig(id: string) {
+	try {
+		// Get config, or create it if it doesn't exist
+		const settings = await db
+			.insert(config)
+			.values({
+				userId: id,
+			})
+			.onConflictDoUpdate({
+				target: config.userId,
+				set: { userId: id }, // No-op update: returns the row
+			})
+			.returning();
+
+		if (!settings) throw new Error('User does not exist');
+		return settings[0];
+	} catch (error) {
+		console.error('Failed to fetch config:', error);
+		throw new Error('Failed to fetch config.');
 	}
 }
