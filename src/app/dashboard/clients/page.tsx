@@ -1,19 +1,19 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { fetchCustomers } from '@/src/app/lib/data';
+import { fetchClient } from '@/src/app/lib/data';
 import { DataTable } from '@/src/components/ui/data-table';
-import type { customers } from '@/src/db/schema';
+import type { clients } from '@/src/db/schema';
 
 export const metadata: Metadata = {
-	title: 'Customers',
+	title: 'Clients',
 };
 
 export default async function Page() {
 	return (
 		<div className='w-full'>
 			<div className='flex w-full items-center justify-between'>
-				<h1 className='mb-6 font-display text-3xl'>Customers</h1>
+				<h1 className='mb-6 font-display text-3xl'>Clients</h1>
 			</div>
 
 			<Suspense fallback={<DataTable columns={columns} data={[]} />}>
@@ -24,11 +24,11 @@ export default async function Page() {
 }
 
 async function Table() {
-	const customers = await fetchCustomers();
-	return <DataTable columns={columns} data={customers} />;
+	const clients = await fetchClient();
+	return <DataTable columns={columns} data={clients} />;
 }
 
-const columns: ColumnDef<typeof customers.$inferSelect>[] = [
+const columns: ColumnDef<typeof clients.$inferSelect>[] = [
 	{
 		accessorKey: 'name',
 		header: 'Name',

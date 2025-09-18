@@ -20,7 +20,7 @@ const links = [
 		name: 'Invoices',
 		href: '/dashboard/invoices',
 	},
-	{ name: 'Customers', href: '/dashboard/customers' },
+	{ name: 'Clients', href: '/dashboard/clients' },
 ];
 
 function NavLinks() {

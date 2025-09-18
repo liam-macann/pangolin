@@ -3,7 +3,7 @@
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useState } from 'react';
-import type { InvoiceWithCustomer } from '@/lib/data';
+import type { InvoiceWithClient } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { DataTable } from '@/ui/data-table';
@@ -17,9 +17,9 @@ import {
 import { formatCurrency, formatDateToLocal } from '../../lib/utils';
 import { UpdateInvoiceDialog } from './create-form';
 
-export const columns: ColumnDef<Omit<InvoiceWithCustomer, 'customerEmail'>>[] = [
+export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
 	{
-		accessorKey: 'customerName',
+		accessorKey: 'clientName',
 		header: 'Name',
 	},
 	{
@@ -98,6 +98,6 @@ export const columns: ColumnDef<Omit<InvoiceWithCustomer, 'customerEmail'>>[] = 
 	},
 ];
 
-export default function Table({ invoices }: { invoices: InvoiceWithCustomer[] }) {
+export default function Table({ invoices }: { invoices: InvoiceWithClient[] }) {
 	return <DataTable columns={columns} data={invoices} />;
 }

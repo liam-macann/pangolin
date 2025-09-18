@@ -9,7 +9,6 @@ import {
 	primaryKey,
 	text,
 	timestamp,
-	unique,
 	uuid,
 	varchar,
 } from 'drizzle-orm/pg-core';
@@ -22,22 +21,22 @@ export const invoices = pgTable(
 		userId: uuid('user_id')
 			.notNull()
 			.references(() => users.id),
-		customerId: uuid('customer_id').notNull(),
+		clientId: uuid('client_id').notNull(),
 		amount: numeric({ precision: 15, scale: 4, mode: 'number' }).notNull(),
 		status: statusEnum().notNull(),
 		date: timestamp({ withTimezone: true, mode: 'string' }).notNull().defaultNow(),
 	},
 	table => [
 		foreignKey({
-			name: 'customer_fk',
-			columns: [table.customerId, table.userId],
-			foreignColumns: [customers.id, customers.userId],
+			name: 'client_fk',
+			columns: [table.clientId, table.userId],
+			foreignColumns: [clients.id, clients.userId],
 		}),
 	],
 );
 
-export const customers = pgTable(
-	'customer',
+export const clients = pgTable(
+	'client',
 	{
 		id: uuid().default(sql`uuid_generate_v4()`).unique().notNull(),
 		userId: uuid('user_id')
@@ -46,7 +45,7 @@ export const customers = pgTable(
 		name: varchar({ length: 255 }).notNull(),
 		email: varchar({ length: 255 }).notNull(),
 	},
-	t => [primaryKey({ name: 'customer_user_pk', columns: [t.id, t.userId] })],
+	t => [primaryKey({ name: 'client_user_pk', columns: [t.id, t.userId] })],
 );
 
 export const config = pgTable('config', {

@@ -7,8 +7,9 @@ import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { type customers as customersSchema, invoices as invoicesSchema } from '@/db/schema';
+import { type clients as clientssSchema, invoices as invoicesSchema } from '@/db/schema';
 import { createInvoice, updateInvoice } from '@/lib/actions';
+import type { InvoiceWithClient } from '@/lib/data';
 import type { Prettify } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { Combobox } from '@/ui/combobox';
@@ -33,7 +34,6 @@ import {
 } from '@/ui/form';
 import { Input } from '@/ui/input';
 import { Switch } from '@/ui/switch';
-import type { InvoiceWithCustomer } from '../../lib/data';
 
 export function applyZodErrors<T extends FieldValues>(
 	form: UseFormReturn<T>,
@@ -47,20 +47,20 @@ export function applyZodErrors<T extends FieldValues>(
 
 export function CreateInvoiceDialog({
 	children,
-	customers,
+	clients,
 }: {
 	children: React.ReactNode;
-	customers: (typeof customersSchema.$inferSelect)[];
+	clients: (typeof clientssSchema.$inferSelect)[];
 }) {
 	const [open, setOpen] = useState(false);
 
-	const options = customers.map(customer => ({
-		value: customer.id,
-		label: customer.name,
+	const options = clients.map(client => ({
+		value: client.id,
+		label: client.name,
 	}));
 
 	const schema = z.object({
-		customerId: z.uuid({ error: 'Please select a customer' }),
+		clientId: z.uuid({ error: 'Please select a client' }),
 		amount: z.coerce
 			.number({ error: 'Please enter an amount' })
 			.gt(0, { message: 'Please enter an amount greater than $0' }),
@@ -69,7 +69,7 @@ export function CreateInvoiceDialog({
 	const form = useForm<z.input<typeof schema>>({
 		resolver: zodResolver(schema),
 		defaultValues: {
-			customerId: '',
+			clientId: '',
 			amount: '0',
 		},
 	});
@@ -98,24 +98,24 @@ export function CreateInvoiceDialog({
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Create invoice</DialogTitle>
-					<DialogDescription>Create a new invoice for an existing customer.</DialogDescription>
+					<DialogDescription>Create a new invoice for an existing client.</DialogDescription>
 				</DialogHeader>
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
 						<FormField
 							control={form.control}
-							name='customerId'
+							name='clientId'
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Customer</FormLabel>
+									<FormLabel>Client</FormLabel>
 									<FormControl>
 										<Combobox
 											options={options}
-											noun={{ singular: 'customer', plural: 'customers' }}
+											noun={{ singular: 'client', plural: 'clients' }}
 											{...field}
 										/>
 									</FormControl>
-									<FormDescription>Select an existing customer to bill.</FormDescription>
+									<FormDescription>Select an existing client to bill.</FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}
@@ -166,7 +166,7 @@ export function UpdateInvoiceDialog({
 }: {
 	children: React.ReactNode;
 	invoice: Prettify<
-		Pick<InvoiceWithCustomer, 'id' | 'amount' | 'status' | 'customerId' | 'customerName'>
+		Pick<InvoiceWithClient, 'id' | 'amount' | 'status' | 'clientId' | 'clientName'>
 	>;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
@@ -228,14 +228,14 @@ export function UpdateInvoiceDialog({
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
 						<FormItem>
-							<FormLabel>Customer</FormLabel>
+							<FormLabel>Client</FormLabel>
 							<FormControl>
 								<Combobox
 									disabled
 									aria-readonly
-									value={invoice.customerId}
-									options={[{ value: invoice.customerId, label: invoice.customerName }]}
-									noun={{ singular: 'customer', plural: 'customers' }}
+									value={invoice.clientId}
+									options={[{ value: invoice.clientId, label: invoice.clientName }]}
+									noun={{ singular: 'client', plural: 'clients' }}
 								/>
 							</FormControl>
 							<FormMessage />

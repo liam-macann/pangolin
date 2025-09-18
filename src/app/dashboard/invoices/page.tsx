@@ -1,7 +1,7 @@
 import { PlusIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { fetchCustomers, fetchInvoices } from '@/src/app/lib/data';
+import { fetchClient, fetchInvoices } from '@/src/app/lib/data';
 import { CreateInvoiceDialog } from '@/src/app/ui/invoices/create-form';
 import Search from '@/src/app/ui/search';
 import { DataTable } from '@/src/components/ui/data-table';
@@ -18,7 +18,7 @@ export default async function Page(_props: {
 		page?: string;
 	}>;
 }) {
-	const customers = await fetchCustomers();
+	const clients = await fetchClient();
 
 	return (
 		<div className='w-full'>
@@ -28,7 +28,7 @@ export default async function Page(_props: {
 			<div className='my-4 flex items-center justify-between gap-2 md:mt-8'>
 				<Search placeholder='Search invoices...' />
 
-				<CreateInvoiceDialog customers={customers}>
+				<CreateInvoiceDialog clients={clients}>
 					<Button>
 						<span className='hidden md:block'>Create Invoice</span>
 						<PlusIcon className='h-5' />

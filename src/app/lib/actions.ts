@@ -30,7 +30,7 @@ export type State =
 	  };
 
 export async function createInvoice(
-	data: Prettify<Pick<typeof invoicesSchema.$inferInsert, 'customerId' | 'amount'>>,
+	data: Prettify<Pick<typeof invoicesSchema.$inferInsert, 'clientId' | 'amount'>>,
 ): Promise<State> {
 	const session = await auth();
 	console.log(session);
@@ -60,13 +60,13 @@ export async function createInvoice(
 	}
 
 	// Prepare data for insertion into the database
-	const { customerId, amount, userId, status } = validated.data;
+	const { clientId, amount, userId, status } = validated.data;
 
 	// Insert data into the database
 	try {
 		await sql`
-      INSERT INTO invoices (customer_id, user_id, amount, status)
-      VALUES (${customerId}, ${userId}, ${amount}, ${status})
+      INSERT INTO invoices (client_id, user_id, amount, status)
+      VALUES (${clientId}, ${userId}, ${amount}, ${status})
     `;
 	} catch {
 		// If a database error occurs, return a more specific error.
