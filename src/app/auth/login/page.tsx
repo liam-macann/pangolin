@@ -77,35 +77,40 @@ export default async function LoginPage({
 				<h1 className={`-mt-2 mb-2 font-bold text-2xl`}>Login</h1>
 
 				<section className='flex gap-2 max-md:flex-col'>
-					{Object.values(providerMap).map(provider => (
-						<form
-							className='grow'
-							key={provider.id}
-							action={async () => {
-								'use server';
-								try {
-									await signIn(provider.id, { redirectTo: callbackUrl });
-								} catch (error) {
-									if (error instanceof AuthError) {
-										console.log(error.message);
-										error.name;
-										return redirect(`?error=${error.name}`);
+					{Object.values(providerMap.filter(provider => provider.id !== 'credentials')).map(
+						provider => (
+							<form
+								className='grow'
+								key={provider.id}
+								action={async () => {
+									'use server';
+									try {
+										await signIn(provider.id, { redirectTo: callbackUrl });
+									} catch (error) {
+										if (error instanceof AuthError) {
+											console.log(error.message);
+											error.name;
+											return redirect(`?error=${error.name}`);
+										}
+
+										// Remember that redirect is a thrown error internally
+										throw error;
 									}
-
-									// Remember that redirect is a thrown error internally
-									throw error;
-								}
-							}}
-						>
-							<Button type='submit' className='w-full'>
-								<span>Sign in with {provider.name}</span>
-							</Button>
-						</form>
-					))}
+								}}
+							>
+								<Button type='submit' className='w-full'>
+									<span>Sign in with {provider.name}</span>
+								</Button>
+							</form>
+						),
+					)}
 				</section>
-				<hr className='my-4' />
-
-				<LoginForm callbackUrl={callbackUrl} />
+				{providerMap.find(provider => provider.id === 'credentials') && (
+					<>
+						<hr className='my-4' />
+						<LoginForm callbackUrl={callbackUrl} />
+					</>
+				)}
 			</div>
 		</>
 	);

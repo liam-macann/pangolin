@@ -46,38 +46,36 @@ import type { Provider } from 'next-auth/providers';
 const providers: Provider[] = [
 	GitHub,
 	Google,
-	Credentials({
-		async authorize(credentials) {
-			const parsedCredentials = z
-				.object({ email: z.email(), password: z.string().min(6) })
-				.safeParse(credentials);
+	// Credentials({
+	// 	async authorize(credentials) {
+	// 		const parsedCredentials = z
+	// 			.object({ email: z.email(), password: z.string().min(6) })
+	// 			.safeParse(credentials);
 
-			if (parsedCredentials.success) {
-				const { email, password } = parsedCredentials.data;
+	// 		if (parsedCredentials.success) {
+	// 			const { email, password } = parsedCredentials.data;
 
-				const user = await getUser(email);
-				if (!user) return null;
+	// 			const user = await getUser(email);
+	// 			if (!user) return null;
 
-				const passwordsMatch = await bcrypt.compare(password, user.password);
-				if (passwordsMatch) return user;
-			}
+	// 			const passwordsMatch = await bcrypt.compare(password, user.password);
+	// 			if (passwordsMatch) return user;
+	// 		}
 
-			console.log('Invalid credentials');
-			return null;
-		},
-	}),
+	// 		console.log('Invalid credentials');
+	// 		return null;
+	// 	},
+	// }),
 ];
 
-export const providerMap = providers
-	.map(provider => {
-		if (typeof provider === 'function') {
-			const providerData = provider();
-			return { id: providerData.id, name: providerData.name };
-		} else {
-			return { id: provider.id, name: provider.name };
-		}
-	})
-	.filter(provider => provider.id !== 'credentials');
+export const providerMap = providers.map(provider => {
+	if (typeof provider === 'function') {
+		const providerData = provider();
+		return { id: providerData.id, name: providerData.name };
+	} else {
+		return { id: provider.id, name: provider.name };
+	}
+});
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
 	...authConfig,
