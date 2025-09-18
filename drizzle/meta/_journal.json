@@ -36,6 +36,13 @@
 			"when": 1758184456568,
 			"tag": "0004_spotty_marauders",
 			"breakpoints": true
+		},
+		{
+			"idx": 5,
+			"version": "7",
+			"when": 1758204311126,
+			"tag": "0005_slim_quasar",
+			"breakpoints": true
 		}
 	]
 }

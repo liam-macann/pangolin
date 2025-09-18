@@ -53,7 +53,7 @@ export const config = pgTable('config', {
 		.primaryKey()
 		.references(() => users.id),
 	// The time zone of record, for invoice dates and yearly sequencing. This should eventually reference a table of time zones.
-	timeZone: text().notNull().default('Australia/Sydney'),
+	timezone: text().notNull().default('Australia/Sydney'),
 });
 
 // Auth.js Data
