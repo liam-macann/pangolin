@@ -27,6 +27,7 @@ export function Combobox({
 	value,
 	disabled = false,
 	onChange,
+	className,
 }: {
 	noun?: { singular: string; plural: string };
 	placeholder?: string;
@@ -34,6 +35,7 @@ export function Combobox({
 	value: string;
 	disabled?: boolean;
 	onChange?: (value: string) => void;
+	className?: string;
 }) {
 	const [open, setOpen] = React.useState(false);
 
@@ -44,7 +46,7 @@ export function Combobox({
 					variant='outline'
 					role='combobox'
 					aria-expanded={open}
-					className='w-[200px] justify-between'
+					className={cn('w-[200px] justify-between', className)}
 					disabled={disabled}
 				>
 					{value ? options.find(option => option.value === value)?.label : `${placeholder}…`}
