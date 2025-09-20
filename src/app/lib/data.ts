@@ -3,7 +3,7 @@
 import { desc, eq } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { clients, config, invoices } from '@/db/schema';
-import { db } from '@/src/db';
+import { db, type Transaction } from '@/src/db';
 /**
  * Join client details with invoice records for authenticated user
  * @returns `Promise<InvoiceWithClient[]>` */
@@ -19,7 +19,10 @@ export async function fetchInvoices() {
 				id: invoices.id,
 				amount: invoices.amount,
 				status: invoices.status,
-				date: invoices.date,
+				date: invoices.created_at,
+				issueYear: invoices.issueYear,
+				index: invoices.index,
+				yearIndex: invoices.yearIndex,
 				clientId: invoices.clientId,
 				clientName: clients.name,
 				clientEmail: clients.email,
@@ -27,7 +30,7 @@ export async function fetchInvoices() {
 			.from(invoices)
 			.where(eq(invoices.userId, session.user.id))
 			.innerJoin(clients, eq(invoices.clientId, clients.id))
-			.orderBy(desc(invoices.date));
+			.orderBy(desc(invoices.created_at));
 
 		return result;
 	} catch (error) {
@@ -51,22 +54,39 @@ export async function fetchClient() {
 	}
 }
 
-export async function getUserConfig(id: string) {
-	try {
-		// Get config, or create it if it doesn't exist
-		const settings = await db
-			.insert(config)
-			.values({
-				userId: id,
-			})
-			.onConflictDoUpdate({
-				target: config.userId,
-				set: { userId: id }, // No-op update: returns the row
-			})
-			.returning();
+export async function getUserConfig(
+	/** Optionally permit calling within a transaction */
+	tx?: Transaction,
+) {
+	const q = tx || db;
 
-		if (!settings) throw new Error('User does not exist');
-		return settings[0];
+	const session = await auth();
+	if (!session?.user?.id) throw new Error('User is not authenticated');
+
+	try {
+		const [settings] = await q
+			.select()
+			.from(config)
+			.where(eq(config.userId, session.user.id))
+			.orderBy(desc(config.validFrom))
+			.limit(1);
+
+		if (!settings) {
+			// If user has no config, create one. Will error if user does not exist.
+			return q
+				.insert(config)
+				.values({
+					userId: session.user.id,
+					timezone: 'Australia/Sydney',
+				})
+				.returning()
+				.then(v => v[0]);
+		} else if (settings.validTo != null) {
+			// If user has no current config
+			throw new Error('User has no current valid config.');
+		}
+
+		return settings;
 	} catch (error) {
 		console.error('Failed to fetch config:', error);
 		throw new Error('Failed to fetch config.');

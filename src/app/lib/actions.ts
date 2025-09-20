@@ -1,13 +1,14 @@
 'use server';
 
-import { eq } from 'drizzle-orm';
+import { type AnyColumn, eq, sql } from 'drizzle-orm';
 import { createInsertSchema, createUpdateSchema } from 'drizzle-zod';
 import { revalidatePath } from 'next/cache';
 import { AuthError } from 'next-auth';
 import z from 'zod';
 import { auth, signIn } from '@/auth';
 import { db } from '@/db';
-import { invoices, invoices as invoicesSchema } from '@/db/schema';
+import { invoiceCount, invoices, invoices as invoicesSchema } from '@/db/schema';
+import { getUserConfig } from '@/lib/data';
 import type { Prettify } from '@/lib/utils';
 
 export type State =
@@ -24,11 +25,12 @@ export type State =
 			message: string;
 	  };
 
+const increment = (column: AnyColumn, value = 1) => sql`${column} + ${value}`;
+
 export async function createInvoice(
 	data: Prettify<Pick<typeof invoicesSchema.$inferInsert, 'clientId' | 'amount'>>,
 ): Promise<State> {
 	const session = await auth();
-	console.log(session);
 	if (!session?.user?.id) {
 		return {
 			success: false,
@@ -36,14 +38,21 @@ export async function createInvoice(
 		};
 	}
 
-	const defaults: typeof invoicesSchema.$inferInsert = {
+	const inputSchema = createInsertSchema(invoicesSchema).omit({
+		index: true,
+		yearIndex: true,
+		config: true,
+		issueYear: true,
+	});
+
+	const defaults: z.infer<typeof inputSchema> = {
 		status: 'unpaid',
 		...data,
 		userId: session.user.id,
 	};
 
 	// Validate form using Zod
-	const validated = createInsertSchema(invoicesSchema).safeParse(defaults);
+	const validated = inputSchema.safeParse(defaults);
 
 	// If form validation fails, return errors early. Otherwise, continue.
 	if (!validated.success) {
@@ -54,19 +63,55 @@ export async function createInvoice(
 		};
 	}
 
-	// Prepare data for insertion into the database
-	const { clientId, amount, userId, status } = validated.data;
-
-	// Insert data into the database
 	try {
-		await db.insert(invoices).values({
-			userId: userId,
-			clientId: clientId,
-			amount: amount,
-			status: status,
+		await db.transaction(async tx => {
+			const config = await getUserConfig(tx);
+
+			// Upsert: increment user invoice count
+			const count = await tx
+				.insert(invoiceCount)
+				.values({
+					userId: validated.data.userId,
+					count: 1,
+					yearCount: 1,
+				})
+				.onConflictDoUpdate({
+					target: invoiceCount.userId,
+					set: {
+						userId: validated.data.userId,
+						count: increment(invoiceCount.count),
+						yearCount: sql`
+							CASE
+							  -- Evaluate against config time zone. If the year is after the tracked date, reset the yearly counter.
+                WHEN EXTRACT(YEAR FROM transaction_timestamp() AT TIME ZONE ${config.timezone})
+                    > EXTRACT(YEAR FROM ${invoiceCount.updatedAt} AT TIME ZONE ${config.timezone})
+                THEN 1
+
+                -- Evaluate against config time zone. If the year is the same, increment the year count.
+                WHEN EXTRACT(YEAR FROM transaction_timestamp() AT TIME ZONE ${config.timezone})
+                    = EXTRACT(YEAR FROM ${invoiceCount.updatedAt} AT TIME ZONE ${config.timezone})
+                THEN ${invoiceCount.yearCount} + 1
+
+                -- If now() is before the tracked date, do nothing.
+                ELSE ${invoiceCount.yearCount}
+              END
+              `,
+						updatedAt: sql`transaction_timestamp()`,
+					},
+				})
+				.returning()
+				.then(v => v[0]);
+
+			await tx.insert(invoices).values({
+				...validated.data,
+				index: count.count,
+				yearIndex: count.yearCount,
+				config: config.id,
+				issueYear: sql`EXTRACT(YEAR FROM transaction_timestamp() AT TIME ZONE ${config.timezone})`,
+			});
 		});
-	} catch {
-		// If a database error occurs, return a more specific error.
+	} catch (err) {
+		console.error(err);
 		return {
 			message: `Database Error: failed to create invoice`,
 			success: false,

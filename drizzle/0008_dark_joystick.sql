@@ -1,0 +1,1 @@
+ALTER TABLE "invoice_count" RENAME COLUMN "yearCount" TO "year_count";

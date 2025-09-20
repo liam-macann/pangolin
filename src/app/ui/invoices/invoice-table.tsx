@@ -19,7 +19,24 @@ import { UpdateInvoiceDialog } from './create-form';
 
 export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
 	{
+		accessorKey: 'yearIndex',
+		header: 'Reference',
+		cell: ({ row }) => {
+			const issueYear: number = row.getValue('issueYear');
+			const index: number = row.getValue('yearIndex');
+			return (
+				<div className='font-medium'>
+					{issueYear.toString()}-{index.toString().padStart(3, '0')}
+				</div>
+			);
+		},
+	},
+	{
 		accessorKey: 'clientName',
+		header: 'Name',
+	},
+	{
+		accessorKey: 'issueYear',
 		header: 'Name',
 	},
 	{
