@@ -1,19 +1,14 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import { AuthError } from 'next-auth';
-import postgres from 'postgres';
-import { auth, signIn } from '@/auth';
-
-// biome-ignore lint/style/noNonNullAssertion: DB URL is always present
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
-
 import { eq } from 'drizzle-orm';
 import { createInsertSchema, createUpdateSchema } from 'drizzle-zod';
+import { revalidatePath } from 'next/cache';
+import { AuthError } from 'next-auth';
 import z from 'zod';
+import { auth, signIn } from '@/auth';
+import { db } from '@/db';
 import { invoices, invoices as invoicesSchema } from '@/db/schema';
 import type { Prettify } from '@/lib/utils';
-import { db } from '@/src/db';
 
 export type State =
 	| {
@@ -64,10 +59,12 @@ export async function createInvoice(
 
 	// Insert data into the database
 	try {
-		await sql`
-      INSERT INTO invoices (client_id, user_id, amount, status)
-      VALUES (${clientId}, ${userId}, ${amount}, ${status})
-    `;
+		await db.insert(invoices).values({
+			userId: userId,
+			clientId: clientId,
+			amount: amount,
+			status: status,
+		});
 	} catch {
 		// If a database error occurs, return a more specific error.
 		return {
