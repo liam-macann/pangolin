@@ -1,0 +1,2 @@
+ALTER TABLE "invoice_item" RENAME COLUMN "cost" TO "unit_cost";--> statement-breakpoint
+ALTER TABLE "invoice_item" ADD COLUMN "amount" numeric(15, 4) GENERATED ALWAYS AS ("invoice_item"."quantity" * "invoice_item"."unit_cost") STORED NOT NULL;

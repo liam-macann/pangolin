@@ -86,9 +86,6 @@ importers:
       dotenv:
         specifier: ^17.2.2
         version: 17.2.2
-      drizzle-orm:
-        specifier: ^0.44.5
-        version: 0.44.5(@neondatabase/serverless@1.0.1)(@types/pg@8.15.5)(postgres@3.4.6)
       drizzle-zod:
         specifier: ^0.8.3
         version: 0.8.3(drizzle-orm@0.44.5(@neondatabase/serverless@1.0.1)(@types/pg@8.15.5)(postgres@3.4.6))(zod@4.1.8)
@@ -165,6 +162,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.4
         version: 0.31.4
+      drizzle-orm:
+        specifier: ^0.44.5
+        version: 0.44.5(@neondatabase/serverless@1.0.1)(@types/pg@8.15.5)(postgres@3.4.6)
       husky:
         specifier: ^9.1.7
         version: 9.1.7
