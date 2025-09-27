@@ -21,12 +21,11 @@
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./*"],
-			"@/hooks": ["src/hooks/*"],
 			"@/lib/*": ["src/app/lib/*"],
 			"@/ui/*": ["src/components/ui/*"],
-			"@/components/*": ["src/components/*"],
 			"@/db/*": ["src/db/*"],
-			"@/db": ["src/db"]
+			"@/db": ["src/db"],
+			"@/auth": ["auth.ts"]
 		}
 	},
 	"include": [
