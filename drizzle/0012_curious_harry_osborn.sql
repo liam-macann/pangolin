@@ -1,0 +1,1 @@
+ALTER TABLE "invoice" ALTER COLUMN "title" SET NOT NULL;
