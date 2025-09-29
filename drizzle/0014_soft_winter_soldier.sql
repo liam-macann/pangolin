@@ -1,0 +1,1 @@
+ALTER TABLE "invoice_item" RENAME COLUMN "amount" TO "net_amount";

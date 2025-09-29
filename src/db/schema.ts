@@ -71,7 +71,7 @@ export const invoiceItems = pgTable('invoice_item', {
 		mode: 'number',
 	}).notNull(),
 	currency: varchar('currency', { length: 3 }).notNull().default('AUD'),
-	amount: numeric('amount', {
+	netAmount: numeric('net_amount', {
 		precision: 15,
 		scale: 4,
 		mode: 'number',
