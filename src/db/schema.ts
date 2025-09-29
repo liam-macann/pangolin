@@ -24,7 +24,8 @@ export const invoices = pgTable(
 			.notNull()
 			.references(() => users.id),
 		clientId: uuid('client_id').notNull(),
-		title: varchar('title', { length: 100 }).notNull(),
+		title: varchar('title', { length: 100 }),
+		description: text('description'),
 		status: statusEnum().notNull(),
 		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 		dueAt: timestamp('due_at', { withTimezone: true, mode: 'date' })
