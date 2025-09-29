@@ -1,16 +1,16 @@
-export const formatCurrency = (amount: number) => {
-	return amount.toLocaleString('en-AU', {
+export const formatCurrency = (amount: number, locale: string) => {
+	return amount.toLocaleString(locale, {
 		style: 'currency',
 		currency: 'AUD',
 	});
 };
 
 export const formatDateToLocal = (
-	dateStr: string,
+	date: string | Date,
 	time: boolean = false,
 	locale: string = 'en-AU',
 ) => {
-	const date = new Date(dateStr);
+	const safeDate = new Date(date);
 	const options: Intl.DateTimeFormatOptions = {
 		day: 'numeric',
 		month: 'short',
@@ -19,7 +19,7 @@ export const formatDateToLocal = (
 		minute: time ? 'numeric' : undefined,
 	};
 	const formatter = new Intl.DateTimeFormat(locale, options);
-	return formatter.format(date);
+	return formatter.format(safeDate);
 };
 
 export const generatePagination = (currentPage: number, totalPages: number) => {

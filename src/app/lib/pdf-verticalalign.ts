@@ -47,7 +47,9 @@ type RowSpan = {
 	align: Align;
 };
 
-export const CenteredLayout: CustomTableLayout = {
+export const CenteredLayout: CustomTableLayout & {
+	paddingTop: NonNullable<CustomTableLayout['paddingTop']>;
+} = {
 	paddingTop: (index, node) => {
 		// @ts-expect-error 'TableCell' is not assignable to type 'TableCellCustom'
 		applyVerticalAlignment(node, index, 'center', []);
@@ -57,7 +59,9 @@ export const CenteredLayout: CustomTableLayout = {
 	// defaultBorder: false,
 };
 
-export const BottomLayout: CustomTableLayout = {
+export const BottomLayout: CustomTableLayout & {
+	paddingTop: NonNullable<CustomTableLayout['paddingTop']>;
+} = {
 	paddingTop: (index, node) => {
 		// @ts-expect-error 'TableCell' is not assignable to type 'TableCellCustom'
 		applyVerticalAlignment(node, index, 'bottom', []);

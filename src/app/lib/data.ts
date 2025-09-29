@@ -1,6 +1,6 @@
 'use server';
 
-import { and, desc, eq, getTableColumns, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableColumns, sql } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { db, type Transaction } from '@/db';
 import { clients, config, invoiceItems, invoices, users } from '@/db/schema';
@@ -18,7 +18,6 @@ export async function fetchInvoices() {
 		const result = await db
 			.select({
 				id: invoices.id,
-				amount: invoices.amount,
 				status: invoices.status,
 				date: invoices.createdAt,
 				issueYear: invoices.issueYear,
@@ -59,6 +58,7 @@ export async function fetchInvoice(id: string) {
 				issuedAt: sql<string>`${invoices.createdAt} AT TIME ZONE ${config.timezone}`.as(
 					'issued_at',
 				),
+				dueAt: sql<string>`${invoices.dueAt} AT TIME ZONE ${config.timezone}`.as('due_at'),
 				client: { ...getTableColumns(clients) },
 				user: { ...getTableColumns(users) },
 				config: { ...getTableColumns(config) },
@@ -69,12 +69,14 @@ export async function fetchInvoice(id: string) {
 			.innerJoin(users, eq(users.id, invoices.userId))
 			.innerJoin(config, eq(config.id, invoices.config))
 			.leftJoin(invoiceItems, eq(invoiceItems.invoiceId, invoices.id))
-			.where(and(eq(invoices.id, id), eq(invoices.userId, session.user.id)));
+			.where(and(eq(invoices.id, id), eq(invoices.userId, session.user.id)))
+			.orderBy(asc(invoiceItems.order), asc(invoiceItems.label));
 
 		type SelectType = ElementType<typeof query>;
-		type ReduceType = Omit<SelectType, 'issuedAt'> & {
+		type ReduceType = Omit<SelectType, 'issuedAt' | 'dueAt'> & {
 			items: NonNullable<SelectType['item']>[];
 			issuedAt: Date;
+			dueAt: Date;
 		};
 
 		// Aggregates result into a single object
@@ -83,7 +85,12 @@ export async function fetchInvoice(id: string) {
 				if (row.item) acc.items.push(row.item);
 				return acc;
 			},
-			{ ...query[0], issuedAt: new Date(query[0].issuedAt), items: [] },
+			{
+				...query[0],
+				issuedAt: new Date(query[0].issuedAt),
+				dueAt: new Date(query[0].dueAt),
+				items: [],
+			},
 		);
 
 		return result;

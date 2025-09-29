@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 import path from 'path';
 import PdfPrinter from 'pdfmake';
 import { fetchInvoice } from '@/lib/data';
-
 import { BottomLayout, CenteredLayout } from '@/lib/pdf-verticalalign';
+import { formatCurrency, formatDateToLocal } from '@/lib/utils';
 
 const colors = {
 	black: '#000000',
@@ -26,15 +26,7 @@ const fontSize = {
 
 /** Convert pixels to points */
 const px = (v: number) => (v / 4) * 3;
-
-const spacing: Record<number, number> = {
-	1: px(8),
-	2: px(12),
-	3: px(16),
-	4: px(24),
-	5: px(32),
-	6: px(48),
-};
+const spacing = (i: number) => px(4 * i);
 
 export async function GET(request, { params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
@@ -53,14 +45,19 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 
 	const printer = new PdfPrinter(fonts);
 
-	const pageMargins: [number, number, number, number] = [50, 50, 50, 70];
+	const pageMargins: [number, number, number, number] = [
+		spacing(18),
+		spacing(14),
+		spacing(18),
+		spacing(28),
+	];
 
 	const pdfDoc = printer.createPdfKitDocument({
 		pageSize: 'A4',
 		pageMargins,
 		info: {
 			title: 'Invoice',
-			// author: 'john doe',
+			author: invoice.user.name,
 			creator: 'Invoicer',
 			producer: 'Invoicer',
 			creationDate: invoice.issuedAt,
@@ -75,8 +72,8 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 					hLineWidth: () => 0,
 					vLineWidth: () => 0,
 					paddingBottom: () => 0,
-					paddingLeft: i => (i === 0 ? 0 : 5),
-					paddingRight: i => (i > 0 ? 0 : 5),
+					paddingLeft: i => (i === 0 ? 0 : spacing(1)),
+					paddingRight: i => (i > 0 ? 0 : spacing(1)),
 				},
 				table: {
 					style: 'footer',
@@ -87,7 +84,7 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 								stack: ['Name: First Lastname', 'BSB: 123 456', 'Acc #: 123 456 789'],
 							},
 							{
-								text: `Issued ${invoice.issuedAt}`,
+								text: `Issued ${formatDateToLocal(invoice.issuedAt, false, 'en-AU')}`,
 								alignment: 'right',
 							},
 						],
@@ -104,7 +101,7 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 						text: invoice.user.name,
 						bold: true,
 						color: colors.heavy,
-						margin: [0, 0, 0, spacing[3]],
+						margin: [0, 0, 0, spacing(4)],
 					},
 					{ text: 'ABN 00 000 000 000' },
 					{ text: invoice.user.email },
@@ -112,82 +109,131 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 			},
 			{
 				text: `Invoice INV-${invoice.index.toString().padStart(3, '0')}`,
-				style: 'header',
-				marginLeft: spacing[4],
+				style: 'heading',
+				margin: [spacing(5), spacing(18), 0, 0],
 			},
 			{
 				table: {
 					widths: ['*', '30%'],
 					body: [
 						[
-							{ text: 'Invoice title', bold: true },
-							{ width: '30%', text: 'Due date', alignment: 'right', bold: true },
+							{ text: invoice.title, bold: true },
+							{
+								width: '30%',
+								text: `Due ${formatDateToLocal(invoice.dueAt, false, invoice.config.locale)}`,
+								alignment: 'right',
+								bold: true,
+							},
 						],
 						[{ stack: [{ text: 'Bill To', bold: true }, invoice.client.name], colSpan: 2 }],
 					],
 				},
 				fontSize: fontSize.base,
-				margin: [0, spacing[5]],
+				margin: [0, spacing(8)],
 				layout: {
 					fillColor: colors.gray,
-					paddingTop: i => (i === 0 ? spacing[4] : 0),
-					paddingBottom: () => spacing[4],
-					paddingLeft: () => spacing[4],
-					paddingRight: () => spacing[4],
+					paddingTop: i => (i === 0 ? spacing(5) : 0),
+					paddingBottom: () => spacing(5),
+					paddingLeft: () => spacing(5),
+					paddingRight: () => spacing(5),
 					hLineWidth: () => 0,
 					vLineWidth: () => 0,
 				},
 			},
 			{
-				stack: [
+				table: {
+					headerRows: 1,
+					widths: ['*', 80, 80, 80],
+					body: [
+						[{ text: 'Description', alignment: 'left' }, 'Quantity', 'Each', 'Amount'],
+						...(invoice.items?.map(item => [
+							{
+								stack: [
+									{ text: item.label, marginBottom: spacing(0.5) },
+									{ text: item.note, color: colors.accent, bold: false },
+								],
+								alignment: 'left',
+								margin: [0, spacing(2)],
+							},
+							{ text: `${item.quantity} ${item.unit ?? ''}`.trim(), bold: false },
+							{ text: formatCurrency(item.unitCost, invoice.config.locale), bold: false },
+							{
+								text: formatCurrency(item.netAmount, invoice.config.locale),
+								margin: [0, spacing(6)],
+							},
+						]) || []),
+					],
+				},
+				bold: true,
+				alignment: 'right',
+				fontSize: fontSize.base,
+				layout: {
+					...CenteredLayout,
+					paddingTop: (i, node) => (i === 0 ? spacing(2) : CenteredLayout.paddingTop(i, node)),
+					paddingBottom: i => (i === 0 ? spacing(2) : 0),
+					paddingLeft: () => spacing(2),
+					paddingRight: () => spacing(2),
+					vLineWidth: () => 0,
+					hLineWidth: (i: number) => (i <= 1 ? 1 : 0.75),
+					hLineColor: (i: number) => (i <= 1 ? colors.black : colors.accent),
+					hLineStyle: i => (i <= 1 ? null : { dash: { length: 0.75, space: 1.5 } }),
+				},
+			},
+			{
+				marginTop: spacing(6),
+				columnGap: spacing(2),
+				columns: [
 					{
+						text: 'Tax not applicable',
+						color: colors.accent,
+						fontSize: fontSize.base,
+						marginLeft: spacing(2),
+					},
+					{
+						width: 'auto',
 						table: {
-							headerRows: 1,
-							widths: ['*', 80, 80, 80],
+							widths: [80, 100],
 							body: [
-								[{ text: 'Description', alignment: 'left' }, 'Quantity', 'Each', 'Amount'],
-								...(invoice.items?.map(item => [
+								['Subtotal', { text: '$00.00', alignment: 'right' }],
+								[
+									{ text: 'Tax incl.', color: colors.accent, marginBottom: spacing(1) },
 									{
-										stack: [
-											{ text: item.label },
-											{ text: item.note, color: colors.accent, bold: false },
-										],
-										alignment: 'left',
-										margin: [0, spacing[1]],
+										text: '$00.00',
+										alignment: 'right',
+										color: colors.accent,
+										marginBottom: spacing(1),
 									},
-									{ text: `${item.quantity} ${item.unit ?? ''}`.trim(), bold: false },
-									{ text: `$${item.unitCost}`, bold: false },
-									{ text: `$${item.amount}`, margin: [0, spacing[3]] },
-								]) || []),
+								],
+								[
+									{ text: 'Total', bold: true },
+									{
+										text: '$00.00',
+										alignment: 'right',
+										bold: true,
+										fontSize: fontSize.lg,
+										marginTop: spacing(4),
+									},
+								],
 							],
 						},
-						bold: true,
-						alignment: 'right',
 						fontSize: fontSize.base,
 						layout: {
-							...CenteredLayout,
-							paddingTop: (i, node) =>
-								i === 0 ? spacing[1] : CenteredLayout.paddingTop?.(i, node) || 0,
-							paddingBottom: i => (i === 0 ? spacing[1] : 0),
+							...BottomLayout,
+							paddingBottom: () => spacing(2),
+							paddingLeft: () => spacing(2),
+							paddingRight: () => spacing(2),
 							vLineWidth: () => 0,
-							hLineWidth: (i: number) => (i <= 1 ? 1 : 0.75),
-							hLineColor: (i: number) => (i <= 1 ? colors.black : colors.accent),
-							hLineStyle: i => {
-								if (i <= 1) {
-									return null;
-								}
-								return { dash: { length: 0.75, space: 1.5 } };
-							},
+							hLineWidth: (i, node) => (i + 1 === node.table.body.length ? 1 : 0),
+							hLineColor: () => colors.accent,
 						},
 					},
 				],
 			},
 		],
 		styles: {
-			header: {
+			heading: {
 				fontSize: fontSize.lg,
 				bold: true,
-				margin: [0, spacing[6], 0, spacing[2]],
 				color: colors.accent,
 			},
 			footer: {
