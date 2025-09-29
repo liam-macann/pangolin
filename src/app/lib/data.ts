@@ -56,7 +56,9 @@ export async function fetchInvoice(id: string) {
 		const query = await db
 			.select({
 				...getTableColumns(invoices),
-				issuedAt: sql<Date>`${invoices.createdAt} AT TIME ZONE ${config.timezone}`.as('issued_at'),
+				issuedAt: sql<string>`${invoices.createdAt} AT TIME ZONE ${config.timezone}`.as(
+					'issued_at',
+				),
 				client: { ...getTableColumns(clients) },
 				user: { ...getTableColumns(users) },
 				config: { ...getTableColumns(config) },
@@ -70,16 +72,18 @@ export async function fetchInvoice(id: string) {
 			.where(and(eq(invoices.id, id), eq(invoices.userId, session.user.id)));
 
 		type SelectType = ElementType<typeof query>;
+		type ReduceType = Omit<SelectType, 'issuedAt'> & {
+			items: NonNullable<SelectType['item']>[];
+			issuedAt: Date;
+		};
 
 		// Aggregates result into a single object
-		const { item: _item, ...result } = query.reduce<
-			SelectType & { items: NonNullable<SelectType['item']>[] }
-		>(
+		const { item: _item, ...result } = query.reduce<ReduceType>(
 			(acc, row) => {
 				if (row.item) acc.items.push(row.item);
 				return acc;
 			},
-			{ ...query[0], items: [] },
+			{ ...query[0], issuedAt: new Date(query[0].issuedAt), items: [] },
 		);
 
 		return result;
