@@ -127,6 +127,13 @@
 			"when": 1759390315859,
 			"tag": "0017_aspiring_giant_man",
 			"breakpoints": true
+		},
+		{
+			"idx": 18,
+			"version": "7",
+			"when": 1759394162819,
+			"tag": "0018_exotic_devos",
+			"breakpoints": true
 		}
 	]
 }

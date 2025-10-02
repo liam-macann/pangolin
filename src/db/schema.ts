@@ -90,7 +90,6 @@ export const invoiceItems = pgTable('invoice_item', {
 		scale: 4,
 		mode: 'number',
 	}).notNull(),
-	currency: varchar('currency', { length: 3 }).notNull().default('AUD'),
 	netAmount: numeric('net_amount', {
 		precision: 15,
 		scale: 4,
@@ -136,6 +135,7 @@ export const config = pgTable('config', {
 	// The time zone of record, for invoice dates and yearly sequencing. This should eventually reference a table of time zones.
 	timezone: text().notNull(),
 	locale: text().notNull().default('en-AU'),
+	currency: varchar('currency', { length: 3 }).notNull().default('AUD'),
 });
 
 // Auth.js Data
