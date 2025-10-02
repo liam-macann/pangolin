@@ -164,9 +164,14 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 									{ text: item.note, color: colors.accent, bold: false },
 								],
 								alignment: 'left',
+								fontFeatures: ['pnum'],
 								margin: [0, spacing(2)],
 							},
-							{ text: `${item.quantity} ${item.unit ?? ''}`.trim(), bold: false },
+							{
+								text: `${item.quantity} ${item.unit ?? ''}`.trim(),
+								bold: false,
+								fontFeatures: ['pnum'],
+							},
 							{ text: formatCurrency(item.unitCost, invoice.config.locale), bold: false },
 							{
 								text: formatCurrency(item.netAmount, invoice.config.locale),
@@ -178,6 +183,7 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 				bold: true,
 				alignment: 'right',
 				fontSize: fontSize.base,
+				fontFeatures: ['tnum', 'lnum'],
 				layout: {
 					...CenteredLayout,
 					paddingTop: (i, node) => (i === 0 ? spacing(2) : CenteredLayout.paddingTop(i, node)),
@@ -228,6 +234,7 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 							],
 						},
 						fontSize: fontSize.base,
+						fontFeatures: ['tnum', 'lnum'],
 						layout: {
 							...BottomLayout,
 							paddingBottom: () => spacing(2),
