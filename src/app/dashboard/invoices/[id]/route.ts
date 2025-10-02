@@ -52,13 +52,15 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 		spacing(28),
 	];
 
+	const reference = `Invoice INV-${invoice.index.toString().padStart(3, '0')}`;
+
 	const pdfDoc = printer.createPdfKitDocument({
 		version: '1.5',
 		subset: 'PDF/A-3a',
 		tagged: true,
 		displayTitle: true,
 		info: {
-			title: 'Invoice',
+			title: reference,
 			author: invoice.user.name,
 			creator: 'Invoicer',
 			producer: 'Invoicer',
@@ -112,7 +114,12 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 				],
 			},
 			{
-				text: `Invoice INV-${invoice.index.toString().padStart(3, '0')}`,
+				text: (() => {
+					const match = reference.match(/(.+)(.-.)(.*)/);
+					if (!match) return reference;
+					// Add spacing around hyphen without affecting copy/paste
+					return [match[1], { text: match[2], characterSpacing: spacing(0.5) }, match[3]];
+				})(),
 				style: 'heading',
 				margin: [spacing(5), spacing(18), 0, 0],
 			},
