@@ -1,8 +1,8 @@
-export const formatCurrency = (amount: number, locale: string) => {
-	return amount.toLocaleString(locale, {
+export const formatCurrency = (amount: number, currency: string, locale: string) => {
+	return new Intl.NumberFormat(locale, {
 		style: 'currency',
-		currency: 'AUD',
-	});
+		currency,
+	}).format(amount);
 };
 
 export const formatDateToLocal = (

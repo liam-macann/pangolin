@@ -172,9 +172,16 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 								bold: false,
 								fontFeatures: ['pnum'],
 							},
-							{ text: formatCurrency(item.unitCost, invoice.config.locale), bold: false },
 							{
-								text: formatCurrency(item.netAmount, invoice.config.locale),
+								text: formatCurrency(item.unitCost, invoice.config.currency, invoice.config.locale),
+								bold: false,
+							},
+							{
+								text: formatCurrency(
+									item.netAmount,
+									invoice.config.currency,
+									invoice.config.locale,
+								),
 								margin: [0, spacing(6)],
 							},
 						]) || []),
@@ -211,7 +218,17 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 						table: {
 							widths: [80, 100],
 							body: [
-								['Subtotal', { text: '$00.00', alignment: 'right' }],
+								[
+									'Subtotal',
+									{
+										text: formatCurrency(
+											invoice.netTotal,
+											invoice.config.currency,
+											invoice.config.locale,
+										),
+										alignment: 'right',
+									},
+								],
 								[
 									{ text: 'Tax incl.', color: colors.accent, marginBottom: spacing(1) },
 									{
