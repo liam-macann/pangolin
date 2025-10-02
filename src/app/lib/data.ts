@@ -1,6 +1,6 @@
 'use server';
 
-import { and, asc, desc, eq, getTableColumns, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, getTableColumns, sql, sum } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { db, type Transaction } from '@/db';
 import { clients, config, invoiceItems, invoices, users } from '@/db/schema';
@@ -20,7 +20,6 @@ export async function fetchInvoices() {
 				id: invoices.id,
 				status: invoices.status,
 				date: invoices.createdAt,
-				issueYear: invoices.issueYear,
 				index: invoices.index,
 				yearIndex: invoices.yearIndex,
 				clientId: invoices.clientId,
@@ -55,10 +54,6 @@ export async function fetchInvoice(id: string) {
 		const query = await db
 			.select({
 				...getTableColumns(invoices),
-				issuedAt: sql<string>`${invoices.createdAt} AT TIME ZONE ${config.timezone}`.as(
-					'issued_at',
-				),
-				dueAt: sql<string>`${invoices.dueAt} AT TIME ZONE ${config.timezone}`.as('due_at'),
 				client: { ...getTableColumns(clients) },
 				user: { ...getTableColumns(users) },
 				config: { ...getTableColumns(config) },
@@ -93,7 +88,28 @@ export async function fetchInvoice(id: string) {
 			},
 		);
 
-		return result;
+		const invoice = await db.query.invoices.findFirst({
+			where: and(eq(invoices.id, id), eq(invoices.userId, session.user.id)),
+			with: {
+				client: true,
+				user: true,
+				config: true,
+				items: {
+					orderBy: [asc(invoiceItems.order), asc(invoiceItems.label)],
+				},
+			},
+			extras: {
+				netTotal: sql<number>`(
+          SELECT SUM(net_amount)
+          FROM invoice_item
+          WHERE invoice_id = ${id}
+        )`
+					.mapWith(Number)
+					.as('net_total'),
+			},
+		});
+
+		return invoice;
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoice');

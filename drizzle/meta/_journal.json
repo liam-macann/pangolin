@@ -113,6 +113,20 @@
 			"when": 1759139478335,
 			"tag": "0015_huge_trauma",
 			"breakpoints": true
+		},
+		{
+			"idx": 16,
+			"version": "7",
+			"when": 1759390305853,
+			"tag": "0016_burly_catseye",
+			"breakpoints": true
+		},
+		{
+			"idx": 17,
+			"version": "7",
+			"when": 1759390315859,
+			"tag": "0017_aspiring_giant_man",
+			"breakpoints": true
 		}
 	]
 }
