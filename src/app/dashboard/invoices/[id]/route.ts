@@ -53,8 +53,10 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 	];
 
 	const pdfDoc = printer.createPdfKitDocument({
-		pageSize: 'A4',
-		pageMargins,
+		version: '1.5',
+		subset: 'PDF/A-3a',
+		tagged: true,
+		displayTitle: true,
 		info: {
 			title: 'Invoice',
 			author: invoice.user.name,
@@ -63,6 +65,8 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 			creationDate: invoice.issuedAt,
 			modDate: invoice.issuedAt,
 		},
+		pageSize: 'A4',
+		pageMargins,
 		footer: (_currentPage, _pageCount) => {
 			return {
 				style: 'footer',
