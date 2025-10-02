@@ -13,11 +13,7 @@
 		"isolatedModules": true,
 		"jsx": "preserve",
 		"incremental": true,
-		"plugins": [
-			{
-				"name": "next"
-			}
-		],
+		"plugins": [{ "name": "next" }],
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./*"],
@@ -28,14 +24,6 @@
 			"@/auth": ["auth.ts"]
 		}
 	},
-	"include": [
-		"auth.ts",
-		"next-env.d.ts",
-		"**/*.ts",
-		"**/*.tsx",
-		".next/types/**/*.ts",
-		"src/app/lib/placeholder-data.ts",
-		"scripts/seed.js"
-	],
-	"exclude": ["node_modules"]
+	"exclude": ["node_modules", ".next", "dist", "out"],
+	"include": ["auth.ts", "next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", ".next/types/**/*.ts"]
 }
