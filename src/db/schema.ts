@@ -24,7 +24,7 @@ export const invoices = pgTable(
 		id: uuid().default(sql`uuid_generate_v4()`).primaryKey().notNull(),
 		userId: uuid('user_id')
 			.notNull()
-			.references(() => users.id),
+			.references(() => users.id, { onDelete: 'cascade' }),
 		clientId: uuid('client_id').notNull(),
 
 		title: varchar('title', { length: 100 }),
@@ -115,7 +115,7 @@ export const taxes = pgTable('tax', {
 	id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
 	userId: uuid('user_id')
 		.notNull()
-		.references(() => users.id),
+		.references(() => users.id, { onDelete: 'cascade' }),
 	name: varchar({ length: 10 }).notNull(),
 	rate: numeric({ precision: 5, scale: 3, mode: 'number' }).notNull(),
 	/** True deletion is disallowed. Can be restored on upsert to reduce redundancy. */
@@ -125,7 +125,7 @@ export const taxes = pgTable('tax', {
 export const invoiceCount = pgTable('invoice_count', {
 	userId: uuid('user_id')
 		.primaryKey()
-		.references(() => users.id),
+		.references(() => users.id, { onDelete: 'cascade' }),
 	count: integer().notNull().default(0),
 	// Reset with app logic
 	yearCount: integer('year_count').notNull().default(0),
@@ -138,7 +138,7 @@ export const clients = pgTable(
 		id: uuid().default(sql`uuid_generate_v4()`).unique().notNull(),
 		userId: uuid('user_id')
 			.notNull()
-			.references(() => users.id),
+			.references(() => users.id, { onDelete: 'cascade' }),
 		name: varchar({ length: 255 }).notNull(),
 		email: varchar({ length: 255 }).notNull(),
 	},
@@ -150,7 +150,7 @@ export const config = pgTable('config', {
 	id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
 	userId: uuid('user_id')
 		.notNull()
-		.references(() => users.id),
+		.references(() => users.id, { onDelete: 'cascade' }),
 	validFrom: timestamp('valid_from', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 	validTo: timestamp('valid_to', { withTimezone: true, mode: 'date' }),
 	// The time zone of record, for invoice dates and yearly sequencing. This should eventually reference a table of time zones.
