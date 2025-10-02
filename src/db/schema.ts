@@ -101,6 +101,27 @@ export const invoiceItems = pgTable('invoice_item', {
 	order: integer(),
 });
 
+/** Join table for invoice items and taxes */
+export const itemTaxes = pgTable('item_tax', {
+	itemId: uuid('item_id')
+		.notNull()
+		.references(() => invoiceItems.id),
+	taxId: uuid('tax_id')
+		.notNull()
+		.references(() => taxes.id),
+});
+
+export const taxes = pgTable('tax', {
+	id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
+	userId: uuid('user_id')
+		.notNull()
+		.references(() => users.id),
+	name: varchar({ length: 10 }).notNull(),
+	rate: numeric({ precision: 5, scale: 3, mode: 'number' }).notNull(),
+	/** True deletion is disallowed. Can be restored on upsert to reduce redundancy. */
+	deleted: boolean().notNull().default(false),
+});
+
 export const invoiceCount = pgTable('invoice_count', {
 	userId: uuid('user_id')
 		.primaryKey()
