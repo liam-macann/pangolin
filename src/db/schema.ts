@@ -103,14 +103,18 @@ export const invoiceItems = pgTable('invoice_item', {
 });
 
 /** Join table for invoice items and taxes */
-export const itemTaxes = pgTable('item_tax', {
-	itemId: uuid('item_id')
-		.notNull()
-		.references(() => invoiceItems.id),
-	taxId: uuid('tax_id')
-		.notNull()
-		.references(() => taxes.id),
-});
+export const itemTaxes = pgTable(
+	'item_tax',
+	{
+		itemId: uuid('item_id')
+			.notNull()
+			.references(() => invoiceItems.id),
+		taxId: uuid('tax_id')
+			.notNull()
+			.references(() => taxes.id),
+	},
+	t => [primaryKey({ name: 'item_tax_pkey', columns: [t.itemId, t.taxId] })],
+);
 
 // Records should be immutable if referenced
 export const taxes = pgTable(
