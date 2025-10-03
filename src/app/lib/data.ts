@@ -1,10 +1,9 @@
 'use server';
 
-import { and, asc, desc, eq, getTableColumns, sql, sum } from 'drizzle-orm';
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { db, type Transaction } from '@/db';
-import { clients, config, invoiceItems, invoices, users } from '@/db/schema';
-import type { ElementType } from '@/src/lib/utils';
+import { clients, config, invoices, itemsWithTax, taxes } from '@/db/schema';
 /**
  * Join client details with invoice records for authenticated user
  * @returns `Promise<InvoiceWithClient[]>` */
@@ -50,66 +49,67 @@ export async function fetchInvoice(id: string) {
 	}
 
 	try {
-		// Returns array of duplicate invoice with every item
-		const query = await db
-			.select({
-				...getTableColumns(invoices),
-				client: { ...getTableColumns(clients) },
-				user: { ...getTableColumns(users) },
-				config: { ...getTableColumns(config) },
-				item: { ...getTableColumns(invoiceItems) },
-			})
-			.from(invoices)
-			.innerJoin(clients, eq(clients.id, invoices.clientId))
-			.innerJoin(users, eq(users.id, invoices.userId))
-			.innerJoin(config, eq(config.id, invoices.config))
-			.leftJoin(invoiceItems, eq(invoiceItems.invoiceId, invoices.id))
-			.where(and(eq(invoices.id, id), eq(invoices.userId, session.user.id)))
-			.orderBy(asc(invoiceItems.order), asc(invoiceItems.label));
-
-		type SelectType = ElementType<typeof query>;
-		type ReduceType = Omit<SelectType, 'issuedAt' | 'dueAt'> & {
-			items: NonNullable<SelectType['item']>[];
-			issuedAt: Date;
-			dueAt: Date;
-		};
-
-		// Aggregates result into a single object
-		const { item: _item, ...result } = query.reduce<ReduceType>(
-			(acc, row) => {
-				if (row.item) acc.items.push(row.item);
-				return acc;
-			},
-			{
-				...query[0],
-				issuedAt: new Date(query[0].issuedAt),
-				dueAt: new Date(query[0].dueAt),
-				items: [],
-			},
-		);
-
-		const invoice = await db.query.invoices.findFirst({
-			where: and(eq(invoices.id, id), eq(invoices.userId, session.user.id)),
-			with: {
-				client: true,
-				user: true,
-				config: true,
-				items: {
-					orderBy: [asc(invoiceItems.order), asc(invoiceItems.label)],
+		const [invoice, [items]] = await Promise.all([
+			db.query.invoices.findFirst({
+				where: and(eq(invoices.id, id), eq(invoices.userId, session.user.id)),
+				with: {
+					client: true,
+					user: true,
+					config: true,
 				},
-			},
-			extras: {
-				netTotal: sql<number>`(
-          SELECT SUM(net_amount)
-          FROM invoice_item
-          WHERE invoice_id = ${id}
-        )`
-					.mapWith(Number)
-					.as('net_total'),
-			},
-		});
+			}),
 
-		return invoice;
+			db
+				.select({
+					netTotal: sql`(
+            SELECT SUM(net_amount)
+            FROM items_with_tax
+            WHERE invoice_id = ${id}
+            )`
+						.mapWith(Number)
+						.as('net_total'),
+					grossTotal: sql`(
+            SELECT SUM(gross_amount)
+            FROM items_with_tax
+            WHERE invoice_id = ${id}
+            )`
+						.mapWith(Number)
+						.as('gross_total'),
+					items: sql`
+    					json_agg(
+    						json_build_object(
+    						'label', ${itemsWithTax.label},
+    						'note', ${itemsWithTax.note},
+    						'quantity', ${itemsWithTax.quantity},
+    						'unit', ${itemsWithTax.unit},
+    						'unitCost', ${itemsWithTax.unitCost},
+    						'netAmount', ${itemsWithTax.netAmount},
+    						'grossAmount', ${itemsWithTax.grossAmount}
+    						) ORDER BY ${itemsWithTax.order}, ${itemsWithTax.label}
+    					)`
+						.mapWith(
+							val =>
+								val as {
+									label: string;
+									note: string;
+									quantity: number;
+									unit: string;
+									unitCost: number;
+									netAmount: number;
+									grossAmount: number;
+								}[],
+						)
+						.as('items'),
+				})
+				.from(itemsWithTax)
+				.where(eq(itemsWithTax.invoiceId, id))
+				.groupBy(itemsWithTax.invoiceId)
+				.limit(1),
+		]);
+
+		if (!invoice) throw new Error('Invoice not found');
+
+		return { ...invoice, ...items };
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoice');

@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { NextResponse } from 'next/server';
 import path from 'path';
 import PdfPrinter from 'pdfmake';
@@ -241,7 +240,11 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 								[
 									{ text: 'Total', bold: true },
 									{
-										text: '$00.00',
+										text: formatCurrency(
+											invoice.grossTotal,
+											invoice.config.currency,
+											invoice.config.locale,
+										),
 										alignment: 'right',
 										bold: true,
 										fontSize: fontSize.lg,

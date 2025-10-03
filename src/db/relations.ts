@@ -22,6 +22,7 @@ export const invoiceItemsRelations = relations(invoiceItems, ({ one, many }) => 
 		fields: [invoiceItems.invoiceId],
 		references: [invoices.id],
 	}),
+	// Once beta reaches release, this may be flattened with a {through: itemTaxes} config
 	itemTax: many(itemTaxes),
 }));
 

@@ -1,4 +1,4 @@
-import { type SQL, sql } from 'drizzle-orm';
+import { eq, getTableColumns, type SQL, sql, sum } from 'drizzle-orm';
 import {
 	boolean,
 	check,
@@ -8,6 +8,7 @@ import {
 	numeric,
 	pgEnum,
 	pgTable,
+	pgView,
 	primaryKey,
 	text,
 	timestamp,
@@ -111,15 +112,38 @@ export const itemTaxes = pgTable('item_tax', {
 		.references(() => taxes.id),
 });
 
-export const taxes = pgTable('tax', {
-	id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
-	name: varchar({ length: 10 }).notNull(),
-	rate: numeric({ precision: 5, scale: 3, mode: 'number' }).notNull(),
-	/** True deletion is disallowed. Can be restored on upsert to reduce redundancy. */
-	deleted: boolean().notNull().default(false),
+// Records should be immutable if referenced
+export const taxes = pgTable(
+	'tax',
+	{
+		id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		name: varchar({ length: 10 }).notNull(),
+		rate: numeric({ precision: 5, scale: 3, mode: 'number' }).notNull(),
+		/** True deletion is disallowed. Can be restored on upsert to reduce redundancy. */
+		deleted: boolean().notNull().default(false),
+	},
+	t => [
+		// Ensure that a user cannot define duplicate taxes (restore deleted records on upsert)
+		unique('user_name_rate').on(t.userId, t.name, t.rate),
+	],
+);
+
+export const itemsWithTax = pgView('items_with_tax').as(qb => {
+	return qb
+		.select({
+			...getTableColumns(invoiceItems),
+			grossAmount:
+				sql<number>`((1 + COALESCE(${sum(taxes.rate)}, 0)) * ${invoiceItems.netAmount})::NUMERIC(15, 4)`.as(
+					'gross_amount',
+				),
+		})
+		.from(invoiceItems)
+		.leftJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
+		.leftJoin(taxes, eq(itemTaxes.taxId, taxes.id))
+		.groupBy(invoiceItems.id);
 });
 
 export const invoiceCount = pgTable('invoice_count', {
