@@ -122,6 +122,15 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 				style: 'heading',
 				margin: [spacing(5), spacing(18), 0, 0],
 			},
+			invoice.description
+				? {
+						text: invoice.description,
+						style: 'body',
+						margin: [spacing(5), spacing(3), spacing(5), 0],
+						fontSize: fontSize.sm,
+						lineHeight: 1.25,
+					}
+				: '',
 			{
 				table: {
 					widths: ['*', '30%'],
