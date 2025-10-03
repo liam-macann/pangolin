@@ -3,7 +3,7 @@
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { db, type Transaction } from '@/db';
-import { clients, config, invoices, itemsWithTax, taxes } from '@/db/schema';
+import { clients, config, invoiceItems, invoices, itemsWithTax } from '@/db/schema';
 /**
  * Join client details with invoice records for authenticated user
  * @returns `Promise<InvoiceWithClient[]>` */
@@ -49,13 +49,30 @@ export async function fetchInvoice(id: string) {
 	}
 
 	try {
-		const [invoice, [items]] = await Promise.all([
+		const [res, [sums]] = await Promise.all([
 			db.query.invoices.findFirst({
 				where: and(eq(invoices.id, id), eq(invoices.userId, session.user.id)),
 				with: {
 					client: true,
 					user: true,
 					config: true,
+					items: {
+						columns: {
+							id: false,
+							invoiceId: false,
+							order: false,
+						},
+						orderBy: [invoiceItems.order, invoiceItems.label],
+						with: {
+							itemTax: {
+								with: {
+									tax: {
+										columns: { id: true, name: true, rate: true },
+									},
+								},
+							},
+						},
+					},
 				},
 			}),
 
@@ -75,31 +92,6 @@ export async function fetchInvoice(id: string) {
             )`
 						.mapWith(Number)
 						.as('gross_total'),
-					items: sql`
-    					json_agg(
-    						json_build_object(
-    						'label', ${itemsWithTax.label},
-    						'note', ${itemsWithTax.note},
-    						'quantity', ${itemsWithTax.quantity},
-    						'unit', ${itemsWithTax.unit},
-    						'unitCost', ${itemsWithTax.unitCost},
-    						'netAmount', ${itemsWithTax.netAmount},
-    						'grossAmount', ${itemsWithTax.grossAmount}
-    						) ORDER BY ${itemsWithTax.order}, ${itemsWithTax.label}
-    					)`
-						.mapWith(
-							val =>
-								val as {
-									label: string;
-									note: string;
-									quantity: number;
-									unit: string;
-									unitCost: number;
-									netAmount: number;
-									grossAmount: number;
-								}[],
-						)
-						.as('items'),
 				})
 				.from(itemsWithTax)
 				.where(eq(itemsWithTax.invoiceId, id))
@@ -107,9 +99,18 @@ export async function fetchInvoice(id: string) {
 				.limit(1),
 		]);
 
-		if (!invoice) throw new Error('Invoice not found');
+		if (!res) throw new Error('Invoice not found');
 
-		return { ...invoice, ...items };
+		// Reduce tax join table (in RQBv2 this will be done via 'through')
+		const inv = {
+			...res,
+			items: res.items.map(({ itemTax, ...item }) => {
+				const tax = itemTax.map(itemTax => itemTax.tax);
+				return { ...item, tax };
+			}),
+		};
+
+		return { ...inv, ...sums };
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoice');

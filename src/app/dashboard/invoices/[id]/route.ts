@@ -153,9 +153,9 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 			{
 				table: {
 					headerRows: 1,
-					widths: ['*', 80, 80, 80],
+					widths: ['*', 70, 70, 60, 70],
 					body: [
-						[{ text: 'Description', alignment: 'left' }, 'Quantity', 'Each', 'Amount'],
+						[{ text: 'Description', alignment: 'left' }, 'Quantity', 'Tax', 'Each', 'Amount'],
 						...(invoice.items?.map(item => [
 							{
 								stack: [
@@ -170,6 +170,13 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 								text: `${item.quantity} ${item.unit ?? ''}`.trim(),
 								bold: false,
 								fontFeatures: ['pnum'],
+							},
+							{
+								text:
+									item.tax.length > 0
+										? item.tax.map(tax => `${tax.name}(${tax.rate * 100}%)`).join(' ')
+										: '–',
+								bold: false,
 							},
 							{
 								text: formatCurrency(item.unitCost, invoice.config.currency, invoice.config.locale),
