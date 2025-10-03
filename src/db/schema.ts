@@ -108,7 +108,7 @@ export const itemTaxes = pgTable(
 	{
 		itemId: uuid('item_id')
 			.notNull()
-			.references(() => invoiceItems.id),
+			.references(() => invoiceItems.id, { onDelete: 'cascade' }),
 		taxId: uuid('tax_id')
 			.notNull()
 			.references(() => taxes.id),
