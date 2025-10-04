@@ -185,6 +185,7 @@ export const config = pgTable('config', {
 	timezone: text().notNull(),
 	locale: text().notNull().default('en-AU'),
 	currency: varchar('currency', { length: 3 }).notNull().default('AUD'),
+	taxRegistration: boolean().notNull().default(false),
 });
 
 // Auth.js Data

@@ -169,6 +169,13 @@
 			"when": 1759486067557,
 			"tag": "0023_free_vampiro",
 			"breakpoints": true
+		},
+		{
+			"idx": 24,
+			"version": "7",
+			"when": 1759548395340,
+			"tag": "0024_tense_gladiator",
+			"breakpoints": true
 		}
 	]
 }
