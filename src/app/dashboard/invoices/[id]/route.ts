@@ -244,15 +244,19 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 										alignment: 'right',
 									},
 								],
-								[
-									{ text: 'Tax incl.', color: colors.accent, marginBottom: spacing(1) },
+								...invoice.tax.map(tax => [
+									{ text: `${tax.name} incl.`, color: colors.accent, marginBottom: spacing(1) },
 									{
-										text: '$00.00',
+										text: formatCurrency(
+											tax.contribution,
+											invoice.config.currency,
+											invoice.config.locale,
+										),
 										alignment: 'right',
 										color: colors.accent,
 										marginBottom: spacing(1),
 									},
-								],
+								]),
 								[
 									{ text: 'Total', bold: true },
 									{

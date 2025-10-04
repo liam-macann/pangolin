@@ -3,7 +3,15 @@
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { db, type Transaction } from '@/db';
-import { clients, config, invoiceItems, invoices, itemsWithTax } from '@/db/schema';
+import {
+	clients,
+	config,
+	invoiceItems,
+	invoices,
+	itemsWithTax,
+	itemTaxes,
+	taxes,
+} from '@/db/schema';
 /**
  * Join client details with invoice records for authenticated user
  * @returns `Promise<InvoiceWithClient[]>` */
@@ -49,7 +57,8 @@ export async function fetchInvoice(id: string) {
 	}
 
 	try {
-		const [res, [sums]] = await Promise.all([
+		// This probably ought to be subqueries
+		const [res, [sums], tax] = await Promise.all([
 			db.query.invoices.findFirst({
 				where: and(eq(invoices.id, id), eq(invoices.userId, session.user.id)),
 				with: {
@@ -97,6 +106,18 @@ export async function fetchInvoice(id: string) {
 				.where(eq(itemsWithTax.invoiceId, id))
 				.groupBy(itemsWithTax.invoiceId)
 				.limit(1),
+
+			db
+				.select({
+					name: taxes.name,
+					/** The total sum this tax has contributed to the invoice */
+					contribution: sql<number>`SUM(${invoiceItems.netAmount} * ${taxes.rate})`.mapWith(Number),
+				})
+				.from(invoiceItems)
+				.innerJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
+				.innerJoin(taxes, eq(itemTaxes.taxId, taxes.id))
+				.where(eq(invoiceItems.invoiceId, id))
+				.groupBy(invoiceItems.invoiceId, taxes.name),
 		]);
 
 		if (!res) throw new Error('Invoice not found');
@@ -110,7 +131,7 @@ export async function fetchInvoice(id: string) {
 			}),
 		};
 
-		return { ...inv, ...sums };
+		return { ...inv, ...sums, tax };
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoice');
