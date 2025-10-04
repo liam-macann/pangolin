@@ -1,0 +1,1 @@
+ALTER TABLE "tax" ADD COLUMN "order" integer;

@@ -128,6 +128,7 @@ export const taxes = pgTable(
 		rate: numeric({ precision: 5, scale: 3, mode: 'number' }).notNull(),
 		/** True deletion is disallowed. Can be restored on upsert to reduce redundancy. */
 		deleted: boolean().notNull().default(false),
+		order: integer(),
 	},
 	t => [
 		// Ensure that a user cannot define duplicate taxes (restore deleted records on upsert)
