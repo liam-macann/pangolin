@@ -1,6 +1,6 @@
 'use server';
 
-import { and, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { db, type Transaction } from '@/db';
 import {
@@ -110,14 +110,23 @@ export async function fetchInvoice(id: string) {
 			db
 				.select({
 					name: taxes.name,
-					/** The total sum this tax has contributed to the invoice */
-					contribution: sql<number>`SUM(${invoiceItems.netAmount} * ${taxes.rate})`.mapWith(Number),
+					rate: taxes.rate,
+					contribution:
+						sql`COALESCE(SUM(${invoiceItems.netAmount} * ${taxes.rate} * ${config.taxRegistration}::INT), 0)`.mapWith(
+							Number,
+						),
 				})
-				.from(invoiceItems)
-				.innerJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
-				.innerJoin(taxes, eq(itemTaxes.taxId, taxes.id))
-				.where(eq(invoiceItems.invoiceId, id))
-				.groupBy(invoiceItems.invoiceId, taxes.name),
+				.from(taxes)
+				.leftJoin(itemTaxes, eq(itemTaxes.taxId, taxes.id))
+				.leftJoin(
+					invoiceItems,
+					and(eq(itemTaxes.itemId, invoiceItems.id), eq(invoiceItems.invoiceId, id)),
+				)
+				.leftJoin(invoices, eq(invoiceItems.invoiceId, invoices.id))
+				.leftJoin(config, eq(invoices.config, config.id))
+				.where(eq(taxes.userId, session.user.id))
+				.groupBy(taxes.id, taxes.name, taxes.rate, config.id)
+				.orderBy(asc(taxes.order), desc(taxes.rate)),
 		]);
 
 		if (!res) throw new Error('Invoice not found');

@@ -3,7 +3,7 @@ import path from 'path';
 import PdfPrinter from 'pdfmake';
 import { fetchInvoice } from '@/lib/data';
 import { BottomLayout, CenteredLayout } from '@/lib/pdf-verticalalign';
-import { formatCurrency, formatDateToLocal } from '@/lib/utils';
+import { formatCurrency, formatDateToLocal, formatNumber } from '@/lib/utils';
 
 const colors = {
 	black: '#000000',
@@ -27,7 +27,7 @@ const fontSize = {
 const px = (v: number) => (v / 4) * 3;
 const spacing = (i: number) => px(4 * i);
 
-export async function GET(request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request, { params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 	const invoice = await fetchInvoice(id);
 
@@ -51,7 +51,7 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 		spacing(28),
 	];
 
-	const reference = `Invoice INV-${invoice.index.toString().padStart(3, '0')}`;
+	const reference = `${invoice.config.taxRegistration ? 'Tax ' : ''}Invoice INV-${invoice.index.toString().padStart(3, '0')}`;
 
 	const pdfDoc = printer.createPdfKitDocument({
 		version: '1.5',
@@ -162,9 +162,15 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 			{
 				table: {
 					headerRows: 1,
-					widths: ['*', 70, 70, 60, 70],
+					widths: ['*', 70, ...(invoice.config.taxRegistration ? [70] : []), 60, 70],
 					body: [
-						[{ text: 'Description', alignment: 'left' }, 'Quantity', 'Tax', 'Each', 'Amount'],
+						[
+							{ text: 'Description', alignment: 'left' },
+							'Quantity',
+							...(invoice.config.taxRegistration ? ['Tax'] : []),
+							'Each',
+							'Amount',
+						],
 						...(invoice.items?.map(item => [
 							{
 								stack: [
@@ -176,17 +182,21 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 								margin: [0, spacing(2)],
 							},
 							{
-								text: `${item.quantity} ${item.unit ?? ''}`.trim(),
+								text: `${formatNumber(item.quantity, invoice.config.locale)} ${item.unit ?? ''}`.trim(),
 								bold: false,
 								fontFeatures: ['pnum'],
 							},
-							{
-								text:
-									item.tax.length > 0
-										? item.tax.map(tax => `${tax.name}(${tax.rate * 100}%)`).join(' ')
-										: '–',
-								bold: false,
-							},
+							...(invoice.config.taxRegistration
+								? [
+										{
+											text:
+												item.tax.length > 0
+													? item.tax.map(tax => `${tax.name}(${tax.rate * 100}%)`).join(' ')
+													: '–',
+											bold: false,
+										},
+									]
+								: []),
 							{
 								text: formatCurrency(item.unitCost, invoice.config.currency, invoice.config.locale),
 								bold: false,
@@ -223,7 +233,9 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 				columnGap: spacing(2),
 				columns: [
 					{
-						text: 'Tax not applicable',
+						stack: invoice.config.taxRegistration
+							? ['']
+							: [...(invoice.tax.map(t => `${t.name} not applicable`) || 'Tax not applicable')],
 						color: colors.accent,
 						fontSize: fontSize.base,
 						marginLeft: spacing(2),
@@ -244,8 +256,12 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 										alignment: 'right',
 									},
 								],
-								...invoice.tax.map(tax => [
-									{ text: `${tax.name} incl.`, color: colors.accent, marginBottom: spacing(1) },
+								...invoice.tax.map((tax, i) => [
+									{
+										text: `${tax.name} incl.`,
+										color: colors.accent,
+										marginBottom: i === invoice.tax.length - 1 ? spacing(1) : 0,
+									},
 									{
 										text: formatCurrency(
 											tax.contribution,
@@ -254,7 +270,7 @@ export async function GET(request, { params }: { params: Promise<{ id: string }>
 										),
 										alignment: 'right',
 										color: colors.accent,
-										marginBottom: spacing(1),
+										marginBottom: i === invoice.tax.length - 1 ? spacing(1) : 0,
 									},
 								]),
 								[

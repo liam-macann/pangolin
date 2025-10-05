@@ -136,21 +136,6 @@ export const taxes = pgTable(
 	],
 );
 
-export const itemsWithTax = pgView('items_with_tax').as(qb => {
-	return qb
-		.select({
-			...getTableColumns(invoiceItems),
-			grossAmount:
-				sql<number>`((1 + COALESCE(${sum(taxes.rate)}, 0)) * ${invoiceItems.netAmount})::NUMERIC(15, 4)`.as(
-					'gross_amount',
-				),
-		})
-		.from(invoiceItems)
-		.leftJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
-		.leftJoin(taxes, eq(itemTaxes.taxId, taxes.id))
-		.groupBy(invoiceItems.id);
-});
-
 export const invoiceCount = pgTable('invoice_count', {
 	userId: uuid('user_id')
 		.primaryKey()
@@ -187,6 +172,24 @@ export const config = pgTable('config', {
 	locale: text().notNull().default('en-AU'),
 	currency: varchar('currency', { length: 3 }).notNull().default('AUD'),
 	taxRegistration: boolean('tax_registration').notNull().default(false),
+});
+
+export const itemsWithTax = pgView('items_with_tax').as(qb => {
+	return qb
+		.select({
+			...getTableColumns(invoiceItems),
+			taxRegistration: config.taxRegistration,
+			grossAmount:
+				sql`((1 + COALESCE(${sum(taxes.rate)} * ${config.taxRegistration}::INT, 0)) * ${invoiceItems.netAmount})::NUMERIC(15, 4)`
+					.mapWith(Number)
+					.as('gross_amount'),
+		})
+		.from(invoiceItems)
+		.leftJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
+		.leftJoin(taxes, eq(itemTaxes.taxId, taxes.id))
+		.leftJoin(invoices, eq(invoiceItems.invoiceId, invoices.id))
+		.leftJoin(config, eq(invoices.config, config.id))
+		.groupBy(invoiceItems.id, config.id);
 });
 
 // Auth.js Data

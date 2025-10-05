@@ -5,6 +5,12 @@ export const formatCurrency = (amount: number, currency: string, locale: string)
 	}).format(amount);
 };
 
+export const formatNumber = (amount: number, locale: string) => {
+	return new Intl.NumberFormat(locale, {
+		style: 'decimal',
+	}).format(amount);
+};
+
 export const formatDateToLocal = (
 	date: string | Date,
 	time: boolean = false,
