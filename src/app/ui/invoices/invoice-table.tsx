@@ -14,7 +14,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
-import { formatCurrency, formatDateToLocal } from '../../lib/utils';
 import { UpdateInvoiceDialog } from './create-form';
 
 export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
@@ -22,7 +21,7 @@ export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
 		accessorKey: 'yearIndex',
 		header: 'Reference',
 		cell: ({ row }) => {
-			const issueYear: number = row.getValue('issueYear');
+			const issueYear: number = row.original.issueYear;
 			const index: number = row.getValue('yearIndex');
 			return (
 				<div className='font-medium'>
@@ -33,10 +32,6 @@ export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
 	},
 	{
 		accessorKey: 'clientName',
-		header: 'Name',
-	},
-	{
-		accessorKey: 'issueYear',
 		header: 'Name',
 	},
 	{
@@ -58,17 +53,17 @@ export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
 		},
 	},
 	{
-		accessorKey: 'date',
+		accessorKey: 'issuedAt',
 		header: 'Date',
-		cell: ({ row }) => formatDateToLocal(row.getValue('date')),
+		cell: ({ row }) => row.original.formatted.issuedAt,
 	},
 	{
-		accessorKey: 'amount',
+		accessorKey: 'grossTotal',
 		header: () => <div className='text-right'>Amount</div>,
 		cell: ({ row }) => {
 			return (
 				<div className='text-right font-medium tabular-nums'>
-					{formatCurrency(row.getValue('amount'))}
+					{row.original.formatted.grossTotal}
 				</div>
 			);
 		},
@@ -80,10 +75,15 @@ export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
 			const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
 
 			return (
-				<div className='-mr-2 text-right'>
+				<div className='-mr-2 flex justify-end gap-1'>
+					<Button size='sm' asChild>
+						<a href={`/dashboard/invoices/${invoice.id}`}>
+							View<span>↗</span>
+						</a>
+					</Button>
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<Button variant='ghost' size='icon' className='ml-auto size-8 p-0'>
+							<Button variant='ghost' size='icon' className='size-8 p-0'>
 								<span className='sr-only'>Open menu</span>
 								<DotsThreeIcon className='size-4' />
 							</Button>

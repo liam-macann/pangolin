@@ -1,12 +1,12 @@
 import { PlusIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { fetchClient, fetchInvoices } from '@/src/app/lib/data';
+import { fetchClient, fetchInvoices, getUserConfig } from '@/lib/data';
 import { CreateInvoiceDialog } from '@/src/app/ui/invoices/create-form';
+import InvoicesTable, { columns } from '@/src/app/ui/invoices/invoice-table';
 import Search from '@/src/app/ui/search';
-import { DataTable } from '@/src/components/ui/data-table';
 import { Button } from '@/ui/button';
-import InvoicesTable, { columns } from '../../ui/invoices/invoice-table';
+import { DataTable } from '@/ui/data-table';
 
 export const metadata: Metadata = {
 	title: 'Invoices',
@@ -19,6 +19,7 @@ export default async function Page(_props: {
 	}>;
 }) {
 	const clients = await fetchClient();
+	const config = await getUserConfig();
 
 	return (
 		<div className='w-full'>

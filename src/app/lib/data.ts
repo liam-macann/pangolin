@@ -1,6 +1,6 @@
 'use server';
 
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, sql, sum } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { db, type Transaction } from '@/db';
 import {
@@ -12,6 +12,7 @@ import {
 	itemTaxes,
 	taxes,
 } from '@/db/schema';
+import { formatCurrency, formatDateToLocal } from '@/lib/utils';
 /**
  * Join client details with invoice records for authenticated user
  * @returns `Promise<InvoiceWithClient[]>` */
@@ -22,23 +23,51 @@ export async function fetchInvoices() {
 	}
 
 	try {
-		const result = await db
-			.select({
-				id: invoices.id,
-				status: invoices.status,
-				date: invoices.createdAt,
-				index: invoices.index,
-				yearIndex: invoices.yearIndex,
-				clientId: invoices.clientId,
-				clientName: clients.name,
-				clientEmail: clients.email,
-			})
-			.from(invoices)
-			.where(eq(invoices.userId, session.user.id))
-			.innerJoin(clients, eq(invoices.clientId, clients.id))
-			.orderBy(desc(invoices.createdAt));
+		const [c, result] = await Promise.all([
+			getUserConfig(),
+			db
+				.select({
+					id: invoices.id,
+					status: invoices.status,
+					createdAt: invoices.createdAt,
+					index: invoices.index,
+					yearIndex: invoices.yearIndex,
+					issuedAt: invoices.issuedAt,
+					issueYear: sql`EXTRACT(YEAR FROM ${invoices.issuedAt})`.mapWith(Number),
+					clientId: invoices.clientId,
+					clientName: clients.name,
+					clientEmail: clients.email,
+					currency: config.currency,
+					grossTotal: sql`COALESCE(SUM(${itemsWithTax.grossAmount}), 0)`.mapWith(Number),
+				})
+				.from(invoices)
+				.where(eq(invoices.userId, session.user.id))
+				.innerJoin(clients, eq(invoices.clientId, clients.id))
+				.innerJoin(config, eq(invoices.config, config.id))
+				.innerJoin(itemsWithTax, eq(invoices.id, itemsWithTax.invoiceId))
+				.groupBy(
+					invoices.id,
+					invoices.status,
+					invoices.createdAt,
+					invoices.index,
+					invoices.yearIndex,
+					invoices.issuedAt,
+					invoices.clientId,
+					clients.name,
+					clients.email,
+					config.currency,
+				)
+				.orderBy(desc(invoices.createdAt)),
+		]);
 
-		return result;
+		return result.map(res => ({
+			...res,
+			/** Values formatted according to current locale */
+			formatted: {
+				grossTotal: formatCurrency(res.grossTotal, res.currency, c.locale),
+				issuedAt: formatDateToLocal(res.issuedAt, false, c.locale),
+			},
+		}));
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoices');
