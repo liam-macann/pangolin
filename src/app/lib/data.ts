@@ -1,6 +1,6 @@
 'use server';
 
-import { and, asc, desc, eq, sql, sum } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { db, type Transaction } from '@/db';
 import {
@@ -199,24 +199,15 @@ export async function getUserConfig(
 	if (!session?.user?.id) throw new Error('User is not authenticated');
 
 	try {
-		const [settings] = await q
-			.select()
-			.from(config)
-			.where(eq(config.userId, session.user.id))
-			.orderBy(desc(config.validFrom))
-			.limit(1);
+		const settings = await q.query.config.findFirst({
+			where: and(eq(config.userId, session.user.id), isNull(config.validTo)),
+			with: {
+				user: { with: { tax: true } },
+			},
+			orderBy: [asc(taxes.id), desc(config.validFrom)],
+		});
 
 		if (!settings) {
-			// If user has no config, create one. Will error if user does not exist.
-			return q
-				.insert(config)
-				.values({
-					userId: session.user.id,
-					timezone: 'Australia/Sydney',
-				})
-				.returning()
-				.then(v => v[0]);
-		} else if (settings.validTo != null) {
 			// If user has no current config
 			throw new Error('User has no current valid config.');
 		}

@@ -36,3 +36,22 @@ export const itemTaxRelations = relations(itemTaxes, ({ one }) => ({
 		references: [taxes.id],
 	}),
 }));
+
+export const taxRelations = relations(taxes, ({ one }) => ({
+	user: one(users, {
+		fields: [taxes.userId],
+		references: [users.id],
+	}),
+}));
+
+export const configRelations = relations(config, ({ one }) => ({
+	user: one(users, {
+		fields: [config.userId],
+		references: [users.id],
+	}),
+}));
+
+export const userRelations = relations(users, ({ many }) => ({
+	config: many(config),
+	tax: many(taxes),
+}));
