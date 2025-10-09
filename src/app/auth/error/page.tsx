@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { z } from 'zod';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/ui/button';
 
 type ErrorDetails = {
 	heading?: React.ReactNode;

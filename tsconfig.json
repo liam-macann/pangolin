@@ -16,12 +16,12 @@
 		"plugins": [{ "name": "next" }],
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["./*"],
 			"@/lib/*": ["src/app/lib/*"],
 			"@/ui/*": ["src/components/ui/*"],
-			"@/db/*": ["src/db/*"],
 			"@/db": ["src/db"],
-			"@/auth": ["auth.ts"]
+			"@/db/*": ["src/db/*"],
+			"@/auth": ["auth.ts"],
+			"@/*": ["./*"]
 		}
 	},
 	"exclude": ["node_modules", ".next", "dist", "out"],
