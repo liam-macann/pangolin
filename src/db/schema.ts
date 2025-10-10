@@ -125,7 +125,7 @@ export const taxes = pgTable(
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
 		name: varchar({ length: 10 }).notNull(),
-		rate: numeric({ precision: 5, scale: 3, mode: 'number' }).notNull(),
+		rate: numeric({ precision: 5, scale: 4, mode: 'number' }).notNull(),
 		/** True deletion is disallowed. Can be restored on upsert to reduce redundancy. */
 		deleted: boolean().notNull().default(false),
 		order: integer(),

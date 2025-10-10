@@ -38,6 +38,7 @@ export function cn(...inputs: ClassValue[]) {
 // biome-ignore lint/suspicious/noExplicitAny: Generic
 export type ElementType<T extends Iterable<any>> = T extends Iterable<infer E> ? E : never;
 
+/** Improve readability of object types */
 export type Prettify<T> = {
 	[K in keyof T]: T[K];
 } & {};

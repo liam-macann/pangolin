@@ -1,7 +1,7 @@
 import { PlusIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { fetchClient, fetchInvoices, getUserConfig } from '@/lib/data';
+import { fetchClient, fetchInvoices } from '@/lib/data';
 import { CreateInvoiceDialog } from '@/src/app/ui/invoices/create-form';
 import InvoicesTable, { columns } from '@/src/app/ui/invoices/invoice-table';
 import Search from '@/src/app/ui/search';
@@ -19,7 +19,6 @@ export default async function Page(_props: {
 	}>;
 }) {
 	const clients = await fetchClient();
-	const config = await getUserConfig();
 
 	return (
 		<div className='w-full'>
