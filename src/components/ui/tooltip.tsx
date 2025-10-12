@@ -72,4 +72,22 @@ const Arrow = (props: React.JSX.IntrinsicAttributes & React.SVGProps<SVGSVGEleme
 	</svg>
 );
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export { Tooltip, TextTooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+
+export default function TextTooltip({
+	children,
+	content,
+	disabled = false,
+	...props
+}: {
+	children: React.ReactNode;
+	content: React.ReactNode;
+	disabled?: boolean;
+} & React.ComponentProps<typeof Tooltip>) {
+	return (
+		<Tooltip open={disabled ? false : undefined} {...props}>
+			<TooltipTrigger asChild>{children}</TooltipTrigger>
+			<TooltipContent>{content}</TooltipContent>
+		</Tooltip>
+	);
+}
