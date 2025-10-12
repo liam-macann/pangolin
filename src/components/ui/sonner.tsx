@@ -1,13 +1,18 @@
 'use client';
 
+import { CheckCircleIcon, InfoIcon, WarningCircleIcon, WarningIcon } from '@phosphor-icons/react';
 import { useTheme } from 'next-themes';
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
+
+import { Spinner } from '@/ui/spinner';
 
 const Toaster = ({ ...props }: ToasterProps) => {
 	const { theme = 'system' } = useTheme();
 
 	return (
 		<Sonner
+			toastOptions={{ className: 'font-sans !rounded-md' }}
+			position='bottom-center'
 			theme={theme as ToasterProps['theme']}
 			className='toaster group'
 			style={
@@ -17,6 +22,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
 					'--normal-border': 'var(--border)',
 				} as React.CSSProperties
 			}
+			gap={12}
+			icons={{
+				success: <CheckCircleIcon className='size-5' weight='fill' />,
+				info: <InfoIcon className='size-5' weight='fill' />,
+				warning: <WarningIcon className='size-5' weight='fill' />,
+				error: <WarningCircleIcon className='size-5' weight='fill' />,
+				loading: <Spinner className='size-5 scale-90' />,
+			}}
 			{...props}
 		/>
 	);
