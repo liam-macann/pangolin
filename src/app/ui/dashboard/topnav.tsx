@@ -37,13 +37,11 @@ function NavLinks() {
 						className={clsx(
 							'relative focus:z-10',
 							pathname === link.href
-								? 'after:-bottom-2.5 after:absolute after:left-0 after:block after:h-[2px] after:w-full after:translate-y-full after:bg-accent-foreground'
+								? 'after:-bottom-2.5 after:pointer-events-none after:absolute after:left-0 after:block after:h-[2px] after:w-full after:translate-y-full after:bg-accent-foreground'
 								: 'text-muted-foreground',
 						)}
 					>
-						<Link href={link.href}>
-							<p className=''>{link.name}</p>
-						</Link>
+						<Link href={link.href}>{link.name}</Link>
 					</Button>
 				);
 			})}
