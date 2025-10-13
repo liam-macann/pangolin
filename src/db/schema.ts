@@ -169,13 +169,13 @@ export const config = pgTable('config', {
 	validTo: timestamp('valid_to', { withTimezone: true, mode: 'date' }),
 	// The time zone of record, for invoice dates and yearly sequencing. This should eventually reference a table of time zones.
 	timezone: text().notNull(),
-	locale: text().notNull().default('en-AU'),
-	currency: varchar('currency', { length: 3 }).notNull().default('AUD'),
-	taxRegistration: boolean('tax_registration').notNull().default(false),
+	locale: text().notNull(),
+	currency: varchar('currency', { length: 3 }).notNull(),
+	taxRegistration: boolean('tax_registration').notNull(),
 });
 
-export const itemsWithTax = pgView('items_with_tax').as(qb => {
-	return qb
+export const itemsWithTax = pgView('items_with_tax').as(qb =>
+	qb
 		.select({
 			...getTableColumns(invoiceItems),
 			taxRegistration: config.taxRegistration,
@@ -189,8 +189,8 @@ export const itemsWithTax = pgView('items_with_tax').as(qb => {
 		.leftJoin(taxes, eq(itemTaxes.taxId, taxes.id))
 		.leftJoin(invoices, eq(invoiceItems.invoiceId, invoices.id))
 		.leftJoin(config, eq(invoices.config, config.id))
-		.groupBy(invoiceItems.id, config.id);
-});
+		.groupBy(invoiceItems.id, config.id),
+);
 
 // Auth.js Data
 

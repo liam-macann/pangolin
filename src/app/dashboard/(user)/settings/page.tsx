@@ -14,7 +14,7 @@ export default async function Page() {
 			</h1>
 
 			<div className='gap-6 md:flex'>
-				<nav className='-ml-4 flex w-64 flex-col items-start gap-1 max-md:hidden'>
+				<nav className='-ml-3 flex w-64 flex-col items-start gap-1 max-md:hidden'>
 					<Button size='sm' className='text-foreground text-sm' variant='ghost' asChild>
 						<a href='#top'>General</a>
 					</Button>

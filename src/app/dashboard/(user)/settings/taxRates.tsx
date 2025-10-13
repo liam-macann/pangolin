@@ -3,13 +3,17 @@ import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
 import { RestrictToElement } from '@dnd-kit/dom/modifiers';
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable, useSortable } from '@dnd-kit/react/sortable';
-
 import { DotsSixIcon, DotsThreeIcon, InfoIcon, TrashIcon } from '@phosphor-icons/react';
-
 import { useRef } from 'react';
-import { type Control, Controller, type UseFormReturn, useFieldArray } from 'react-hook-form';
-
+import {
+	type Control,
+	Controller,
+	type FieldValues,
+	type FormState,
+	useFieldArray,
+} from 'react-hook-form';
 import { v4 as uuid } from 'uuid';
+import { z } from 'zod';
 import type { taxes } from '@/db/schema';
 import { cn, type Prettify } from '@/lib/utils';
 import { Button } from '@/ui/button';
@@ -32,26 +36,77 @@ import {
 import { Input } from '@/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip';
 
-type RateInput = Prettify<
-	Omit<typeof taxes.$inferSelect, 'rate' | 'userId' | 'order'> & {
+export const taxArraySchema = z.array(
+	z.object({
+		id: z.uuid(),
+		name: z
+			.string()
+			.min(1, 'Please enter a tax label')
+			.min(2, 'Label must be at least 2 characters'),
+		rate: z
+			.any()
+			// 1. Sanitize the string based on the position of separators
+			.transform(val => {
+				if (typeof val === 'string') {
+					// We want to support both comma and period delimited decimals.
+					// eg. "20,5" → "20.5"
+					//
+					// Both separators may be present in a numeric string, as the inverse is used
+					// for thousands separation (although beyond max for this schema)
+					// eg. "1.200,5" || "1,200.5" → "1200.5"
+					//
+
+					// Use the last separator to infer the formatting.
+					const commaDecimal = val.includes(',') && val.lastIndexOf(',') > val.lastIndexOf('.');
+
+					if (commaDecimal) {
+						// Remove all periods (thousand separators) and replace the decimal comma with a period
+						return val.replace(/\./g, '').replace(',', '.');
+					} else {
+						// Otherwise, for period decimals, strip all commas (thousand separators)
+						return val.replace(/,/g, '');
+					}
+				} else return val;
+			})
+			.transform((val, ctx) => {
+				if (val === '') {
+					ctx.issues.push({ code: 'custom', message: 'Please enter a rate', input: val });
+					return z.NEVER;
+				}
+				return Number(val);
+			})
+			.pipe(
+				z
+					.number('Tax rate must be a number')
+					.multipleOf(0.01, 'You may only define up to two decimal places')
+					.min(0, 'Negative taxes are not allowed')
+					.max(200, 'Tax may not exceed 200%'),
+			),
+	}),
+);
+
+type TaxField = Prettify<
+	Pick<typeof taxes.$inferSelect, 'name' | 'id'> & {
 		/** Widened type to allow blank default value */
 		rate: number | '';
-		/** Flags whether the tax rate was pulled from the database. Used to reconcile deletions. */
-		committed: boolean;
 	}
 >;
 
-type FormValues = {
-	taxes: RateInput[];
-};
+interface FormValues extends FieldValues {
+	taxes: TaxField[];
+}
 
-export function TaxRateField({
+export function TaxRateField<T extends FormValues>({
 	className,
-	form,
+	control: _control,
 }: {
 	className?: string;
-	form: UseFormReturn<FormValues>;
+	control: Control<T>;
 }) {
+	// Necessary, as RHF can't extract typings from the generic
+	const control = _control as unknown as Control<FormValues>;
+	const state = control.getFieldState('taxes');
+
 	return (
 		<FieldSet className={className}>
 			<FieldContent className='ml-8'>
@@ -69,30 +124,26 @@ export function TaxRateField({
 				<FieldDescription>
 					When registered for tax, each rate can be applied on a per-item basis.
 				</FieldDescription>
-				<pre>{JSON.stringify(form.formState.errors.taxes?.root, null, 2)}</pre>
-
-				{form.formState.errors.taxes?.root && (
-					<FieldError className='text-xs' errors={[form.formState.errors.taxes?.root]} />
-				)}
+				{state.error?.root && <FieldError errors={[state.error?.root]} />}
 			</FieldContent>
-			<TaxRateInput className='mt-2' form={form} />
+			<TaxRateInput className='mt-2' control={control} />
 		</FieldSet>
 	);
 }
 
 export function TaxRateInput({
 	className,
-	form: { control, getValues },
+	control,
 }: {
 	className?: string;
-	form: UseFormReturn<FormValues>;
+	control: Control<FormValues>;
 }) {
-	const { fields, append, remove, move, update } = useFieldArray({ control, name: 'taxes' });
-	const addTax = () => append({ id: uuid(), name: '', rate: '', deleted: false, committed: false });
+	const { fields, append, remove, move } = useFieldArray({ control, name: 'taxes' });
+	const addTax = () => append({ id: uuid(), name: '', rate: '' });
 
 	return (
 		<FieldGroup className={cn('gap-2', className)}>
-			{fields.reduce((acc, field) => (acc ? acc : !field.deleted), false) ? (
+			{fields.length > 0 ? (
 				<>
 					<div className='grid grid-cols-[1.25rem_1fr_1fr_2.25rem] gap-3'>
 						<div className='col-start-2'>
@@ -134,17 +185,9 @@ export function TaxRateInput({
 									key={tax.id}
 									tax={tax}
 									index={i}
-									disabled={fields.reduce((acc, field) => (field.deleted ? acc : acc + 1), 0) < 2}
+									disabled={fields.length < 2}
 								>
-									<DropdownMenuItem
-										variant='destructive'
-										onClick={() =>
-											tax.committed
-												? // RHF reduces rerenders. Update function may receive stale data without function call.
-													update(i, { ...getValues(`taxes.${i}`), deleted: true })
-												: remove(i)
-										}
-									>
+									<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
 										<TrashIcon />
 										Delete
 									</DropdownMenuItem>
@@ -167,7 +210,7 @@ export function TaxRateInput({
 }
 
 interface SortableProps {
-	tax: RateInput;
+	tax: TaxField;
 	index: number;
 	control: Control<FormValues>;
 	children: React.ReactNode;
@@ -187,8 +230,6 @@ function Sortable({ tax, index, control, children, disabled = false }: SortableP
 			RestrictToElement.configure({ element: ref.current?.parentElement }),
 		],
 	});
-
-	if (tax.deleted) return;
 
 	return (
 		<li
@@ -215,7 +256,6 @@ function Sortable({ tax, index, control, children, disabled = false }: SortableP
 			</Button>
 			<Controller
 				control={control}
-				disabled={tax.deleted}
 				name={`taxes.${index}.name`}
 				render={({ field, fieldState }) => (
 					<Field className='gap-0.5' data-invalid={fieldState.invalid}>
@@ -232,14 +272,15 @@ function Sortable({ tax, index, control, children, disabled = false }: SortableP
 			<Controller
 				control={control}
 				name={`taxes.${index}.rate`}
-				disabled={tax.deleted}
 				render={({ field, fieldState }) => (
 					<Field className='gap-0.5' data-invalid={fieldState.invalid}>
 						<Input
 							suffix='%'
 							className={cn(isDragging && 'border-ring/70', 'transition-colors')}
-							type='number'
+							type='text'
+							inputMode='decimal'
 							placeholder='2.5'
+							step='any'
 							onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
 							{...field}
 						/>

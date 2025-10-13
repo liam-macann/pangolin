@@ -3,7 +3,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { InfoIcon } from '@phosphor-icons/react/ssr';
 import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { z } from 'zod';
+import { updateUserConfig } from '@/lib/actions';
 import type { getUserConfig } from '@/lib/data';
 import { Button } from '@/ui/button';
 import { Checkbox } from '@/ui/checkbox';
@@ -17,28 +19,10 @@ import {
 	FieldLabel,
 } from '@/ui/field';
 import { TextTooltip, Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip';
-import { TaxRateField } from './taxRates';
+import { TaxRateField, taxArraySchema } from './taxRates';
 
 const formSchema = z.object({
-	taxes: z.array(
-		z.object({
-			name: z.string().min(2, { message: 'Label must be at least 2 characters' }),
-			rate: z.preprocess(
-				(val, ctx) => {
-					if (val === '') {
-						ctx.issues.push({ code: 'custom', message: 'Please enter a rate', input: val });
-						return z.NEVER;
-					}
-					return val;
-				},
-				z.coerce
-					.number('Tax rate must be a number')
-					.multipleOf(0.01, 'You may only define up to two decimal places')
-					.min(0, 'Negative taxes are not allowed')
-					.max(200, 'Tax may not exceed 200%'),
-			),
-		}),
-	),
+	taxes: taxArraySchema,
 	timezone: z.string(),
 	locale: z.string(),
 	currency: z.string(),
@@ -50,25 +34,54 @@ export default function ConfigForm({
 }: {
 	config: Awaited<ReturnType<typeof getUserConfig>>;
 }) {
-	const form = useForm<z.input<typeof formSchema>>({
+	const {
+		formState: { isDirty, isSubmitting },
+		handleSubmit,
+		control,
+		reset,
+	} = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			taxRegistration: config.taxRegistration,
-			taxes: config.user.tax.map(t => ({ ...t, rate: String(t.rate * 100), committed: true })),
+			taxes: config.user.tax.map(t => ({ ...t, rate: t.rate * 100 })),
 			timezone: config.timezone,
 			locale: config.locale,
 			currency: config.currency,
 		},
 	});
 
-	const {
-		formState: { isDirty },
-		handleSubmit,
-		control,
-	} = form;
-
 	return (
-		<form className='grid gap-12' onSubmit={handleSubmit(val => console.log(val))}>
+		<form
+			className='grid gap-12'
+			onSubmit={handleSubmit(
+				async val => {
+					if (isSubmitting) return;
+					else if (!isDirty) {
+						toast.info('You have not made any changes');
+						return;
+					}
+
+					const { taxes, ...config } = val;
+
+					const floatTaxes = taxes.map(tax => ({
+						...tax,
+						// Convert the whole number percentage back to a decimal
+						rate: Number(tax.rate) / 100,
+					}));
+
+					const promise = updateUserConfig(config, floatTaxes).then(() => reset(val));
+
+					toast.promise(promise, {
+						loading: 'Updating settings…',
+						success: 'Settings updated successfully',
+						error: 'Failed to update configuration',
+					});
+
+					return promise;
+				},
+				() => toast.warning('Please ensure all fields are filled correctly'),
+			)}
+		>
 			<FieldGroup>
 				<h2 className='flex items-baseline gap-3 font-bold text-2xl' id='taxation'>
 					Taxation
@@ -96,7 +109,7 @@ export default function ConfigForm({
 					}}
 				/>
 
-				<TaxRateField form={form} className='mt-4' />
+				<TaxRateField control={control} className='mt-4' />
 			</FieldGroup>
 
 			<FieldGroup>
@@ -174,14 +187,9 @@ export default function ConfigForm({
 							<FieldContent>
 								<FieldLabel htmlFor='name'>
 									Currency
-									<Tooltip>
-										<TooltipTrigger className='rounded-full'>
-											<InfoIcon />
-										</TooltipTrigger>
-										<TooltipContent>
-											If locale does not match, the currency code will be displayed on the invoice.
-										</TooltipContent>
-									</Tooltip>
+									<TextTooltip content='If locale does not match, the currency code will be displayed on the invoice.'>
+										<InfoIcon />
+									</TextTooltip>
 								</FieldLabel>
 								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 							</FieldContent>
@@ -197,7 +205,12 @@ export default function ConfigForm({
 			</FieldGroup>
 			<div className='mt-18 flex gap-2 sm:justify-end'>
 				<TextTooltip content='You have not made changes' disabled={isDirty}>
-					<Button type='submit' className='max-sm:grow' variant='primary' disabled={!isDirty}>
+					<Button
+						type='submit'
+						className='max-sm:grow'
+						variant='primary'
+						disabled={!isDirty || isSubmitting}
+					>
 						Save changes
 					</Button>
 				</TextTooltip>

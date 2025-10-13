@@ -2,17 +2,18 @@
 
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import { auth } from '@/auth';
-import { db, type Transaction } from '@/db';
+import { db } from '@/db';
 import {
 	clients,
-	config,
+	config as configSchema,
 	invoiceItems,
 	invoices,
 	itemsWithTax,
 	itemTaxes,
-	taxes,
+	taxes as taxesSchema,
 } from '@/db/schema';
 import { formatCurrency, formatDateToLocal } from '@/lib/utils';
+
 /**
  * Join client details with invoice records for authenticated user
  * @returns `Promise<InvoiceWithClient[]>` */
@@ -37,13 +38,13 @@ export async function fetchInvoices() {
 					clientId: invoices.clientId,
 					clientName: clients.name,
 					clientEmail: clients.email,
-					currency: config.currency,
+					currency: configSchema.currency,
 					grossTotal: sql`COALESCE(SUM(${itemsWithTax.grossAmount}), 0)`.mapWith(Number),
 				})
 				.from(invoices)
 				.where(eq(invoices.userId, session.user.id))
 				.innerJoin(clients, eq(invoices.clientId, clients.id))
-				.innerJoin(config, eq(invoices.config, config.id))
+				.innerJoin(configSchema, eq(invoices.config, configSchema.id))
 				.innerJoin(itemsWithTax, eq(invoices.id, itemsWithTax.invoiceId))
 				.groupBy(
 					invoices.id,
@@ -55,7 +56,7 @@ export async function fetchInvoices() {
 					invoices.clientId,
 					clients.name,
 					clients.email,
-					config.currency,
+					configSchema.currency,
 				)
 				.orderBy(desc(invoices.createdAt)),
 		]);
@@ -138,24 +139,24 @@ export async function fetchInvoice(id: string) {
 
 			db
 				.select({
-					name: taxes.name,
-					rate: taxes.rate,
+					name: taxesSchema.name,
+					rate: taxesSchema.rate,
 					contribution:
-						sql`COALESCE(SUM(${invoiceItems.netAmount} * ${taxes.rate} * ${config.taxRegistration}::INT), 0)`.mapWith(
+						sql`COALESCE(SUM(${invoiceItems.netAmount} * ${taxesSchema.rate} * ${configSchema.taxRegistration}::INT), 0)`.mapWith(
 							Number,
 						),
 				})
-				.from(taxes)
-				.leftJoin(itemTaxes, eq(itemTaxes.taxId, taxes.id))
+				.from(taxesSchema)
+				.leftJoin(itemTaxes, eq(itemTaxes.taxId, taxesSchema.id))
 				.leftJoin(
 					invoiceItems,
 					and(eq(itemTaxes.itemId, invoiceItems.id), eq(invoiceItems.invoiceId, id)),
 				)
 				.leftJoin(invoices, eq(invoiceItems.invoiceId, invoices.id))
-				.leftJoin(config, eq(invoices.config, config.id))
-				.where(eq(taxes.userId, session.user.id))
-				.groupBy(taxes.id, taxes.name, taxes.rate, config.id)
-				.orderBy(asc(taxes.order), desc(taxes.rate)),
+				.leftJoin(configSchema, eq(invoices.config, configSchema.id))
+				.where(eq(taxesSchema.userId, session.user.id))
+				.groupBy(taxesSchema.id, taxesSchema.name, taxesSchema.rate, configSchema.id)
+				.orderBy(asc(taxesSchema.order), desc(taxesSchema.rate)),
 		]);
 
 		if (!res) throw new Error('Invoice not found');
@@ -189,22 +190,21 @@ export async function fetchClient() {
 	}
 }
 
-export async function getUserConfig(
-	/** Optionally permit calling within a transaction */
-	tx?: Transaction,
-) {
-	const q = tx || db;
-
+export async function getUserConfig() {
 	const session = await auth();
 	if (!session?.user?.id) throw new Error('User is not authenticated');
 
 	try {
-		const settings = await q.query.config.findFirst({
-			where: and(eq(config.userId, session.user.id), isNull(config.validTo)),
+		const settings = await db.query.config.findFirst({
+			where: and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo)),
 			with: {
-				user: { with: { tax: true } },
+				user: {
+					with: {
+						tax: { where: (taxes, { eq }) => eq(taxes.deleted, false) },
+					},
+				},
 			},
-			orderBy: [asc(taxes.id), desc(config.validFrom)],
+			orderBy: [asc(taxesSchema.id), desc(configSchema.validFrom)],
 		});
 
 		if (!settings) {
