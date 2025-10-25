@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { auth, signOut } from '@/auth';
 import SideNav from '@/src/app/ui/dashboard/topnav';
-import Avatar from '@/ui/avatar';
+import Avatar, { AvatarEmpty } from '@/ui/avatar';
 import { Button } from '@/ui/button';
 import {
 	DropdownMenu,
@@ -45,7 +45,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
 async function AccountMenuContent() {
 	const session = await auth();
-	if (!session?.user) return null;
+	if (!session?.user) return <AvatarEmpty />;
 
 	return (
 		<DropdownMenu>

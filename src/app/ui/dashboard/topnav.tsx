@@ -4,29 +4,10 @@ import clsx from 'clsx';
 import Link from 'next/link';
 
 export default function TopNav({ className }: { className?: string }) {
+	const pathname = usePathname();
+
 	return (
 		<nav className={clsx('-mx-3 -my-1.5 flex items-baseline', className)}>
-			<NavLinks />
-		</nav>
-	);
-}
-
-import { usePathname } from 'next/navigation';
-import { Button } from '@/src/components/ui/button';
-
-// Map of links to display in the navigation.
-const links = [
-	{
-		name: 'Invoices',
-		href: '/dashboard/invoices',
-	},
-	{ name: 'Clients', href: '/dashboard/clients' },
-];
-
-function NavLinks() {
-	const pathname = usePathname();
-	return (
-		<>
 			{links.map(link => {
 				return (
 					<Button
@@ -45,6 +26,18 @@ function NavLinks() {
 					</Button>
 				);
 			})}
-		</>
+		</nav>
 	);
 }
+
+import { usePathname } from 'next/navigation';
+import { Button } from '@/src/components/ui/button';
+
+// Map of links to display in the navigation.
+const links = [
+	{
+		name: 'Invoices',
+		href: '/dashboard/invoices',
+	},
+	{ name: 'Clients', href: '/dashboard/clients' },
+];

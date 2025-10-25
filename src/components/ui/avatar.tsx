@@ -1,6 +1,7 @@
+import { UserIcon } from '@phosphor-icons/react/ssr';
 import * as AvatarPrimitive from '@radix-ui/react-avatar';
 import { md5 } from 'hash-wasm';
-import * as React from 'react';
+import type * as React from 'react';
 import { cn } from '@/lib/utils';
 
 function Avatar({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Root>) {
@@ -44,9 +45,7 @@ export default function GeneratedAvatar({
 }: React.ComponentProps<typeof AvatarPrimitive.Root> & { email: string }) {
 	return (
 		<Avatar {...props}>
-			<React.Suspense>
-				<Gravatar email={email} />
-			</React.Suspense>
+			<Gravatar email={email} />
 			<AvatarFallback>
 				<Placeholder
 					className='size-full'
@@ -64,6 +63,16 @@ async function Gravatar({ email }: { email: string }) {
 		<AvatarImage
 			src={`https://seccdn.libravatar.org/avatar/${await md5(email.trim().toLowerCase())}?d=404`}
 		/>
+	);
+}
+
+export function AvatarEmpty({ ...props }: React.ComponentProps<typeof AvatarPrimitive.Root>) {
+	return (
+		<Avatar {...props}>
+			<AvatarFallback>
+				<UserIcon />
+			</AvatarFallback>
+		</Avatar>
 	);
 }
 
