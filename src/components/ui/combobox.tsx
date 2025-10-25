@@ -46,7 +46,7 @@ export function Combobox({
 					variant='outline'
 					role='combobox'
 					aria-expanded={open}
-					className={cn('w-[200px] justify-between enabled:active:scale-100', className)}
+					className={cn('min-w-[200px] justify-between enabled:active:scale-100', className)}
 					disabled={disabled}
 				>
 					{value ? options.find(option => option.value === value)?.label : `${placeholder}…`}
