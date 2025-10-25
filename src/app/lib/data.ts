@@ -1,6 +1,7 @@
 'use server';
 
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import {
@@ -19,9 +20,6 @@ import { formatCurrency, formatDateToLocal } from '@/lib/utils';
  * @returns `Promise<InvoiceWithClient[]>` */
 export async function fetchInvoices() {
 	const session = await auth();
-	if (!session?.user?.id) {
-		throw new Error('User is not authenticated');
-	}
 
 	try {
 		const [c, result] = await Promise.all([
@@ -82,9 +80,6 @@ export type InvoiceWithClient = Awaited<ReturnType<typeof fetchInvoices>>[number
  * @returns `Promise<InvoiceWithClient>` */
 export async function fetchInvoice(id: string) {
 	const session = await auth();
-	if (!session?.user?.id) {
-		throw new Error('User is not authenticated');
-	}
 
 	try {
 		// This probably ought to be subqueries
@@ -180,7 +175,6 @@ export async function fetchInvoice(id: string) {
 /** Fetch all clients for authenticated user */
 export async function fetchClient() {
 	const session = await auth();
-	if (!session?.user?.id) throw new Error('User is not authenticated');
 
 	try {
 		return await db.select().from(clients).where(eq(clients.userId, session.user.id));
@@ -192,7 +186,6 @@ export async function fetchClient() {
 
 export async function getUserConfig() {
 	const session = await auth();
-	if (!session?.user?.id) throw new Error('User is not authenticated');
 
 	try {
 		const settings = await db.query.config.findFirst({

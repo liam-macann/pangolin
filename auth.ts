@@ -1,6 +1,6 @@
 import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import bcrypt from 'bcrypt';
-import NextAuth from 'next-auth';
+import NextAuth, { type Session, type User } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import GitHub from 'next-auth/providers/github';
 import Google from 'next-auth/providers/google';
@@ -36,6 +36,7 @@ declare module 'next-auth' {
 	}
 }
 
+import { redirect } from 'next/navigation';
 import type { Provider } from 'next-auth/providers';
 
 const providers: Provider[] = [
@@ -72,7 +73,12 @@ export const providerMap = providers.map(provider => {
 	}
 });
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const {
+	handlers,
+	auth: _auth,
+	signIn,
+	signOut,
+} = NextAuth({
 	...authConfig,
 	adapter: DrizzleAdapter(db, {
 		usersTable: users,
@@ -90,3 +96,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 	},
 	providers,
 });
+
+export async function auth(): Promise<Session & { user: User }> {
+	return _auth().then(session => {
+		if (!session?.user?.id) redirect('/auth/login');
+
+		// Safe assertion, due to previous check
+		return session as Session & { user: User };
+	});
+}
