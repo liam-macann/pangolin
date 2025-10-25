@@ -10,7 +10,7 @@ function Input({
 	...props
 }: React.ComponentProps<'input'> & { prefix?: React.ReactNode; suffix?: React.ReactNode }) {
 	return (
-		<span className='relative text-base md:text-sm'>
+		<span className={cn('relative text-base md:text-sm', className)}>
 			<input
 				type={type}
 				data-slot='input'
@@ -20,9 +20,8 @@ function Input({
 					'bg-background dark:bg-input/30',
 					'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
 					'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
-					prefix && 'pl-7',
-					suffix && 'pr-7',
-					className,
+					prefix && 'pl-8',
+					suffix && 'pr-8',
 				)}
 				{...props}
 			/>

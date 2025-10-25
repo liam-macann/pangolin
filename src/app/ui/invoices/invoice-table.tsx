@@ -2,6 +2,7 @@
 
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import type { InvoiceWithClient } from '@/lib/data';
 import { cn } from '@/lib/utils';
@@ -116,5 +117,13 @@ export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
 ];
 
 export default function Table({ invoices }: { invoices: InvoiceWithClient[] }) {
-	return <DataTable columns={columns} data={invoices} />;
+	const searchParams = useSearchParams();
+
+	return (
+		<DataTable
+			columns={columns}
+			data={invoices}
+			globalFilter={searchParams.get('query') || undefined}
+		/>
+	);
 }

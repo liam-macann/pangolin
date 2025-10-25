@@ -132,12 +132,11 @@ export function CreateInvoiceDialog({
 												type='number'
 												step={0.01}
 												min={0}
-												className='pl-6'
 												{...field}
 												value={String(field.value)}
+												prefix='$'
 											/>
 										</FormControl>
-										<span className='absolute ml-3 text-base md:text-sm'>$</span>
 									</div>
 									<FormDescription>The invoice total sum.</FormDescription>
 									<FormMessage />

@@ -26,7 +26,7 @@ export default async function Page(_props: {
 				<h1 className={`font-display text-3xl`}>Invoices</h1>
 			</div>
 			<div className='my-4 flex items-center justify-between gap-2 md:mt-8'>
-				<Search placeholder='Search invoices...' />
+				<Search className='grow' placeholder='Search invoices...' />
 
 				<CreateInvoiceDialog clients={clients}>
 					<Button>
