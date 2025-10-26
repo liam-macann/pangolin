@@ -34,15 +34,9 @@ export type State =
 // const increment = (column: AnyColumn, value = 1) => sql`${column} + ${value}`;
 
 export async function createInvoice(
-	data: Prettify<Pick<typeof invoicesSchema.$inferInsert, 'clientId' | 'amount'>>,
+	data: Prettify<Pick<typeof invoicesSchema.$inferInsert, 'clientId'>>,
 ): Promise<State> {
 	const session = await auth();
-	if (!session?.user?.id) {
-		return {
-			success: false,
-			message: 'User is not authenticated',
-		};
-	}
 
 	const inputSchema = createInsertSchema(invoicesSchema).omit({
 		index: true,
@@ -61,13 +55,8 @@ export async function createInvoice(
 	const validated = inputSchema.safeParse(defaults);
 
 	// If form validation fails, return errors early. Otherwise, continue.
-	if (!validated.success) {
-		return {
-			success: false,
-			errors: z.flattenError(validated.error),
-			message: 'Failed to create invoice. Please ensure all fields are valid.',
-		};
-	}
+	if (!validated.success)
+		throw new Error('Failed to create invoice. Please ensure all fields are valid.');
 
 	try {
 		throw new Error('Function not implemented');
@@ -119,10 +108,7 @@ export async function createInvoice(
 		// });
 	} catch (err) {
 		console.error(err);
-		return {
-			message: `Database Error: failed to create invoice`,
-			success: false,
-		};
+		throw new Error(`Database Error: failed to create invoice`);
 	}
 
 	// Revalidate the cache for the invoices page

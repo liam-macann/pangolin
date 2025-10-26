@@ -15,7 +15,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
-import { UpdateInvoiceDialog } from './create-form';
 
 export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
 	{
@@ -73,7 +72,6 @@ export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
 		id: 'actions',
 		cell: function OverflowMenu({ row }) {
 			const invoice = row.original;
-			const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
 
 			return (
 				<div className='-mr-2 flex justify-end gap-1'>
@@ -94,22 +92,11 @@ export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
 								Copy payment ID
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
-							<DropdownMenuItem onClick={() => setIsUpdateDialogOpen(true)}>
-								Update invoice
-							</DropdownMenuItem>
 							<DropdownMenuItem disabled asChild>
 								<button type='submit'>Delete invoice</button>
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>
-					<UpdateInvoiceDialog
-						invoice={invoice}
-						open={isUpdateDialogOpen}
-						onOpenChange={setIsUpdateDialogOpen}
-						// biome-ignore lint/correctness/noChildrenProp: Null trigger required to place dialog outside of mounted menu
-						// biome-ignore lint/complexity/noUselessFragments: Null trigger required to place dialog outside of mounted menu
-						children={<></>}
-					/>
 				</div>
 			);
 		},

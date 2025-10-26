@@ -97,6 +97,7 @@ export const {
 	providers,
 });
 
+/** Authenticate the user, returning the session or redirecting to login */
 export async function auth(): Promise<Session & { user: User }> {
 	return _auth().then(session => {
 		if (!session?.user?.id) redirect('/auth/login');
