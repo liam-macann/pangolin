@@ -205,7 +205,9 @@ export async function getUserConfig() {
 			throw new Error('User has no current valid config.');
 		}
 
-		return settings;
+		const { tax, ...user } = settings.user;
+
+		return { ...settings, user, tax };
 	} catch (error) {
 		console.error('Failed to fetch config:', error);
 		throw new Error('Failed to fetch config.');

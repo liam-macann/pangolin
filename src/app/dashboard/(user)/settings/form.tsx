@@ -43,7 +43,7 @@ export default function ConfigForm({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			taxRegistration: config.taxRegistration,
-			taxes: config.user.tax.map(t => ({ ...t, rate: t.rate * 100 })),
+			taxes: config.tax.map(t => ({ ...t, rate: t.rate * 100 })),
 			timezone: config.timezone,
 			locale: config.locale,
 			currency: config.currency,
