@@ -1,5 +1,6 @@
-import type * as React from 'react';
+'use client';
 
+import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 function Input({
@@ -9,32 +10,35 @@ function Input({
 	suffix,
 	...props
 }: React.ComponentProps<'input'> & { prefix?: React.ReactNode; suffix?: React.ReactNode }) {
+	const ref = React.useRef<HTMLInputElement>(null);
+
 	return (
-		<span className={cn('relative text-base md:text-sm', className)}>
+		<span
+			className={cn(
+				'flex items-center text-base md:text-sm',
+				'has-[input:focus-visible]:border-ring has-[input:focus-visible]:ring-[3px] has-[input:focus-visible]:ring-ring/50',
+				'file:inline-flex file:h-7 file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm placeholder:text-muted-foreground',
+				'flex h-9 w-full min-w-0 rounded-md border border-input shadow-xs outline-none transition-[color,box-shadow] disabled:cursor-not-allowed disabled:opacity-50',
+				'bg-background dark:bg-input/30',
+				'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
+				className,
+			)}
+			onPointerDown={e => {
+				if (ref.current) {
+					e.preventDefault();
+					ref.current.focus();
+				}
+			}}
+		>
+			{prefix && <div className='pointer-events-none ml-3 flex h-full items-center'>{prefix}</div>}
 			<input
+				ref={ref}
 				type={type}
 				data-slot='input'
-				className={cn(
-					'file:inline-flex file:h-7 file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm placeholder:text-muted-foreground',
-					'flex h-9 w-full min-w-0 rounded-md border border-input px-3 py-1 shadow-xs outline-none transition-[color,box-shadow] disabled:cursor-not-allowed disabled:opacity-50',
-					'bg-background dark:bg-input/30',
-					'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
-					'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
-					prefix && 'pl-8',
-					suffix && 'pr-8',
-				)}
+				className={cn('h-full w-full grow px-3 py-1 outline-none')}
 				{...props}
 			/>
-			{prefix && (
-				<div className='pointer-events-none absolute top-0 left-px ml-3 flex h-full items-center'>
-					{prefix}
-				</div>
-			)}
-			{suffix && (
-				<div className='pointer-events-none absolute top-0 right-px mr-3 flex h-full items-center'>
-					{suffix}
-				</div>
-			)}
+			{suffix && <div className='mr-3 flex h-full items-center'>{suffix}</div>}
 		</span>
 	);
 }
