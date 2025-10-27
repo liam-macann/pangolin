@@ -35,7 +35,11 @@ function Input({
 				ref={ref}
 				type={type}
 				data-slot='input'
-				className={cn('h-full w-full grow px-3 py-1 outline-none')}
+				className={cn(
+					'h-full w-full grow px-3 py-1 outline-none',
+					prefix && 'pl-1.5',
+					suffix && 'pr-1.5',
+				)}
 				{...props}
 			/>
 			{suffix && <div className='mr-3 flex h-full items-center'>{suffix}</div>}
