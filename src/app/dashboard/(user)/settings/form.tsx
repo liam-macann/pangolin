@@ -187,7 +187,10 @@ export default function ConfigForm({
 							<FieldContent>
 								<FieldLabel htmlFor='name'>
 									Currency
-									<TextTooltip content='If locale does not match, the currency code will be displayed on the invoice.'>
+									<TextTooltip
+										className='rounded-full'
+										content='If locale does not match, the currency code will be displayed on the invoice.'
+									>
 										<InfoIcon />
 									</TextTooltip>
 								</FieldLabel>
@@ -204,7 +207,7 @@ export default function ConfigForm({
 				/>
 			</FieldGroup>
 			<div className='mt-18 flex gap-2 sm:justify-end'>
-				<TextTooltip content='You have not made changes' disabled={isDirty}>
+				<TextTooltip asChild content='You have not made changes' disabled={isDirty}>
 					<Button
 						type='submit'
 						className='max-sm:grow'

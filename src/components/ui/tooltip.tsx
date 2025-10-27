@@ -83,6 +83,8 @@ export default function TextTooltip({
 	side,
 	align,
 
+	asChild,
+
 	...props
 }: {
 	children: React.ReactNode;
@@ -90,10 +92,13 @@ export default function TextTooltip({
 	className?: string;
 	disabled?: boolean;
 } & React.ComponentProps<typeof Tooltip> &
-	Pick<React.ComponentProps<typeof TooltipContent>, 'side' | 'align'>) {
+	Pick<React.ComponentProps<typeof TooltipContent>, 'side' | 'align'> &
+	Pick<React.ComponentProps<typeof TooltipTrigger>, 'asChild'>) {
 	return (
 		<Tooltip open={disabled ? false : undefined} {...props}>
-			<TooltipTrigger className={className}>{children}</TooltipTrigger>
+			<TooltipTrigger asChild={asChild} className={className}>
+				{children}
+			</TooltipTrigger>
 			<TooltipContent side={side} align={align}>
 				{content}
 			</TooltipContent>
