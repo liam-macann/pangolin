@@ -302,9 +302,10 @@ function Sortable({
 		<li
 			ref={ref}
 			className={cn(
-				'relative grid origin-center grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2 border-border border-b border-dotted py-3',
-				'transition-all duration-200',
-				isDragging && 'drop-shadow-black/7 drop-shadow-md',
+				'relative grid origin-center grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2 border-border border-y border-t-transparent border-dotted py-3',
+				'bg-background transition-colors',
+				isDragging &&
+					'not-first:not-[[style*="--dnd-translate:_0px_0px_0"]]:border-t-border *:drop-shadow-black/7 *:drop-shadow-md *:transition-all',
 			)}
 		>
 			<Button
