@@ -13,6 +13,7 @@ import {
 	type FieldValues,
 	type UseFormGetValues,
 	useFieldArray,
+	useFormState,
 	useWatch,
 } from 'react-hook-form';
 import { z } from 'zod';
@@ -50,22 +51,35 @@ import {
 	SelectValue,
 } from '@/ui/select';
 
-export const itemsArraySchema = z.array(
-	createInsertSchema(invoiceItemsSchema, {
-		quantity: z.coerce.number('Please enter a valid quantity').min(0),
-		unitCost: z.coerce.number('Please enter a valid cost'),
-	})
-		.pick({
-			label: true,
-			note: true,
-			quantity: true,
-			unit: true,
-			unitCost: true,
+export const itemsArraySchema = z
+	.array(
+		createInsertSchema(invoiceItemsSchema, {
+			label: z => z.min(1, 'Please enter a description'),
+			quantity: s =>
+				z.coerce
+					.number('Enter a valid quantity')
+					.min(0, 'Enter a valid quantity')
+					.max(10000, 'Too large')
+					.pipe(s),
+			unitCost: s =>
+				z.coerce
+					.number('Enter a valid cost')
+					.min(-1000000, 'Too small')
+					.max(1000000, 'Too large')
+					.pipe(s),
 		})
-		.extend({
-			taxes: z.map(z.uuid(), z.boolean()),
-		}),
-);
+			.pick({
+				label: true,
+				note: true,
+				quantity: true,
+				unit: true,
+				unitCost: true,
+			})
+			.extend({
+				taxes: z.map(z.uuid('Invalid tax: check configuration'), z.boolean()),
+			}),
+	)
+	.min(1, 'Invoice must contain items');
 
 type ItemField = z.infer<typeof itemsArraySchema>;
 
@@ -89,14 +103,10 @@ export function InvoiceItemsField<T extends FormValues>({
 	// Necessary, as RHF can't extract typings from the generic
 	const control = _control as unknown as Control<FormValues>;
 	const getValues = _getValues as unknown as UseFormGetValues<FormValues>;
-	const state = control.getFieldState('items');
 
 	return (
 		<FieldSet className={cn('gap-0', className)}>
-			<div className='ml-7'>
-				<FieldLegend className='sr-only'>Items</FieldLegend>
-				{state.error?.root && <FieldError className='mb-3' errors={[state.error?.root]} />}
-			</div>
+			<FieldLegend className='sr-only'>Items</FieldLegend>
 			<InvoiceItemsInput config={config} control={control} getValues={getValues} />
 		</FieldSet>
 	);
@@ -182,6 +192,10 @@ function InvoiceItemsInput({
 			taxes: new Map(config.tax.map(tax => [tax.id, true])),
 		});
 
+	const {
+		errors: { items: errors },
+	} = useFormState({ control, name: 'items' });
+
 	return (
 		<FieldGroup className={cn('gap-0', className)}>
 			{fields.length > 0 ? (
@@ -229,6 +243,9 @@ function InvoiceItemsInput({
 							))}
 						</ul>
 					</DragDropProvider>
+
+					{errors && <FieldError className='mt-3 ml-7' errors={[errors]} />}
+
 					<div className='mt-6 ml-7 flex justify-between gap-8'>
 						<Button onClick={addItem} size='sm'>
 							Add Item
@@ -238,7 +255,10 @@ function InvoiceItemsInput({
 				</>
 			) : (
 				<div className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6'>
-					<p className='font-medium text-muted-foreground text-sm'>Add an invoice item</p>
+					<div className='flex flex-col gap-1'>
+						<p className='font-medium text-muted-foreground text-sm'>Add an invoice item</p>
+						{errors && <FieldError className='' errors={[errors]} />}
+					</div>
 					<Button onClick={addItem}>Add Item</Button>
 				</div>
 			)}
@@ -324,6 +344,7 @@ function Sortable({
 						<Input
 							className={cn(isDragging && 'border-ring/70', 'transition-colors')}
 							type='number'
+							min={0}
 							inputMode='decimal'
 							placeholder='2'
 							onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
@@ -373,7 +394,7 @@ function Sortable({
 							type='number'
 							inputMode='decimal'
 							placeholder='40'
-							onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+							onKeyDown={e => ['e', 'E', '+'].includes(e.key) && e.preventDefault()}
 							prefix={getCurrencySymbol(config.currency, config.locale)}
 							{...field}
 						/>

@@ -63,8 +63,8 @@ const schema = createInsertSchema(invoicesSchema, {
 		.optional()
 		.transform(v => v?.trim())
 		.transform(v => (v === '' ? undefined : v)),
-	issuedAt: z.date({ error: 'Please select an issue date' }),
-	dueAt: z.date({ error: 'Please select a due date' }),
+	issuedAt: z.date({ error: 'Please enter an issue date' }),
+	dueAt: z.date({ error: 'Please enter a due date' }),
 })
 	.omit({ createdAt: true, status: true, userId: true, id: true })
 	.extend({
@@ -167,7 +167,7 @@ export function CreateInvoiceDialog({
 										Title
 									</FieldLabel>
 									<div className='flex flex-col gap-1'>
-										<Input {...field} className='@md/field-group:min-w-80' />
+										<Input placeholder='Optional' {...field} className='@md/field-group:min-w-80' />
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 									</div>
 								</Field>
@@ -191,12 +191,20 @@ export function CreateInvoiceDialog({
 											className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
 										>
 											Description
-											<TextTooltip side='right' content='Printed below the invoice reference'>
+											<TextTooltip
+												side='right'
+												content='Printed below the invoice reference'
+												className='rounded-full'
+											>
 												<InfoIcon />
 											</TextTooltip>
 										</FieldLabel>
 										<div className='flex flex-col gap-1'>
-											<Textarea {...field} className='@md/field-group:w-80' />
+											<Textarea
+												placeholder='Optional'
+												{...field}
+												className='@md/field-group:w-80'
+											/>
 											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 										</div>
 									</Field>
@@ -212,12 +220,20 @@ export function CreateInvoiceDialog({
 											className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
 										>
 											Notes
-											<TextTooltip side='right' content='Your own private notes'>
+											<TextTooltip
+												side='right'
+												content='Your own private notes'
+												className='rounded-full'
+											>
 												<InfoIcon />
 											</TextTooltip>
 										</FieldLabel>
 										<div className='flex flex-col gap-1'>
-											<Textarea {...field} className='@md/field-group:w-80' />
+											<Textarea
+												placeholder='Optional'
+												{...field}
+												className='@md/field-group:w-80'
+											/>
 											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 										</div>
 									</Field>
