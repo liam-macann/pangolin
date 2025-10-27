@@ -42,6 +42,7 @@ import {
 	FieldSet,
 } from '@/ui/field';
 import { Input } from '@/ui/input';
+import { Textarea } from '@/ui/textarea';
 import { InvoiceItemsField, itemsArraySchema } from './invoiceItems';
 
 const schema = createInsertSchema(invoicesSchema, {
@@ -131,7 +132,7 @@ export function CreateInvoiceDialog({
 							render={({ field, fieldState }) => (
 								<Field orientation='responsive'>
 									<FieldLabel
-										// htmlFor='clientId'
+										htmlFor='clientId'
 										className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
 									>
 										Bill To
@@ -153,7 +154,12 @@ export function CreateInvoiceDialog({
 							control={form.control}
 							render={({ field, fieldState }) => (
 								<Field orientation='responsive'>
-									<FieldLabel>Title</FieldLabel>
+									<FieldLabel
+										htmlFor='title'
+										className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
+									>
+										Title
+									</FieldLabel>
 									<div className='flex flex-col gap-1'>
 										<Input {...field} className='@md/field-group:min-w-80' />
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -166,16 +172,21 @@ export function CreateInvoiceDialog({
 							control={form.control}
 							render={({ field, fieldState }) => (
 								<Field orientation='responsive'>
-									<FieldLabel>Description</FieldLabel>
+									<FieldLabel
+										htmlFor='description'
+										className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
+									>
+										Description
+									</FieldLabel>
 									<div className='flex flex-col gap-1'>
-										<Input {...field} className='@md/field-group:min-w-80' />
+										<Textarea {...field} className='@md/field-group:min-w-80' />
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 									</div>
 								</Field>
 							)}
 						/>
 					</FieldGroup>
-					<details>
+					{/*<details>
 						<Button asChild size='sm' variant='ghost' className='!-ml-2.5 text-muted-foreground'>
 							<summary>
 								Advanced <CaretUpDownIcon />
@@ -211,8 +222,8 @@ export function CreateInvoiceDialog({
 								)}
 							/>
 						</FieldGroup>
-					</details>
-					<FieldSeparator className='-mx-6 my-3'>Items</FieldSeparator>
+					</details>*/}
+					<FieldSeparator className='-mx-6 my-6'>Items</FieldSeparator>
 
 					<InvoiceItemsField
 						config={config}

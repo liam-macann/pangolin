@@ -92,10 +92,10 @@ export function InvoiceItemsField<T extends FormValues>({
 	const state = control.getFieldState('items');
 
 	return (
-		<FieldSet className={cn('gap-3', className)}>
+		<FieldSet className={cn('gap-0', className)}>
 			<div className='ml-7'>
 				<FieldLegend className='sr-only'>Items</FieldLegend>
-				{state.error?.root && <FieldError errors={[state.error?.root]} />}
+				{state.error?.root && <FieldError className='mb-3' errors={[state.error?.root]} />}
 			</div>
 			<InvoiceItemsInput config={config} control={control} getValues={getValues} />
 		</FieldSet>
