@@ -128,20 +128,22 @@ function ItemSum({
 
 	return (
 		<table className={cn('block max-w-full table-auto text-sm', className)}>
-			<tr className='flex items-baseline justify-between gap-4 text-muted-foreground *:pb-1.5'>
-				<td>Subtotal</td>
-				<td className='truncate text-right tabular-nums'>
-					{formatCurrency(subtotal, config.currency, config.locale)}
-				</td>
-			</tr>
-			{/*{Array.from(taxes).map(([id, tax]) => (
-				<tr key={id} className='flex items-baseline justify-between gap-4 text-muted-foreground *:py-0.5 last-of-type:*:pb-1'>
-					<td>{tax.name}</td>
-					<td className='text-right tabular-nums'>
-						{formatCurrency(taxesSum.get(id) || 0, config.currency, config.locale)}
+			<tbody className='contents'>
+				<tr className='flex items-baseline justify-between gap-4 text-muted-foreground *:pb-1.5'>
+					<td>Subtotal</td>
+					<td className='truncate text-right tabular-nums'>
+						{formatCurrency(subtotal, config.currency, config.locale)}
 					</td>
 				</tr>
-			))}*/}
+				{/*{Array.from(taxes).map(([id, tax]) => (
+  				<tr key={id} className='flex items-baseline justify-between gap-4 text-muted-foreground *:py-0.5 last-of-type:*:pb-1'>
+  					<td>{tax.name}</td>
+  					<td className='text-right tabular-nums'>
+  						{formatCurrency(taxesSum.get(id) || 0, config.currency, config.locale)}
+  					</td>
+  				</tr>
+  			))}*/}
+			</tbody>
 			<tfoot className='contents'>
 				<tr className='flex items-baseline justify-between gap-4 border-t font-semibold *:pt-1'>
 					<td>Total</td>
@@ -181,7 +183,7 @@ function InvoiceItemsInput({
 		});
 
 	return (
-		<FieldGroup className={cn('gap-2', className)}>
+		<FieldGroup className={cn('gap-0', className)}>
 			{fields.length > 0 ? (
 				<>
 					<div className='grid grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2'>
@@ -206,7 +208,7 @@ function InvoiceItemsInput({
 							}
 						}}
 					>
-						<ul className='flex flex-col gap-2'>
+						<ul className='flex flex-col'>
 							{fields.map((item, i) => (
 								<Sortable
 									control={control}
@@ -227,7 +229,7 @@ function InvoiceItemsInput({
 							))}
 						</ul>
 					</DragDropProvider>
-					<div className='mt-4 ml-7 flex justify-between gap-8'>
+					<div className='mt-6 ml-7 flex justify-between gap-8'>
 						<Button onClick={addItem} size='sm'>
 							Add Item
 						</Button>
@@ -280,7 +282,7 @@ function Sortable({
 		<li
 			ref={ref}
 			className={cn(
-				'relative grid origin-center grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2 border-border border-b border-dotted pb-2',
+				'relative grid origin-center grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2 border-border border-b border-dotted py-3',
 				'transition-all duration-200',
 				isDragging && 'drop-shadow-black/7 drop-shadow-md',
 			)}

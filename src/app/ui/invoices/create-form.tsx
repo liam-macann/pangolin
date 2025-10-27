@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
+import { CaretUpDownIcon, InfoIcon } from '@phosphor-icons/react/ssr';
 import { createInsertSchema } from 'drizzle-zod';
 import { useState } from 'react';
 import {
@@ -43,6 +43,7 @@ import {
 } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
+import { TextTooltip } from '@/ui/tooltip';
 import { InvoiceItemsField, itemsArraySchema } from './invoiceItems';
 
 const schema = createInsertSchema(invoicesSchema, {
@@ -53,6 +54,11 @@ const schema = createInsertSchema(invoicesSchema, {
 		.transform(v => v?.trim())
 		.transform(v => (v === '' ? undefined : v)),
 	description: z
+		.string()
+		.optional()
+		.transform(v => v?.trim())
+		.transform(v => (v === '' ? undefined : v)),
+	notes: z
 		.string()
 		.optional()
 		.transform(v => v?.trim())
@@ -124,8 +130,8 @@ export function CreateInvoiceDialog({
 					<DialogDescription>Create a new invoice for an existing client.</DialogDescription>
 				</DialogHeader>
 
-				<form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-					<FieldGroup>
+				<form onSubmit={form.handleSubmit(onSubmit)}>
+					<FieldGroup className='gap-4'>
 						<Controller
 							name='clientId'
 							control={form.control}
@@ -167,62 +173,89 @@ export function CreateInvoiceDialog({
 								</Field>
 							)}
 						/>
-						<Controller
-							name='description'
-							control={form.control}
-							render={({ field, fieldState }) => (
-								<Field orientation='responsive'>
-									<FieldLabel
-										htmlFor='description'
-										className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
-									>
-										Description
-									</FieldLabel>
-									<div className='flex flex-col gap-1'>
-										<Textarea {...field} className='@md/field-group:min-w-80' />
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</div>
-								</Field>
-							)}
-						/>
 					</FieldGroup>
-					{/*<details>
+					<details className='mt-6'>
 						<Button asChild size='sm' variant='ghost' className='!-ml-2.5 text-muted-foreground'>
 							<summary>
 								Advanced <CaretUpDownIcon />
 							</summary>
 						</Button>
-						<FieldGroup className='mt-4 flex flex-row gap-3'>
+						<FieldGroup className='mt-4 gap-4'>
 							<Controller
-								name='issuedAt'
+								name='description'
 								control={form.control}
-								disabled
 								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor='form-rhf-textarea-about'>Date of issue</FieldLabel>
-										<DatePicker startMonth={new Date()} timeZone={config.timezone} {...field} />
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+									<Field orientation='responsive'>
+										<FieldLabel
+											htmlFor='description'
+											className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
+										>
+											Description
+											<TextTooltip side='right' content='Printed below the invoice reference'>
+												<InfoIcon />
+											</TextTooltip>
+										</FieldLabel>
+										<div className='flex flex-col gap-1'>
+											<Textarea {...field} className='@md/field-group:w-80' />
+											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+										</div>
 									</Field>
 								)}
 							/>
 							<Controller
-								name='dueAt'
+								name='notes'
 								control={form.control}
 								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor='form-rhf-textarea-about'>Due date</FieldLabel>
-										<DatePicker
-											disabledDays={[{ before: new Date() }, new Date()]}
-											startMonth={new Date()}
-											timeZone={config.timezone}
-											{...field}
-										/>
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+									<Field orientation='responsive'>
+										<FieldLabel
+											htmlFor='notes'
+											className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
+										>
+											Notes
+											<TextTooltip side='right' content='Your own private notes'>
+												<InfoIcon />
+											</TextTooltip>
+										</FieldLabel>
+										<div className='flex flex-col gap-1'>
+											<Textarea {...field} className='@md/field-group:w-80' />
+											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+										</div>
 									</Field>
 								)}
 							/>
+
+							<div className='mt-2 flex flex-row gap-3'>
+								<Controller
+									name='issuedAt'
+									control={form.control}
+									disabled
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor='form-rhf-textarea-about'>Date of issue</FieldLabel>
+											<DatePicker startMonth={new Date()} timeZone={config.timezone} {...field} />
+											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+										</Field>
+									)}
+								/>
+								<Controller
+									name='dueAt'
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor='form-rhf-textarea-about'>Due date</FieldLabel>
+											<DatePicker
+												disabledDays={[{ before: new Date() }, new Date()]}
+												startMonth={new Date()}
+												timeZone={config.timezone}
+												{...field}
+											/>
+											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+										</Field>
+									)}
+								/>
+							</div>
 						</FieldGroup>
-					</details>*/}
+					</details>
 					<FieldSeparator className='-mx-6 my-6'>Items</FieldSeparator>
 
 					<InvoiceItemsField

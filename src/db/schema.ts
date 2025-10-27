@@ -29,8 +29,11 @@ export const invoices = pgTable(
 		clientId: uuid('client_id').notNull(),
 
 		title: varchar('title', { length: 100 }),
+		/** Description printed under invoice reference */
 		description: text('description'),
 		status: statusEnum().notNull(),
+		/** Private notes for the user */
+		notes: text('notes'),
 
 		/** Timestamp instant of record creation: do not use for invoice display */
 		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
