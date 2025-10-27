@@ -5,6 +5,11 @@ export const formatCurrency = (amount: number, currency: string, locale: string)
 	}).format(amount);
 };
 
+export const getCurrencySymbol = (currency: string, locale: string): string | undefined =>
+	new Intl.NumberFormat(locale, { style: 'currency', currency })
+		.formatToParts(1)
+		.find(x => x.type === 'currency')?.value;
+
 export const formatNumber = (amount: number, locale: string) => {
 	return new Intl.NumberFormat(locale, {
 		style: 'decimal',

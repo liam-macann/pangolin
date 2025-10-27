@@ -2,17 +2,18 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
-import { createInsertSchema, createUpdateSchema } from 'drizzle-zod';
-import { useEffect, useState } from 'react';
-import type { FieldValues, Path, UseFormReturn } from 'react-hook-form';
-import { Controller, useForm } from 'react-hook-form';
+import { createInsertSchema } from 'drizzle-zod';
+import { useState } from 'react';
+import {
+	Controller,
+	type FieldValues,
+	type Path,
+	type UseFormReturn,
+	useForm,
+} from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import {
-	type clients as clientsSchema,
-	invoiceItems as invoiceItemsSchema,
-	invoices as invoicesSchema,
-} from '@/db/schema';
+import { type clients as clientsSchema, invoices as invoicesSchema } from '@/db/schema';
 import { createInvoice, updateInvoice } from '@/lib/actions';
 import type { getUserConfig, InvoiceWithClient } from '@/lib/data';
 import type { Prettify } from '@/lib/utils';
@@ -31,6 +32,7 @@ import {
 } from '@/ui/dialog';
 import {
 	Field,
+	FieldContent,
 	FieldDescription,
 	FieldError,
 	FieldGroup,
@@ -40,16 +42,27 @@ import {
 	FieldSet,
 } from '@/ui/field';
 import { Input } from '@/ui/input';
-import { Switch } from '@/ui/switch';
-
-const itemsSchema = createInsertSchema(invoiceItemsSchema);
+import { InvoiceItemsField, itemsArraySchema } from './invoiceItems';
 
 const schema = createInsertSchema(invoicesSchema, {
 	clientId: z.uuid({ error: 'Please select a client' }),
+	title: z
+		.string()
+		.optional()
+		.transform(v => v?.trim())
+		.transform(v => (v === '' ? undefined : v)),
+	description: z
+		.string()
+		.optional()
+		.transform(v => v?.trim())
+		.transform(v => (v === '' ? undefined : v)),
 	issuedAt: z.date({ error: 'Please select an issue date' }),
 	dueAt: z.date({ error: 'Please select a due date' }),
-	// items: z.array(itemsSchema),
-}).omit({ createdAt: true, status: true });
+})
+	.omit({ createdAt: true, status: true, userId: true, id: true })
+	.extend({
+		items: itemsArraySchema,
+	});
 
 export function CreateInvoiceDialog({
 	children,
@@ -59,7 +72,10 @@ export function CreateInvoiceDialog({
 	children: React.ReactNode;
 	clients: (typeof clientsSchema.$inferSelect)[];
 	config: Prettify<
-		Pick<Awaited<ReturnType<typeof getUserConfig>>, 'currency' | 'locale' | 'timezone'>
+		Pick<
+			Awaited<ReturnType<typeof getUserConfig>>,
+			'id' | 'currency' | 'locale' | 'timezone' | 'tax'
+		>
 	>;
 }) {
 	const [open, setOpen] = useState(false);
@@ -69,12 +85,16 @@ export function CreateInvoiceDialog({
 		label: client.name,
 	}));
 
-	const form = useForm<z.infer<typeof schema>>({
+	const form = useForm<z.input<typeof schema>>({
 		resolver: zodResolver(schema),
 		defaultValues: {
 			clientId: '',
 			issuedAt: new Date(),
 			dueAt: new Date(new Date().setDate(new Date().getDate() + 14)),
+			config: config.id,
+			items: [],
+			title: '',
+			description: '',
 		},
 	});
 	async function onSubmit(values: z.input<typeof schema>) {
@@ -102,38 +122,62 @@ export function CreateInvoiceDialog({
 					<DialogTitle>Create invoice</DialogTitle>
 					<DialogDescription>Create a new invoice for an existing client.</DialogDescription>
 				</DialogHeader>
+
 				<form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
-					<Controller
-						name='clientId'
-						control={form.control}
-						render={({ field, fieldState }) => (
-							<Field>
-								<FieldLabel>Client</FieldLabel>
-								<Combobox
-									options={options}
-									noun={{ singular: 'client', plural: 'clients' }}
-									className='justify-self-start'
-									{...field}
-								/>
-								<FieldDescription>Select an existing client to bill.</FieldDescription>
-								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-							</Field>
-						)}
-					/>
-					<Controller
-						name='title'
-						control={form.control}
-						render={({ field, fieldState }) => (
-							<Field>
-								<FieldLabel>Title</FieldLabel>
-								<Input {...field} />
-								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-							</Field>
-						)}
-					/>
+					<FieldGroup>
+						<Controller
+							name='clientId'
+							control={form.control}
+							render={({ field, fieldState }) => (
+								<Field orientation='responsive'>
+									<FieldLabel
+										// htmlFor='clientId'
+										className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
+									>
+										Bill To
+									</FieldLabel>
+									<div className='flex flex-col gap-1'>
+										<Combobox
+											options={options}
+											noun={{ singular: 'client', plural: 'clients' }}
+											className='@md/field-group:min-w-80'
+											{...field}
+										/>
+										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+									</div>
+								</Field>
+							)}
+						/>
+						<Controller
+							name='title'
+							control={form.control}
+							render={({ field, fieldState }) => (
+								<Field orientation='responsive'>
+									<FieldLabel>Title</FieldLabel>
+									<div className='flex flex-col gap-1'>
+										<Input {...field} className='@md/field-group:min-w-80' />
+										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+									</div>
+								</Field>
+							)}
+						/>
+						<Controller
+							name='description'
+							control={form.control}
+							render={({ field, fieldState }) => (
+								<Field orientation='responsive'>
+									<FieldLabel>Description</FieldLabel>
+									<div className='flex flex-col gap-1'>
+										<Input {...field} className='@md/field-group:min-w-80' />
+										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+									</div>
+								</Field>
+							)}
+						/>
+					</FieldGroup>
 					<details>
 						<Button asChild size='sm' variant='ghost' className='!-ml-2.5 text-muted-foreground'>
-							<summary className=''>
+							<summary>
 								Advanced <CaretUpDownIcon />
 							</summary>
 						</Button>
@@ -168,11 +212,25 @@ export function CreateInvoiceDialog({
 							/>
 						</FieldGroup>
 					</details>
+					<FieldSeparator className='-mx-6 my-3'>Items</FieldSeparator>
+
+					<InvoiceItemsField
+						config={config}
+						control={form.control}
+						getValues={form.getValues}
+						className='mb-6'
+					/>
 				</form>
 
 				<DialogFooter>
-					<Button onClick={form.handleSubmit(onSubmit)}>Submit</Button>
-					<DialogClose className='order-first' asChild>
+					<Button variant='primary' onClick={form.handleSubmit(onSubmit)}>
+						Submit
+					</Button>
+					<DialogClose
+						className='order-first'
+						onClick={() => setTimeout(() => form.reset(), 200)}
+						asChild
+					>
 						<Button variant='secondary'>Cancel</Button>
 					</DialogClose>
 				</DialogFooter>

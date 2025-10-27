@@ -3,7 +3,6 @@
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
 import type { InvoiceWithClient } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/button';

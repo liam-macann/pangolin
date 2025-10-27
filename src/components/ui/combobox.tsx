@@ -28,6 +28,9 @@ export function Combobox({
 	disabled = false,
 	onChange,
 	className,
+
+	align = 'end',
+	...props
 }: {
 	noun?: { singular: string; plural: string };
 	placeholder?: string;
@@ -36,7 +39,7 @@ export function Combobox({
 	disabled?: boolean;
 	onChange?: (value: string) => void;
 	className?: string;
-}) {
+} & React.ComponentProps<typeof PopoverContent>) {
 	const [open, setOpen] = React.useState(false);
 
 	return (
@@ -46,14 +49,16 @@ export function Combobox({
 					variant='outline'
 					role='combobox'
 					aria-expanded={open}
-					className={cn('min-w-[200px] justify-between enabled:active:scale-100', className)}
+					className={cn('justify-between enabled:active:scale-100', className)}
 					disabled={disabled}
 				>
-					{value ? options.find(option => option.value === value)?.label : `${placeholder}…`}
+					<div className='truncate'>
+						{value ? options.find(option => option.value === value)?.label : `${placeholder}…`}
+					</div>
 					<CaretUpDownIcon className='ml-2 h-4 w-4 shrink-0 opacity-50' />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className='w-[200px] p-0'>
+			<PopoverContent align={align} {...props} className='w-[200px] p-0'>
 				<Command>
 					<CommandInput placeholder={`Search ${noun.plural}…`} />
 					<CommandList>

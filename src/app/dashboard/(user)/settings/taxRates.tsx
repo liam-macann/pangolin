@@ -131,7 +131,7 @@ export function TaxRateField<T extends FormValues>({
 	);
 }
 
-export function TaxRateInput({
+function TaxRateInput({
 	className,
 	control,
 }: {
