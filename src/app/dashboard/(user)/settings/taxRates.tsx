@@ -4,6 +4,7 @@ import { RestrictToElement } from '@dnd-kit/dom/modifiers';
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable, useSortable } from '@dnd-kit/react/sortable';
 import { DotsSixIcon, DotsThreeIcon, InfoIcon, TrashIcon } from '@phosphor-icons/react';
+import { createInsertSchema } from 'drizzle-zod';
 import { useRef } from 'react';
 import {
 	type Control,
@@ -14,8 +15,9 @@ import {
 } from 'react-hook-form';
 import { v4 as uuid } from 'uuid';
 import { z } from 'zod';
-import type { taxes } from '@/db/schema';
+import { taxes } from '@/db/schema';
 import { cn, type Prettify } from '@/lib/utils';
+import { intlNumber } from '@/lib/zod';
 import { Button } from '@/ui/button';
 import {
 	DropdownMenu,
@@ -37,51 +39,23 @@ import { Input } from '@/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip';
 
 export const taxArraySchema = z.array(
-	z.object({
-		id: z.uuid(),
-		name: z
-			.string()
-			.min(1, 'Please enter a tax label')
-			.min(2, 'Label must be at least 2 characters'),
-		rate: z
-			.any()
-			// 1. Sanitize the string based on the position of separators
-			.transform(val => {
-				if (typeof val === 'string') {
-					// We want to support both comma and period delimited decimals.
-					// eg. "20,5" → "20.5"
-					//
-					// Both separators may be present in a numeric string, as the inverse is used
-					// for thousands separation (although beyond max for this schema)
-					// eg. "1.200,5" || "1,200.5" → "1200.5"
-					//
-
-					// Use the last separator to infer the formatting.
-					const commaDecimal = val.includes(',') && val.lastIndexOf(',') > val.lastIndexOf('.');
-
-					if (commaDecimal) {
-						// Remove all periods (thousand separators) and replace the decimal comma with a period
-						return val.replace(/\./g, '').replace(',', '.');
-					} else {
-						// Otherwise, for period decimals, strip all commas (thousand separators)
-						return val.replace(/,/g, '');
-					}
-				} else return val;
-			})
-			.transform((val, ctx) => {
-				if (val === '') {
-					ctx.issues.push({ code: 'custom', message: 'Please enter a rate', input: val });
-					return z.NEVER;
-				}
-				return Number(val);
-			})
-			.pipe(
+	createInsertSchema(taxes, {
+		id: s => z.uuid().pipe(s),
+		name: s =>
+			z
+				.string()
+				.min(1, 'Please enter a tax label')
+				.min(2, 'Label must be at least 2 characters')
+				.pipe(s),
+		rate: s =>
+			intlNumber(
 				z
 					.number('Tax rate must be a number')
 					.multipleOf(0.01, 'You may only define up to two decimal places')
 					.min(0, 'Negative taxes are not allowed')
 					.max(200, 'Tax may not exceed 200%'),
-			),
+				'Please enter a quantity',
+			).pipe(s),
 	}),
 );
 

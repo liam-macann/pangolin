@@ -1,9 +1,11 @@
 'use client';
+
 import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
 import { RestrictToElement } from '@dnd-kit/dom/modifiers';
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable, useSortable } from '@dnd-kit/react/sortable';
-import { DotsSixIcon, DotsThreeIcon, PlusCircleIcon } from '@phosphor-icons/react';
+
+import { DotsSixIcon, DotsThreeIcon } from '@phosphor-icons/react';
 import { createInsertSchema } from 'drizzle-zod';
 import { useRef } from 'react';
 import {
@@ -17,9 +19,11 @@ import {
 	useWatch,
 } from 'react-hook-form';
 import { z } from 'zod';
-import { type invoiceItems, invoiceItems as invoiceItemsSchema, unitEnum } from '@/db/schema';
+import { invoiceItems } from '@/db/schema';
 import type { getUserConfig } from '@/lib/data';
 import { cn, formatCurrency, getCurrencySymbol, type Prettify } from '@/lib/utils';
+import { intlNumber } from '@/lib/zod';
+
 import { Button } from '@/ui/button';
 import {
 	DropdownMenu,
@@ -53,14 +57,13 @@ import {
 
 export const itemsArraySchema = z
 	.array(
-		createInsertSchema(invoiceItemsSchema, {
+		createInsertSchema(invoiceItems, {
 			label: z => z.min(1, 'Please enter a description'),
 			quantity: s =>
-				z.coerce
-					.number('Enter a valid quantity')
-					.min(0, 'Enter a valid quantity')
-					.max(10000, 'Too large')
-					.pipe(s),
+				intlNumber(
+					z.number().min(0, 'Enter a valid quantity').max(10000, 'Too large'),
+					'Please enter a quantity',
+				).pipe(s),
 			unitCost: s =>
 				z.coerce
 					.number('Enter a valid cost')
