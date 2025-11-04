@@ -6,13 +6,7 @@ import { isSortable, useSortable } from '@dnd-kit/react/sortable';
 import { DotsSixIcon, DotsThreeIcon, InfoIcon, TrashIcon } from '@phosphor-icons/react';
 import { createInsertSchema } from 'drizzle-zod';
 import { useRef } from 'react';
-import {
-	type Control,
-	Controller,
-	type FieldValues,
-	type FormState,
-	useFieldArray,
-} from 'react-hook-form';
+import { type Control, Controller, type FieldValues, useFieldArray } from 'react-hook-form';
 import { v4 as uuid } from 'uuid';
 import { z } from 'zod';
 import { taxes } from '@/db/schema';
@@ -90,7 +84,7 @@ export function TaxRateField<T extends FormValues>({
 						<TooltipTrigger className='rounded-full'>
 							<InfoIcon />
 						</TooltipTrigger>
-						<TooltipContent>
+						<TooltipContent side='right'>
 							Taxes defined here will always be printed on invoices, even if no tax is applicable.
 						</TooltipContent>
 					</Tooltip>

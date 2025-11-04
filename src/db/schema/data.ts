@@ -164,6 +164,7 @@ export const clients = pgTable(
 	t => [primaryKey({ name: 'client_user_pk', columns: [t.id, t.userId] })],
 );
 
+export const numberingScheme = pgEnum('numbering_scheme', ['sequential', 'annual']);
 // Slowly changing dimension (SCD) — history table
 export const config = pgTable('config', {
 	id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
@@ -177,6 +178,7 @@ export const config = pgTable('config', {
 	locale: text().notNull(),
 	currency: varchar('currency', { length: 3 }).notNull(),
 	taxRegistration: boolean('tax_registration').notNull(),
+	numberingScheme: numberingScheme('numbering_scheme').notNull(),
 });
 
 export const itemsWithTax = pgView('items_with_tax').as(qb =>

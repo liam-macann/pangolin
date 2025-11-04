@@ -2,9 +2,11 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { InfoIcon } from '@phosphor-icons/react/ssr';
+import { createInsertSchema } from 'drizzle-zod';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import type { z } from 'zod';
+import { config } from '@/db/schema/data';
 import { updateUserConfig } from '@/lib/actions';
 import type { getUserConfig } from '@/lib/data';
 import { Button } from '@/ui/button';
@@ -17,17 +19,23 @@ import {
 	FieldError,
 	FieldGroup,
 	FieldLabel,
+	FieldLegend,
+	FieldSet,
+	FieldTitle,
 } from '@/ui/field';
+import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
 import { TextTooltip, Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip';
 import { TaxRateField, taxArraySchema } from './taxRates';
 
-const formSchema = z.object({
-	taxes: taxArraySchema,
-	timezone: z.string(),
-	locale: z.string(),
-	currency: z.string(),
-	taxRegistration: z.boolean(),
-});
+const formSchema = createInsertSchema(config)
+	.pick({
+		taxRegistration: true,
+		timezone: true,
+		locale: true,
+		currency: true,
+		numberingScheme: true,
+	})
+	.extend({ taxes: taxArraySchema });
 
 export default function ConfigForm({
 	config,
@@ -47,6 +55,7 @@ export default function ConfigForm({
 			timezone: config.timezone,
 			locale: config.locale,
 			currency: config.currency,
+			numberingScheme: config.numberingScheme,
 		},
 	});
 
@@ -55,6 +64,7 @@ export default function ConfigForm({
 			className='grid gap-12'
 			onSubmit={handleSubmit(
 				async val => {
+					// Prevent duplicate submissions
 					if (isSubmitting) return;
 					else if (!isDirty) {
 						toast.info('You have not made any changes');
@@ -82,6 +92,68 @@ export default function ConfigForm({
 				() => toast.warning('Please ensure all fields are filled correctly'),
 			)}
 		>
+			<Controller
+				name='numberingScheme'
+				control={control}
+				rules={{ required: true }}
+				render={({ field, fieldState }) => {
+					return (
+						<FieldSet>
+							<FieldLegend className='flex items-center gap-2'>
+								Numbering scheme
+								<Tooltip>
+									<TooltipTrigger className='rounded-full'>
+										<InfoIcon />
+									</TooltipTrigger>
+									<TooltipContent side='right'>
+										Existing invoices will not be affected by changes to numbering scheme.
+									</TooltipContent>
+								</Tooltip>
+							</FieldLegend>
+							<FieldDescription>Select the method used to identify your invoices.</FieldDescription>
+							<RadioGroup
+								{...field}
+								onValueChange={field.onChange}
+								disabled
+								className='flex max-sm:flex-col'
+							>
+								<FieldLabel>
+									<Field orientation='vertical' className='h-full justify-between'>
+										<div className='flex justify-between'>
+											<FieldTitle>Sequential</FieldTitle>
+											<RadioGroupItem value='sequential' />
+										</div>
+										<div className='flex items-end justify-between gap-6'>
+											<FieldDescription className='text-balance'>
+												Track invoices sequentially, over the life of the business
+											</FieldDescription>
+											<FieldDescription className='text-nowrap font-mono'>INV–001</FieldDescription>
+										</div>
+									</Field>
+								</FieldLabel>
+								<FieldLabel>
+									<Field orientation='vertical' className='h-full justify-between'>
+										<div className='flex justify-between'>
+											<FieldTitle>Annual</FieldTitle>
+											<RadioGroupItem value='annual' />
+										</div>
+										<div className='flex items-end justify-between gap-6'>
+											<FieldDescription className='text-balance'>
+												Reset invoice count with each new calendar year
+											</FieldDescription>
+											<FieldDescription className='text-nowrap font-mono'>
+												{new Date().getFullYear()}–001
+											</FieldDescription>
+										</div>
+									</Field>
+								</FieldLabel>
+							</RadioGroup>
+
+							{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+						</FieldSet>
+					);
+				}}
+			/>
 			<FieldGroup>
 				<h2 className='flex items-baseline gap-3 font-bold text-2xl' id='taxation'>
 					Taxation
