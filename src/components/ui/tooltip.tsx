@@ -1,7 +1,7 @@
 'use client';
 
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-import type * as React from 'react';
+import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -94,8 +94,11 @@ export default function TextTooltip({
 } & React.ComponentProps<typeof Tooltip> &
 	Pick<React.ComponentProps<typeof TooltipContent>, 'side' | 'align'> &
 	Pick<React.ComponentProps<typeof TooltipTrigger>, 'asChild'>) {
+	// Necessary to prevent switching between controlled and uncontrolled states
+	const [open, setOpen] = React.useState(false);
+
 	return (
-		<Tooltip open={disabled ? false : undefined} {...props}>
+		<Tooltip open={disabled ? false : open} onOpenChange={setOpen} {...props}>
 			<TooltipTrigger asChild={asChild} className={className}>
 				{children}
 			</TooltipTrigger>
