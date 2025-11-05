@@ -19,7 +19,9 @@
 	--accent-foreground: var(--secondary-foreground);
 	--destructive: var(--color-red-11);
 	--border: var(--color-gray-6);
-	--input: var(--color-gray-5);
+	--input: var(
+		--color-gray-6
+	); /* Input borders (eg. text input, checkbox, radio — not button driven inputs like combobox) */
 	--ring: var(--color-gray-8); /* Focus ring */
 	--chart-1: oklch(0.646 0.222 41.116);
 	--chart-2: oklch(0.6 0.118 184.704);
