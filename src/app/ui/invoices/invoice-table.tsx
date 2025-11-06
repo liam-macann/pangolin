@@ -22,10 +22,14 @@ export const columns: ColumnDef<Invoice>[] = [
 		accessorKey: 'reference',
 		header: 'Reference',
 		cell: ({ row }) => <div className='font-medium'>{row.original.formatted.reference}</div>,
+		size: 150,
 	},
 	{
 		accessorKey: 'client.name',
 		header: 'Name',
+		minSize: 200,
+		maxSize: 400,
+		cell: ({ row }) => <div className='truncate'>{row.original.client.name}</div>,
 	},
 	{
 		accessorKey: 'status',
@@ -44,11 +48,13 @@ export const columns: ColumnDef<Invoice>[] = [
 				</span>
 			);
 		},
+		size: 150,
 	},
 	{
 		accessorKey: 'issuedAt',
 		header: 'Date',
 		cell: ({ row }) => row.original.formatted.issuedAt,
+		size: 150,
 	},
 	{
 		accessorKey: 'grossTotal',
@@ -60,6 +66,7 @@ export const columns: ColumnDef<Invoice>[] = [
 				</div>
 			);
 		},
+		size: 150,
 	},
 	{
 		id: 'actions',
@@ -93,6 +100,7 @@ export const columns: ColumnDef<Invoice>[] = [
 				</div>
 			);
 		},
+		size: 150,
 	},
 ];
 
