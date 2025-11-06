@@ -232,6 +232,13 @@
 			"when": 1762241990627,
 			"tag": "0032_plain_aqueduct",
 			"breakpoints": true
+		},
+		{
+			"idx": 33,
+			"version": "7",
+			"when": 1762248782545,
+			"tag": "0033_zippy_nitro",
+			"breakpoints": true
 		}
 	]
 }

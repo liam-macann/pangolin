@@ -3,8 +3,8 @@
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
-import type { InvoiceWithClient } from '@/lib/data';
-import { cn } from '@/lib/utils';
+import type { fetchInvoices } from '@/lib/data';
+import { cn, type ElementType } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { DataTable } from '@/ui/data-table';
 import {
@@ -15,22 +15,16 @@ import {
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
 
-export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
+type Invoice = ElementType<Awaited<ReturnType<typeof fetchInvoices>>>;
+
+export const columns: ColumnDef<Invoice>[] = [
 	{
-		accessorKey: 'yearIndex',
+		accessorKey: 'reference',
 		header: 'Reference',
-		cell: ({ row }) => {
-			const issueYear: number = row.original.issueYear;
-			const index: number = row.getValue('yearIndex');
-			return (
-				<div className='font-medium'>
-					{issueYear.toString()}-{index.toString().padStart(3, '0')}
-				</div>
-			);
-		},
+		cell: ({ row }) => <div className='font-medium'>{row.original.formatted.reference}</div>,
 	},
 	{
-		accessorKey: 'clientName',
+		accessorKey: 'client.name',
 		header: 'Name',
 	},
 	{
@@ -102,7 +96,7 @@ export const columns: ColumnDef<Omit<InvoiceWithClient, 'clientEmail'>>[] = [
 	},
 ];
 
-export default function Table({ invoices }: { invoices: InvoiceWithClient[] }) {
+export default function Table({ invoices }: { invoices: Invoice[] }) {
 	const searchParams = useSearchParams();
 
 	return (

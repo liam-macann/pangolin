@@ -45,6 +45,10 @@ export const invoices = pgTable(
 		 * Should IANA table change, wall time derived from the creation timestamp becomes unreliable.
 		 */
 		issuedAt: date('issued_at').notNull(),
+		/** Year of invoice issuance in timezone of record, derived from issuedAt */
+		issueYear: integer('issue_year')
+			.generatedAlwaysAs((): SQL => sql`EXTRACT(YEAR FROM ${invoices.issuedAt})`)
+			.notNull(),
 		/** Date that payment is due in timezone of record
 		 *
 		 * @remarks This is stored as a date, not a timestamp, to avoid shift on a region redefinition.
@@ -181,11 +185,18 @@ export const config = pgTable('config', {
 	numberingScheme: numberingScheme('numbering_scheme').notNull(),
 });
 
+//
+//
+//
+// VIEWS
+//
+
 export const itemsWithTax = pgView('items_with_tax').as(qb =>
 	qb
 		.select({
 			...getTableColumns(invoiceItems),
 			taxRegistration: config.taxRegistration,
+			/** @remarks This can safely be used regardless of tax registration. Unregistered taxes will not be applied. */
 			grossAmount:
 				sql`((1 + COALESCE(${sum(taxes.rate)} * ${config.taxRegistration}::INT, 0)) * ${invoiceItems.netAmount})::NUMERIC(15, 4)`
 					.mapWith(Number)

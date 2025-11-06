@@ -1,7 +1,7 @@
+import path from 'node:path';
 import { NextResponse } from 'next/server';
-import path from 'path';
 import PdfPrinter from 'pdfmake';
-import { fetchInvoice } from '@/lib/data';
+import { fetchInvoice, getUser } from '@/lib/data';
 import { BottomLayout, CenteredLayout } from '@/lib/pdf-verticalalign';
 import { formatCurrency, formatDateToLocal, formatNumber } from '@/lib/utils';
 
@@ -29,7 +29,7 @@ const spacing = (i: number) => px(4 * i);
 
 export async function GET(_request, { params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
-	const invoice = await fetchInvoice(id);
+	const [invoice, user] = await Promise.all([fetchInvoice(id), getUser()]);
 
 	if (!invoice) {
 		return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
@@ -51,7 +51,7 @@ export async function GET(_request, { params }: { params: Promise<{ id: string }
 		spacing(28),
 	];
 
-	const reference = `${invoice.config.taxRegistration ? 'Tax ' : ''}Invoice INV-${invoice.index.toString().padStart(3, '0')}`;
+	const reference = `${invoice.config.taxRegistration ? 'Tax ' : ''}Invoice ${invoice.formatted.reference}`;
 
 	const pdfDoc = printer.createPdfKitDocument({
 		version: '1.5',
@@ -60,7 +60,7 @@ export async function GET(_request, { params }: { params: Promise<{ id: string }
 		displayTitle: true,
 		info: {
 			title: reference,
-			author: invoice.user.name,
+			author: user.name,
 			creator: 'Invoicer',
 			producer: 'Invoicer',
 			creationDate: invoice.createdAt,
@@ -103,13 +103,13 @@ export async function GET(_request, { params }: { params: Promise<{ id: string }
 				alignment: 'right',
 				stack: [
 					{
-						text: invoice.user.name,
+						text: user.name,
 						bold: true,
 						color: colors.heavy,
 						margin: [0, 0, 0, spacing(4)],
 					},
 					{ text: 'ABN 00 000 000 000' },
-					{ text: invoice.user.email },
+					{ text: user.email },
 				],
 			},
 			{
@@ -190,8 +190,8 @@ export async function GET(_request, { params }: { params: Promise<{ id: string }
 								? [
 										{
 											text:
-												item.tax.length > 0
-													? item.tax.map(tax => `${tax.name}(${tax.rate * 100}%)`).join(' ')
+												item.taxes.length > 0
+													? item.taxes.map(tax => `${tax.name}(${tax.rate * 100}%)`).join(' ')
 													: '–',
 											bold: false,
 										},

@@ -1,3 +1,5 @@
+import type { invoices, numberingScheme } from '@/db/schema';
+
 export const formatCurrency = (amount: number, currency: string, locale: string) => {
 	return new Intl.NumberFormat(locale, {
 		style: 'currency',
@@ -14,6 +16,20 @@ export const formatNumber = (amount: number, locale: string) => {
 	return new Intl.NumberFormat(locale, {
 		style: 'decimal',
 	}).format(amount);
+};
+
+export const invoiceReference = (
+	invoice: Pick<typeof invoices.$inferSelect, 'index' | 'yearIndex' | 'issueYear'>,
+	scheme: ElementType<typeof numberingScheme.enumValues>,
+) => {
+	switch (scheme) {
+		case 'sequential':
+			return `INV-${invoice.index.toString().padStart(3, '0')}`;
+		case 'annual':
+			return `${invoice.issueYear}-${invoice.yearIndex.toString().padStart(3, '0')}`;
+		default:
+			throw new Error(`Undefined scheme: ${scheme}`);
+	}
 };
 
 export const formatDateToLocal = (
@@ -40,8 +56,7 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: Generic
-export type ElementType<T extends Iterable<any>> = T extends Iterable<infer E> ? E : never;
+export type ElementType<T extends Iterable<unknown>> = T extends Iterable<infer E> ? E : never;
 
 /** Improve readability of object types */
 export type Prettify<T> = {

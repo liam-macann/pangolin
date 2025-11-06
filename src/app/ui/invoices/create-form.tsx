@@ -4,18 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CaretUpDownIcon, InfoIcon } from '@phosphor-icons/react/ssr';
 import { createInsertSchema } from 'drizzle-zod';
 import { useState } from 'react';
-import {
-	Controller,
-	type FieldValues,
-	type Path,
-	type UseFormReturn,
-	useForm,
-} from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { type clients as clientsSchema, invoices as invoicesSchema } from '@/db/schema';
-import { createInvoice, updateInvoice } from '@/lib/actions';
-import type { getUserConfig, InvoiceWithClient } from '@/lib/data';
+import { createInvoice } from '@/lib/actions';
+import type { getUserConfig } from '@/lib/data';
 import type { Prettify } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { Combobox } from '@/ui/combobox';
@@ -30,17 +24,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@/ui/dialog';
-import {
-	Field,
-	FieldContent,
-	FieldDescription,
-	FieldError,
-	FieldGroup,
-	FieldLabel,
-	FieldLegend,
-	FieldSeparator,
-	FieldSet,
-} from '@/ui/field';
+import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
 import { TextTooltip } from '@/ui/tooltip';
