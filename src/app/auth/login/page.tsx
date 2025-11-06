@@ -1,4 +1,4 @@
-import { WarningCircleIcon } from '@phosphor-icons/react/ssr';
+import { CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { AuthError } from 'next-auth';
@@ -65,53 +65,94 @@ export default async function LoginPage({
 			: { message: 'Something went wrong. Please try again later.' });
 
 	return (
-		<>
-			{errorInfo && (
-				<Alert variant='destructive'>
-					<WarningCircleIcon className='text-destructive' />
-					<AlertTitle>{errorInfo.message}</AlertTitle>
-					{errorInfo.description && <AlertDescription>{errorInfo.description}</AlertDescription>}
-				</Alert>
-			)}
-			<div className='relative flex flex-col gap-y-4 rounded-md border bg-card p-4 py-8 shadow md:p-8'>
-				<h1 className={`-mt-2 mb-2 font-bold text-2xl`}>Login</h1>
-
-				<section className='flex gap-2 max-md:flex-col'>
-					{Object.values(providerMap.filter(provider => provider.id !== 'credentials')).map(
-						provider => (
-							<form
-								className='grow'
-								key={provider.id}
-								action={async () => {
-									'use server';
-									try {
-										await signIn(provider.id, { redirectTo: callbackUrl });
-									} catch (error) {
-										if (error instanceof AuthError) {
-											console.log(error.message);
-											error.name;
-											return redirect(`?error=${error.name}`);
-										}
-
-										// Remember that redirect is a thrown error internally
-										throw error;
-									}
-								}}
-							>
-								<Button type='submit' className='w-full'>
-									<span>Sign in with {provider.name}</span>
-								</Button>
-							</form>
-						),
-					)}
-				</section>
-				{providerMap.find(provider => provider.id === 'credentials') && (
-					<>
-						<hr className='my-4' />
-						<LoginForm callbackUrl={callbackUrl} />
-					</>
+		<div>
+			<section>
+				{errorInfo && (
+					<Alert variant='destructive'>
+						<WarningCircleIcon className='text-destructive' />
+						<AlertTitle>{errorInfo.message}</AlertTitle>
+						{errorInfo.description && <AlertDescription>{errorInfo.description}</AlertDescription>}
+					</Alert>
 				)}
-			</div>
-		</>
+				<div className='relative flex flex-col gap-y-4 rounded-md border bg-card p-4 py-8 shadow md:p-8'>
+					<h1 className={`-mt-2 mb-2 font-bold text-2xl`}>Login</h1>
+
+					<section className='flex flex-col gap-2'>
+						{Object.values(providerMap.filter(provider => provider.id !== 'credentials')).map(
+							provider => (
+								<form
+									className='grow'
+									key={provider.id}
+									action={async () => {
+										'use server';
+										try {
+											await signIn(provider.id, { redirectTo: callbackUrl });
+										} catch (error) {
+											if (error instanceof AuthError) {
+												console.log(error.message);
+												error.name;
+												return redirect(`?error=${error.name}`);
+											}
+
+											// Remember that redirect is a thrown error internally
+											throw error;
+										}
+									}}
+								>
+									<Button size='lg' type='submit' className='w-full'>
+										<span>Sign in with {provider.name}</span>
+									</Button>
+								</form>
+							),
+						)}
+					</section>
+					{providerMap.find(provider => provider.id === 'credentials') && (
+						<>
+							<hr className='my-4' />
+							<LoginForm callbackUrl={callbackUrl} />
+						</>
+					)}
+				</div>
+			</section>
+			<section className='mt-12'>
+				<h2 className='mb-2 font-semibold text-lg'>What this is</h2>
+				<p className='mb-6 text-muted-foreground'>
+					This is not accounting software, or a CRM. Basic invoice templating, for low-volume
+					service providers.
+				</p>
+
+				<ul className='space-y-2'>
+					{[
+						'Dead-simple invoice generator',
+						'Designed for sole traders',
+						'A place to understand your income',
+					].map(el => (
+						<li className='flex items-baseline gap-3' key={el}>
+							<div className='flex size-5 shrink-0 items-center justify-center rounded-full bg-green-4 text-green-12'>
+								<CheckIcon size={12} />
+							</div>
+							{el}
+						</li>
+					))}
+				</ul>
+
+				<h2 className='mt-8 mb-4 font-semibold text-lg'>What we won't do</h2>
+
+				<ul className='space-y-2'>
+					{[
+						'Receive and track payment status',
+						'Handle your taxes',
+						'Keep track of what you sell',
+					].map(el => (
+						<li className='flex items-baseline gap-3' key={el}>
+							<div className='flex size-5 shrink-0 items-center justify-center rounded-full bg-red-4 text-red-12'>
+								<XIcon size={12} />
+							</div>
+							{el}
+						</li>
+					))}
+				</ul>
+			</section>
+		</div>
 	);
 }
