@@ -26,16 +26,17 @@ export default async function Page(_props: {
 			<div className='flex w-full items-center justify-between'>
 				<h1 className={`font-display text-3xl`}>Invoices</h1>
 			</div>
-			<div className='my-4 flex items-center justify-between gap-2 md:mt-8'>
-				<Search className='grow' placeholder='Search invoices...' />
+			<div className='my-4 mb-8 flex items-center justify-between gap-2 md:mt-8'>
+				<Search className='grow bg-card' placeholder='Search invoices...' />
 
 				<CreateInvoiceDialog config={config} clients={clients}>
-					<Button>
+					<Button variant='primary'>
 						<span className='hidden md:block'>Create Invoice</span>
 						<PlusIcon className='h-5' />
 					</Button>
 				</CreateInvoiceDialog>
 			</div>
+
 			<Suspense fallback={<DataTable columns={columns} data={[]} />}>
 				<Table />
 			</Suspense>
