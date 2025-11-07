@@ -1,5 +1,3 @@
-/* biome-ignore-all lint/suspicious/noUnknownAtRules: Biome doesn't support Tailwind v4 */
-
 /* Shadcn: semantic colors */
 :root {
 	--radius: 0.5rem;

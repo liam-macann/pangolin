@@ -1,5 +1,3 @@
-/* biome-ignore-all lint/suspicious/noUnknownAtRules: Biome doesn't support Tailwind v4 */
-
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./colors.css";
@@ -61,8 +59,19 @@
 	}
 }
 
-@custom-variant hocus (&:hover, &:focus);
-@custom-variant hocus-visible (&:hover, &:focus-visible);
+@custom-variant hocus {
+	&:hover,
+	&:focus {
+		@slot;
+	}
+}
+
+@custom-variant hocus-visible {
+	&:hover,
+	&:focus-visible {
+		@slot;
+	}
+}
 
 @layer base {
 	.font-display {
