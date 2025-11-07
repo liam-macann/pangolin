@@ -182,9 +182,9 @@ function InvoiceItemsInput({
 		append({
 			label: '',
 			note: '',
-			quantity: '',
+			quantity: '' as unknown as number, // Input condition satisfied, and we want to init empty values
 			unit: null,
-			unitCost: '',
+			unitCost: '' as unknown as number, // Input condition satisfied, and we want to init empty values
 			taxes: new Map(config.tax.map(tax => [tax.id, true])),
 		});
 

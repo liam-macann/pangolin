@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import PdfPrinter from 'pdfmake';
 import { fetchInvoice, getUser } from '@/lib/data';
 import { BottomLayout, CenteredLayout } from '@/lib/pdf-verticalalign';
@@ -27,7 +27,7 @@ const fontSize = {
 const px = (v: number) => (v / 4) * 3;
 const spacing = (i: number) => px(4 * i);
 
-export async function GET(_request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 	const [invoice, user] = await Promise.all([fetchInvoice(id), getUser()]);
 
@@ -326,7 +326,7 @@ export async function GET(_request, { params }: { params: Promise<{ id: string }
 		pdfDoc.on('end', () => resolve(Buffer.concat(chunks)));
 	});
 
-	return new NextResponse(buffer, {
+	return new NextResponse(new Uint8Array(buffer), {
 		status: 200,
 		headers: {
 			'Content-Type': 'application/pdf',
