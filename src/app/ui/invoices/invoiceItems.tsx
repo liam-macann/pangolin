@@ -19,7 +19,7 @@ import {
 	useWatch,
 } from 'react-hook-form';
 import { z } from 'zod';
-import { invoiceItems } from '@/db/schema';
+import { invoiceItems, unitEnum } from '@/db/schema';
 import type { getUserConfig } from '@/lib/data';
 import { cn, formatCurrency, getCurrencySymbol, type Prettify } from '@/lib/utils';
 import { intlNumber } from '@/lib/zod';
@@ -35,18 +35,11 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
-import {
-	Field,
-	FieldContent,
-	FieldError,
-	FieldGroup,
-	FieldLabel,
-	FieldLegend,
-	FieldSet,
-} from '@/ui/field';
+import { Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/ui/field';
 import { Input } from '@/ui/input';
 import {
 	Select,
+	SelectClear,
 	SelectContent,
 	SelectGroup,
 	SelectItem,
@@ -371,7 +364,7 @@ function Sortable({
 											<SelectContent>
 												<SelectGroup>
 													<SelectLabel>Units</SelectLabel>
-													<SelectItem value={null}>–</SelectItem>
+													<SelectClear />
 													{unitEnum.enumValues.map(unit => (
 														<SelectItem key={unit} value={unit}>
 															{unit}

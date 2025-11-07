@@ -105,7 +105,7 @@ function SelectItem({
 	className,
 	children,
 	...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: React.ComponentProps<typeof SelectPrimitive.Item> & { value: string | null }) {
 	return (
 		<SelectPrimitive.Item
 			data-slot='select-item'
@@ -122,6 +122,21 @@ function SelectItem({
 			</span>
 			<SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
 		</SelectPrimitive.Item>
+	);
+}
+
+// What an awful workaround
+function SelectClear({
+	className,
+	children,
+	...props
+}: Omit<React.ComponentProps<typeof SelectPrimitive.Item>, 'value'> & {
+	value?: string;
+}) {
+	return (
+		<SelectItem key={'reset'} value={null as unknown as string} {...props}>
+			{children ?? '–'}
+		</SelectItem>
 	);
 }
 
@@ -173,6 +188,7 @@ export {
 	SelectContent,
 	SelectGroup,
 	SelectItem,
+	SelectClear,
 	SelectLabel,
 	SelectScrollDownButton,
 	SelectScrollUpButton,
