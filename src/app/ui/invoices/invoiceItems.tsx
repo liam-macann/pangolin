@@ -55,14 +55,13 @@ export const itemsArraySchema = z
 			quantity: s =>
 				intlNumber(
 					z.number().min(0, 'Enter a valid quantity').max(10000, 'Too large'),
-					'Please enter a quantity',
+					'Enter quantity',
 				).pipe(s),
 			unitCost: s =>
-				z.coerce
-					.number('Enter a valid cost')
-					.min(-1000000, 'Too small')
-					.max(1000000, 'Too large')
-					.pipe(s),
+				intlNumber(
+					z.number('Enter a valid cost').min(-1000000, 'Too small').max(1000000, 'Too large'),
+					'Enter cost',
+				).pipe(s),
 		})
 			.pick({
 				label: true,
@@ -83,7 +82,10 @@ interface FormValues extends FieldValues {
 	items: ItemField;
 }
 
-type Config = Pick<Awaited<ReturnType<typeof getUserConfig>>, 'currency' | 'locale' | 'tax'>;
+type Config = Pick<
+	Awaited<ReturnType<typeof getUserConfig>>,
+	'currency' | 'locale' | 'tax' | 'taxRegistration'
+>;
 
 export function InvoiceItemsField<T extends FormValues>({
 	className,
@@ -185,7 +187,7 @@ function InvoiceItemsInput({
 			quantity: '' as unknown as number, // Input condition satisfied, and we want to init empty values
 			unit: null,
 			unitCost: '' as unknown as number, // Input condition satisfied, and we want to init empty values
-			taxes: new Map(config.tax.map(tax => [tax.id, true])),
+			taxes: new Map(config.tax.map(tax => [tax.id, config.taxRegistration])),
 		});
 
 	const {
@@ -411,39 +413,44 @@ function Sortable({
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent side='right' sideOffset={12}>
-					<DropdownMenuLabel>Taxes</DropdownMenuLabel>
-					<Controller
-						control={control}
-						name={`items.${index}.taxes`}
-						render={({ field, fieldState }) => (
-							<DropdownMenuGroup>
-								{config.tax.map(tax => {
-									return (
-										<DropdownMenuCheckboxItem
-											key={tax.id}
-											checkbox
-											checked={field.value.get(tax.id)}
-											onSelect={e => e.preventDefault()}
-											onCheckedChange={val => {
-												const update = new Map(getValues(`items.${index}.taxes`));
-												update.set(tax.id, val);
-												field.onChange(update);
-											}}
-											className='justify-between'
-										>
-											{tax.name}
-											<span className='text-muted-foreground'>{tax.rate * 100}%</span>
-										</DropdownMenuCheckboxItem>
-									);
-								})}
-								{fieldState.invalid && (
-									<FieldError className='text-xs' errors={[fieldState.error]} />
+					{config.taxRegistration && config.tax.length > 0 && (
+						<>
+							<DropdownMenuLabel>Taxes</DropdownMenuLabel>
+							<Controller
+								control={control}
+								name={`items.${index}.taxes`}
+								render={({ field, fieldState }) => (
+									<DropdownMenuGroup>
+										{config.tax.map(tax => {
+											return (
+												<DropdownMenuCheckboxItem
+													key={tax.id}
+													checkbox
+													disabled={!config.taxRegistration}
+													checked={field.value.get(tax.id)}
+													onSelect={e => e.preventDefault()}
+													onCheckedChange={val => {
+														const update = new Map(getValues(`items.${index}.taxes`));
+														update.set(tax.id, val);
+														field.onChange(update);
+													}}
+													className='justify-between'
+												>
+													{tax.name}
+													<span className='text-muted-foreground'>{tax.rate * 100}%</span>
+												</DropdownMenuCheckboxItem>
+											);
+										})}
+										{fieldState.invalid && (
+											<FieldError className='text-xs' errors={[fieldState.error]} />
+										)}
+									</DropdownMenuGroup>
 								)}
-							</DropdownMenuGroup>
-						)}
-					/>
+							/>
 
-					<DropdownMenuSeparator />
+							<DropdownMenuSeparator />
+						</>
+					)}
 					<DropdownMenuLabel>Actions</DropdownMenuLabel>
 					<DropdownMenuGroup>{children}</DropdownMenuGroup>
 				</DropdownMenuContent>
