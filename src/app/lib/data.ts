@@ -158,6 +158,24 @@ export async function fetchInvoice(id: string) {
 	const session = await auth();
 
 	try {
+		const taxContributions = db.$with('tax_contributions').as(
+			db
+				.select({
+					taxId: itemTaxes.taxId,
+					contribution:
+						sql`SUM(${invoiceItems.netAmount} * ${taxesSchema.rate} * ${configSchema.taxRegistration}::INT)`
+							.mapWith(Number)
+							.as('contribution'),
+				})
+				.from(invoiceItems)
+				.innerJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
+				.innerJoin(taxesSchema, eq(taxesSchema.id, itemTaxes.taxId))
+				.innerJoin(invoices, eq(invoiceItems.invoiceId, invoices.id))
+				.innerJoin(configSchema, eq(invoices.config, configSchema.id))
+				.where(eq(invoiceItems.invoiceId, id))
+				.groupBy(itemTaxes.taxId),
+		);
+
 		const [[res], tax] = await Promise.all([
 			invoiceQuery(true)
 				.$dynamic()
@@ -166,24 +184,15 @@ export async function fetchInvoice(id: string) {
 
 			// Get all active taxes, and calculate sum for display in the invoice subtotals
 			db
+				.with(taxContributions)
 				.select({
 					name: taxesSchema.name,
 					rate: taxesSchema.rate,
-					contribution:
-						sql`COALESCE(SUM(${invoiceItems.netAmount} * ${taxesSchema.rate} * ${configSchema.taxRegistration}::INT), 0)`.mapWith(
-							Number,
-						),
+					contribution: sql`COALESCE(${taxContributions.contribution}, 0)`.mapWith(Number),
 				})
 				.from(taxesSchema)
-				.leftJoin(itemTaxes, eq(itemTaxes.taxId, taxesSchema.id))
-				.leftJoin(
-					invoiceItems,
-					and(eq(itemTaxes.itemId, invoiceItems.id), eq(invoiceItems.invoiceId, id)),
-				)
-				.leftJoin(invoices, eq(invoiceItems.invoiceId, invoices.id))
-				.leftJoin(configSchema, eq(invoices.config, configSchema.id))
-				.where(eq(taxesSchema.userId, session.user.id))
-				.groupBy(taxesSchema.id, taxesSchema.name, taxesSchema.rate, configSchema.id)
+				.leftJoin(taxContributions, eq(taxContributions.taxId, taxesSchema.id))
+				.where(and(eq(taxesSchema.userId, session.user.id), eq(taxesSchema.deleted, false)))
 				.orderBy(asc(taxesSchema.order), desc(taxesSchema.rate)),
 		]);
 
