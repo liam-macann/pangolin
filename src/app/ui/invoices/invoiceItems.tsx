@@ -296,6 +296,12 @@ function Sortable({
 		],
 	});
 
+	const taxes = useWatch({
+		control,
+		name: `items.${index}.taxes`,
+	});
+	const activeTaxes = taxes.entries().reduce((acc, [_, value]) => acc + Number(value), 0);
+
 	return (
 		<li
 			ref={ref}
@@ -405,11 +411,16 @@ function Sortable({
 				<DropdownMenuTrigger asChild>
 					<Button
 						size='icon'
-						className={cn(isDragging && 'border-ring/70', 'bg-background')}
+						className={cn(isDragging && 'border-ring/70', 'relative bg-background')}
 						variant='outline'
 					>
 						<DotsThreeIcon />
 						<span className='sr-only'>Actions</span>
+						{config.taxRegistration && (
+							<div className='-translate-y-1/2 absolute top-0 right-0 flex h-4.5 min-w-4.5 translate-x-1/2 items-center justify-center rounded-full border bg-background px-1 text-muted-foreground text-xs'>
+								{activeTaxes}
+							</div>
+						)}
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent side='right' sideOffset={12}>
