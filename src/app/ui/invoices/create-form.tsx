@@ -50,7 +50,15 @@ const schema = createInsertSchema(invoicesSchema, {
 	issuedAt: z.date({ error: 'Please enter an issue date' }),
 	dueAt: z.date({ error: 'Please enter a due date' }),
 })
-	.omit({ createdAt: true, status: true, userId: true, id: true })
+	.pick({
+		clientId: true,
+		title: true,
+		description: true,
+		notes: true,
+		issuedAt: true,
+		dueAt: true,
+		status: true,
+	})
 	.extend({
 		items: itemsArraySchema,
 	});
@@ -82,15 +90,25 @@ export function CreateInvoiceDialog({
 			clientId: '',
 			issuedAt: new Date(),
 			dueAt: new Date(new Date().setDate(new Date().getDate() + 14)),
-			config: config.id,
 			items: [],
 			title: '',
 			description: '',
+			status: 'unpaid',
 		},
 	});
-	async function onSubmit(values: z.input<typeof schema>) {
+
+	async function onSubmit({ items, ...invoice }: z.input<typeof schema>) {
+		console.log('onSubmit', invoice);
+
 		const result = createInvoice({
-			...values,
+			invoice,
+			items: items.map(item => ({
+				...item,
+				taxes: item.taxes.entries().reduce((acc: string[], [id, status]) => {
+					if (status) acc.push(id);
+					return acc;
+				}, []),
+			})),
 		}).then(() => {
 			setOpen(false);
 			form.reset();
@@ -102,6 +120,7 @@ export function CreateInvoiceDialog({
 			error: 'Failed to create invoice',
 		});
 	}
+
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
@@ -267,7 +286,7 @@ export function CreateInvoiceDialog({
 				</form>
 
 				<DialogFooter>
-					<Button variant='primary' onClick={form.handleSubmit(onSubmit)}>
+					<Button variant='primary' type='submit' onClick={form.handleSubmit(onSubmit)}>
 						Submit
 					</Button>
 					<DialogClose

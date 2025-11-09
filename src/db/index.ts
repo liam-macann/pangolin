@@ -1,10 +1,14 @@
-import { drizzle } from 'drizzle-orm/neon-http';
+import { Pool } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
 import * as relations from './relations';
 import * as schema from './schema';
 
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
 export const db = drizzle({
-	// biome-ignore lint/style/noNonNullAssertion: Connection URL is guaranteed to be defined in production
-	connection: process.env.DATABASE_URL!,
+	client: pool,
 	schema: { ...schema, ...relations },
 	casing: 'snake_case',
 });
+
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];

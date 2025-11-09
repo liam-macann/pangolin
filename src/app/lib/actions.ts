@@ -1,21 +1,23 @@
 'use server';
 
-import { type AnyColumn, and, eq, isNull, sql } from 'drizzle-orm';
-import { createInsertSchema, createUpdateSchema } from 'drizzle-zod';
+import { type AnyColumn, and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { createInsertSchema } from 'drizzle-zod';
 import { revalidatePath } from 'next/cache';
 import { AuthError } from 'next-auth';
+import { v4 as uuid } from 'uuid';
 import z from 'zod';
 import { auth, signIn } from '@/auth';
 import { db } from '@/db';
 import {
 	config as configSchema,
-	// invoiceCount,
-	invoices,
+	invoiceCount,
+	invoiceItems,
 	invoices as invoicesSchema,
+	itemTaxes,
 	taxes as taxesSchema,
 } from '@/db/schema';
-// import { getUserConfig } from '@/lib/data';
 import type { Prettify } from '@/lib/utils';
+import { jsonbBuildObject } from './utils/drizzle';
 
 export type State =
 	| {
@@ -31,23 +33,59 @@ export type State =
 			message: string;
 	  };
 
-// const increment = (column: AnyColumn, value = 1) => sql`${column} + ${value}`;
+const increment = (column: AnyColumn, value = 1) => sql`${column} + ${value}`;
 
-export async function createInvoice(
-	data: Prettify<Pick<typeof invoicesSchema.$inferInsert, 'clientId'>>,
-): Promise<State> {
+type InvoiceData = Pick<
+	typeof invoicesSchema.$inferInsert,
+	'clientId' | 'title' | 'description' | 'notes'
+> & {
+	// These are naively accepted in timezone of record, truncated to only date. createdAt stores a tz timestamp.
+	issuedAt?: Date;
+	dueAt: Date;
+	status?: (typeof invoicesSchema.$inferInsert)['status'];
+};
+
+type InvoiceItemData = Pick<
+	typeof invoiceItems.$inferInsert,
+	'label' | 'note' | 'quantity' | 'unit' | 'unitCost' | 'order'
+>;
+
+interface CreateInvoiceData {
+	invoice: InvoiceData;
+
+	items: (InvoiceItemData & {
+		/** Supply applicable taxes as array of tax IDs */
+		taxes: string[];
+	})[];
+}
+
+export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 	const session = await auth();
 
-	const inputSchema = createInsertSchema(invoicesSchema).omit({
-		index: true,
-		yearIndex: true,
-		config: true,
-		issueYear: true,
-	});
+	// Pre request validation. Validation has also been performed on the client side.
+	const inputSchema = createInsertSchema(invoicesSchema, {
+		issuedAt: s => s.nullable(), // Has default set in transaction logic (current date in timezone of record)
+	})
+		// Omit generated fields
+		.omit({
+			id: true,
+			index: true,
+			yearIndex: true,
+			config: true,
+			createdAt: true,
+		});
 
+	// Explicit about accepted input to prevent injecting via spread operator
 	const defaults: z.infer<typeof inputSchema> = {
-		status: 'unpaid',
-		...data,
+		clientId: invoice.clientId,
+		title: invoice.title,
+		description: invoice.description,
+		status: invoice.status || 'unpaid',
+		notes: invoice.notes,
+		issuedAt: invoice.issuedAt?.toISOString() || null,
+		dueAt: invoice.dueAt.toISOString(),
+
+		// Ensure invoice is created for authenticated user, not supplied ID
 		userId: session.user.id,
 	};
 
@@ -55,114 +93,141 @@ export async function createInvoice(
 	const validated = inputSchema.safeParse(defaults);
 
 	// If form validation fails, return errors early. Otherwise, continue.
-	if (!validated.success)
-		throw new Error('Failed to create invoice. Please ensure all fields are valid.');
+	if (!validated.success) throw new Error('Failed to create invoice. Ensure all fields are valid.');
 
-	try {
-		throw new Error('Function not implemented');
-		// await db.transaction(async tx => {
-		// 	const config = await getUserConfig(tx);
+	return db
+		.transaction(async tx => {
+			const tzSubquery = tx
+				.select({ timezone: configSchema.timezone })
+				.from(configSchema)
+				.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo)))
+				.orderBy(desc(configSchema.validFrom))
+				.limit(1)
+				.getSQL();
 
-		// 	// Upsert: increment user invoice count
-		// 	const count = await tx
-		// 		.insert(invoiceCount)
-		// 		.values({
-		// 			userId: validated.data.userId,
-		// 			count: 1,
-		// 			yearCount: 1,
-		// 		})
-		// 		.onConflictDoUpdate({
-		// 			target: invoiceCount.userId,
-		// 			set: {
-		// 				userId: validated.data.userId,
-		// 				count: increment(invoiceCount.count),
-		// 				yearCount: sql`
-		// 					CASE
-		// 					  -- Evaluate against config time zone. If the year is after the tracked date, reset the yearly counter.
-		//               WHEN EXTRACT(YEAR FROM transaction_timestamp() AT TIME ZONE ${config.timezone})
-		//                   > EXTRACT(YEAR FROM ${invoiceCount.updatedAt} AT TIME ZONE ${config.timezone})
-		//               THEN 1
+			// Upsert watermark table with invoice count
+			const [count] = await tx
+				.insert(invoiceCount)
+				.values({
+					userId: session.user.id,
+					updatedAt: sql`transaction_timestamp()`,
+					count: 1,
+					yearCount: 1,
+				})
+				.onConflictDoUpdate({
+					target: invoiceCount.userId,
+					set: {
+						updatedAt: sql`transaction_timestamp()`,
+						count: increment(invoiceCount.count),
+						yearCount: sql`
+        				CASE
+      				  -- Evaluate against config time zone. If the year is after the tracked date, reset the yearly counter.
+                    WHEN EXTRACT(YEAR FROM transaction_timestamp() AT TIME ZONE (${tzSubquery}))
+                      > EXTRACT(YEAR FROM ${invoiceCount.updatedAt} AT TIME ZONE (${tzSubquery}))
+                    THEN 1
+                    -- Evaluate against config time zone. If the year is the same, increment the year count.
+                    WHEN EXTRACT(YEAR FROM transaction_timestamp() AT TIME ZONE (${tzSubquery}))
+                        = EXTRACT(YEAR FROM ${invoiceCount.updatedAt} AT TIME ZONE (${tzSubquery}))
+                    THEN ${invoiceCount.yearCount} + 1
+                    -- If now() is before the tracked date, do nothing.
+                    ELSE ${invoiceCount.yearCount}
+                END
+                `,
+					},
+					where: and(eq(invoiceCount.userId, session.user.id)),
+				})
+				.returning({
+					count: invoiceCount.count,
+					yearCount: invoiceCount.yearCount,
+				});
 
-		//               -- Evaluate against config time zone. If the year is the same, increment the year count.
-		//               WHEN EXTRACT(YEAR FROM transaction_timestamp() AT TIME ZONE ${config.timezone})
-		//                   = EXTRACT(YEAR FROM ${invoiceCount.updatedAt} AT TIME ZONE ${config.timezone})
-		//               THEN ${invoiceCount.yearCount} + 1
+			// CTE, executed within insert to retrieve current valid config
+			const c = tx.$with('active_config').as(
+				tx
+					.select({
+						id: configSchema.id,
+						userId: configSchema.userId,
+						timezone: configSchema.timezone,
+						taxRegistration: configSchema.taxRegistration,
+					})
+					.from(configSchema)
+					.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo)))
+					.orderBy(desc(configSchema.validFrom))
+					.limit(1),
+			);
 
-		//               -- If now() is before the tracked date, do nothing.
-		//               ELSE ${invoiceCount.yearCount}
-		//             END
-		//             `,
-		// 				updatedAt: sql`transaction_timestamp()`,
-		// 			},
-		// 		})
-		// 		.returning()
-		// 		.then(v => v[0]);
+			const [insertedInvoice] = await tx
+				.with(c)
+				.insert(invoicesSchema)
+				.values([
+					{
+						userId: validated.data.userId,
+						clientId: validated.data.clientId,
 
-		// 	await tx.insert(invoices).values({
-		// 		...validated.data,
-		// 		index: count.count,
-		// 		yearIndex: count.yearCount,
-		// 		config: config.id,
-		// 		issueYear: sql`EXTRACT(YEAR FROM transaction_timestamp() AT TIME ZONE ${config.timezone})`,
-		// 	});
-		// });
-	} catch (err) {
-		console.error(err);
-		throw new Error(`Database Error: failed to create invoice`);
-	}
+						title: validated.data.title,
+						description: validated.data.description,
+						status: validated.data.status,
+						notes: validated.data.notes,
 
-	// Revalidate the cache for the invoices page
-	// revalidatePath('/dashboard/invoices');
+						issuedAt:
+							validated.data.issuedAt ||
+							sql`transaction_timestamp() AT TIME ZONE (SELECT timezone from ${c})`,
+						dueAt: validated.data.dueAt,
 
-	// return {
-	// 	success: true,
-	// 	message: 'Invoice created',
-	// };
-}
+						index: count.count,
+						yearIndex: count.yearCount,
 
-const updateInvoiceSchema = createUpdateSchema(invoices).omit({ id: true });
-export async function updateInvoice(id: string, data: z.input<typeof updateInvoiceSchema>) {
-	const session = await auth();
-	console.log(session);
-	if (!session?.user?.id) {
-		return {
-			success: false,
-			message: 'User is not authenticated',
-		};
-	}
+						config: sql<string>`(SELECT id from ${c})`,
+					},
+				])
+				.returning({
+					id: invoicesSchema.id,
+					config: jsonbBuildObject({
+						taxRegistration: sql<boolean>`(SELECT tax_registration from ${c})`,
+					}),
+				});
 
-	const { success, error, data: validated } = updateInvoiceSchema.safeParse(data);
+			// Necessary to have stable ID to link taxes with items
+			const itemsWithId = items.map((item, i) => ({
+				...item,
+				id: uuid(),
+				order: i,
+			}));
 
-	if (!success) {
-		return {
-			success: false,
-			errors: z.flattenError(error),
-			message: 'Invalid fields. Failed to update invoice.',
-		};
-	}
+			// Insert items for invoice
+			await tx
+				.insert(invoiceItems)
+				.values(
+					itemsWithId.map(i => ({
+						id: i.id,
+						invoiceId: insertedInvoice.id,
 
-	if (Object.keys(validated).length === 0) {
-		return {
-			success: true,
-			message: 'No fields to update',
-		};
-	}
+						label: i.label,
+						note: i.note,
 
-	try {
-		await db.update(invoices).set(validated).where(eq(invoices.id, id));
-	} catch (_error) {
-		return {
-			success: false,
-			message: 'Database Error: Failed to update invoice',
-		};
-	}
+						quantity: i.quantity,
+						unit: i.unit,
+						unitCost: i.unitCost,
 
-	revalidatePath('/dashboard/invoices');
-
-	return {
-		success: true,
-		message: 'Invoice amended',
-	};
+						order: i.order,
+					})),
+				)
+				.then(async () => {
+					// Link items with taxes, if registered
+					if (insertedInvoice.config.taxRegistration) {
+						await tx
+							.insert(itemTaxes)
+							.values(
+								itemsWithId.flatMap(item => item.taxes.map(taxId => ({ itemId: item.id, taxId }))),
+							);
+					}
+				});
+		})
+		.then(() => revalidatePath('/dashboard/invoices'))
+		.catch(err => {
+			console.error(err);
+			throw new Error(`Database Error: failed to create invoice`);
+		});
 }
 
 export async function authenticate(_prevState: string | undefined, formData: FormData) {
