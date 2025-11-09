@@ -1,6 +1,6 @@
 import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import bcrypt from 'bcrypt';
-import NextAuth, { type Session, type User } from 'next-auth';
+import NextAuth, { type Session as NextAuthSession, type User } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import GitHub from 'next-auth/providers/github';
 import Google from 'next-auth/providers/google';
@@ -98,11 +98,13 @@ export const {
 });
 
 /** Authenticate the user, returning the session or redirecting to login */
-export async function auth(): Promise<Session & { user: User }> {
+export async function auth(): Promise<Session> {
 	return _auth().then(session => {
 		if (!session?.user?.id) redirect('/auth/login');
 
 		// Safe assertion, due to previous check
-		return session as Session & { user: User };
+		return session as Session;
 	});
 }
+
+export type Session = NextAuthSession & { user: User };

@@ -37,40 +37,31 @@ function AvatarFallback({
 	);
 }
 
-import Placeholder from 'boring-avatars';
+import type { Session } from '@/auth';
 
-export default function GeneratedAvatar({
-	email,
+export default function UserAvatar({
+	user,
+	className,
 	...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root> & { email: string }) {
+}: React.ComponentProps<typeof AvatarPrimitive.Root> & { user: Session['user'] }) {
 	return (
-		<Avatar {...props}>
-			<Gravatar email={email} />
+		<Avatar className={cn('!bg-gray-4 size-full', className)} {...props}>
+			{user.image && <AvatarImage src='/api/avatar' />}
 			<AvatarFallback>
-				<Placeholder
-					className='size-full'
-					name={email}
-					colors={['#f8dac2', '#f2a297', '#f4436f', '#ca1444', '#142738']}
-					variant='marble'
-				/>
+				<UserIcon className='size-1/2' />
 			</AvatarFallback>
 		</Avatar>
 	);
 }
 
-async function Gravatar({ email }: { email: string }) {
+export function AvatarEmpty({
+	className,
+	...props
+}: React.ComponentProps<typeof AvatarPrimitive.Root>) {
 	return (
-		<AvatarImage
-			src={`https://seccdn.libravatar.org/avatar/${await md5(email.trim().toLowerCase())}?d=404`}
-		/>
-	);
-}
-
-export function AvatarEmpty({ ...props }: React.ComponentProps<typeof AvatarPrimitive.Root>) {
-	return (
-		<Avatar {...props}>
+		<Avatar className={cn('!bg-gray-4 size-full', className)} {...props}>
 			<AvatarFallback>
-				<UserIcon />
+				<UserIcon className='size-1/2' />
 			</AvatarFallback>
 		</Avatar>
 	);

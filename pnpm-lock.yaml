@@ -92,9 +92,6 @@ importers:
       bcrypt:
         specifier: ^5.1.1
         version: 5.1.1
-      boring-avatars:
-        specifier: ^2.0.1
-        version: 2.0.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -1555,12 +1552,6 @@ packages:
 
   binary-searching@2.0.5:
     resolution: {integrity: sha512-v4N2l3RxL+m4zDxyxz3Ne2aTmiPn8ZUpKFpdPtO+ItW1NcTCXA7JeHG5GMBSvoKSkQZ9ycS+EouDVxYB9ufKWA==}
-
-  boring-avatars@2.0.1:
-    resolution: {integrity: sha512-TeBnZrp7WxHcQPuLhGQamklgNqaL7eUAUh3E11kFj9rTn0Hari2ZKVTchqNrp62UOHN/XOe5bZGcbzVGwHjHwg==}
-    peerDependencies:
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
 
   brace-expansion@1.1.11:
     resolution: {integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==}
@@ -3929,11 +3920,6 @@ snapshots:
       - supports-color
 
   binary-searching@2.0.5: {}
-
-  boring-avatars@2.0.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
-    dependencies:
-      react: 19.1.0
-      react-dom: 19.1.0(react@19.1.0)
 
   brace-expansion@1.1.11:
     dependencies:

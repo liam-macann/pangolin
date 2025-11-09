@@ -27,8 +27,8 @@ export default async function Page() {
 				</nav>
 				<section className='mb-12 flex w-full flex-col gap-12'>
 					<div>
-						<div className='flex items-center gap-12 rounded-lg border bg-card p-6 px-8'>
-							<Avatar className='size-12' email={config.user.email} />
+						<div className='flex items-center gap-6 rounded-lg border bg-card p-6 px-8 sm:gap-12'>
+							<Avatar className='size-12' user={config.user} />
 							<div className='flex flex-col'>
 								<p className='font-semibold text-lg'>{config.user.name}</p>
 								<p className='text-muted-foreground'>{config.user.email}</p>
@@ -36,15 +36,7 @@ export default async function Page() {
 						</div>
 
 						<p className='mt-3 text-muted-foreground text-sm'>
-							You may update your profile picture on{' '}
-							<a className='link' href='https://gravatar.com/'>
-								Gravatar
-							</a>{' '}
-							or{' '}
-							<a className='link' href='https://libravatar.org/'>
-								Libravatar
-							</a>
-							.
+							You may update your profile picture through your linked identity provider.
 						</p>
 					</div>
 

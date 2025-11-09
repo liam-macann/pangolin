@@ -52,9 +52,9 @@ async function AccountMenuContent() {
 			<DropdownMenuTrigger asChild>
 				<Button
 					variant='ghost'
-					className='!bg-gray-4 relative size-8 cursor-pointer overflow-hidden rounded-full'
+					className='relative m-0 size-8 cursor-pointer overflow-hidden rounded-full p-0'
 				>
-					<Avatar email={session.user.email || ''} />
+					<Avatar className='absolute inset-0' user={session.user} />
 					<div className='sr-only'>Account</div>
 				</Button>
 			</DropdownMenuTrigger>

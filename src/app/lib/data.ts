@@ -257,7 +257,18 @@ export async function getUserConfig() {
 
 		const { tax, ...user } = settings.user;
 
-		return { ...settings, user, tax };
+		return {
+			...settings,
+			// Omit return of (hashed) password
+			user: {
+				email: user.email,
+				emailVerified: user.emailVerified,
+				id: user.id,
+				image: user.image,
+				name: user.name,
+			},
+			tax,
+		};
 	} catch (error) {
 		console.error('Failed to fetch config:', error);
 		throw new Error('Failed to fetch config.');
