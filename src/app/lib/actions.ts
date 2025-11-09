@@ -249,10 +249,13 @@ export async function authenticate(_prevState: string | undefined, formData: For
 /** Minimal insertion record for database configuration, excluding generated fields */
 type TaxesSchema = Prettify<Pick<typeof taxesSchema.$inferInsert, 'name' | 'rate' | 'deleted'>>;
 
-/** Accepts array of tax data for the authenticated user. Sensitive to insertion order.
+/** Accepts array of tax data for a given user.
  *
- * Pushes provided state, and not merely changes (ie. implicit deletion of all existing taxes) */
-function buildUpdateUserTaxes(taxes: TaxesSchema[], userId: string) {
+ * Pushes provided state, and not merely changes (ie. implicit deletion of all existing taxes)
+ *
+ * @internal
+ */
+function updateUserTaxesCTEs(taxes: TaxesSchema[], userId: string) {
 	// Validate the input data
 	const safeTaxes = z
 		.array(
@@ -274,35 +277,24 @@ function buildUpdateUserTaxes(taxes: TaxesSchema[], userId: string) {
 	}));
 
 	return [
-		// Reset all taxes to deleted. This avoids having to manage insert and modification state, with reconciliation.
 		db
-			.update(taxesSchema)
-			.set({ deleted: true })
-			.where(eq(taxesSchema.userId, userId)),
-		// Upsertion of provided values
-		...(values.length > 0
-			? [
-					db
-						.insert(taxesSchema)
-						.values(values)
-						.onConflictDoUpdate({
-							target: [taxesSchema.userId, taxesSchema.name, taxesSchema.rate],
-							set: { deleted: sql`excluded.deleted`, order: sql`excluded.order` },
-						}),
-				]
-			: []),
-	] as const;
-}
+			// Reset all taxes to deleted. This avoids reconciliation (input taxes are representative of desired state)
+			.$with('reset_taxes')
+			.as(db.update(taxesSchema).set({ deleted: true }).where(eq(taxesSchema.userId, userId))),
 
-/** Accepts array of tax data for the authenticated user. Sensitive to insertion order.
- *
- * Pushes provided state, and not merely changes (ie. implicit deletion of all existing taxes) */
-export async function updateUserTaxes(taxes: TaxesSchema[]) {
-	// Authenticate the user
-	const session = await auth();
-	if (!session?.user?.id) throw new Error('User is not authenticated');
-
-	return db.batch(buildUpdateUserTaxes(taxes, session.user.id));
+		db
+			// Push new state
+			.$with('update_taxes')
+			.as(
+				db
+					.insert(taxesSchema)
+					.values(values)
+					.onConflictDoUpdate({
+						target: [taxesSchema.userId, taxesSchema.name, taxesSchema.rate],
+						set: { deleted: sql`excluded.deleted`, order: sql`excluded.order` },
+					}),
+			),
+	];
 }
 
 /** Complete insertion record for database configuration, excluding generated fields */
@@ -326,16 +318,25 @@ export async function updateUserConfig(config: ConfigSchema, taxes?: TaxesSchema
 		.strict()
 		.parse(config);
 
+	const ctes = [
+		// Void previously active config
+		db
+			.$with('void_config')
+			.as(
+				db
+					.update(configSchema)
+					.set({ validTo: sql`now()` })
+					.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo))),
+			),
+		// Push new tax config
+		...(taxes ? updateUserTaxesCTEs(taxes, session.user.id) : []),
+	];
+
 	// Executes as implicit transaction
 	return db
-		.batch([
-			db
-				.update(configSchema)
-				.set({ validTo: sql`now()` })
-				.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo))),
-			db.insert(configSchema).values({ ...safeConfig, userId: session.user.id }),
-			...(taxes ? buildUpdateUserTaxes(taxes, session.user.id) : []),
-		])
+		.with(...ctes)
+		.insert(configSchema)
+		.values({ ...safeConfig, userId: session.user.id })
 		.then(() => {
 			// Revalidate the cache for the invoices page, where the formatting may have changed.
 			revalidatePath('/dashboard/invoices');
