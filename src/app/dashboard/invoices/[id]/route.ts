@@ -36,7 +36,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 	}
 
 	const fonts = {
-		Roboto: {
+		InstrumentSans: {
 			normal: path.resolve('./public/InstrumentSans-Regular.ttf'),
 			bold: path.resolve('./public/InstrumentSans-Semibold.ttf'),
 		},
@@ -67,6 +67,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 			modDate: invoice.createdAt,
 		},
 		pageSize: 'A4',
+		defaultStyle: { font: 'InstrumentSans' },
 		pageMargins,
 		footer: (_currentPage, _pageCount) => {
 			return {
