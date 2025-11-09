@@ -9,7 +9,10 @@ function Input({
 	prefix,
 	suffix,
 	...props
-}: React.ComponentProps<'input'> & { prefix?: React.ReactNode; suffix?: React.ReactNode }) {
+}: Omit<React.ComponentProps<'input'>, 'prefix' | 'suffix'> & {
+	prefix?: React.ReactNode;
+	suffix?: React.ReactNode;
+}) {
 	const ref = React.useRef<HTMLInputElement>(null);
 
 	return (

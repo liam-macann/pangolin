@@ -73,7 +73,7 @@ export function CreateInvoiceDialog({
 	config: Prettify<
 		Pick<
 			Awaited<ReturnType<typeof getUserConfig>>,
-			'id' | 'currency' | 'locale' | 'timezone' | 'tax'
+			'id' | 'currency' | 'locale' | 'timezone' | 'tax' | 'taxRegistration'
 		>
 	>;
 }) {
