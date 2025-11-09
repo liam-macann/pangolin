@@ -278,10 +278,10 @@ function Sortable({
 	item,
 	index,
 	control,
-	getValues,
-	children,
 	disabled = false,
 	config,
+	getValues,
+	children,
 }: SortableProps) {
 	const ref = useRef<HTMLLIElement>(null);
 
@@ -296,12 +296,6 @@ function Sortable({
 		],
 	});
 
-	const taxes = useWatch({
-		control,
-		name: `items.${index}.taxes`,
-	});
-	const activeTaxes = taxes.entries().reduce((acc, [_, value]) => acc + Number(value), 0);
-
 	return (
 		<li
 			ref={ref}
@@ -314,8 +308,9 @@ function Sortable({
 		>
 			<Button
 				variant='link'
-				className={cn('-ml-2.5 focus:!ring-0 group', disabled && 'cursor-not-allowed opacity-50')}
+				className={cn('-ml-2.5 focus:!ring-0 group')}
 				size='icon'
+				disabled={disabled}
 				ref={handleRef}
 			>
 				<DotsSixIcon
@@ -407,65 +402,93 @@ function Sortable({
 					</Field>
 				)}
 			/>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button
-						size='icon'
-						className={cn(isDragging && 'border-ring/70', 'relative bg-background')}
-						variant='outline'
-					>
-						<DotsThreeIcon />
-						<span className='sr-only'>Actions</span>
-						{config.taxRegistration && (
-							<div className='-translate-y-1/2 absolute top-0 right-0 flex h-4.5 min-w-4.5 translate-x-1/2 items-center justify-center rounded-full border bg-background px-1 text-muted-foreground text-xs'>
-								{activeTaxes}
-							</div>
-						)}
-					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent side='right' sideOffset={12}>
-					{config.taxRegistration && config.tax.length > 0 && (
-						<>
-							<DropdownMenuLabel>Taxes</DropdownMenuLabel>
-							<Controller
-								control={control}
-								name={`items.${index}.taxes`}
-								render={({ field, fieldState }) => (
-									<DropdownMenuGroup>
-										{config.tax.map(tax => {
-											return (
-												<DropdownMenuCheckboxItem
-													key={tax.id}
-													checkbox
-													disabled={!config.taxRegistration}
-													checked={field.value.get(tax.id)}
-													onSelect={e => e.preventDefault()}
-													onCheckedChange={val => {
-														const update = new Map(getValues(`items.${index}.taxes`));
-														update.set(tax.id, val);
-														field.onChange(update);
-													}}
-													className='justify-between'
-												>
-													{tax.name}
-													<span className='text-muted-foreground'>{tax.rate * 100}%</span>
-												</DropdownMenuCheckboxItem>
-											);
-										})}
-										{fieldState.invalid && (
-											<FieldError className='text-xs' errors={[fieldState.error]} />
-										)}
-									</DropdownMenuGroup>
-								)}
-							/>
-
-							<DropdownMenuSeparator />
-						</>
-					)}
-					<DropdownMenuLabel>Actions</DropdownMenuLabel>
-					<DropdownMenuGroup>{children}</DropdownMenuGroup>
-				</DropdownMenuContent>
-			</DropdownMenu>
+			<SortableActions
+				className={cn(isDragging && 'border-ring/70')}
+				getValues={getValues}
+				config={config}
+				control={control}
+				index={index}
+			>
+				{children}
+			</SortableActions>
 		</li>
+	);
+}
+
+// Isolate re-render due to field watch
+function SortableActions({
+	className,
+	index,
+	control,
+	config,
+	getValues,
+	children,
+}: { className?: string } & Pick<
+	SortableProps,
+	'index' | 'control' | 'config' | 'getValues' | 'children'
+>) {
+	const taxes = useWatch({
+		control,
+		name: `items.${index}.taxes`,
+	});
+
+	const activeTaxes = taxes.entries().reduce((acc, [_, value]) => acc + Number(value), 0);
+
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button size='icon' className={cn('relative bg-background', className)} variant='outline'>
+					<DotsThreeIcon />
+					<span className='sr-only'>Actions</span>
+					{config.taxRegistration && (
+						<div className='-translate-y-1/2 absolute top-0 right-0 flex h-4.5 min-w-4.5 translate-x-1/2 items-center justify-center rounded-full border bg-background px-1 text-muted-foreground text-xs'>
+							{activeTaxes}
+						</div>
+					)}
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent side='right' sideOffset={12}>
+				{config.taxRegistration && config.tax.length > 0 && (
+					<>
+						<DropdownMenuLabel>Taxes</DropdownMenuLabel>
+						<Controller
+							control={control}
+							name={`items.${index}.taxes`}
+							render={({ field, fieldState }) => (
+								<DropdownMenuGroup>
+									{config.tax.map(tax => {
+										return (
+											<DropdownMenuCheckboxItem
+												key={tax.id}
+												checkbox
+												disabled={!config.taxRegistration}
+												checked={field.value.get(tax.id)}
+												onSelect={e => e.preventDefault()}
+												onCheckedChange={val => {
+													const update = new Map(getValues(`items.${index}.taxes`));
+													update.set(tax.id, val);
+													field.onChange(update);
+												}}
+												className='justify-between'
+											>
+												{tax.name}
+												<span className='text-muted-foreground'>{tax.rate * 100}%</span>
+											</DropdownMenuCheckboxItem>
+										);
+									})}
+									{fieldState.invalid && (
+										<FieldError className='text-xs' errors={[fieldState.error]} />
+									)}
+								</DropdownMenuGroup>
+							)}
+						/>
+
+						<DropdownMenuSeparator />
+					</>
+				)}
+				<DropdownMenuLabel>Actions</DropdownMenuLabel>
+				<DropdownMenuGroup>{children}</DropdownMenuGroup>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }
