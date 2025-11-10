@@ -37,8 +37,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
 	const fonts = {
 		InstrumentSans: {
-			normal: path.resolve('./public/InstrumentSans-Regular.ttf'),
-			bold: path.resolve('./public/InstrumentSans-Semibold.ttf'),
+			normal: path.resolve('./src/fonts/InstrumentSans-Regular.ttf'),
+			bold: path.resolve('./src/fonts/InstrumentSans-Semibold.ttf'),
 		},
 	};
 

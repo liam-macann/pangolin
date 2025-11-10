@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang='en' className={InstrumentSans.className}>
+		<html lang='en' className={InstrumentSans.variable}>
 			<MotionConfig reducedMotion='user'>
 				<body className={`bg-background font-sans antialiased`}>
 					{children}

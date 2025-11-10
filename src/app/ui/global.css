@@ -10,11 +10,11 @@
 		ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
 		"Noto Color Emoji";
 
-	--font-sans: "Instrument Sans", var(--font-system);
+	--font-sans: var(--instrument-sans, "Instrument Sans"), var(--font-system);
 	--font-sans--font-variation-settings: "wdth" 94;
 	--font-sans--font-feature-settings: "liga", "ss04", "ss05";
 
-	--font-display: "Instrument Sans", var(--font-system);
+	--font-display: var(--instrument-sans, "Instrument Sans"), var(--font-system);
 	--font-display--font-variation-settings: "wdth" 84;
 	--font-display--font-feature-settings: "liga", "ss04", "ss05";
 
