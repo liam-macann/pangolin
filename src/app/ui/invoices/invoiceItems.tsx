@@ -4,10 +4,10 @@ import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
 import { RestrictToElement } from '@dnd-kit/dom/modifiers';
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable, useSortable } from '@dnd-kit/react/sortable';
-
 import { DotsSixIcon, DotsThreeIcon } from '@phosphor-icons/react';
 import { createInsertSchema } from 'drizzle-zod';
-import { useRef } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useRef, useState } from 'react';
 import {
 	type Control,
 	Controller,
@@ -221,24 +221,26 @@ function InvoiceItemsInput({
 						}}
 					>
 						<ul className='flex flex-col'>
-							{fields.map((item, i) => (
-								<Sortable
-									control={control}
-									getValues={getValues}
-									key={item.id}
-									item={item}
-									index={i}
-									disabled={fields.length < 2}
-									config={config}
-								>
-									<DropdownMenuItem onClick={() => insert(i + 1, getValues(`items.${i}`))}>
-										Duplicate
-									</DropdownMenuItem>
-									<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
-										Delete
-									</DropdownMenuItem>
-								</Sortable>
-							))}
+							<AnimatePresence>
+								{fields.map((item, i) => (
+									<Sortable
+										control={control}
+										getValues={getValues}
+										key={item.id}
+										item={item}
+										index={i}
+										disabled={fields.length < 2}
+										config={config}
+									>
+										<DropdownMenuItem onClick={() => insert(i + 1, getValues(`items.${i}`))}>
+											Duplicate
+										</DropdownMenuItem>
+										<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
+											Delete
+										</DropdownMenuItem>
+									</Sortable>
+								))}
+							</AnimatePresence>
 						</ul>
 					</DragDropProvider>
 
@@ -297,121 +299,145 @@ function Sortable({
 	});
 
 	return (
-		<li
+		<motion.li
 			ref={ref}
-			className={cn(
-				'relative grid origin-center grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2 border-border border-y border-t-transparent border-dotted py-3',
-				'bg-background transition-colors',
-				isDragging &&
-					'not-first:not-[[style*="--dnd-translate:_0px_0px_0"]]:border-t-border *:drop-shadow-black/7 *:drop-shadow-md *:transition-all',
-			)}
+			className={cn('bg-background', 'group/sortable')}
+			initial={{ height: 0, opacity: 0, pointerEvents: 'none' }}
+			animate={{ height: 'auto', scale: 1, opacity: 1, pointerEvents: 'auto' }}
+			exit={{ height: 0, opacity: 0, pointerEvents: 'none' }}
+			transition={{ duration: 0.1, ease: 'easeOut' }}
+			key={item.id}
 		>
-			<Button
-				variant='link'
-				className={cn('-ml-2.5 focus:!ring-0 group touch-manipulation')}
-				size='icon'
-				disabled={disabled}
-				ref={handleRef}
+			<motion.div
+				className={cn(
+					'relative grid origin-top grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2 border-border border-y border-t-transparent border-dotted py-3 *:transition-[filter]',
+					isDragging && '*:drop-shadow-black/7 *:drop-shadow-md',
+					'group-not-first/sortable:group-[[style*="--dnd-translate"]]/sortable:group-not-[[style*="--dnd-translate:_0px_0px_0"]]/sortable:border-t-border',
+				)}
+				initial={{
+					opacity: 0,
+					scale: 0.98,
+					filter: 'blur(4px)',
+				}}
+				animate={{
+					opacity: 1,
+					scale: 1,
+					filter: 'blur(0px)',
+				}}
+				exit={{
+					opacity: 0,
+					scale: 0.98,
+					filter: 'blur(4px)',
+				}}
+				transition={{ duration: 0.08, ease: 'easeOut' }}
 			>
-				<DotsSixIcon
+				<Button
+					variant='link'
+					className={cn('-ml-2.5 focus:!ring-0 group touch-manipulation')}
+					size='icon'
+					disabled={disabled}
 					ref={handleRef}
-					className={cn(
-						'inline-block size-6 h-8 self-center',
-						'rounded p-1 group-focus-visible:ring-2 group-focus-visible:ring-ring/50',
+				>
+					<DotsSixIcon
+						ref={handleRef}
+						className={cn(
+							'inline-block size-6 h-8 self-center',
+							'rounded p-1 group-focus-visible:ring-2 group-focus-visible:ring-ring/50',
+						)}
+					/>
+				</Button>
+				<Controller
+					control={control}
+					name={`items.${index}.label`}
+					render={({ field, fieldState }) => (
+						<Field className='gap-0.5' data-invalid={fieldState.invalid}>
+							<Input
+								type='text'
+								className={cn(isDragging && 'border-ring/70', 'transition-colors')}
+								placeholder='Description'
+								{...field}
+							/>
+							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
+						</Field>
 					)}
 				/>
-			</Button>
-			<Controller
-				control={control}
-				name={`items.${index}.label`}
-				render={({ field, fieldState }) => (
-					<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-						<Input
-							type='text'
-							className={cn(isDragging && 'border-ring/70', 'transition-colors')}
-							placeholder='Description'
-							{...field}
-						/>
-						{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
-					</Field>
-				)}
-			/>
-			<Controller
-				control={control}
-				name={`items.${index}.quantity`}
-				render={({ field, fieldState }) => (
-					<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-						<Input
-							className={cn(isDragging && 'border-ring/70', 'transition-colors')}
-							type='number'
-							min={0}
-							inputMode='decimal'
-							placeholder='2'
-							onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
-							{...field}
-							suffix={
-								<Controller
-									control={control}
-									name={`items.${index}.units`}
-									render={({ field }) => (
-										<Select {...field} onValueChange={field.onChange} required={false}>
-											<SelectTrigger asChild>
-												<Button
-													size='xs'
-													variant='secondary'
-													className='-mr-1.5 data-placeholder:text-muted-foreground'
-												>
-													<SelectValue placeholder='units' />
-												</Button>
-											</SelectTrigger>
-											<SelectContent>
-												<SelectGroup>
-													<SelectLabel>Units</SelectLabel>
-													<SelectClear />
-													{unitEnum.enumValues.map(unit => (
-														<SelectItem key={unit} value={unit}>
-															{unit}
-														</SelectItem>
-													))}
-												</SelectGroup>
-											</SelectContent>
-										</Select>
-									)}
-								/>
-							}
-						/>
-						{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
-					</Field>
-				)}
-			/>
-			<Controller
-				control={control}
-				name={`items.${index}.unitCost`}
-				render={({ field, fieldState }) => (
-					<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-						<Input
-							className={cn(isDragging && 'border-ring/70', 'transition-colors')}
-							type='number'
-							inputMode='decimal'
-							placeholder='40'
-							onKeyDown={e => ['e', 'E', '+'].includes(e.key) && e.preventDefault()}
-							prefix={getCurrencySymbol(config.currency, config.locale)}
-							{...field}
-						/>
-						{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
-					</Field>
-				)}
-			/>
-			<SortableActions
-				className={cn(isDragging && 'border-ring/70')}
-				getValues={getValues}
-				config={config}
-				control={control}
-				index={index}
-			>
-				{children}
-			</SortableActions>
-		</li>
+				<Controller
+					control={control}
+					name={`items.${index}.quantity`}
+					render={({ field, fieldState }) => (
+						<Field className='gap-0.5' data-invalid={fieldState.invalid}>
+							<Input
+								className={cn(isDragging && 'border-ring/70', 'transition-colors')}
+								type='number'
+								min={0}
+								inputMode='decimal'
+								placeholder='2'
+								onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+								{...field}
+								suffix={
+									<Controller
+										control={control}
+										name={`items.${index}.units`}
+										render={({ field }) => (
+											<Select {...field} onValueChange={field.onChange} required={false}>
+												<SelectTrigger asChild>
+													<Button
+														size='xs'
+														variant='secondary'
+														className='-mr-1.5 data-placeholder:text-muted-foreground'
+													>
+														<SelectValue placeholder='units' />
+													</Button>
+												</SelectTrigger>
+												<SelectContent>
+													<SelectGroup>
+														<SelectLabel>Units</SelectLabel>
+														<SelectClear />
+														{unitEnum.enumValues.map(unit => (
+															<SelectItem key={unit} value={unit}>
+																{unit}
+															</SelectItem>
+														))}
+													</SelectGroup>
+												</SelectContent>
+											</Select>
+										)}
+									/>
+								}
+							/>
+							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
+						</Field>
+					)}
+				/>
+				<Controller
+					control={control}
+					name={`items.${index}.unitCost`}
+					render={({ field, fieldState }) => (
+						<Field className='gap-0.5' data-invalid={fieldState.invalid}>
+							<Input
+								className={cn(isDragging && 'border-ring/70', 'transition-colors')}
+								type='number'
+								inputMode='decimal'
+								placeholder='40'
+								onKeyDown={e => ['e', 'E', '+'].includes(e.key) && e.preventDefault()}
+								prefix={getCurrencySymbol(config.currency, config.locale)}
+								{...field}
+							/>
+							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
+						</Field>
+					)}
+				/>
+				<SortableActions
+					className={cn(isDragging && 'border-ring/70')}
+					getValues={getValues}
+					config={config}
+					control={control}
+					index={index}
+				>
+					{children}
+				</SortableActions>
+			</motion.div>
+		</motion.li>
 	);
 }
 
@@ -427,12 +453,12 @@ function SortableActions({
 	SortableProps,
 	'index' | 'control' | 'config' | 'getValues' | 'children'
 >) {
-	const taxes = useWatch({
-		control,
-		name: `items.${index}.taxes`,
-	});
-
-	const activeTaxes = taxes.entries().reduce((acc, [_, value]) => acc + Number(value), 0);
+	// Not ideal, but useWatch causes stale conflict issues with AnimatePresence. This keeps state updated onChange.
+	const [activeTaxes, setActiveTaxes] = useState(
+		getValues(`items.${index}.taxes`)
+			.values()
+			.reduce((acc, value) => acc + Number(value), 0),
+	);
 
 	return (
 		<DropdownMenu>
@@ -468,6 +494,12 @@ function SortableActions({
 													const update = new Map(getValues(`items.${index}.taxes`));
 													update.set(tax.id, val);
 													field.onChange(update);
+
+													setActiveTaxes(
+														getValues(`items.${index}.taxes`)
+															.values()
+															.reduce((acc, value) => acc + Number(value), 0),
+													);
 												}}
 												className='justify-between'
 											>
