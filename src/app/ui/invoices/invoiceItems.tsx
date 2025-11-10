@@ -308,7 +308,7 @@ function Sortable({
 		>
 			<Button
 				variant='link'
-				className={cn('-ml-2.5 focus:!ring-0 group')}
+				className={cn('-ml-2.5 focus:!ring-0 group touch-manipulation')}
 				size='icon'
 				disabled={disabled}
 				ref={handleRef}

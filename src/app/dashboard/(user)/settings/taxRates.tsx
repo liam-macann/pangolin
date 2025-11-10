@@ -210,7 +210,10 @@ function Sortable({ tax, index, control, children, disabled = false }: SortableP
 		>
 			<Button
 				variant='link'
-				className={cn('-ml-2.5 focus:!ring-0 group', disabled && 'cursor-not-allowed opacity-50')}
+				className={cn(
+					'-ml-2.5 focus:!ring-0 group touch-manipulation',
+					disabled && 'cursor-not-allowed opacity-50',
+				)}
 				size='icon'
 				ref={handleRef}
 			>
