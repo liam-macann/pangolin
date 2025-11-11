@@ -1,26 +1,22 @@
 import { PlusIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { fetchClient, fetchInvoices, getUserConfig } from '@/lib/data';
+import { fetchClient, getUserConfig } from '@/lib/data';
 import { CreateInvoiceDialog } from '@/src/app/ui/invoices/create-form';
-import InvoicesTable, { columns } from '@/src/app/ui/invoices/invoice-table';
+import InvoicesTable from '@/src/app/ui/invoices/invoice-table';
 import Search from '@/src/app/ui/search';
 import { Button } from '@/ui/button';
-import { DataTable } from '@/ui/data-table';
 
 export const metadata: Metadata = {
 	title: 'Invoices',
 };
 
-export default async function Page(_props: {
+export default function Page(_props: {
 	searchParams?: Promise<{
 		query?: string;
 		page?: string;
 	}>;
 }) {
-	const clients = await fetchClient();
-	const config = await getUserConfig();
-
 	return (
 		<div className='w-full'>
 			<div className='flex w-full items-center justify-between'>
@@ -29,22 +25,32 @@ export default async function Page(_props: {
 			<div className='my-4 mb-8 flex items-center justify-between gap-2 md:mt-8'>
 				<Search className='grow bg-card' placeholder='Search invoices...' />
 
-				<CreateInvoiceDialog config={config} clients={clients}>
-					<Button variant='primary'>
-						<span className='hidden md:block'>Create Invoice</span>
-						<PlusIcon className='h-5' />
-					</Button>
-				</CreateInvoiceDialog>
+				<Suspense fallback={<DialogTrigger />}>
+					<Dialog />
+				</Suspense>
 			</div>
 
-			<Suspense fallback={<DataTable columns={columns} data={[]} />}>
-				<Table />
-			</Suspense>
+			<InvoicesTable />
 		</div>
 	);
 }
 
-async function Table() {
-	const invoices = await fetchInvoices();
-	return <InvoicesTable invoices={invoices} />;
+async function Dialog() {
+	const clients = await fetchClient();
+	const config = await getUserConfig();
+
+	return (
+		<CreateInvoiceDialog config={config} clients={clients}>
+			<DialogTrigger />
+		</CreateInvoiceDialog>
+	);
+}
+
+function DialogTrigger() {
+	return (
+		<Button variant='primary'>
+			<span className='hidden sm:block'>Create Invoice</span>
+			<PlusIcon className='h-5' />
+		</Button>
+	);
 }

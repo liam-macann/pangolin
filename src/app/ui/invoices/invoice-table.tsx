@@ -3,7 +3,9 @@
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import type { fetchInvoices } from '@/lib/data';
+import { useInvoices } from '@/lib/hooks';
 import { cn, type ElementType } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { DataTable } from '@/ui/data-table';
@@ -104,14 +106,22 @@ export const columns: ColumnDef<Invoice>[] = [
 	},
 ];
 
-export default function Table({ invoices }: { invoices: Invoice[] }) {
+export default function Table() {
 	const searchParams = useSearchParams();
 
-	return (
-		<DataTable
-			columns={columns}
-			data={invoices}
-			globalFilter={searchParams.get('query') || undefined}
-		/>
+	const { data, isLoading, isError } = useInvoices();
+
+	if (isError) throw new Error('Failed to fetch invoices');
+
+	return isLoading ? (
+		<DataTable columns={columns} data={[]} />
+	) : (
+		data && (
+			<DataTable
+				columns={columns}
+				data={data}
+				globalFilter={searchParams.get('query') || undefined}
+			/>
+		)
 	);
 }

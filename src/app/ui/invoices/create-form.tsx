@@ -6,6 +6,7 @@ import { createInsertSchema } from 'drizzle-zod';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { useSWRConfig } from 'swr';
 import { z } from 'zod';
 import { type clients as clientsSchema, invoices as invoicesSchema } from '@/db/schema';
 import { createInvoice } from '@/lib/actions';
@@ -78,6 +79,7 @@ export function CreateInvoiceDialog({
 	>;
 }) {
 	const [open, setOpen] = useState(false);
+	const { mutate } = useSWRConfig();
 
 	const options = clients.map(client => ({
 		value: client.id,
@@ -98,9 +100,7 @@ export function CreateInvoiceDialog({
 	});
 
 	async function onSubmit({ items, ...invoice }: z.input<typeof schema>) {
-		console.log('onSubmit', invoice);
-
-		const result = createInvoice({
+		const data = {
 			invoice,
 			items: items.map(item => ({
 				...item,
@@ -109,7 +109,11 @@ export function CreateInvoiceDialog({
 					return acc;
 				}, []),
 			})),
-		}).then(() => {
+		};
+
+		const result = createInvoice(data).then(() => {
+			// This should really pass the action returned invoice, but that needs an identical shape to the fetcher
+			mutate('/api/invoices');
 			setOpen(false);
 			form.reset();
 		});

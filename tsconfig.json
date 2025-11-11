@@ -17,6 +17,7 @@
 		"baseUrl": ".",
 		"paths": {
 			"@/lib/*": ["src/app/lib/*"],
+			"@/api/*": ["src/app/api/*"],
 			"@/ui/*": ["src/components/ui/*"],
 			"@/db": ["src/db"],
 			"@/db/*": ["src/db/*"],
