@@ -49,7 +49,7 @@ export function Combobox({
 					variant='outline'
 					role='combobox'
 					aria-expanded={open}
-					className={cn('justify-between enabled:active:scale-100', className)}
+					className={cn('w-full justify-between not-disabled:active:scale-100', className)}
 					disabled={disabled}
 				>
 					<div className='truncate'>

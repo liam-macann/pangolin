@@ -139,18 +139,19 @@ export function CreateInvoiceDialog({
 							name='clientId'
 							control={form.control}
 							render={({ field, fieldState }) => (
-								<Field orientation='responsive'>
+								<Field orientation='horizontal'>
 									<FieldLabel
 										htmlFor='clientId'
-										className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
+										className='-translate-y-1/2 !grow-0 mt-4.5 self-start'
 									>
 										Bill To
 									</FieldLabel>
-									<div className='flex flex-col gap-1'>
+									<div className='flex grow flex-col items-end gap-1'>
 										<Combobox
 											options={options}
 											noun={{ singular: 'client', plural: 'clients' }}
-											className='@md/field-group:min-w-80'
+											className='max-w-80'
+											id='clientId'
 											{...field}
 										/>
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -162,15 +163,15 @@ export function CreateInvoiceDialog({
 							name='title'
 							control={form.control}
 							render={({ field, fieldState }) => (
-								<Field orientation='responsive'>
+								<Field orientation='horizontal'>
 									<FieldLabel
 										htmlFor='title'
-										className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
+										className='-translate-y-1/2 !grow-0 mt-4.5 self-start'
 									>
 										Title
 									</FieldLabel>
-									<div className='flex flex-col gap-1'>
-										<Input placeholder='Optional' {...field} className='@md/field-group:min-w-80' />
+									<div className='flex grow flex-col items-end gap-1'>
+										<Input id='title' placeholder='Optional' {...field} className='max-w-80' />
 										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 									</div>
 								</Field>
@@ -243,15 +244,21 @@ export function CreateInvoiceDialog({
 								)}
 							/>
 
-							<div className='mt-2 flex flex-row gap-3'>
+							<div className='mt-2 grid grid-cols-2 gap-3'>
 								<Controller
 									name='issuedAt'
 									control={form.control}
 									disabled
 									render={({ field, fieldState }) => (
 										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor='form-rhf-textarea-about'>Date of issue</FieldLabel>
-											<DatePicker startMonth={new Date()} timeZone={config.timezone} {...field} />
+											<FieldLabel htmlFor='issuedAt'>Date of issue</FieldLabel>
+											<DatePicker
+												className='min-w-0'
+												id='issuedAt'
+												startMonth={new Date()}
+												timeZone={config.timezone}
+												{...field}
+											/>
 											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 										</Field>
 									)}
@@ -261,8 +268,10 @@ export function CreateInvoiceDialog({
 									control={form.control}
 									render={({ field, fieldState }) => (
 										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor='form-rhf-textarea-about'>Due date</FieldLabel>
+											<FieldLabel htmlFor='dueAt'>Due date</FieldLabel>
 											<DatePicker
+												className='min-w-0'
+												id='dueAt'
 												disabledDays={[{ before: new Date() }, new Date()]}
 												startMonth={new Date()}
 												timeZone={config.timezone}

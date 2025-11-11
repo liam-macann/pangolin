@@ -68,7 +68,7 @@ function CalendarPopover({
 					className={cn('min-w-[200px] justify-between enabled:active:scale-100', className)}
 					{...props}
 				>
-					{label || 'Select date…'}
+					<span className='truncate'>{label || 'Select date…'}</span>
 					<CaretUpDownIcon className='ml-2 h-4 w-4 shrink-0 opacity-50' />
 				</Button>
 			</PopoverTrigger>
@@ -93,6 +93,7 @@ export function DatePicker({
 	value: controlledValue,
 	disabled = false,
 	ref,
+	className,
 
 	disabledDays,
 	...props
@@ -110,6 +111,7 @@ export function DatePicker({
 			disabled={disabled}
 			onBlur={onBlur}
 			ref={ref}
+			className={className}
 		>
 			<Calendar
 				mode='single'

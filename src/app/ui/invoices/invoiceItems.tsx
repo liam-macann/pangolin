@@ -255,7 +255,7 @@ function InvoiceItemsInput({
 							</div>
 						</>
 					) : (
-						<div className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6'>
+						<div className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 max-sm:flex-col'>
 							<div className='flex flex-col gap-1'>
 								<p className='font-medium text-muted-foreground text-sm'>Add an invoice item</p>
 								{errors && <FieldError className='' errors={[errors]} />}
