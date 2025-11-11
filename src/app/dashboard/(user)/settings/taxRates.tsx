@@ -3,6 +3,7 @@ import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
 import { RestrictToElement } from '@dnd-kit/dom/modifiers';
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable, useSortable } from '@dnd-kit/react/sortable';
+import { SortableContext } from '@dnd-kit/sortable';
 import { DotsSixIcon, DotsThreeIcon, InfoIcon, TrashIcon } from '@phosphor-icons/react';
 import { createInsertSchema } from 'drizzle-zod';
 import { useRef } from 'react';
@@ -110,70 +111,72 @@ function TaxRateInput({
 	const addTax = () => append({ id: uuid(), name: '', rate: '' });
 
 	return (
-		<FieldGroup className={cn('gap-2', className)}>
-			{fields.length > 0 ? (
-				<>
-					<div className='grid grid-cols-[1.25rem_1fr_1fr_2.25rem] gap-3'>
-						<div className='col-start-2'>
-							<FieldLabel>Label</FieldLabel>
+		<DragDropProvider
+			onDragEnd={event => {
+				const { operation, canceled } = event;
+				const { source } = operation;
+
+				if (canceled) return;
+
+				if (isSortable(source)) {
+					const initialIndex = source.sortable.initialIndex;
+					const targetIndex = source.sortable.index;
+
+					move(initialIndex, targetIndex);
+				}
+			}}
+		>
+			<SortableContext items={fields}>
+				<FieldGroup className={cn('gap-2', className)}>
+					{fields.length > 0 ? (
+						<>
+							<div className='grid grid-cols-[1.25rem_1fr_1fr_2.25rem] gap-3'>
+								<div className='col-start-2'>
+									<FieldLabel>Label</FieldLabel>
+								</div>
+								<div>
+									<FieldLabel>
+										Rate
+										<Tooltip>
+											<TooltipTrigger className='rounded-full'>
+												<InfoIcon />
+											</TooltipTrigger>
+											<TooltipContent>
+												Simple percentage of item total. Compound taxes are not supported.
+											</TooltipContent>
+										</Tooltip>
+									</FieldLabel>
+								</div>
+							</div>
+							<ul className='flex flex-col gap-2'>
+								{fields.map((tax, i) => (
+									<Sortable
+										control={control}
+										key={tax.id}
+										tax={tax}
+										index={i}
+										disabled={fields.length < 2}
+									>
+										<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
+											<TrashIcon />
+											Delete
+										</DropdownMenuItem>
+									</Sortable>
+								))}
+							</ul>
+							<Button className='mt-3 self-end' onClick={addTax}>
+								Add Tax
+							</Button>
+						</>
+					) : (
+						<div className='mb-7 ml-8 flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
+							<p className='font-medium text-muted-foreground text-sm'>No taxes configured</p>
+							<Button onClick={addTax}>Add Tax</Button>
 						</div>
-						<div>
-							<FieldLabel>
-								Rate
-								<Tooltip>
-									<TooltipTrigger className='rounded-full'>
-										<InfoIcon />
-									</TooltipTrigger>
-									<TooltipContent>
-										Simple percentage of item total. Compound taxes are not supported.
-									</TooltipContent>
-								</Tooltip>
-							</FieldLabel>
-						</div>
-					</div>
-					<DragDropProvider
-						onDragEnd={event => {
-							const { operation, canceled } = event;
-							const { source } = operation;
-
-							if (canceled) return;
-
-							if (isSortable(source)) {
-								const initialIndex = source.sortable.initialIndex;
-								const targetIndex = source.sortable.index;
-
-								move(initialIndex, targetIndex);
-							}
-						}}
-					>
-						<ul className='flex flex-col gap-2'>
-							{fields.map((tax, i) => (
-								<Sortable
-									control={control}
-									key={tax.id}
-									tax={tax}
-									index={i}
-									disabled={fields.length < 2}
-								>
-									<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
-										<TrashIcon />
-										Delete
-									</DropdownMenuItem>
-								</Sortable>
-							))}
-						</ul>
-					</DragDropProvider>
-					<Button className='mt-3 self-end' onClick={addTax}>
-						Add Tax
-					</Button>
-				</>
-			) : (
-				<div className='mb-7 ml-8 flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
-					<p className='font-medium text-muted-foreground text-sm'>No taxes configured</p>
-					<Button onClick={addTax}>Add Tax</Button>
-				</div>
-			)}
-		</FieldGroup>
+					)}
+				</FieldGroup>
+			</SortableContext>
+		</DragDropProvider>
 	);
 }
 

@@ -4,6 +4,7 @@ import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
 import { RestrictToElement } from '@dnd-kit/dom/modifiers';
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable, useSortable } from '@dnd-kit/react/sortable';
+import { SortableContext } from '@dnd-kit/sortable';
 import { DotsSixIcon, DotsThreeIcon } from '@phosphor-icons/react';
 import { createInsertSchema } from 'drizzle-zod';
 import { AnimatePresence, motion } from 'motion/react';
@@ -195,74 +196,76 @@ function InvoiceItemsInput({
 	} = useFormState({ control, name: 'items' });
 
 	return (
-		<FieldGroup className={cn('gap-0', className)}>
-			{fields.length > 0 ? (
-				<>
-					<div className='grid grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2'>
-						<div className='col-start-2'>
-							<FieldLabel>Description</FieldLabel>
+		<DragDropProvider
+			onDragEnd={event => {
+				const { operation, canceled } = event;
+				const { source } = operation;
+
+				if (canceled) return;
+
+				if (isSortable(source)) {
+					const initialIndex = source.sortable.initialIndex;
+					const targetIndex = source.sortable.index;
+
+					move(initialIndex, targetIndex);
+				}
+			}}
+		>
+			<SortableContext items={fields}>
+				<FieldGroup className={cn('gap-0', className)}>
+					{fields.length > 0 ? (
+						<>
+							<div className='grid grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2'>
+								<div className='col-start-2'>
+									<FieldLabel>Description</FieldLabel>
+								</div>
+								<FieldLabel>Quantity</FieldLabel>
+								<FieldLabel>Each</FieldLabel>
+							</div>
+							<ul className='flex flex-col'>
+								<AnimatePresence>
+									{fields.map((item, i) => (
+										<Sortable
+											control={control}
+											getValues={getValues}
+											key={item.id}
+											item={item}
+											index={i}
+											disabled={fields.length < 2}
+											config={config}
+										>
+											<DropdownMenuItem onClick={() => insert(i + 1, getValues(`items.${i}`))}>
+												Duplicate
+											</DropdownMenuItem>
+											<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
+												Delete
+											</DropdownMenuItem>
+										</Sortable>
+									))}
+								</AnimatePresence>
+							</ul>
+
+							{errors && <FieldError className='mt-3 ml-7' errors={[errors]} />}
+
+							<div className='mt-6 ml-7 flex justify-between gap-8'>
+								<Button onClick={addItem} size='sm'>
+									Add Item
+								</Button>
+								<ItemSum control={control} config={config} className='min-w-48 self-end' />
+							</div>
+						</>
+					) : (
+						<div className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6'>
+							<div className='flex flex-col gap-1'>
+								<p className='font-medium text-muted-foreground text-sm'>Add an invoice item</p>
+								{errors && <FieldError className='' errors={[errors]} />}
+							</div>
+							<Button onClick={addItem}>Add Item</Button>
 						</div>
-						<FieldLabel>Quantity</FieldLabel>
-						<FieldLabel>Each</FieldLabel>
-					</div>
-					<DragDropProvider
-						onDragEnd={event => {
-							const { operation, canceled } = event;
-							const { source } = operation;
-
-							if (canceled) return;
-
-							if (isSortable(source)) {
-								const initialIndex = source.sortable.initialIndex;
-								const targetIndex = source.sortable.index;
-
-								move(initialIndex, targetIndex);
-							}
-						}}
-					>
-						<ul className='flex flex-col'>
-							<AnimatePresence>
-								{fields.map((item, i) => (
-									<Sortable
-										control={control}
-										getValues={getValues}
-										key={item.id}
-										item={item}
-										index={i}
-										disabled={fields.length < 2}
-										config={config}
-									>
-										<DropdownMenuItem onClick={() => insert(i + 1, getValues(`items.${i}`))}>
-											Duplicate
-										</DropdownMenuItem>
-										<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
-											Delete
-										</DropdownMenuItem>
-									</Sortable>
-								))}
-							</AnimatePresence>
-						</ul>
-					</DragDropProvider>
-
-					{errors && <FieldError className='mt-3 ml-7' errors={[errors]} />}
-
-					<div className='mt-6 ml-7 flex justify-between gap-8'>
-						<Button onClick={addItem} size='sm'>
-							Add Item
-						</Button>
-						<ItemSum control={control} config={config} className='min-w-48 self-end' />
-					</div>
-				</>
-			) : (
-				<div className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6'>
-					<div className='flex flex-col gap-1'>
-						<p className='font-medium text-muted-foreground text-sm'>Add an invoice item</p>
-						{errors && <FieldError className='' errors={[errors]} />}
-					</div>
-					<Button onClick={addItem}>Add Item</Button>
-				</div>
-			)}
-		</FieldGroup>
+					)}
+				</FieldGroup>
+			</SortableContext>
+		</DragDropProvider>
 	);
 }
 
