@@ -140,9 +140,9 @@ export default async function LoginPage({
 
 				<ul className='space-y-2'>
 					{[
-						'Receive and track payment status',
-						'Handle your taxes',
-						'Keep track of what you sell',
+						'Receive and track payment',
+						'Handle your tax or audit responsibilities',
+						'Keep inventory',
 					].map(el => (
 						<li className='flex items-baseline gap-3' key={el}>
 							<div className='flex size-5 shrink-0 items-center justify-center rounded-full bg-red-4 text-red-12'>
