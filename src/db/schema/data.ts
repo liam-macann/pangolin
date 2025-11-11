@@ -90,7 +90,7 @@ export const invoiceItems = pgTable('invoice_item', {
 	id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
 	invoiceId: uuid('invoice_id')
 		.notNull()
-		.references(() => invoices.id),
+		.references(() => invoices.id, { onDelete: 'cascade' }),
 	/** Invoice entry label */
 	label: varchar({ length: 60 }).notNull(),
 	/** Optional information to describe the item */
