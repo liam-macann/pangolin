@@ -1,0 +1,1 @@
+ALTER TABLE "invoice" ADD COLUMN "isVoid" boolean DEFAULT false NOT NULL;

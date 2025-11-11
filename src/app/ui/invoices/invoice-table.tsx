@@ -5,11 +5,22 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import type { statusEnum } from '@/db/schema';
-import { updateInvoiceStatus } from '@/lib/actions';
+import { updateInvoiceStatus, voidInvoice } from '@/lib/actions';
 import type { fetchInvoices } from '@/lib/data';
 import { useInvoices } from '@/lib/hooks';
 import { cn, type ElementType } from '@/lib/utils';
 import type { Enum } from '@/lib/utils/drizzle';
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from '@/ui/alert-dialog';
 import { Button } from '@/ui/button';
 import { DataTable } from '@/ui/data-table';
 import {
@@ -125,35 +136,87 @@ export const columns: ColumnDef<Invoice>[] = [
 		id: 'actions',
 		cell: function OverflowMenu({ row }) {
 			const invoice = row.original;
+			const { mutate } = useInvoices();
 
 			return (
-				<div className='-mr-2 flex justify-end gap-1'>
-					<Button size='sm' asChild>
-						<a href={`/dashboard/invoices/${invoice.id}`}>
-							View<span>↗</span>
-						</a>
-					</Button>
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant='ghost' size='icon' className='size-8 p-0'>
-								<span className='sr-only'>Open menu</span>
-								<DotsThreeIcon className='size-4' />
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent side='right' align='start'>
-							<DropdownMenuLabel>Actions</DropdownMenuLabel>
-							<DropdownMenuItem
-								onClick={() => navigator.clipboard.writeText(invoice.formatted.reference)}
+				<AlertDialog>
+					<div className='-mr-2 flex justify-end gap-1'>
+						<Button size='sm' asChild>
+							<a href={`/dashboard/invoices/${invoice.id}`}>
+								View<span>↗</span>
+							</a>
+						</Button>
+						<DropdownMenu modal={false}>
+							<DropdownMenuTrigger asChild>
+								<Button variant='ghost' size='icon' className='size-8 p-0'>
+									<span className='sr-only'>Open menu</span>
+									<DotsThreeIcon className='size-4' />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent side='right' align='start'>
+								<DropdownMenuLabel>Actions</DropdownMenuLabel>
+								<DropdownMenuItem
+									onClick={() => navigator.clipboard.writeText(invoice.formatted.reference)}
+								>
+									Copy reference
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+
+								<AlertDialogTrigger asChild>
+									<DropdownMenuItem disabled={invoice.isVoid} variant='destructive'>
+										Void invoice
+									</DropdownMenuItem>
+								</AlertDialogTrigger>
+								<DropdownMenuItem variant='destructive' disabled>
+									Delete invoice
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</div>
+
+					<AlertDialogContent>
+						<AlertDialogHeader>
+							<AlertDialogTitle>Are you sure?</AlertDialogTitle>
+							<AlertDialogDescription>
+								This action cannot be undone. You will still be able to access the invoice, but it
+								will be marked as void.
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel>Cancel</AlertDialogCancel>
+							<AlertDialogAction
+								variant='destructive'
+								onClick={() => {
+									mutate(
+										async curr => {
+											await voidInvoice(invoice.id).catch(err => {
+												toast.error('Failed to void invoice');
+												throw err;
+											});
+
+											// Function does not return. On success, use optimistic data.
+											return curr
+												? curr.map(item =>
+														item.id === invoice.id ? { ...item, isVoid: true } : item,
+													)
+												: [];
+										},
+										{
+											optimisticData: curr =>
+												curr
+													? curr.map(item =>
+															item.id === invoice.id ? { ...item, isVoid: true } : item,
+														)
+													: [],
+										},
+									);
+								}}
 							>
-								Copy reference
-							</DropdownMenuItem>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem variant='destructive' disabled>
-								Delete invoice
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
-				</div>
+								Mark as void
+							</AlertDialogAction>
+						</AlertDialogFooter>
+					</AlertDialogContent>
+				</AlertDialog>
 			);
 		},
 		size: 150,

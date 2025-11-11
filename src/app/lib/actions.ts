@@ -232,7 +232,19 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 }
 
 export async function updateInvoiceStatus(id: string, status: Enum<typeof statusEnum>) {
-	await db.update(invoicesSchema).set({ status }).where(eq(invoicesSchema.id, id));
+	const session = await auth();
+	await db
+		.update(invoicesSchema)
+		.set({ status })
+		.where(and(eq(invoicesSchema.id, id), eq(invoicesSchema.userId, session.user.id)));
+}
+
+export async function voidInvoice(id: string) {
+	const session = await auth();
+	await db
+		.update(invoicesSchema)
+		.set({ isVoid: true })
+		.where(and(eq(invoicesSchema.id, id), eq(invoicesSchema.userId, session.user.id)));
 }
 
 export async function authenticate(_prevState: string | undefined, formData: FormData) {

@@ -36,6 +36,8 @@ export const invoices = pgTable(
 		status: statusEnum().notNull(),
 		/** Private notes for the user */
 		notes: text('notes'),
+		/** Whether the invoice has been voided */
+		isVoid: boolean('is_void').notNull().default(false),
 
 		/** Timestamp instant of record creation: do not use for invoice display */
 		createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),

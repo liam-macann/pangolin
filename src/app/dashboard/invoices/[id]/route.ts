@@ -98,6 +98,18 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 				},
 			};
 		},
+		...(invoice.isVoid
+			? {
+					watermark: {
+						text: 'VOID',
+						color: 'red',
+						opacity: 0.3,
+						bold: true,
+						fontSize: 176,
+						angle: -45,
+					},
+				}
+			: {}),
 		content: [
 			{
 				style: 'footer',

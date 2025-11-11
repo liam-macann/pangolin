@@ -79,6 +79,7 @@ function invoiceQuery<Detailed extends boolean>(
 	const baseSelect = {
 		id: invoices.id,
 		status: invoices.status,
+		isVoid: invoices.isVoid,
 		createdAt: invoices.createdAt,
 		index: invoices.index,
 		yearIndex: invoices.yearIndex,

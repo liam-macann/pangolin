@@ -1,0 +1,1 @@
+ALTER TABLE "invoice" RENAME COLUMN "isVoid" TO "is_void";
