@@ -81,7 +81,6 @@ export const columns: ColumnDef<Invoice>[] = [
 						<SelectTrigger
 							size='sm'
 							className={cn(
-								'shadow-none',
 								status === 'unpaid' &&
 									'!border-red-6 focus-visible:!border-red-7 !ring-red-6/50 !bg-red-3 text-red-12',
 								status === 'paid' &&
