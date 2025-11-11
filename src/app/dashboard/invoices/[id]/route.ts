@@ -67,7 +67,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 			modDate: invoice.createdAt,
 		},
 		pageSize: 'A4',
-		defaultStyle: { font: 'InstrumentSans' },
+		defaultStyle: { font: 'InstrumentSans', fontFeatures: ['liga', 'ss04', 'ss05'] },
 		pageMargins,
 		footer: (_currentPage, _pageCount) => {
 			return {
