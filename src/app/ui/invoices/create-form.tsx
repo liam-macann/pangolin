@@ -6,11 +6,11 @@ import { createInsertSchema } from 'drizzle-zod';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { useSWRConfig } from 'swr';
 import { z } from 'zod';
 import { type clients as clientsSchema, invoices as invoicesSchema } from '@/db/schema';
 import { createInvoice } from '@/lib/actions';
 import type { getUserConfig } from '@/lib/data';
+import { useInvoices } from '@/lib/hooks';
 import type { Prettify } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { Combobox } from '@/ui/combobox';
@@ -79,7 +79,7 @@ export function CreateInvoiceDialog({
 	>;
 }) {
 	const [open, setOpen] = useState(false);
-	const { mutate } = useSWRConfig();
+	const { mutate } = useInvoices();
 
 	const options = clients.map(client => ({
 		value: client.id,
@@ -113,7 +113,7 @@ export function CreateInvoiceDialog({
 
 		const result = createInvoice(data).then(() => {
 			// This should really pass the action returned invoice, but that needs an identical shape to the fetcher
-			mutate('/api/invoices');
+			mutate();
 			setOpen(false);
 			form.reset();
 		});

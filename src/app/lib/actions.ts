@@ -14,10 +14,11 @@ import {
 	invoiceItems,
 	invoices as invoicesSchema,
 	itemTaxes,
+	type statusEnum,
 	taxes as taxesSchema,
 } from '@/db/schema';
 import type { Prettify } from '@/lib/utils';
-import { jsonbBuildObject } from './utils/drizzle';
+import { type Enum, jsonbBuildObject } from './utils/drizzle';
 
 export type State =
 	| {
@@ -228,6 +229,10 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 			console.error(err);
 			throw new Error(`Database Error: failed to create invoice`);
 		});
+}
+
+export async function updateInvoiceStatus(id: string, status: Enum<typeof statusEnum>) {
+	await db.update(invoicesSchema).set({ status }).where(eq(invoicesSchema.id, id));
 }
 
 export async function authenticate(_prevState: string | undefined, formData: FormData) {

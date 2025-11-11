@@ -3,19 +3,31 @@
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
+import { toast } from 'sonner';
+import type { statusEnum } from '@/db/schema';
+import { updateInvoiceStatus } from '@/lib/actions';
 import type { fetchInvoices } from '@/lib/data';
 import { useInvoices } from '@/lib/hooks';
 import { cn, type ElementType } from '@/lib/utils';
+import type { Enum } from '@/lib/utils/drizzle';
 import { Button } from '@/ui/button';
 import { DataTable } from '@/ui/data-table';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectSeparator,
+	SelectTrigger,
+	SelectValue,
+} from '@/ui/select';
 
 type Invoice = ElementType<Awaited<ReturnType<typeof fetchInvoices>>>;
 
@@ -36,18 +48,58 @@ export const columns: ColumnDef<Invoice>[] = [
 	{
 		accessorKey: 'status',
 		header: 'Status',
-		cell: ({ row }) => {
-			const status: string = row.getValue('status');
+		cell: function StatusSelect({ row }) {
+			const status: Enum<typeof statusEnum> = row.getValue('status');
+			const id = row.original.id;
+
+			const { mutate } = useInvoices();
+
 			return (
-				<span
-					className={cn(
-						'rounded px-2 py-1',
-						status === 'unpaid' && 'border border-red-6 bg-red-3 text-red-12',
-						status === 'paid' && 'border border-blue-6 bg-blue-3 text-blue-12',
-					)}
-				>
-					{status.replace(/^./, char => char.toUpperCase())}
-				</span>
+				<div>
+					<Select
+						value={status}
+						onValueChange={(v: typeof status) => {
+							mutate(
+								async curr => {
+									await updateInvoiceStatus(id, v).catch(err => {
+										toast.error('Failed to update invoice status');
+										throw err;
+									});
+
+									// Function does not return. On success, use optimistic data.
+									return curr
+										? curr.map(item => (item.id === id ? { ...item, status: v } : item))
+										: [];
+								},
+								{
+									optimisticData: curr =>
+										curr ? curr.map(item => (item.id === id ? { ...item, status: v } : item)) : [],
+								},
+							);
+						}}
+					>
+						<SelectTrigger
+							size='sm'
+							className={cn(
+								'shadow-none',
+								status === 'unpaid' &&
+									'!border-red-6 focus-visible:!border-red-7 !ring-red-6/50 !bg-red-3 text-red-12',
+								status === 'paid' &&
+									'!border-blue-6 focus-visible:!border-blue-7 !ring-blue-6/50 !bg-blue-3 text-blue-12',
+								status === 'refunded' &&
+									'!border-yellow-6 focus-visible:!border-yellow-7 !ring-yellow-6/50 !bg-yellow-3 text-yellow-12',
+							)}
+						>
+							<SelectValue placeholder='Update status…' />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value='unpaid'>Unpaid</SelectItem>
+							<SelectItem value='paid'>Paid</SelectItem>
+							<SelectSeparator />
+							<SelectItem value='refunded'>Refunded</SelectItem>
+						</SelectContent>
+					</Select>
+				</div>
 			);
 		},
 		size: 150,
@@ -89,13 +141,16 @@ export const columns: ColumnDef<Invoice>[] = [
 								<DotsThreeIcon className='size-4' />
 							</Button>
 						</DropdownMenuTrigger>
-						<DropdownMenuContent align='end'>
-							<DropdownMenuItem onClick={() => navigator.clipboard.writeText(invoice.id)}>
-								Copy payment ID
+						<DropdownMenuContent side='right' align='start'>
+							<DropdownMenuLabel>Actions</DropdownMenuLabel>
+							<DropdownMenuItem
+								onClick={() => navigator.clipboard.writeText(invoice.formatted.reference)}
+							>
+								Copy reference
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
-							<DropdownMenuItem disabled asChild>
-								<button type='submit'>Delete invoice</button>
+							<DropdownMenuItem variant='destructive' disabled>
+								Delete invoice
 							</DropdownMenuItem>
 						</DropdownMenuContent>
 					</DropdownMenu>

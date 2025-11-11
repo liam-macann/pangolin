@@ -239,6 +239,13 @@
 			"when": 1762248782545,
 			"tag": "0033_zippy_nitro",
 			"breakpoints": true
+		},
+		{
+			"idx": 34,
+			"version": "7",
+			"when": 1762861656205,
+			"tag": "0034_glamorous_taskmaster",
+			"breakpoints": true
 		}
 	]
 }

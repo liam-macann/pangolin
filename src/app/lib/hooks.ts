@@ -1,7 +1,7 @@
 'use client';
 
 import useSWR, { type SWRConfiguration } from 'swr';
-import type { Data } from '@/api/invoices/route';
+import type { Data as InvoiceData } from '@/api/invoices/route';
 import { responseSchema } from '@/api/types';
 
 const fetcher = async <T>(url: string): Promise<T> => {
@@ -17,10 +17,10 @@ const fetcher = async <T>(url: string): Promise<T> => {
 };
 
 export function useInvoices(
-	initial?: Data,
+	initial?: InvoiceData,
 	config?: Omit<SWRConfiguration, 'fallbackData' | 'suspense'>,
 ) {
-	const { error, ...rest } = useSWR('/api/invoices', fetcher<Data>, {
+	const { error, ...rest } = useSWR('/api/invoices', fetcher<InvoiceData>, {
 		...config,
 		...(initial ? { fallbackData: initial } : {}),
 	});

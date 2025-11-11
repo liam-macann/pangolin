@@ -1,5 +1,5 @@
 import { type SQL, sql } from 'drizzle-orm';
-import type { PgColumn } from 'drizzle-orm/pg-core';
+import type { PgColumn, PgEnum } from 'drizzle-orm/pg-core';
 
 /** Helper type to extract the TypeScript type from a PgColumn or SQL */
 export type ColumnType<T> = T extends PgColumn<infer C>
@@ -8,9 +8,14 @@ export type ColumnType<T> = T extends PgColumn<infer C>
 		? S
 		: never;
 
-function _jsonbAgg<T>(expression: SQL<T> | SQL.Aliased<T>) {
-	return sql<T[]>`jsonb_agg(${expression})`;
-}
+/** Derive type from PgEnum definition
+ *
+ * @example `type EnumType = Enum<typeof myEnum>;`
+ */
+// biome-ignore lint/suspicious/noExplicitAny: Conflict between mutability of type and return value. PgEnum type is stricter than structural check.
+export type Enum<T extends PgEnum<any>> = T['enumValues'][number];
+
+const _jsonbAgg = <T>(expression: SQL<T> | SQL.Aliased<T>) => sql<T[]>`jsonb_agg(${expression})`;
 
 /** Pass a PgColumn to filter the aggregation where column is not null */
 export function jsonbAgg<T>(expression: SQL<T> | SQL.Aliased<T>, filter?: PgColumn) {

@@ -20,7 +20,7 @@ import {
 
 import { users } from './auth';
 
-export const statusEnum = pgEnum('status', ['unpaid', 'paid']);
+export const statusEnum = pgEnum('status', ['unpaid', 'paid', 'refunded']);
 export const invoices = pgTable(
 	'invoice',
 	{

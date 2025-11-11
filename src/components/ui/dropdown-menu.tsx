@@ -161,7 +161,7 @@ function DropdownMenuSeparator({
 	return (
 		<DropdownMenuPrimitive.Separator
 			data-slot='dropdown-menu-separator'
-			className={cn('mx-1 my-1 border-t border-dotted', className)}
+			className={cn('pointer-events-none mx-1 my-1 border-t border-dotted', className)}
 			{...props}
 		/>
 	);
