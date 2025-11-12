@@ -132,7 +132,7 @@ function TaxRateInput({
 								<div>
 									<FieldLabel>
 										Rate
-										<InfoTip>
+										<InfoTip side='right'>
 											Simple percentage of item total. Compound taxes are not supported.
 										</InfoTip>
 									</FieldLabel>

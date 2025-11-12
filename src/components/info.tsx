@@ -1,6 +1,6 @@
 import { InfoIcon } from '@phosphor-icons/react';
 import * as Popover from '@radix-ui/react-popover';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -15,12 +15,25 @@ export function InfoTip({
 	'side' | 'align'
 >) {
 	const [open, setOpen] = useState(false);
+	const pointerDown = useRef(false);
 
 	return (
 		<Popover.Root onOpenChange={setOpen} open={open}>
-			<Popover.Trigger className='-m-1.5 group/info' onFocus={() => setOpen(true)} asChild>
+			<Popover.Trigger
+				onPointerDown={() => {
+					pointerDown.current = true;
+				}}
+				onPointerUp={() => {
+					pointerDown.current = false;
+				}}
+				className='-m-1.5 group/info'
+				onFocus={() => {
+					if (!pointerDown.current) setOpen(true);
+				}}
+				asChild
+			>
 				<Button variant='ghost' size='icon-xs' className={cn('focus-visible:ring-0', className)}>
-					<InfoIcon className='-m-px group-hover/info:!ring-0 size-3.5 cursor-pointer rounded-full ring-ring/50 transition-shadow group-focus-visible/info:ring-2' />
+					<InfoIcon className='-m-px group-hover/info:!ring-0 size-3.5 cursor-pointer rounded-full text-muted-foreground ring-ring/50 transition-shadow group-focus-visible/info:ring-2' />
 					<span className='sr-only'>Information</span>
 				</Button>
 			</Popover.Trigger>
@@ -30,7 +43,6 @@ export function InfoTip({
 				onEscapeKeyDown={() => setOpen(false)}
 				side={side}
 				align={align}
-				sideOffset={-6}
 			>
 				{children}
 			</PopoverContent>

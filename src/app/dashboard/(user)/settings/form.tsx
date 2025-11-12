@@ -249,7 +249,7 @@ export default function ConfigForm({
 							<FieldContent>
 								<FieldLabel htmlFor='name'>
 									Currency
-									<InfoTip>
+									<InfoTip side='right'>
 										If locale does not match, the currency code will be displayed on the invoice
 									</InfoTip>
 								</FieldLabel>
