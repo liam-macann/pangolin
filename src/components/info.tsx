@@ -40,7 +40,7 @@ export function InfoTip({
 
 function PopoverContent({
 	className,
-	sideOffset = 0,
+	sideOffset = 4,
 	children,
 	...props
 }: React.ComponentProps<typeof Popover.Content>) {
@@ -48,7 +48,7 @@ function PopoverContent({
 		<Popover.Portal>
 			<Popover.Content
 				data-slot='popover-content'
-				sideOffset={sideOffset - 6}
+				sideOffset={sideOffset}
 				className={cn(
 					'outline-none',
 					'fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
@@ -68,7 +68,7 @@ function PopoverContent({
 }
 
 const Arrow = (props: React.JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>) => (
-	<svg {...props} width='15' height='15' aria-hidden='true' viewBox='0 0 15 15'>
+	<svg {...props} width='15' height='5' aria-hidden='true' viewBox='0 0 15 5'>
 		<mask id='stroke-mask'>
 			<rect x='0' y='0.5' width='15' height='15'></rect>
 		</mask>

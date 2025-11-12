@@ -28,7 +28,7 @@ function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimiti
 
 function TooltipContent({
 	className,
-	sideOffset = -6,
+	sideOffset = 4,
 	children,
 	...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
@@ -55,7 +55,7 @@ function TooltipContent({
 }
 
 const Arrow = (props: React.JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>) => (
-	<svg {...props} width='15' height='15' aria-hidden='true' viewBox='0 0 15 15'>
+	<svg {...props} width='15' height='5' aria-hidden='true' viewBox='0 0 15 5'>
 		<mask id='stroke-mask'>
 			<rect x='0' y='0.5' width='15' height='15'></rect>
 		</mask>
