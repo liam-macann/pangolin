@@ -29,30 +29,24 @@ function SelectTrigger({
 	size?: React.ComponentProps<typeof Button>['size'];
 }) {
 	return (
-		<SelectPrimitive.Trigger
-			data-slot='select-trigger'
-			className={cn(
-				'font-normal',
-				'aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-[placeholder]:text-muted-foreground',
-				'*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:aria-invalid:ring-destructive/40',
-
-				className,
+		<SelectPrimitive.Trigger data-slot='select-trigger' className={className} asChild {...props}>
+			{!asChild ? (
+				<Button
+					size={size}
+					className={cn(
+						'bg-none font-normal',
+						'aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-[placeholder]:text-muted-foreground',
+						'*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:aria-invalid:ring-destructive/40',
+					)}
+				>
+					{children}
+					<SelectPrimitive.Icon asChild>
+						<CaretDownIcon className='-mr-0.5 text-inherit opacity-50' />
+					</SelectPrimitive.Icon>
+				</Button>
+			) : (
+				children
 			)}
-			asChild
-			{...props}
-		>
-			<Button size={size} className='bg-none' asChild={asChild}>
-				{!asChild ? (
-					<>
-						{children}
-						<SelectPrimitive.Icon asChild>
-							<CaretDownIcon className='-mr-0.5 text-inherit opacity-50' />
-						</SelectPrimitive.Icon>
-					</>
-				) : (
-					children
-				)}
-			</Button>
 		</SelectPrimitive.Trigger>
 	);
 }

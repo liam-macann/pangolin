@@ -383,7 +383,7 @@ function Sortable({
 										name={`items.${index}.units`}
 										render={({ field }) => (
 											<Select {...field} onValueChange={field.onChange} required={false}>
-												<SelectTrigger asChild>
+												<SelectTrigger size='xs' asChild>
 													<Button
 														size='xs'
 														variant='secondary'
