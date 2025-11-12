@@ -109,7 +109,6 @@ export default function ConfigForm({
 							<RadioGroup
 								{...field}
 								onValueChange={field.onChange}
-								disabled
 								className='flex max-sm:flex-col'
 							>
 								<FieldLabel>
