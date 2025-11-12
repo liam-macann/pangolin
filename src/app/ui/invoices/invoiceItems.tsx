@@ -521,7 +521,7 @@ function SortableActions({
 						<DropdownMenuSeparator />
 					</>
 				)}
-				<DropdownMenuLabel>Actions</DropdownMenuLabel>
+				<DropdownMenuLabel className='first:hidden'>Actions</DropdownMenuLabel>
 				<DropdownMenuGroup>{children}</DropdownMenuGroup>
 			</DropdownMenuContent>
 		</DropdownMenu>
