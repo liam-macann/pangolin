@@ -92,12 +92,13 @@ export const columns: ColumnDef<Invoice>[] = [
 						<SelectTrigger
 							size='sm'
 							className={cn(
+								'!px-2 h-auto gap-1 rounded-sm py-1',
 								status === 'unpaid' &&
 									'!border-red-6 focus-visible:!border-red-7 !ring-red-6/50 !bg-red-3 text-red-12',
 								status === 'paid' &&
 									'!border-blue-6 focus-visible:!border-blue-7 !ring-blue-6/50 !bg-blue-3 text-blue-12',
 								status === 'refunded' &&
-									'!border-yellow-6 focus-visible:!border-yellow-7 !ring-yellow-6/50 !bg-yellow-3 text-yellow-12',
+									'!border-orange-6 focus-visible:!border-orange-7 !ring-orange-6/50 !bg-orange-3 text-orange-12',
 							)}
 						>
 							<SelectValue placeholder='Update status…' />

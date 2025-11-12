@@ -19,7 +19,7 @@ const colors: Record<string, [Color, ...Color[]]> = defineColors({
 	red: [radix.redP3, radix.redDarkP3, radix.red],
 	green: [radix.greenP3, radix.greenDarkP3, radix.green],
 	blue: [radix.indigoP3, radix.indigoDarkP3, radix.indigo],
-	yellow: [radix.amberP3, radix.amberDarkP3, radix.amber],
+	orange: [radix.orangeP3, radix.orangeDarkP3, radix.orange],
 });
 
 type Color = Record<string, string>;
