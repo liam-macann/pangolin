@@ -29,7 +29,12 @@ function SelectTrigger({
 	size?: React.ComponentProps<typeof Button>['size'];
 }) {
 	return (
-		<SelectPrimitive.Trigger data-slot='select-trigger' className={className} asChild {...props}>
+		<SelectPrimitive.Trigger
+			data-slot='select-trigger'
+			className={cn('not-disabled:active:scale-100', className)}
+			asChild
+			{...props}
+		>
 			{!asChild ? (
 				<Button
 					size={size}
