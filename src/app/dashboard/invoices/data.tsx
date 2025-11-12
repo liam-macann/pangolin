@@ -12,17 +12,17 @@ export default function Data({ header }: { header?: JSX.Element }) {
 
 	return (
 		<>
-			<div className='my-4 mb-8 flex items-center justify-between gap-2 md:mt-8'>
+			<div className='my-4 mb-8 flex items-center justify-between gap-3 md:mt-8'>
+				{header}
+
 				<Input
-					className='grow'
+					className='h-10 grow shadow-none'
 					aria-label='Search'
 					placeholder='Search invoices…'
 					onChange={e => setFilter(e.target.value)}
 					value={filter}
 					prefix={<MagnifyingGlassIcon />}
 				/>
-
-				{header}
 			</div>
 
 			<InvoicesTable filter={filter} />

@@ -15,7 +15,7 @@
 	--font-sans--font-feature-settings: "liga", "ss04", "ss05";
 
 	--font-display: var(--instrument-sans, "Instrument Sans"), var(--font-system);
-	--font-display--font-variation-settings: "wdth" 84;
+	--font-display--font-variation-settings: "wdth" 87;
 	--font-display--font-feature-settings: "liga", "ss04", "ss05";
 
 	--animate-shimmer: "shimmer 6s ease-in-out infinite alternate";
@@ -75,7 +75,7 @@
 
 @layer base {
 	.font-display {
-		font-weight: var(--font-weight-bold);
+		font-weight: 650;
 	}
 
 	hr {

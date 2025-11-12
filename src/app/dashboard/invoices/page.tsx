@@ -45,9 +45,9 @@ async function Dialog() {
 
 function DialogTrigger() {
 	return (
-		<Button variant='primary'>
+		<Button variant='outline' size='lg'>
+			<PlusIcon />
 			<span className='hidden sm:block'>Create Invoice</span>
-			<PlusIcon className='h-5' />
 		</Button>
 	);
 }

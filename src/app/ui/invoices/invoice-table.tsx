@@ -148,7 +148,7 @@ export const columns: ColumnDef<Invoice>[] = [
 			return (
 				<AlertDialog>
 					<div className='-mr-2 flex justify-end gap-1'>
-						<Button size='sm' asChild>
+						<Button size='sm' variant='ghost' asChild>
 							<a href={`/dashboard/invoices/${invoice.id}`}>
 								View<span>↗</span>
 							</a>
