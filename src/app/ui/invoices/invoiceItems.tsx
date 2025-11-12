@@ -223,7 +223,7 @@ function InvoiceItemsInput({
 								<FieldLabel>Each</FieldLabel>
 							</div>
 							<ul className='flex flex-col'>
-								<AnimatePresence>
+								<AnimatePresence initial={false}>
 									{fields.map((item, i) => (
 										<Sortable
 											control={control}
