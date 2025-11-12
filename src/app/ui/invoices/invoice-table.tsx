@@ -46,7 +46,11 @@ export const columns: ColumnDef<Invoice>[] = [
 	{
 		accessorKey: 'reference',
 		header: 'Reference',
-		cell: ({ row }) => <div className='font-medium'>{row.original.formatted.reference}</div>,
+		cell: ({ row }) => (
+			<div className='font-medium group-data-void/row:line-through'>
+				{row.original.formatted.reference}
+			</div>
+		),
 		size: 150,
 	},
 	{
@@ -54,7 +58,9 @@ export const columns: ColumnDef<Invoice>[] = [
 		header: 'Name',
 		minSize: 200,
 		maxSize: 400,
-		cell: ({ row }) => <div className='truncate'>{row.original.client.name}</div>,
+		cell: ({ row }) => (
+			<div className='truncate group-data-void/row:line-through'>{row.original.client.name}</div>
+		),
 	},
 	{
 		accessorKey: 'status',
@@ -126,7 +132,7 @@ export const columns: ColumnDef<Invoice>[] = [
 		header: () => <div className='text-right'>Amount</div>,
 		cell: ({ row }) => {
 			return (
-				<div className='text-right font-medium tabular-nums'>
+				<div className='text-right font-medium tabular-nums group-data-void/row:line-through'>
 					{row.original.formatted.grossTotal}
 				</div>
 			);
@@ -232,6 +238,16 @@ export default function Table({ filter }: { filter?: string }) {
 	return isLoading ? (
 		<DataTable columns={columns} data={[]} />
 	) : (
-		data && <DataTable columns={columns} data={data} globalFilter={filter || undefined} />
+		data && (
+			<DataTable
+				columns={columns}
+				data={data}
+				globalFilter={filter || undefined}
+				getRowAttr={row => ({
+					'data-void': row.isVoid || undefined,
+					className: 'data-void:opacity-50 group/row',
+				})}
+			/>
+		)
 	);
 }

@@ -8,18 +8,35 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 
+import type { DetailedHTMLProps, HTMLAttributes } from 'react';
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 
 interface DataTableProps<TData, TValue> {
 	columns: ColumnDef<TData, TValue>[];
 	data: TData[];
 	globalFilter?: string;
+
+	/** Set attributes according to row data
+	 *
+	 * @example
+	 * ```ts
+	 * getRowAttr={row => ({ 'data-void': row.isVoid })}
+	 * ```
+	 */
+	getRowAttr?: (row: TData) => Omit<
+		DetailedHTMLProps<HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement> & {
+			[key: `data-${string}`]: string | boolean | number | undefined;
+		},
+		'data-state' | 'key'
+	>;
 }
 
 export function DataTable<TData, TValue>({
 	columns,
 	data,
 	globalFilter,
+	getRowAttr: getRowDataAttr,
 }: DataTableProps<TData, TValue>) {
 	const table = useReactTable({
 		data,
@@ -57,7 +74,11 @@ export function DataTable<TData, TValue>({
 				<TableBody>
 					{table.getRowModel().rows?.length ? (
 						table.getRowModel().rows.map(row => (
-							<TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+							<TableRow
+								key={row.id}
+								data-state={row.getIsSelected() && 'selected'}
+								{...getRowDataAttr?.(row.original)}
+							>
 								{row.getVisibleCells().map(cell => (
 									<TableCell key={cell.id}>
 										{flexRender(cell.column.columnDef.cell, cell.getContext())}
