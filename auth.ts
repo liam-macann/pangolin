@@ -1,5 +1,6 @@
 import { DrizzleAdapter } from '@auth/drizzle-adapter';
 import bcrypt from 'bcrypt';
+import { eq } from 'drizzle-orm';
 import NextAuth, { type Session as NextAuthSession, type User } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import GitHub from 'next-auth/providers/github';
@@ -88,6 +89,12 @@ export const {
 	}),
 	session: { strategy: 'database' },
 	callbacks: {
+		async signIn({ user, profile }) {
+			if (user.image !== profile?.picture)
+				await db.update(users).set({ image: profile?.picture }).where(eq(users.id, user.id));
+
+			return Promise.resolve(true);
+		},
 		session({ session, user }) {
 			// Send user id to the client
 			session.user.id = user.id;
