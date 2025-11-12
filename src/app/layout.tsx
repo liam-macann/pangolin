@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import { SWRConfig } from 'swr';
 import { InstrumentSans } from '@/src/app/ui/fonts';
 import { Toaster } from '@/ui/sonner';
+import { TooltipProvider } from '@/ui/tooltip';
 
 export const metadata: Metadata = {
 	title: {
@@ -18,14 +19,16 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang='en' className={InstrumentSans.variable}>
-			<SWRConfig>
-				<MotionConfig reducedMotion='user'>
-					<body className={`bg-background font-sans antialiased`}>
-						{children}
-						<Toaster />
-					</body>
-				</MotionConfig>
-			</SWRConfig>
+			<TooltipProvider>
+				<SWRConfig>
+					<MotionConfig reducedMotion='user'>
+						<body className={`bg-background font-sans antialiased`}>
+							{children}
+							<Toaster />
+						</body>
+					</MotionConfig>
+				</SWRConfig>
+			</TooltipProvider>
 		</html>
 	);
 }

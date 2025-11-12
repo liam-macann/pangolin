@@ -4,12 +4,13 @@ import { RestrictToElement } from '@dnd-kit/dom/modifiers';
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable, useSortable } from '@dnd-kit/react/sortable';
 import { SortableContext } from '@dnd-kit/sortable';
-import { DotsSixIcon, DotsThreeIcon, InfoIcon, TrashIcon } from '@phosphor-icons/react';
+import { DotsSixIcon, DotsThreeIcon, TrashIcon } from '@phosphor-icons/react';
 import { createInsertSchema } from 'drizzle-zod';
 import { useRef } from 'react';
 import { type Control, Controller, type FieldValues, useFieldArray } from 'react-hook-form';
 import { v4 as uuid } from 'uuid';
 import { z } from 'zod';
+import { InfoTip } from '@/components/info';
 import { taxes } from '@/db/schema';
 import { cn, type Prettify } from '@/lib/utils';
 import { intlNumber } from '@/lib/zod';
@@ -31,7 +32,6 @@ import {
 	FieldSet,
 } from '@/ui/field';
 import { Input } from '@/ui/input';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip';
 
 export const taxArraySchema = z.array(
 	createInsertSchema(taxes, {
@@ -81,14 +81,9 @@ export function TaxRateField<T extends FormValues>({
 			<FieldContent className='ml-8'>
 				<FieldLegend className='flex items-center gap-2'>
 					Tax rates
-					<Tooltip>
-						<TooltipTrigger className='rounded-full'>
-							<InfoIcon />
-						</TooltipTrigger>
-						<TooltipContent side='right'>
-							Taxes defined here will always be printed on invoices, even if no tax is applicable.
-						</TooltipContent>
-					</Tooltip>
+					<InfoTip side='right'>
+						Taxes defined here will always be printed on invoices, even if no tax is applicable
+					</InfoTip>
 				</FieldLegend>
 				<FieldDescription>
 					When registered for tax, each rate can be applied on a per-item basis.
@@ -137,14 +132,9 @@ function TaxRateInput({
 								<div>
 									<FieldLabel>
 										Rate
-										<Tooltip>
-											<TooltipTrigger className='rounded-full'>
-												<InfoIcon />
-											</TooltipTrigger>
-											<TooltipContent>
-												Simple percentage of item total. Compound taxes are not supported.
-											</TooltipContent>
-										</Tooltip>
+										<InfoTip>
+											Simple percentage of item total. Compound taxes are not supported.
+										</InfoTip>
 									</FieldLabel>
 								</div>
 							</div>

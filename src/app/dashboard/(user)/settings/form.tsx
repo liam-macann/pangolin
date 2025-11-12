@@ -1,11 +1,11 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { InfoIcon } from '@phosphor-icons/react/ssr';
 import { createInsertSchema } from 'drizzle-zod';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { z } from 'zod';
+import { InfoTip } from '@/components/info';
 import { config } from '@/db/schema/data';
 import { updateUserConfig } from '@/lib/actions';
 import type { getUserConfig } from '@/lib/data';
@@ -24,7 +24,7 @@ import {
 	FieldTitle,
 } from '@/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
-import { TextTooltip, Tooltip, TooltipContent, TooltipTrigger } from '@/ui/tooltip';
+import { TextTooltip } from '@/ui/tooltip';
 import { TaxRateField, taxArraySchema } from './taxRates';
 
 const formSchema = createInsertSchema(config)
@@ -101,14 +101,9 @@ export default function ConfigForm({
 						<FieldSet>
 							<FieldLegend className='flex items-center gap-2'>
 								Numbering scheme
-								<Tooltip>
-									<TooltipTrigger className='rounded-full'>
-										<InfoIcon />
-									</TooltipTrigger>
-									<TooltipContent side='right'>
-										Existing invoices will not be affected by changes to numbering scheme.
-									</TooltipContent>
-								</Tooltip>
+								<InfoTip side='right'>
+									Existing invoices will not be affected by changes to numbering scheme
+								</InfoTip>
 							</FieldLegend>
 							<FieldDescription>Select the method used to identify your invoices.</FieldDescription>
 							<RadioGroup
@@ -187,14 +182,9 @@ export default function ConfigForm({
 			<FieldGroup>
 				<h2 className='flex items-baseline gap-3 font-bold text-2xl' id='localisation'>
 					Localisation
-					<Tooltip>
-						<TooltipTrigger className='translate-y-px rounded-full'>
-							<InfoIcon className='size-4' />
-						</TooltipTrigger>
-						<TooltipContent side='right' sideOffset={0}>
-							Existing invoices will not be affected by changes to localisation.
-						</TooltipContent>
-					</Tooltip>
+					<InfoTip side='right'>
+						Existing invoices will not be affected by changes to localisation
+					</InfoTip>
 				</h2>
 				<Controller
 					name='locale'
@@ -259,12 +249,9 @@ export default function ConfigForm({
 							<FieldContent>
 								<FieldLabel htmlFor='name'>
 									Currency
-									<TextTooltip
-										className='rounded-full'
-										content='If locale does not match, the currency code will be displayed on the invoice.'
-									>
-										<InfoIcon />
-									</TextTooltip>
+									<InfoTip>
+										If locale does not match, the currency code will be displayed on the invoice
+									</InfoTip>
 								</FieldLabel>
 								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 							</FieldContent>

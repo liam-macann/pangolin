@@ -1,12 +1,13 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CaretUpDownIcon, InfoIcon } from '@phosphor-icons/react/ssr';
+import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
 import { createInsertSchema } from 'drizzle-zod';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { InfoTip } from '@/components/info';
 import { type clients as clientsSchema, invoices as invoicesSchema } from '@/db/schema';
 import { createInvoice } from '@/lib/actions';
 import type { getUserConfig } from '@/lib/data';
@@ -28,7 +29,6 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
-import { TextTooltip } from '@/ui/tooltip';
 import { InvoiceItemsField, itemsArraySchema } from './invoiceItems';
 
 const schema = createInsertSchema(invoicesSchema, {
@@ -199,13 +199,7 @@ export function CreateInvoiceDialog({
 											className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
 										>
 											Description
-											<TextTooltip
-												side='right'
-												content='Printed below the invoice reference'
-												className='rounded-full'
-											>
-												<InfoIcon />
-											</TextTooltip>
+											<InfoTip side='right'>Printed below the invoice reference</InfoTip>
 										</FieldLabel>
 										<div className='flex flex-col gap-1'>
 											<Textarea
@@ -228,13 +222,7 @@ export function CreateInvoiceDialog({
 											className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
 										>
 											Notes
-											<TextTooltip
-												side='right'
-												content='Your own private notes'
-												className='rounded-full'
-											>
-												<InfoIcon />
-											</TextTooltip>
+											<InfoTip side='right'>Your own private notes</InfoTip>
 										</FieldLabel>
 										<div className='flex flex-col gap-1'>
 											<Textarea

@@ -18,6 +18,7 @@
 		"paths": {
 			"@/lib/*": ["src/app/lib/*"],
 			"@/api/*": ["src/app/api/*"],
+			"@/components/*": ["src/components/*"],
 			"@/ui/*": ["src/components/ui/*"],
 			"@/db": ["src/db"],
 			"@/db/*": ["src/db/*"],
