@@ -223,9 +223,7 @@ export const columns: ColumnDef<Invoice>[] = [
 	},
 ];
 
-export default function Table() {
-	const searchParams = useSearchParams();
-
+export default function Table({ filter }: { filter?: string }) {
 	const { data, isLoading, isError } = useInvoices();
 
 	if (isError) throw new Error('Failed to fetch invoices');
@@ -233,12 +231,6 @@ export default function Table() {
 	return isLoading ? (
 		<DataTable columns={columns} data={[]} />
 	) : (
-		data && (
-			<DataTable
-				columns={columns}
-				data={data}
-				globalFilter={searchParams.get('query') || undefined}
-			/>
-		)
+		data && <DataTable columns={columns} data={data} globalFilter={filter || undefined} />
 	);
 }
