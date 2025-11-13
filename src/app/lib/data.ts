@@ -97,6 +97,7 @@ function invoiceQuery<Detailed extends boolean>(
 			currency: configSchema.currency,
 			taxRegistration: configSchema.taxRegistration,
 			numberingScheme: configSchema.numberingScheme,
+			colorScheme: configSchema.colorScheme,
 		},
 
 		netTotal: itemsAgg.netTotal,

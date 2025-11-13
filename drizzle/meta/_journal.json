@@ -267,6 +267,13 @@
 			"when": 1762868994183,
 			"tag": "0037_flippant_obadiah_stane",
 			"breakpoints": true
+		},
+		{
+			"idx": 38,
+			"version": "7",
+			"when": 1763014960562,
+			"tag": "0038_even_corsair",
+			"breakpoints": true
 		}
 	]
 }

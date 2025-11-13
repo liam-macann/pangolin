@@ -5,15 +5,7 @@ import { fetchInvoice, getUser } from '@/lib/data';
 import { BottomLayout, CenteredLayout } from '@/lib/pdf-verticalalign';
 import { formatCurrency, formatDateToLocal, formatNumber } from '@/lib/utils';
 
-const colors = {
-	black: '#000000',
-	/** Accent text */
-	accent: '#5EAB92',
-	/** Toned black */
-	heavy: '#266453',
-	/** Backgrounds */
-	gray: '#f2f9f7',
-};
+import schemes from '@/src/app/ui/colorSchemes';
 
 const fontSize = {
 	base: 10,
@@ -41,6 +33,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 			bold: path.resolve('./src/fonts/InstrumentSans-Semibold.ttf'),
 		},
 	};
+
+	const colors = schemes[invoice.config.colorScheme];
 
 	const printer = new PdfPrinter(fonts);
 

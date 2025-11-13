@@ -170,6 +170,7 @@ export const clients = pgTable(
 	t => [primaryKey({ name: 'client_user_pk', columns: [t.id, t.userId] })],
 );
 
+export const colorEnum = pgEnum('color', ['blue', 'green', 'red', 'lavender']);
 export const numberingScheme = pgEnum('numbering_scheme', ['sequential', 'annual']);
 // Slowly changing dimension (SCD) — history table
 export const config = pgTable('config', {
@@ -185,6 +186,7 @@ export const config = pgTable('config', {
 	currency: varchar('currency', { length: 3 }).notNull(),
 	taxRegistration: boolean('tax_registration').notNull(),
 	numberingScheme: numberingScheme('numbering_scheme').notNull(),
+	colorScheme: colorEnum('color_scheme').notNull().default('blue'),
 });
 
 //

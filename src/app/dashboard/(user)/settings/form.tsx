@@ -1,14 +1,19 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { CheckIcon } from '@phosphor-icons/react';
 import { createInsertSchema } from 'drizzle-zod';
-import { Controller, useForm } from 'react-hook-form';
+import { useState } from 'react';
+import { Controller, type ControllerRenderProps, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 import { InfoTip } from '@/components/info';
 import { config } from '@/db/schema/data';
 import { updateUserConfig } from '@/lib/actions';
 import type { getUserConfig } from '@/lib/data';
+import { cn } from '@/lib/utils';
+import { Enum } from '@/lib/utils/drizzle';
+import schemes from '@/src/app/ui/colorSchemes';
 import { Button } from '@/ui/button';
 import { Checkbox } from '@/ui/checkbox';
 import { Combobox } from '@/ui/combobox';
@@ -34,6 +39,7 @@ const formSchema = createInsertSchema(config)
 		locale: true,
 		currency: true,
 		numberingScheme: true,
+		colorScheme: true,
 	})
 	.extend({ taxes: taxArraySchema });
 
@@ -56,6 +62,7 @@ export default function ConfigForm({
 			locale: config.locale,
 			currency: config.currency,
 			numberingScheme: config.numberingScheme,
+			colorScheme: config.colorScheme,
 		},
 	});
 
@@ -92,62 +99,92 @@ export default function ConfigForm({
 				() => toast.warning('Please ensure all fields are filled correctly'),
 			)}
 		>
-			<Controller
-				name='numberingScheme'
-				control={control}
-				rules={{ required: true }}
-				render={({ field, fieldState }) => {
-					return (
-						<FieldSet>
-							<FieldLegend className='flex items-center gap-2'>
-								Numbering scheme
-								<InfoTip side='right'>
-									Existing invoices will not be affected by changes to numbering scheme
-								</InfoTip>
-							</FieldLegend>
-							<FieldDescription>Select the method used to identify your invoices.</FieldDescription>
-							<RadioGroup
-								{...field}
-								onValueChange={field.onChange}
-								className='flex max-sm:flex-col'
-							>
-								<FieldLabel>
-									<Field orientation='vertical' className='h-full justify-between'>
-										<div className='flex justify-between'>
-											<FieldTitle>Sequential</FieldTitle>
-											<RadioGroupItem value='sequential' />
-										</div>
-										<div className='flex items-end justify-between gap-6'>
-											<FieldDescription className='text-balance'>
-												Track invoices sequentially, over the life of the business
-											</FieldDescription>
-											<FieldDescription className='text-nowrap font-mono'>INV–001</FieldDescription>
-										</div>
-									</Field>
-								</FieldLabel>
-								<FieldLabel>
-									<Field orientation='vertical' className='h-full justify-between'>
-										<div className='flex justify-between'>
-											<FieldTitle>Annual</FieldTitle>
-											<RadioGroupItem value='annual' />
-										</div>
-										<div className='flex items-end justify-between gap-6'>
-											<FieldDescription className='text-balance'>
-												Reset invoice count with each new calendar year
-											</FieldDescription>
-											<FieldDescription className='text-nowrap font-mono'>
-												{new Date().getFullYear()}–001
-											</FieldDescription>
-										</div>
-									</Field>
-								</FieldLabel>
-							</RadioGroup>
+			<FieldGroup>
+				<Controller
+					name='colorScheme'
+					control={control}
+					rules={{ required: true }}
+					render={({ field, fieldState }) => (
+						<Field
+							orientation='horizontal'
+							className='!items-center'
+							data-invalid={fieldState.invalid}
+						>
+							<FieldContent>
+								<FieldLabel htmlFor='color-scheme'>Color scheme</FieldLabel>
+								<FieldDescription>
+									Select an accent color for your generated invoices
+								</FieldDescription>
+								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+							</FieldContent>
 
-							{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-						</FieldSet>
-					);
-				}}
-			/>
+							<ColorPalette {...field} />
+						</Field>
+					)}
+				/>
+
+				<Controller
+					name='numberingScheme'
+					control={control}
+					rules={{ required: true }}
+					render={({ field, fieldState }) => {
+						return (
+							<FieldSet className='mt-4'>
+								<FieldLegend className='flex items-center gap-2'>
+									Numbering scheme
+									<InfoTip side='right'>
+										Existing invoices will not be affected by changes to numbering scheme
+									</InfoTip>
+								</FieldLegend>
+								<FieldDescription>
+									Choose the method used to identify your invoices.
+								</FieldDescription>
+								<RadioGroup
+									{...field}
+									onValueChange={field.onChange}
+									className='flex max-sm:flex-col'
+								>
+									<FieldLabel>
+										<Field orientation='vertical' className='h-full justify-between'>
+											<div className='flex justify-between'>
+												<FieldTitle>Sequential</FieldTitle>
+												<RadioGroupItem value='sequential' />
+											</div>
+											<div className='flex items-end justify-between gap-6'>
+												<FieldDescription className='text-balance'>
+													Track invoices sequentially, over the life of the business
+												</FieldDescription>
+												<FieldDescription className='text-nowrap font-mono'>
+													INV–001
+												</FieldDescription>
+											</div>
+										</Field>
+									</FieldLabel>
+									<FieldLabel>
+										<Field orientation='vertical' className='h-full justify-between'>
+											<div className='flex justify-between'>
+												<FieldTitle>Annual</FieldTitle>
+												<RadioGroupItem value='annual' />
+											</div>
+											<div className='flex items-end justify-between gap-6'>
+												<FieldDescription className='text-balance'>
+													Reset invoice count with each new calendar year
+												</FieldDescription>
+												<FieldDescription className='text-nowrap font-mono'>
+													{new Date().getFullYear()}–001
+												</FieldDescription>
+											</div>
+										</Field>
+									</FieldLabel>
+								</RadioGroup>
+
+								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+							</FieldSet>
+						);
+					}}
+				/>
+			</FieldGroup>
+
 			<FieldGroup>
 				<h2 className='flex items-baseline gap-3 font-bold text-2xl' id='taxation'>
 					Taxation
@@ -195,7 +232,7 @@ export default function ConfigForm({
 							data-invalid={fieldState.invalid}
 						>
 							<FieldContent>
-								<FieldLabel htmlFor='name'>Locale</FieldLabel>
+								<FieldLabel htmlFor='locale'>Locale</FieldLabel>
 								<FieldDescription>
 									Adjust formatting of dates, times, and numbers to reflect your region.
 								</FieldDescription>
@@ -205,6 +242,7 @@ export default function ConfigForm({
 								{...field}
 								disabled
 								className='min-w-60'
+								id='locale'
 								options={[{ label: 'Australia', value: 'en-AU' }]}
 							/>
 						</Field>
@@ -220,7 +258,7 @@ export default function ConfigForm({
 							data-invalid={fieldState.invalid}
 						>
 							<FieldContent>
-								<FieldLabel htmlFor='name'>Time zone</FieldLabel>
+								<FieldLabel htmlFor='timezone'>Time zone</FieldLabel>
 								<FieldDescription>
 									Your time zone of record, which affects the time displayed in your invoices and
 									summary data.
@@ -231,6 +269,7 @@ export default function ConfigForm({
 								{...field}
 								disabled
 								className='min-w-60'
+								id='timezone'
 								options={[{ label: 'Sydney, Australia', value: 'Australia/Sydney' }]}
 							/>
 						</Field>
@@ -246,7 +285,7 @@ export default function ConfigForm({
 							data-invalid={fieldState.invalid}
 						>
 							<FieldContent>
-								<FieldLabel htmlFor='name'>
+								<FieldLabel htmlFor='currency'>
 									Currency
 									<InfoTip side='right'>
 										If locale does not match, the currency code will be displayed on the invoice
@@ -258,6 +297,7 @@ export default function ConfigForm({
 								{...field}
 								disabled
 								className='min-w-60'
+								id='currency'
 								options={[{ label: 'AUD', value: 'AUD' }]}
 							/>
 						</Field>
@@ -277,5 +317,37 @@ export default function ConfigForm({
 				</TextTooltip>
 			</div>
 		</form>
+	);
+}
+
+function ColorPalette({
+	...field
+}: ControllerRenderProps<z.infer<typeof formSchema>, 'colorScheme'>) {
+	const [hover, setHover] = useState<string | null>(null);
+	return (
+		<div className='flex flex-col items-end gap-2'>
+			<RadioGroup
+				className='flex'
+				{...field}
+				value={field.value}
+				onValueChange={field.onChange}
+				onPointerLeave={() => setHover(null)}
+			>
+				{Object.entries(schemes).map(([key, scheme]) => (
+					<Button variant='primary' size='icon-sm' key={key} asChild>
+						<RadioGroupItem
+							className='rounded-full border-gray-12/20 text-white outline-gray-11 data-[state="checked"]:outline'
+							style={{ backgroundColor: scheme.accent }}
+							value={key}
+							onMouseEnter={() => setHover(key)}
+						>
+							<CheckIcon className='fade-in-0 zoom-in-90 animate-in duration-150' weight='bold' />
+						</RadioGroupItem>
+					</Button>
+				))}
+			</RadioGroup>
+
+			<FieldDescription className='text-xs capitalize'>{hover || field.value}</FieldDescription>
+		</div>
 	);
 }
