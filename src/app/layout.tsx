@@ -2,6 +2,7 @@ import '@/src/app/ui/global.css';
 
 import { MotionConfig } from 'motion/react';
 import type { Metadata } from 'next';
+import { Provider } from 'react-wrap-balancer';
 import { SWRConfig } from 'swr';
 import { InstrumentSans } from '@/src/app/ui/fonts';
 import { Toaster } from '@/ui/sonner';
@@ -23,8 +24,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				<SWRConfig>
 					<MotionConfig reducedMotion='user'>
 						<body className={`bg-background font-sans antialiased`}>
-							{children}
-							<Toaster />
+							<Provider>
+								{children}
+								<Toaster />
+							</Provider>
 						</body>
 					</MotionConfig>
 				</SWRConfig>

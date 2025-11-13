@@ -1,7 +1,7 @@
 import { InfoIcon } from '@phosphor-icons/react';
 import * as Popover from '@radix-ui/react-popover';
 import { useRef, useState } from 'react';
-
+import Balancer from 'react-wrap-balancer';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 
@@ -43,6 +43,8 @@ export function InfoTip({
 				onEscapeKeyDown={() => setOpen(false)}
 				side={side}
 				align={align}
+				arrowPadding={8}
+				collisionPadding={8}
 			>
 				{children}
 			</PopoverContent>
@@ -62,7 +64,7 @@ function PopoverContent({
 				data-slot='popover-content'
 				sideOffset={sideOffset}
 				className={cn(
-					'outline-none',
+					'max-w-[50vw] outline-none',
 					'fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
 					'origin-(--radix-popover-content-transform-origin) animate-in data-[state=closed]:animate-out',
 					'relative inset-0 z-50 w-fit text-balance rounded-sm bg-primary px-2 py-1 text-primary-foreground text-xs drop-shadow-xs',
@@ -70,7 +72,7 @@ function PopoverContent({
 				)}
 				{...props}
 			>
-				{children}
+				<Balancer preferNative={false}>{children}</Balancer>
 				<Popover.Arrow className='pointer-events-none fill-primary dark:fill-gray-900' asChild>
 					<Arrow />
 				</Popover.Arrow>
