@@ -75,7 +75,7 @@
 
 @layer base {
 	.font-display {
-		font-weight: 650;
+		font-weight: var(--font-weight-bold);
 	}
 
 	hr {
