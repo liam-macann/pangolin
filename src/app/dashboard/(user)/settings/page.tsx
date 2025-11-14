@@ -27,8 +27,8 @@ export default async function Page() {
 				</nav>
 				<section className='mb-12 flex w-full flex-col gap-12'>
 					<div>
-						<div className='flex items-center gap-6 rounded-lg border bg-card p-6 px-8 sm:gap-12'>
-							<Avatar className='size-12' user={config.user} />
+						<div className='flex items-center gap-6 rounded-lg border bg-card p-6 px-8 sm:gap-10'>
+							<Avatar className='size-14' user={config.user} />
 							<div className='flex flex-col'>
 								<p className='font-semibold text-lg'>{config.user.name}</p>
 								<p className='text-muted-foreground'>{config.user.email}</p>
