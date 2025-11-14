@@ -285,12 +285,10 @@ export default function ConfigForm({
 							data-invalid={fieldState.invalid}
 						>
 							<FieldContent>
-								<FieldLabel htmlFor='currency'>
-									Currency
-									<InfoTip side='right'>
-										If locale does not match, the currency code will be displayed on the invoice
-									</InfoTip>
-								</FieldLabel>
+								<FieldLabel htmlFor='currency'>Currency</FieldLabel>
+								<FieldDescription>
+									The currency will be displayed on invoices if different from locale.
+								</FieldDescription>
 								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 							</FieldContent>
 							<Combobox
