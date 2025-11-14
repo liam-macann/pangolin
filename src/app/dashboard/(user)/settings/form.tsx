@@ -215,7 +215,7 @@ export default function ConfigForm({
 				<TaxRateField control={control} className='mt-4' />
 			</FieldGroup>
 
-			<FieldGroup>
+			<FieldGroup className='mb-14'>
 				<h2 className='flex items-baseline gap-3 font-bold text-2xl' id='localisation'>
 					Localisation
 					<InfoTip side='right'>
@@ -302,14 +302,17 @@ export default function ConfigForm({
 					)}
 				/>
 			</FieldGroup>
-			<div className='mt-18 flex gap-2 sm:justify-end'>
+			<div className='-mx-2 sticky bottom-0 flex grid-cols-2 gap-2 border-t bg-background px-2 py-4 pb-6 max-sm:grid max-md:fixed max-md:right-0 max-md:left-0 max-md:px-8 sm:justify-end'>
+				<Button
+					type='button'
+					variant='secondary'
+					onClick={() => reset()}
+					disabled={!isDirty || isSubmitting}
+				>
+					Cancel
+				</Button>
 				<TextTooltip asChild content='You have not made changes' disabled={isDirty}>
-					<Button
-						type='submit'
-						className='max-sm:grow'
-						variant='primary'
-						disabled={!isDirty || isSubmitting}
-					>
+					<Button type='submit' variant='primary' disabled={!isDirty || isSubmitting}>
 						Save changes
 					</Button>
 				</TextTooltip>
