@@ -2,7 +2,6 @@
 
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import type { statusEnum } from '@/db/schema';
 import { updateInvoiceStatus, voidInvoice } from '@/lib/actions';
@@ -119,7 +118,7 @@ export const columns: ColumnDef<Invoice>[] = [
 				</div>
 			);
 		},
-		size: 150,
+		size: 160,
 	},
 	{
 		accessorKey: 'issuedAt',
@@ -148,7 +147,12 @@ export const columns: ColumnDef<Invoice>[] = [
 			return (
 				<AlertDialog>
 					<div className='-mr-2 flex justify-end gap-1'>
-						<Button size='sm' variant='ghost' asChild>
+						<Button
+							size='sm'
+							variant='ghost'
+							className='pointer-fine:opacity-0 transition-none group-hover/row:opacity-100'
+							asChild
+						>
 							<a href={`/dashboard/invoices/${invoice.id}`}>
 								View<span>↗</span>
 							</a>
@@ -226,7 +230,7 @@ export const columns: ColumnDef<Invoice>[] = [
 				</AlertDialog>
 			);
 		},
-		size: 150,
+		size: 125,
 	},
 ];
 
