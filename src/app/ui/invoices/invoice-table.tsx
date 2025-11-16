@@ -3,9 +3,9 @@
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
+import type { Data as InvoiceData } from '@/api/invoices/route';
 import type { statusEnum } from '@/db/schema';
 import { updateInvoiceStatus, voidInvoice } from '@/lib/actions';
-import type { fetchInvoices } from '@/lib/data';
 import { useInvoices } from '@/lib/hooks';
 import { cn, type ElementType } from '@/lib/utils';
 import type { Enum } from '@/lib/utils/drizzle';
@@ -39,7 +39,7 @@ import {
 	SelectValue,
 } from '@/ui/select';
 
-type Invoice = ElementType<Awaited<ReturnType<typeof fetchInvoices>>>;
+type Invoice = ElementType<InvoiceData>;
 
 export const columns: ColumnDef<Invoice>[] = [
 	{
@@ -97,7 +97,7 @@ export const columns: ColumnDef<Invoice>[] = [
 						<SelectTrigger
 							size='sm'
 							className={cn(
-								'!px-2 h-auto gap-1 rounded-sm py-1',
+								'!px-2 h-auto gap-1 rounded-sm py-1 capitalize',
 								status === 'unpaid' &&
 									'!border-red-6 focus-visible:!border-red-7 !ring-red-6/50 !bg-red-3 text-red-12',
 								status === 'paid' &&
@@ -106,7 +106,7 @@ export const columns: ColumnDef<Invoice>[] = [
 									'!border-orange-6 focus-visible:!border-orange-7 !ring-orange-6/50 !bg-orange-3 text-orange-12',
 							)}
 						>
-							<SelectValue placeholder='Update status…' />
+							<SelectValue placeholder='Update status…'>{status}</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
 							<SelectItem value='unpaid'>Unpaid</SelectItem>
@@ -234,24 +234,18 @@ export const columns: ColumnDef<Invoice>[] = [
 	},
 ];
 
-export default function Table({ filter }: { filter?: string }) {
-	const { data, isLoading, isError } = useInvoices();
+export default function Table({ filter, initial }: { filter?: string; initial?: Invoice[] }) {
+	const { data } = useInvoices(initial, { suspense: true });
 
-	if (isError) throw new Error('Failed to fetch invoices');
-
-	return isLoading ? (
-		<DataTable columns={columns} data={[]} />
-	) : (
-		data && (
-			<DataTable
-				columns={columns}
-				data={data}
-				globalFilter={filter || undefined}
-				getRowAttr={row => ({
-					'data-void': row.isVoid || undefined,
-					className: 'data-void:opacity-50 group/row',
-				})}
-			/>
-		)
+	return (
+		<DataTable
+			columns={columns}
+			data={data}
+			globalFilter={filter || undefined}
+			getRowAttr={row => ({
+				'data-void': row.isVoid || undefined,
+				className: 'data-void:opacity-50 group/row',
+			})}
+		/>
 	);
 }

@@ -1,13 +1,15 @@
 'use client';
 
 import { MagnifyingGlassIcon } from '@phosphor-icons/react';
-
 import { type JSX, useState } from 'react';
+import type { Data as InvoiceData } from '@/api/invoices/route';
+import type { ElementType } from '@/lib/utils';
 import InvoicesTable from '@/src/app/ui/invoices/invoice-table';
-
 import { Input } from '@/ui/input';
 
-export default function Data({ header }: { header?: JSX.Element }) {
+type Invoice = ElementType<InvoiceData>;
+
+export default function Data({ header, initial }: { header?: JSX.Element; initial?: Invoice[] }) {
 	const [filter, setFilter] = useState('');
 
 	return (
@@ -25,7 +27,7 @@ export default function Data({ header }: { header?: JSX.Element }) {
 				/>
 			</div>
 
-			<InvoicesTable filter={filter} />
+			<InvoicesTable initial={initial} filter={filter} />
 		</>
 	);
 }

@@ -1,7 +1,6 @@
 'use client';
 
-import useSWR, { type SWRConfiguration } from 'swr';
-import type { Data as InvoiceData } from '@/api/invoices/route';
+import useSWR, { type SWRConfiguration, type SWRResponse } from 'swr';
 import { responseSchema } from '@/api/types';
 
 const fetcher = async <T>(url: string): Promise<T> => {
@@ -16,33 +15,34 @@ const fetcher = async <T>(url: string): Promise<T> => {
 	return data.data;
 };
 
-export function useInvoices(
-	initial?: InvoiceData,
-	config?: Omit<SWRConfiguration, 'fallbackData' | 'suspense'>,
-) {
-	const { error, ...rest } = useSWR('/api/invoices', fetcher<InvoiceData>, {
+type Config = Omit<SWRConfiguration, 'fallbackData'>;
+type Response<T, C> = SWRResponse<T, unknown, C> & { isError: boolean };
+
+import type { Data as InvoiceData } from '@/api/invoices/route';
+
+export function useInvoices<C extends Config>(initial?: InvoiceData, config?: C) {
+	const swr = useSWR('/api/invoices', fetcher<InvoiceData>, {
 		...config,
 		...(initial ? { fallbackData: initial } : {}),
 	});
 
+	// Necessary to maintain discriminated types
 	return {
-		isError: error !== undefined,
-		...rest,
-	};
+		...swr,
+		isError: swr.error !== undefined,
+	} as Response<InvoiceData, C>;
 }
 
 import type { Data as ClientData } from '@/api/clients/route';
-export function useClients(
-	initial?: ClientData,
-	config?: Omit<SWRConfiguration, 'fallbackData' | 'suspense'>,
-) {
-	const { error, ...rest } = useSWR('/api/clients', fetcher<ClientData>, {
+
+export function useClients<C extends Config>(initial?: ClientData, config?: C) {
+	const swr = useSWR('/api/clients', fetcher<ClientData>, {
 		...config,
 		...(initial ? { fallbackData: initial } : {}),
 	});
 
 	return {
-		isError: error !== undefined,
-		...rest,
-	};
+		...swr,
+		isError: swr.error !== undefined,
+	} as Response<ClientData, C>;
 }

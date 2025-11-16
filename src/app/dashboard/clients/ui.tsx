@@ -1,19 +1,16 @@
 'use client';
 import type { ColumnDef } from '@tanstack/react-table';
+import type { Data as ClientData } from '@/api/clients/route';
 import type { clients } from '@/db/schema';
 import { useClients } from '@/lib/hooks';
+import type { ElementType } from '@/lib/utils';
 import { DataTable } from '@/ui/data-table';
 
-export function Table() {
-	const { data, isLoading, isError } = useClients();
+type Client = ElementType<ClientData>;
 
-	if (isError) throw new Error('Failed to fetch clients');
-
-	return isLoading ? (
-		<DataTable columns={columns} data={[]} />
-	) : (
-		data && <DataTable columns={columns} data={data} />
-	);
+export function Table({ initial }: { initial?: Client[] }) {
+	const { data } = useClients(initial, { suspense: true });
+	return <DataTable columns={columns} data={data} />;
 }
 
 const columns: ColumnDef<typeof clients.$inferSelect>[] = [

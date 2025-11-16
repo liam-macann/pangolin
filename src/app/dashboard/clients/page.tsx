@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-
+import { fetchClients } from '@/lib/data';
 import { Table } from './ui';
 
 export const metadata: Metadata = {
@@ -7,13 +7,15 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
+	const clients = await fetchClients();
+
 	return (
 		<div className='w-full'>
 			<div className='flex w-full items-center justify-between'>
 				<h1 className='mb-6 font-display text-3xl'>Clients</h1>
 			</div>
 
-			<Table />
+			<Table initial={clients} />
 		</div>
 	);
 }
