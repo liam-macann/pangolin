@@ -3,7 +3,9 @@ import type { PgColumn, PgEnum } from 'drizzle-orm/pg-core';
 
 /** Helper type to extract the TypeScript type from a PgColumn or SQL */
 export type ColumnType<T> = T extends PgColumn<infer C>
-	? C['data']
+	? C['notNull'] extends true
+		? C['data']
+		: C['data'] | null
 	: T extends SQL<infer S>
 		? S
 		: never;
