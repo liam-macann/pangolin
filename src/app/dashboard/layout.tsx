@@ -1,9 +1,9 @@
 import { SignOutIcon, SlidersHorizontalIcon } from '@phosphor-icons/react/ssr';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { auth, signOut } from '@/auth';
+import { auth, type Session, signOut } from '@/auth';
 import SideNav from '@/src/app/ui/dashboard/topnav';
-import Avatar, { AvatarEmpty } from '@/ui/avatar';
+import UserAvatar, { AvatarEmpty } from '@/ui/avatar';
 import { Button } from '@/ui/button';
 import {
 	DropdownMenu,
@@ -20,21 +20,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 			<header className='gap-y-4 border-b py-4'>
 				<div className='mx-auto flex max-w-5xl flex-col px-6'>
 					<div className='self-end'>
-						<Suspense
-							fallback={
-								<Button
-									variant='ghost'
-									aria-disabled
-									className='!bg-gray-4 relative size-8 animate-pulse cursor-pointer overflow-hidden rounded-full'
-								>
-									<div className='sr-only'>Account</div>
-								</Button>
-							}
-						>
+						<Suspense fallback={<Trigger aria-disabled image={null} />}>
 							<AccountMenuContent />
 						</Suspense>
 					</div>
-
 					<SideNav />
 				</div>
 			</header>
@@ -50,13 +39,7 @@ async function AccountMenuContent() {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button
-					variant='ghost'
-					className='relative m-0 size-8 cursor-pointer overflow-hidden rounded-full p-0'
-				>
-					<Avatar className='absolute inset-0' user={session.user} />
-					<div className='sr-only'>Account</div>
-				</Button>
+				<Trigger image={session.user.image} />
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align='end'>
 				<DropdownMenuLabel>
@@ -84,3 +67,17 @@ async function AccountMenuContent() {
 		</DropdownMenu>
 	);
 }
+
+const Trigger = ({
+	image,
+	...props
+}: { image: Session['user']['image'] } & React.ComponentProps<typeof Button>) => (
+	<Button
+		variant='ghost'
+		className='relative m-0 size-8 cursor-pointer overflow-hidden rounded-full p-0'
+		{...props}
+	>
+		<UserAvatar className='absolute inset-0' image={image} />
+		<div className='sr-only'>Account</div>
+	</Button>
+);

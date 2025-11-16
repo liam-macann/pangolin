@@ -1,6 +1,5 @@
 import { UserIcon } from '@phosphor-icons/react/ssr';
 import * as AvatarPrimitive from '@radix-ui/react-avatar';
-import { md5 } from 'hash-wasm';
 import type * as React from 'react';
 import { cn } from '@/lib/utils';
 
@@ -40,13 +39,13 @@ function AvatarFallback({
 import type { Session } from '@/auth';
 
 export default function UserAvatar({
-	user,
+	image,
 	className,
 	...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root> & { user: Session['user'] }) {
+}: React.ComponentProps<typeof AvatarPrimitive.Root> & { image: Session['user']['image'] }) {
 	return (
-		<Avatar className={cn('!bg-gray-4 size-full', className)} {...props}>
-			{user.image && <AvatarImage src='/api/avatar' />}
+		<Avatar className={cn('!bg-gray-4', className)} {...props}>
+			{image && <AvatarImage src={`/api/avatar?user=${image}`} />}
 			<AvatarFallback>
 				<UserIcon className='size-1/2' />
 			</AvatarFallback>
