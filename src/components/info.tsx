@@ -33,7 +33,7 @@ export function InfoTip({
 				asChild
 			>
 				<Button variant='ghost' size='icon-xs' className={cn('focus-visible:ring-0', className)}>
-					<InfoIcon className='-m-px group-hover/info:!ring-0 size-3.5 cursor-pointer rounded-full text-muted-foreground ring-ring/50 transition-shadow group-focus-visible/info:ring-2' />
+					<InfoIcon className='-m-px group-hover/info:!ring-0 size-3.5 cursor-pointer rounded-full text-muted-foreground ring-ring/50 group-focus-visible/info:ring-2' />
 					<span className='sr-only'>Information</span>
 				</Button>
 			</Popover.Trigger>
