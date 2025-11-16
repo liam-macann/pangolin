@@ -1,9 +1,6 @@
-import type { ColumnDef } from '@tanstack/react-table';
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
-import { fetchClient } from '@/src/app/lib/data';
-import { DataTable } from '@/src/components/ui/data-table';
-import type { clients } from '@/src/db/schema';
+
+import { Table } from './ui';
 
 export const metadata: Metadata = {
 	title: 'Clients',
@@ -16,25 +13,7 @@ export default async function Page() {
 				<h1 className='mb-6 font-display text-3xl'>Clients</h1>
 			</div>
 
-			<Suspense fallback={<DataTable columns={columns} data={[]} />}>
-				<Table />
-			</Suspense>
+			<Table />
 		</div>
 	);
 }
-
-async function Table() {
-	const clients = await fetchClient();
-	return <DataTable columns={columns} data={clients} />;
-}
-
-const columns: ColumnDef<typeof clients.$inferSelect>[] = [
-	{
-		accessorKey: 'name',
-		header: 'Name',
-	},
-	{
-		accessorKey: 'email',
-		header: 'Email',
-	},
-];

@@ -30,3 +30,19 @@ export function useInvoices(
 		...rest,
 	};
 }
+
+import type { Data as ClientData } from '@/api/clients/route';
+export function useClients(
+	initial?: ClientData,
+	config?: Omit<SWRConfiguration, 'fallbackData' | 'suspense'>,
+) {
+	const { error, ...rest } = useSWR('/api/clients', fetcher<ClientData>, {
+		...config,
+		...(initial ? { fallbackData: initial } : {}),
+	});
+
+	return {
+		isError: error !== undefined,
+		...rest,
+	};
+}

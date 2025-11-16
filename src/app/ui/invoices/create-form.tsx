@@ -11,8 +11,8 @@ import { InfoTip } from '@/components/info';
 import { type clients as clientsSchema, invoices as invoicesSchema } from '@/db/schema';
 import { createInvoice } from '@/lib/actions';
 import type { getUserConfig } from '@/lib/data';
-import { useInvoices } from '@/lib/hooks';
-import type { Prettify } from '@/lib/utils';
+import { useClients, useInvoices } from '@/lib/hooks';
+import { cn, type Prettify } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { Combobox } from '@/ui/combobox';
 import { DatePicker } from '@/ui/date-picker';
@@ -66,11 +66,10 @@ const schema = createInsertSchema(invoicesSchema, {
 
 export function CreateInvoiceDialog({
 	children,
-	clients,
 	config,
 }: {
 	children: React.ReactNode;
-	clients: (typeof clientsSchema.$inferSelect)[];
+	clients?: (typeof clientsSchema.$inferSelect)[];
 	config: Prettify<
 		Pick<
 			Awaited<ReturnType<typeof getUserConfig>>,
@@ -80,11 +79,7 @@ export function CreateInvoiceDialog({
 }) {
 	const [open, setOpen] = useState(false);
 	const { mutate } = useInvoices();
-
-	const options = clients.map(client => ({
-		value: client.id,
-		label: client.name,
-	}));
+	const { data: clientsData, isLoading: isClientsLoading, isError: isClientsError } = useClients();
 
 	const form = useForm<z.input<typeof schema>>({
 		resolver: zodResolver(schema),
@@ -152,9 +147,20 @@ export function CreateInvoiceDialog({
 									</FieldLabel>
 									<div className='flex grow flex-col items-end gap-1'>
 										<Combobox
-											options={options}
+											options={
+												clientsData
+													? clientsData.map(client => ({
+															value: client.id,
+															label: client.name,
+														}))
+													: []
+											}
+											disabled={isClientsLoading || isClientsError || !clientsData}
 											noun={{ singular: 'client', plural: 'clients' }}
-											className='max-w-80'
+											className={cn(
+												'max-w-80',
+												isClientsLoading && 'disabled:cursor-wait disabled:opacity-100',
+											)}
 											id='clientId'
 											{...field}
 										/>

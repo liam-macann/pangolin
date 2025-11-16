@@ -224,7 +224,7 @@ export async function getUser() {
 }
 
 /** Fetch all clients for authenticated user */
-export async function fetchClient() {
+export async function fetchClients() {
 	const session = await auth();
 
 	try {
