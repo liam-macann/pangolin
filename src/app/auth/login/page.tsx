@@ -66,7 +66,7 @@ export default async function LoginPage({
 
 	return (
 		<div>
-			<section>
+			<section className='space-y-4'>
 				{errorInfo && (
 					<Alert variant='destructive'>
 						<WarningCircleIcon className='text-destructive' />
