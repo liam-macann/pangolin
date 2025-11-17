@@ -6,7 +6,7 @@ import { boolean, integer, pgTable, primaryKey, text, timestamp, uuid } from 'dr
 import type { AdapterAccountType } from '@auth/core/adapters';
 
 export const users = pgTable('user', {
-	id: uuid().default(sql`uuid_generate_v4()`).primaryKey().notNull(),
+	id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
 	name: text('name').notNull(),
 	email: text('email').unique().notNull(),
 	password: text(),

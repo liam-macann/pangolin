@@ -274,6 +274,20 @@
 			"when": 1763014960562,
 			"tag": "0038_even_corsair",
 			"breakpoints": true
+		},
+		{
+			"idx": 39,
+			"version": "7",
+			"when": 1763371455857,
+			"tag": "0039_broad_moon_knight",
+			"breakpoints": true
+		},
+		{
+			"idx": 40,
+			"version": "7",
+			"when": 1763371935225,
+			"tag": "0040_absent_rumiko_fujikawa",
+			"breakpoints": true
 		}
 	]
 }

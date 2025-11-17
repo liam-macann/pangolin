@@ -28,7 +28,9 @@ export const invoices = pgTable(
 		userId: uuid('user_id')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
-		clientId: uuid('client_id').notNull(),
+		clientId: uuid('client_id')
+			.notNull()
+			.references(() => clients.id),
 
 		title: varchar('title', { length: 100 }),
 		/** Description printed under invoice reference */
@@ -157,37 +159,59 @@ export const invoiceCount = pgTable('invoice_count', {
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
 
+//
+//
+//
+// SCD v2
+//
+// Slowly changing dimension (SCD) — history table necessary for stable invoice references
+
+const scdDates = {
+	validFrom: timestamp('valid_from', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+	validTo: timestamp('valid_to', { withTimezone: true, mode: 'date' }),
+};
+
 export const clients = pgTable(
 	'client',
 	{
-		id: uuid().default(sql`uuid_generate_v4()`).unique().notNull(),
+		id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
+		clientId: uuid('client_id').default(sql`uuid_generate_v4()`).unique().notNull(),
 		userId: uuid('user_id')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
 		name: varchar({ length: 255 }).notNull(),
 		email: varchar({ length: 255 }).notNull(),
+		...scdDates,
 	},
-	t => [primaryKey({ name: 'client_user_pk', columns: [t.id, t.userId] })],
+	t => [
+		// Ensure that a client has only one valid configuration (multiple null values will conflict)
+		unique('client_version').on(t.userId, t.validTo),
+	],
 );
 
 export const colorEnum = pgEnum('color', ['blue', 'green', 'red', 'lavender']);
 export const numberingScheme = pgEnum('numbering_scheme', ['sequential', 'annual']);
-// Slowly changing dimension (SCD) — history table
-export const config = pgTable('config', {
-	id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
-	validFrom: timestamp('valid_from', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
-	validTo: timestamp('valid_to', { withTimezone: true, mode: 'date' }),
-	// The time zone of record, for invoice dates and yearly sequencing. This should eventually reference a table of time zones.
-	timezone: text().notNull(),
-	locale: text().notNull(),
-	currency: varchar('currency', { length: 3 }).notNull(),
-	taxRegistration: boolean('tax_registration').notNull(),
-	numberingScheme: numberingScheme('numbering_scheme').notNull(),
-	colorScheme: colorEnum('color_scheme').notNull().default('blue'),
-});
+export const config = pgTable(
+	'config',
+	{
+		id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		// The time zone of record, for invoice dates and yearly sequencing. This should eventually reference a table of time zones.
+		timezone: text().notNull(),
+		locale: text().notNull(),
+		currency: varchar('currency', { length: 3 }).notNull(),
+		taxRegistration: boolean('tax_registration').notNull(),
+		numberingScheme: numberingScheme('numbering_scheme').notNull(),
+		colorScheme: colorEnum('color_scheme').notNull().default('blue'),
+		...scdDates,
+	},
+	t => [
+		// Ensure that a user has only one valid configuration (multiple null values will conflict)
+		unique('config_version').on(t.userId, t.validTo),
+	],
+);
 
 //
 //

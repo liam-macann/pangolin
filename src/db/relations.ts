@@ -1,5 +1,14 @@
 import { relations } from 'drizzle-orm';
-import { clients, config, invoiceItems, invoices, itemTaxes, taxes, users } from '@/db/schema';
+import {
+	accounts,
+	clients,
+	config,
+	invoiceItems,
+	invoices,
+	itemTaxes,
+	taxes,
+	users,
+} from '@/db/schema';
 
 export const invoicesRelations = relations(invoices, ({ one, many }) => ({
 	client: one(clients, {
@@ -54,4 +63,12 @@ export const configRelations = relations(config, ({ one }) => ({
 export const userRelations = relations(users, ({ many }) => ({
 	config: many(config),
 	tax: many(taxes),
+	accounts: many(accounts),
+}));
+
+export const accountRelations = relations(accounts, ({ one }) => ({
+	user: one(users, {
+		fields: [accounts.userId],
+		references: [users.id],
+	}),
 }));
