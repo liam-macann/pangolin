@@ -1,9 +1,11 @@
 import path from 'node:path';
 import { type NextRequest, NextResponse } from 'next/server';
 import PdfPrinter from 'pdfmake';
+import type { unitEnum } from '@/db/schema/data';
 import { fetchInvoice, getUser } from '@/lib/data';
 import { BottomLayout, CenteredLayout } from '@/lib/pdf-verticalalign';
-import { formatCurrency, formatDateToLocal, formatNumber } from '@/lib/utils';
+import { formatCurrency, formatDateToLocal, formatNumber, pluralize } from '@/lib/utils';
+import type { Enum } from '@/lib/utils/drizzle';
 
 import schemes from '@/src/app/ui/colorSchemes';
 
@@ -13,6 +15,12 @@ const fontSize = {
 	sm: 11,
 	/** Headings */
 	lg: 14,
+};
+
+/** Get the singular equivalent of a unit (stored as plural enum) */
+const singularUnits: Record<Enum<typeof unitEnum>, string> = {
+	hours: 'hour',
+	items: 'item',
 };
 
 /** Convert pixels to points */
@@ -189,7 +197,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 								margin: [0, spacing(2)],
 							},
 							{
-								text: `${formatNumber(item.quantity, invoice.config.locale)} ${item.unit ?? ''}`.trim(),
+								text: `${formatNumber(item.quantity, invoice.config.locale)} ${item.unit ? pluralize(item.quantity, singularUnits[item.unit], item.unit) : ''}`.trim(),
 								bold: false,
 								fontFeatures: ['pnum'],
 							},

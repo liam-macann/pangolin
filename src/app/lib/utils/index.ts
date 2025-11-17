@@ -49,6 +49,22 @@ export const formatDateToLocal = (
 	return formatter.format(safeDate);
 };
 
+// Localisation is irrelevant as we only target English
+const pluralRules = new Intl.PluralRules('en-GB');
+/** Accepts a number, and returns either singular or plural form */
+export function pluralize(count: number, singular: string, plural: string) {
+	const form = pluralRules.select(count);
+
+	switch (form) {
+		case 'one':
+			return singular;
+		case 'other':
+			return plural;
+		default:
+			throw new Error(`Unknown: ${form}`);
+	}
+}
+
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
