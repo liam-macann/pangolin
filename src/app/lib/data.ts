@@ -1,8 +1,9 @@
-import { and, asc, desc, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
 import type { PgSelectBase } from 'drizzle-orm/pg-core';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import {
+	clientPreferences,
 	clients,
 	config as configSchema,
 	invoiceItems,
@@ -228,7 +229,29 @@ export async function fetchClients() {
 	const session = await auth();
 
 	try {
-		return await db.select().from(clients).where(eq(clients.userId, session.user.id));
+		return await db
+			.select({
+				id: clients.id,
+				name: clients.name,
+				email: clients.email,
+				invoiceCount: count(invoices.id),
+				preferences: jsonbBuildObject({
+					isFavourite: clientPreferences.isFavourite,
+					isDeleted: clientPreferences.isDeleted,
+				}),
+			})
+			.from(clients)
+			.where(eq(clients.userId, session.user.id))
+			.leftJoin(invoices, eq(clients.id, invoices.clientId))
+			.leftJoin(clientPreferences, eq(clients.preferences, clientPreferences.id))
+			.groupBy(
+				clients.id,
+				clients.name,
+				clients.email,
+				clientPreferences.isFavourite,
+				clientPreferences.isDeleted,
+			)
+			.orderBy(clients.name);
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoices.');

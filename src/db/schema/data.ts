@@ -159,6 +159,12 @@ export const invoiceCount = pgTable('invoice_count', {
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
 
+export const clientPreferences = pgTable('client_preferences', {
+	id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
+	isFavourite: boolean('is_favourite').notNull().default(false),
+	isDeleted: boolean('is_deleted').notNull().default(false),
+});
+
 //
 //
 //
@@ -181,6 +187,9 @@ export const clients = pgTable(
 			.references(() => users.id, { onDelete: 'cascade' }),
 		name: varchar({ length: 255 }).notNull(),
 		email: varchar({ length: 255 }).notNull(),
+		preferences: uuid()
+			.references(() => clientPreferences.id)
+			.notNull(),
 		...scdDates,
 	},
 	t => [

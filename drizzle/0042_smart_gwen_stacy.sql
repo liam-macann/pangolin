@@ -1,0 +1,1 @@
+ALTER TABLE "client" ALTER COLUMN "preferences" SET NOT NULL;

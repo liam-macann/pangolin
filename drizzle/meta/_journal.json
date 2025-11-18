@@ -288,6 +288,20 @@
 			"when": 1763371935225,
 			"tag": "0040_absent_rumiko_fujikawa",
 			"breakpoints": true
+		},
+		{
+			"idx": 41,
+			"version": "7",
+			"when": 1763470670027,
+			"tag": "0041_redundant_moira_mactaggert",
+			"breakpoints": true
+		},
+		{
+			"idx": 42,
+			"version": "7",
+			"when": 1763471424243,
+			"tag": "0042_smart_gwen_stacy",
+			"breakpoints": true
 		}
 	]
 }

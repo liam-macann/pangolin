@@ -48,7 +48,9 @@ async function main(uuid?: string) {
 				invoices: invoiceCount,
 			},
 		},
-		clients: { columns: { name: f.fullName() } },
+		clients: {
+			columns: { name: f.fullName() },
+		},
 		invoices: {
 			columns: {
 				id: f.uuid(),

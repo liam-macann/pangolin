@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm';
 import {
 	accounts,
+	clientPreferences,
 	clients,
 	config,
 	invoiceItems,
@@ -51,6 +52,17 @@ export const taxRelations = relations(taxes, ({ one }) => ({
 		fields: [taxes.userId],
 		references: [users.id],
 	}),
+}));
+
+export const clientRelations = relations(clients, ({ one }) => ({
+	clientPreferences: one(clientPreferences, {
+		fields: [clients.preferences],
+		references: [clientPreferences.id],
+	}),
+}));
+
+export const clientPreferencesRelations = relations(clientPreferences, ({ many }) => ({
+	clients: many(clients),
 }));
 
 export const configRelations = relations(config, ({ one }) => ({

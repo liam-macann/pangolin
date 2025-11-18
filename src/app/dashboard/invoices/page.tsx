@@ -1,4 +1,4 @@
-import { PlusIcon } from '@phosphor-icons/react/ssr';
+import { PlusCircleIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { fetchInvoices, getUserConfig } from '@/lib/data';
@@ -48,8 +48,8 @@ async function Dialog() {
 function DialogTrigger() {
 	return (
 		<Button variant='outline' size='lg'>
-			<PlusIcon />
-			<span className='hidden sm:block'>Create Invoice</span>
+			<PlusCircleIcon />
+			<span className='hidden sm:block'>Create invoice</span>
 		</Button>
 	);
 }
