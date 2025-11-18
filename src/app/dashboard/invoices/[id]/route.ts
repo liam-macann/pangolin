@@ -27,6 +27,46 @@ const singularUnits: Record<Enum<typeof unitEnum>, string> = {
 const px = (v: number) => (v / 4) * 3;
 const spacing = (i: number) => px(4 * i);
 
+/** Necessary before execution to estimate bottom margin height */
+const footerLeftContent = ['Name: First Lastname', 'BSB: 123 456', 'Acc #: 123 456 789'];
+
+const footerStyles = {
+	border: 0,
+	fontSize: fontSize.sm,
+	lineHeight: 1,
+};
+
+// Yes, this is a magic number multiplier. Exact `1` failed, despite lineHeight being set on footer styles.
+// Tested between 1–50 lines
+const footerLineHeight = (n: number) => n * footerStyles.fontSize * footerStyles.lineHeight * 1.22;
+
+const footerMargins = {
+	/** Applied as padding to table layout. The gutter between footer end and page end. */
+	marginBottom: spacing(12),
+
+	/** Prevent overflow due to text being too close to padding. Magic number. */
+	safeAreaTop: footerLineHeight(1),
+
+	/** Prevent overflow due to text being too close to padding. Magic number. */
+	safeAreaBottom: footerLineHeight(1),
+};
+
+const footerHeight = () => {
+	// Lines incremented for safe area
+	const textHeight = footerLineHeight(footerLeftContent.length);
+
+	const tablePadding = 2; // Default pdfmake top-padding
+
+	return (
+		textHeight +
+		tablePadding +
+		footerStyles.border * 2 +
+		footerMargins.marginBottom +
+		footerMargins.safeAreaTop +
+		footerMargins.safeAreaBottom
+	);
+};
+
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 	const [invoice, user] = await Promise.all([fetchInvoice(id), getUser()]);
@@ -47,10 +87,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 	const printer = new PdfPrinter(fonts);
 
 	const pageMargins: [number, number, number, number] = [
-		spacing(18),
-		spacing(14),
-		spacing(18),
-		spacing(28),
+		spacing(18), // L
+		spacing(18), // T
+		spacing(18), // R
+		footerHeight(), // B
 	];
 
 	const reference = `${invoice.config.taxRegistration ? 'Tax ' : ''}Invoice ${invoice.formatted.reference}`;
@@ -75,21 +115,32 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 			return {
 				style: 'footer',
 				margin: [pageMargins[0], 0, pageMargins[2], 0],
+				unbreakable: true,
 				layout: {
 					...BottomLayout,
-					hLineWidth: () => 0,
-					vLineWidth: () => 0,
-					paddingBottom: () => 0,
+					hLineWidth: () => footerStyles.border,
+					vLineWidth: () => footerStyles.border,
+					paddingBottom: () => footerMargins.marginBottom,
 					paddingLeft: i => (i === 0 ? 0 : spacing(1)),
 					paddingRight: i => (i > 0 ? 0 : spacing(1)),
 				},
 				table: {
 					style: 'footer',
-					widths: ['*', '*'],
+					widths: ['*', 0, '*'],
+					dontBreakRows: true,
 					body: [
 						[
+							{ stack: footerLeftContent },
 							{
-								stack: ['Name: First Lastname', 'BSB: 123 456', 'Acc #: 123 456 789'],
+								stack: [' '],
+								opacity: 0,
+								fontSize: 0.1,
+								margin: [
+									0,
+									pageMargins[3] - footerMargins.marginBottom - footerMargins.safeAreaBottom,
+									0,
+									0,
+								],
 							},
 							{
 								text: `Issued ${formatDateToLocal(invoice.issuedAt, false, 'en-AU')}`,
@@ -116,6 +167,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 			{
 				style: 'footer',
 				alignment: 'right',
+				marginTop: -spacing(4),
 				stack: [
 					{
 						text: user.name,
@@ -148,7 +200,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 				: '',
 			{
 				table: {
-					widths: ['*', '30%'],
+					widths: ['70%', '30%'],
 					body: [
 						[
 							{ text: invoice.title, bold: true },
@@ -174,9 +226,15 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 					vLineWidth: () => 0,
 				},
 			},
+			//
+			//
+			//
+			// Line items
+			//
 			{
 				table: {
 					headerRows: 1,
+					dontBreakRows: true,
 					widths: ['*', 70, ...(invoice.config.taxRegistration ? [70] : []), 60, 70],
 					body: [
 						[
@@ -243,6 +301,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 					hLineStyle: i => (i <= 1 ? null : { dash: { length: 0.75, space: 1.5 } }),
 				},
 			},
+			//
+			//
+			//
+			// Subtotal and taxes
+			//
 			{
 				marginTop: spacing(6),
 				columnGap: spacing(2),
@@ -257,7 +320,9 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 					},
 					{
 						width: 'auto',
+						unbreakable: true,
 						table: {
+							dontBreakRows: true,
 							widths: [80, 100],
 							body: [
 								[
@@ -326,7 +391,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 				color: colors.accent,
 			},
 			footer: {
-				fontSize: fontSize.sm,
+				fontSize: footerStyles.fontSize,
+				lineHeight: footerStyles.lineHeight,
 				color: colors.accent,
 			},
 		},
