@@ -38,7 +38,7 @@ const increment = (column: AnyColumn, value = 1) => sql`${column} + ${value}`;
 
 type InvoiceData = Pick<
 	typeof invoicesSchema.$inferInsert,
-	'clientId' | 'title' | 'description' | 'notes'
+	'clientData' | 'title' | 'description' | 'notes'
 > & {
 	// These are naively accepted in timezone of record, truncated to only date. createdAt stores a tz timestamp.
 	issuedAt?: Date;
@@ -78,7 +78,7 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 
 	// Explicit about accepted input to prevent injecting via spread operator
 	const defaults: z.infer<typeof inputSchema> = {
-		clientId: invoice.clientId,
+		clientData: invoice.clientData,
 		title: invoice.title,
 		description: invoice.description,
 		status: invoice.status || 'unpaid',
@@ -163,7 +163,7 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 				.values([
 					{
 						userId: validated.data.userId,
-						clientId: validated.data.clientId,
+						clientData: validated.data.clientData,
 
 						title: validated.data.title,
 						description: validated.data.description,

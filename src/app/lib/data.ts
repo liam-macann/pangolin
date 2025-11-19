@@ -1,9 +1,9 @@
-import { and, asc, count, desc, eq, getTableColumns, isNull, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, getTableColumns, isNotNull, isNull, sql } from 'drizzle-orm';
 import type { PgSelectBase } from 'drizzle-orm/pg-core';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import {
-	clientPreferences,
+	clientData,
 	clients,
 	config as configSchema,
 	invoiceItems,
@@ -48,7 +48,7 @@ function invoiceQuery<Detailed extends boolean>(
 				unitCost: itemsWithTax.unitCost,
 				netAmount: itemsWithTax.netAmount,
 				order: itemsWithTax.order,
-				taxes: jsonbAgg(jsonbBuildObject(getTableColumns(taxesSchema)), taxesSchema.id),
+				taxes: jsonbAgg(jsonbBuildObject(getTableColumns(taxesSchema)), isNotNull(taxesSchema.id)),
 			}).as('item'),
 		})
 		.from(itemsWithTax)
@@ -90,7 +90,7 @@ function invoiceQuery<Detailed extends boolean>(
 		title: invoices.title,
 		description: invoices.description,
 
-		client: getTableColumns(clients),
+		client: getTableColumns(clientData),
 
 		config: {
 			timezone: configSchema.timezone,
@@ -118,7 +118,7 @@ function invoiceQuery<Detailed extends boolean>(
 
 	return query
 		.where(eq(invoices.userId, sql.placeholder('userId')))
-		.innerJoin(clients, eq(invoices.clientId, clients.id))
+		.innerJoin(clientData, eq(invoices.clientData, clientData.id))
 		.innerJoin(configSchema, eq(invoices.config, configSchema.id))
 		.leftJoin(itemsAgg, eq(invoices.id, itemsAgg.invoiceId))
 		.leftJoin(itemsAggDetailed, eq(invoices.id, itemsAggDetailed.invoiceId))
@@ -229,29 +229,36 @@ export async function fetchClients() {
 	const session = await auth();
 
 	try {
+		const invoiceCounts = db.$with('invoice_counts').as(
+			db
+				.select({
+					clientId: clients.id,
+					count: count(invoices).as('count'),
+				})
+				.from(clients)
+				.leftJoin(clientData, eq(clientData.clientId, clients.id))
+				.leftJoin(invoices, eq(invoices.clientData, clientData.id))
+				.groupBy(clients.id),
+		);
+
 		return await db
+			.with(invoiceCounts)
 			.select({
 				id: clients.id,
-				name: clients.name,
-				email: clients.email,
-				invoiceCount: count(invoices.id),
-				preferences: jsonbBuildObject({
-					isFavourite: clientPreferences.isFavourite,
-					isDeleted: clientPreferences.isDeleted,
+				isFavourite: clients.isFavorite,
+				isDeleted: clients.isDeleted,
+				invoiceCount: invoiceCounts.count,
+				data: jsonbBuildObject({
+					name: clientData.name,
+					email: clientData.email,
 				}),
 			})
 			.from(clients)
+			.leftJoin(clientData, and(eq(clients.id, clientData.clientId), isNull(clientData.validTo)))
+			.leftJoin(invoiceCounts, eq(clients.id, invoiceCounts.clientId))
 			.where(eq(clients.userId, session.user.id))
-			.leftJoin(invoices, eq(clients.id, invoices.clientId))
-			.leftJoin(clientPreferences, eq(clients.preferences, clientPreferences.id))
-			.groupBy(
-				clients.id,
-				clients.name,
-				clients.email,
-				clientPreferences.isFavourite,
-				clientPreferences.isDeleted,
-			)
-			.orderBy(clients.name);
+			.groupBy(clients.id, clientData.name, clientData.email, invoiceCounts.count)
+			.orderBy(clientData.name);
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoices.');

@@ -1,1 +1,0 @@
-ALTER TABLE "invoice" ADD COLUMN "issue_year" integer GENERATED ALWAYS AS (EXTRACT(YEAR FROM "invoice"."issued_at")) STORED NOT NULL;

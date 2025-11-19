@@ -1,20 +1,21 @@
 import { relations } from 'drizzle-orm';
 import {
 	accounts,
-	clientPreferences,
+	clientData,
 	clients,
 	config,
 	invoiceItems,
 	invoices,
 	itemTaxes,
+	sessions,
 	taxes,
 	users,
 } from '@/db/schema';
 
 export const invoicesRelations = relations(invoices, ({ one, many }) => ({
-	client: one(clients, {
-		fields: [invoices.clientId],
-		references: [clients.id],
+	clientData: one(clientData, {
+		fields: [invoices.clientData],
+		references: [clientData.id],
 	}),
 	user: one(users, {
 		fields: [invoices.userId],
@@ -54,15 +55,15 @@ export const taxRelations = relations(taxes, ({ one }) => ({
 	}),
 }));
 
-export const clientRelations = relations(clients, ({ one }) => ({
-	clientPreferences: one(clientPreferences, {
-		fields: [clients.preferences],
-		references: [clientPreferences.id],
+export const clientDataRelations = relations(clientData, ({ one }) => ({
+	clients: one(clients, {
+		fields: [clientData.clientId],
+		references: [clients.id],
 	}),
 }));
 
-export const clientPreferencesRelations = relations(clientPreferences, ({ many }) => ({
-	clients: many(clients),
+export const clientRelations = relations(clients, ({ many }) => ({
+	clientData: many(clientData),
 }));
 
 export const configRelations = relations(config, ({ one }) => ({
@@ -76,11 +77,19 @@ export const userRelations = relations(users, ({ many }) => ({
 	config: many(config),
 	tax: many(taxes),
 	accounts: many(accounts),
+	sessions: many(sessions),
 }));
 
 export const accountRelations = relations(accounts, ({ one }) => ({
 	user: one(users, {
 		fields: [accounts.userId],
+		references: [users.id],
+	}),
+}));
+
+export const sessionRelations = relations(sessions, ({ one }) => ({
+	user: one(users, {
+		fields: [sessions.userId],
 		references: [users.id],
 	}),
 }));

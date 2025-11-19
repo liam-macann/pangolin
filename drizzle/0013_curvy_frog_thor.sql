@@ -1,1 +1,0 @@
-ALTER TABLE "config" ADD COLUMN "locale" text DEFAULT 'en-AU' NOT NULL;

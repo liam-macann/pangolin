@@ -1,2 +1,0 @@
-CREATE TYPE "public"."numbering_scheme" AS ENUM('sequential', 'calendar_year');--> statement-breakpoint
-ALTER TABLE "config" ADD COLUMN "numbering_scheme" "numbering_scheme" DEFAULT 'sequential' NOT NULL;

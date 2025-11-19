@@ -1,1 +1,0 @@
-ALTER TABLE "config" RENAME COLUMN "taxRegistration" TO "tax_registration";

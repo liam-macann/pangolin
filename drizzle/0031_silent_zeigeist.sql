@@ -1,1 +1,0 @@
-ALTER TABLE "config" ALTER COLUMN "numbering_scheme" DROP DEFAULT;

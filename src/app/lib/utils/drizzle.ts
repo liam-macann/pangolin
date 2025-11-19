@@ -20,12 +20,12 @@ export type Enum<T extends PgEnum<any>> = T['enumValues'][number];
 const _jsonbAgg = <T>(expression: SQL<T> | SQL.Aliased<T>) => sql<T[]>`jsonb_agg(${expression})`;
 
 /** Pass a PgColumn to filter the aggregation where column is not null */
-export function jsonbAgg<T>(expression: SQL<T> | SQL.Aliased<T>, filter?: PgColumn) {
+export function jsonbAgg<T>(expression: SQL<T> | SQL.Aliased<T>, filter?: SQL) {
 	if (!filter) return _jsonbAgg(expression);
 
 	return sql<T[]>`COALESCE(
         ${_jsonbAgg(expression)}
-        FILTER (WHERE ${filter} IS NOT NULL),
+        FILTER (WHERE ${filter}),
         '[]'::jsonb
       )`;
 }

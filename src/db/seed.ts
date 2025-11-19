@@ -16,7 +16,7 @@ const { accounts, authenticators, sessions, ...include } = schema;
 const fetchUser = async (uuid: string) =>
 	await db.query.users.findFirst({
 		where: (users, { eq }) => eq(users.id, uuid),
-		with: { accounts: true },
+		with: { accounts: true, sessions: true },
 	});
 
 async function main(uuid?: string) {
@@ -48,8 +48,12 @@ async function main(uuid?: string) {
 				invoices: invoiceCount,
 			},
 		},
-		clients: {
-			columns: { name: f.fullName() },
+		clients: { with: { clientData: 1 } },
+		clientData: {
+			columns: {
+				name: f.fullName(),
+				validTo: f.default({ defaultValue: null }),
+			},
 		},
 		invoices: {
 			columns: {
@@ -151,7 +155,11 @@ async function main(uuid?: string) {
 		},
 	}));
 
-	if (attachedUser?.accounts.length) await db.insert(accounts).values(attachedUser.accounts);
+	if (attachedUser?.accounts.length)
+		await Promise.all([
+			db.insert(accounts).values(attachedUser.accounts),
+			db.insert(sessions).values(attachedUser.sessions),
+		]);
 }
 
 (async () => {

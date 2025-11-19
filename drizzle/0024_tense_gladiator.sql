@@ -1,1 +1,0 @@
-ALTER TABLE "config" ADD COLUMN "taxRegistration" boolean DEFAULT false NOT NULL;

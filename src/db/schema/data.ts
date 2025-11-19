@@ -28,9 +28,9 @@ export const invoices = pgTable(
 		userId: uuid('user_id')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
-		clientId: uuid('client_id')
+		clientData: uuid('client_data_id')
 			.notNull()
-			.references(() => clients.id),
+			.references(() => clientData.id),
 
 		title: varchar('title', { length: 100 }),
 		/** Description printed under invoice reference */
@@ -71,9 +71,9 @@ export const invoices = pgTable(
 	},
 	t => [
 		foreignKey({
-			name: 'client_fk',
-			columns: [t.clientId, t.userId],
-			foreignColumns: [clients.id, clients.userId],
+			name: 'invoice_ownership_fk',
+			columns: [t.clientData, t.userId],
+			foreignColumns: [clientData.id, clientData.userId],
 		}),
 		// Ensure that the sequence is unique for each user
 		unique('user_index').on(t.userId, t.index),
@@ -159,11 +159,20 @@ export const invoiceCount = pgTable('invoice_count', {
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 });
 
-export const clientPreferences = pgTable('client_preferences', {
-	id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
-	isFavourite: boolean('is_favourite').notNull().default(false),
-	isDeleted: boolean('is_deleted').notNull().default(false),
-});
+// Logical client. Data is stored in SCD table.
+export const clients = pgTable(
+	'client',
+	{
+		id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
+		userId: uuid('user_id')
+			.references(() => users.id, { onDelete: 'cascade' })
+			.notNull(),
+		isFavorite: boolean('is_favorite').notNull().default(false),
+		isDeleted: boolean('is_deleted').notNull().default(false),
+	},
+	// Necessary for ownership constraint on clientData
+	t => [unique('client_user_unique').on(t.id, t.userId)],
+);
 
 //
 //
@@ -177,24 +186,30 @@ const scdDates = {
 	validTo: timestamp('valid_to', { withTimezone: true, mode: 'date' }),
 };
 
-export const clients = pgTable(
-	'client',
+// All data used to construct invoice should be here
+export const clientData = pgTable(
+	'client_data',
 	{
 		id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
-		clientId: uuid('client_id').default(sql`uuid_generate_v4()`).unique().notNull(),
+		// Denormalised to allow DB-level ownership constraint
 		userId: uuid('user_id')
-			.notNull()
-			.references(() => users.id, { onDelete: 'cascade' }),
+			.references(() => users.id, { onDelete: 'cascade' })
+			.notNull(),
+		clientId: uuid('client_id').references(() => clients.id, { onDelete: 'cascade' }),
 		name: varchar({ length: 255 }).notNull(),
 		email: varchar({ length: 255 }).notNull(),
-		preferences: uuid()
-			.references(() => clientPreferences.id)
-			.notNull(),
 		...scdDates,
 	},
 	t => [
+		// Necessary for ownership constraint on clientData
+		unique('client_data_user_unique').on(t.id, t.userId),
 		// Ensure that a client has only one valid configuration (multiple null values will conflict)
-		unique('client_version').on(t.userId, t.validTo),
+		unique('client_version').on(t.clientId, t.validTo),
+		foreignKey({
+			name: 'client_data_ownership_fk',
+			columns: [t.clientId, t.userId],
+			foreignColumns: [clients.id, clients.userId],
+		}),
 	],
 );
 

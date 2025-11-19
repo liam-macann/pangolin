@@ -17,11 +17,11 @@ type Client = ElementType<ClientData>;
 
 const columns: ColumnDef<Client>[] = [
 	{
-		accessorKey: 'name',
+		accessorKey: 'data.name',
 		header: 'Name',
 	},
 	{
-		accessorKey: 'email',
+		accessorKey: 'data.email',
 		header: 'Email',
 	},
 	{
@@ -32,7 +32,7 @@ const columns: ColumnDef<Client>[] = [
 
 export function Clients({ initial }: { initial: Client[] }) {
 	const { data } = useClients(initial, { suspense: true });
-	const favorites = data.filter(client => client.preferences.isFavourite);
+	const favorites = data.filter(client => client.isFavourite);
 
 	return (
 		<>
@@ -45,7 +45,7 @@ export function Clients({ initial }: { initial: Client[] }) {
 								key={client.id}
 								className='rounded-md border border-gray-12/30 bg-primary p-4 pt-8 text-primary-foreground'
 							>
-								<h2 className='font-medium'>{client.name}</h2>
+								<h2 className='font-medium'>{client.data.name}</h2>
 								<p className='text-primary-foreground text-sm'>
 									{client.invoiceCount} {pluralize(client.invoiceCount, 'invoice', 'invoices')}
 								</p>
@@ -97,14 +97,14 @@ export function Table({ data }: { data: Client[] }) {
 							>
 								<DotsThreeIcon />
 							</Button>
-							<h2 className='font-medium'>{client.getValue('name')}</h2>
+							<h2 className='font-medium'>{client.original.data.name}</h2>
 							<div className='flex justify-between'>
 								<p className='text-muted-foreground text-sm'>
 									{client.getValue('invoiceCount')}{' '}
 									{pluralize(client.original.invoiceCount, 'invoice', 'invoices')}
 								</p>
 								<StarIcon
-									weight={client.original.preferences.isFavourite ? 'fill' : undefined}
+									weight={client.original.isFavourite ? 'fill' : undefined}
 									className='text-muted-foreground'
 								/>
 							</div>
