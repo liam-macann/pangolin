@@ -198,7 +198,7 @@ export const clients = pgTable(
 	],
 );
 
-export const colorEnum = pgEnum('color', ['blue', 'green', 'red', 'lavender']);
+export const colorEnum = pgEnum('color', ['blue', 'grass', 'green', 'red', 'pink', 'lavender']);
 export const numberingScheme = pgEnum('numbering_scheme', ['sequential', 'annual']);
 export const config = pgTable(
 	'config',
