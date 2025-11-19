@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { InfoTip } from '@/components/info';
 import { type clients as clientsSchema, invoices as invoicesSchema } from '@/db/schema';
-import { createInvoice } from '@/lib/actions';
+import { createInvoice } from '@/lib/actions/invoice';
 import type { getUserConfig } from '@/lib/data';
 import { useClients, useInvoices } from '@/lib/hooks';
 import { cn, type Prettify } from '@/lib/utils';

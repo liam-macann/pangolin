@@ -5,7 +5,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import type { Data as InvoiceData } from '@/api/invoices/route';
 import type { statusEnum } from '@/db/schema';
-import { updateInvoiceStatus, voidInvoice } from '@/lib/actions';
+import { updateInvoiceStatus, voidInvoice } from '@/lib/actions/invoice';
 import { useInvoices } from '@/lib/hooks';
 import { cn, type ElementType } from '@/lib/utils';
 import type { Enum } from '@/lib/utils/drizzle';
