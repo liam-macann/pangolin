@@ -245,7 +245,7 @@ export async function fetchClients() {
 			.with(invoiceCounts)
 			.select({
 				id: clients.id,
-				isFavourite: clients.isFavorite,
+				isFavorite: clients.isFavorite,
 				isDeleted: clients.isDeleted,
 				invoiceCount: invoiceCounts.count,
 				data: jsonbBuildObject({
