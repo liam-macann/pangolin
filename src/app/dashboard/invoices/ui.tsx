@@ -1,7 +1,8 @@
 'use client';
 
-import { DotsThreeIcon } from '@phosphor-icons/react';
+import { DotsThreeIcon, MagnifyingGlassIcon } from '@phosphor-icons/react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { type JSX, useState } from 'react';
 import { toast } from 'sonner';
 import type { Data as InvoiceData } from '@/api/invoices/route';
 import type { statusEnum } from '@/db/schema';
@@ -30,6 +31,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
+import { Input } from '@/ui/input';
 import {
 	Select,
 	SelectContent,
@@ -53,6 +55,7 @@ export const columns: ColumnDef<Invoice>[] = [
 		size: 150,
 	},
 	{
+		accessorFn: row => row.client.name,
 		accessorKey: 'client.name',
 		header: 'Name',
 		minSize: 200,
@@ -234,18 +237,33 @@ export const columns: ColumnDef<Invoice>[] = [
 	},
 ];
 
-export default function Table({ filter, initial }: { filter?: string; initial?: Invoice[] }) {
+export default function Table({ header, initial }: { header?: JSX.Element; initial?: Invoice[] }) {
 	const { data } = useInvoices(initial, { suspense: true });
+	const [filter, setFilter] = useState('');
 
 	return (
-		<DataTable
-			columns={columns}
-			data={data}
-			globalFilter={filter || undefined}
-			getRowAttr={row => ({
-				'data-void': row.isVoid || undefined,
-				className: 'data-void:opacity-50 group/row',
-			})}
-		/>
+		<>
+			<div className='my-4 mb-8 flex items-center justify-between gap-3 md:mt-8'>
+				{header}
+
+				<Input
+					className='h-10 grow shadow-none'
+					aria-label='Search'
+					placeholder='Search invoices…'
+					onChange={e => setFilter(e.target.value)}
+					value={filter}
+					prefix={<MagnifyingGlassIcon />}
+				/>
+			</div>
+			<DataTable
+				columns={columns}
+				data={data}
+				globalFilter={filter}
+				getRowAttr={row => ({
+					'data-void': row.isVoid || undefined,
+					className: 'data-void:opacity-50 group/row',
+				})}
+			/>
+		</>
 	);
 }

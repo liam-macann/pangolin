@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import { fetchInvoices, getUserConfig } from '@/lib/data';
 import { CreateInvoiceDialog } from '@/src/app/ui/invoices/create-form';
 import { Button } from '@/ui/button';
-import Data from './data';
+import Data from './ui';
 
 export const metadata: Metadata = {
 	title: 'Invoices',
