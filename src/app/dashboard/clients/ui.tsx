@@ -8,6 +8,7 @@ import {
 	getFilteredRowModel,
 	useReactTable,
 } from '@tanstack/react-table';
+import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { Data as ClientData } from '@/api/clients/route';
@@ -50,13 +51,15 @@ export function Clients({ initial }: { initial: Client[] }) {
 				<>
 					<h1 className='mb-3 font-semibold text-lg'>Pinned</h1>
 					<section className='grid grid-cols-4 gap-4'>
-						{favorites.map(client => (
-							<Card
-								key={client.id}
-								client={client}
-								className='border-black/20 bg-primary **:text-primary-foreground'
-							/>
-						))}
+						<AnimatePresence mode='popLayout' initial={false}>
+							{favorites.map(client => (
+								<Card
+									key={client.id}
+									client={client}
+									className='border-black/20 bg-primary **:text-primary-foreground'
+								/>
+							))}
+						</AnimatePresence>
 					</section>
 
 					<hr className='my-12' />
@@ -103,9 +106,11 @@ export function Table({ data }: { data: Client[] }) {
 
 			{table.getRowModel().rows.length ? (
 				<section className='grid grid-cols-4 gap-4'>
-					{table.getRowModel().rows.map(client => (
-						<Card key={client.id} client={client.original} />
-					))}
+					<AnimatePresence mode='popLayout' initial={false}>
+						{table.getRowModel().rows.map(client => (
+							<Card key={client.id} client={client.original} />
+						))}
+					</AnimatePresence>
 				</section>
 			) : (
 				<div className='py-6 text-center text-muted-foreground'>No results</div>
@@ -114,12 +119,26 @@ export function Table({ data }: { data: Client[] }) {
 	);
 }
 
-function Card({ client, className }: { client: Client; className?: string }) {
+function Card({
+	client,
+	className,
+	ref,
+}: {
+	client: Client;
+	className?: string;
+	ref?: React.Ref<HTMLDivElement>;
+}) {
 	const { mutate } = useClients();
 
 	return (
-		<div
+		<motion.div
+			initial={{ scale: 0.95, opacity: 0, filter: 'blur(2px)', pointerEvents: 'none' }}
+			animate={{ scale: 1, opacity: 1, filter: 'blur(0px)', pointerEvents: 'auto' }}
+			exit={{ scale: 0.95, opacity: 0, filter: 'blur(1px)', pointerEvents: 'none' }}
+			transition={{ mass: 0.2, stiffness: 150, damping: 10, type: 'spring' }}
 			key={client.id}
+			layout='position'
+			ref={ref}
 			className={cn('flex flex-col gap-y-0.5 rounded-md border bg-card p-4', className)}
 		>
 			<Button size='icon-sm' variant='ghost' className='-m-2 mb-2 self-end text-muted-foreground'>
@@ -162,6 +181,6 @@ function Card({ client, className }: { client: Client; className?: string }) {
 					/>
 				</Toggle>
 			</div>
-		</div>
+		</motion.div>
 	);
 }
