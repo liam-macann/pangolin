@@ -13,7 +13,7 @@ export default async function Page() {
 
 	return (
 		<div className='w-full'>
-			<div className='mb-12 flex w-full items-baseline justify-between'>
+			<div className='mb-8 flex w-full items-baseline justify-between'>
 				<h1 className='font-display text-3xl'>Clients</h1>
 				<Button variant='outline' disabled>
 					<UserCirclePlusIcon />
