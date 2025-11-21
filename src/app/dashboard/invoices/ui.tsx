@@ -48,7 +48,8 @@ export const columns: ColumnDef<Invoice>[] = [
 		accessorKey: 'reference',
 		header: 'Reference',
 		cell: ({ row }) => (
-			<div className='font-medium group-data-void/row:line-through'>
+			<div className='font-medium'>
+				<span className='sr-only'>{row.original.isVoid && 'Void, '}</span>
 				{row.original.formatted.reference}
 			</div>
 		),
@@ -60,9 +61,7 @@ export const columns: ColumnDef<Invoice>[] = [
 		header: 'Name',
 		minSize: 200,
 		maxSize: 400,
-		cell: ({ row }) => (
-			<div className='truncate group-data-void/row:line-through'>{row.original.client.name}</div>
-		),
+		cell: ({ row }) => <div className='truncate'>{row.original.client.name}</div>,
 	},
 	{
 		accessorKey: 'status',
@@ -102,11 +101,11 @@ export const columns: ColumnDef<Invoice>[] = [
 							className={cn(
 								'!px-2 h-auto gap-1 rounded-sm py-1 capitalize',
 								status === 'unpaid' &&
-									'!border-red-6 focus-visible:!border-red-7 !ring-red-6/50 !bg-red-3 text-red-12',
+									'!border-red-6 focus-visible:!border-red-7 !ring-red-6/50 !bg-red-3 dark:!bg-red-4 dark:!border-red-6 text-red-12',
 								status === 'paid' &&
-									'!border-blue-6 focus-visible:!border-blue-7 !ring-blue-6/50 !bg-blue-3 text-blue-12',
+									'!border-blue-6 focus-visible:!border-blue-7 !ring-blue-6/50 !bg-blue-3 dark:!bg-blue-4 dark:!border-blue-6 text-blue-12',
 								status === 'refunded' &&
-									'!border-orange-6 focus-visible:!border-orange-7 !ring-orange-6/50 !bg-orange-3 text-orange-12',
+									'!border-orange-6 focus-visible:!border-orange-7 !ring-orange-6/50 !bg-orange-3 dark:!bg-orange-4 dark:!border-orange-6 text-orange-12',
 							)}
 						>
 							<SelectValue placeholder='Update status…'>{status}</SelectValue>
@@ -134,7 +133,7 @@ export const columns: ColumnDef<Invoice>[] = [
 		header: () => <div className='text-right'>Amount</div>,
 		cell: ({ row }) => {
 			return (
-				<div className='text-right font-medium tabular-nums group-data-void/row:line-through'>
+				<div className='text-right font-medium tabular-nums decoration-2 group-data-void/row:line-through'>
 					{row.original.formatted.grossTotal}
 				</div>
 			);
@@ -181,9 +180,6 @@ export const columns: ColumnDef<Invoice>[] = [
 										Void invoice
 									</DropdownMenuItem>
 								</AlertDialogTrigger>
-								<DropdownMenuItem variant='destructive' disabled>
-									Delete invoice
-								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>
@@ -261,6 +257,17 @@ export default function Table({ header, initial }: { header?: JSX.Element; initi
 				globalFilter={filter}
 				getRowAttr={row => ({
 					'data-void': row.isVoid || undefined,
+					style: row.isVoid
+						? {
+								background: `repeating-linear-gradient(
+                              45deg,
+                              transparent,
+                              transparent 2px,
+                              var(--color-gray-3) 2px,
+                              var(--color-gray-3) 4px
+                            )`,
+							}
+						: undefined,
 					className: 'data-void:opacity-50 group/row',
 				})}
 			/>

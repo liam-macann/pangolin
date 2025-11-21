@@ -13,7 +13,7 @@
 	--secondary-foreground: var(--foreground);
 	--muted: var(--color-gray-3); /* Interaction state (eg. hover table row, ghost buttons) */
 	--muted-foreground: var(--color-gray-11);
-	--accent: var(--secondary);
+	--accent: var(--color-gray-a-3);
 	--accent-foreground: var(--secondary-foreground);
 	--destructive: var(--color-red-11);
 	--border: var(--color-gray-6);
