@@ -1,13 +1,16 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { WarningIcon } from '@phosphor-icons/react';
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
 import { createInsertSchema } from 'drizzle-zod';
 import { useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { InfoTip } from '@/components/info';
+import { Alert, AlertTitle } from '@/components/ui/alert';
 import { invoices as invoicesSchema } from '@/db/schema';
 import { createInvoice } from '@/lib/actions/invoice';
 import type { getUserConfig } from '@/lib/data';
@@ -131,86 +134,45 @@ export function CreateInvoiceDialog({
 					<DialogDescription>Create a new invoice for an existing client.</DialogDescription>
 				</DialogHeader>
 
-				<form onSubmit={form.handleSubmit(onSubmit)}>
-					<FieldGroup className='gap-4'>
-						<Controller
-							name='clientData'
-							control={form.control}
-							render={({ field, fieldState }) => (
-								<Field orientation='horizontal'>
-									<FieldLabel
-										htmlFor='clientId'
-										className='-translate-y-1/2 !grow-0 mt-4.5 self-start'
-									>
-										Bill To
-									</FieldLabel>
-									<div className='flex grow flex-col items-end gap-1'>
-										<Combobox
-											options={
-												clientsData
-													? clientsData.map(client => ({
-															value: client.data.scdId,
-															label: client.data.name,
-														}))
-													: []
-											}
-											disabled={isClientsLoading || isClientsError || !clientsData}
-											noun={{ singular: 'client', plural: 'clients' }}
-											className={cn(
-												'max-w-80',
-												isClientsLoading && 'disabled:cursor-wait disabled:opacity-100',
-											)}
-											id='clientId'
-											{...field}
-										/>
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</div>
-								</Field>
-							)}
-						/>
-						<Controller
-							name='title'
-							control={form.control}
-							render={({ field, fieldState }) => (
-								<Field orientation='horizontal'>
-									<FieldLabel
-										htmlFor='title'
-										className='-translate-y-1/2 !grow-0 mt-4.5 self-start'
-									>
-										Title
-									</FieldLabel>
-									<div className='flex grow flex-col items-end gap-1'>
-										<Input id='title' placeholder='Optional' {...field} className='max-w-80' />
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</div>
-								</Field>
-							)}
-						/>
-					</FieldGroup>
-					<details className='mt-6'>
-						<Button asChild size='sm' variant='ghost' className='!-ml-2.5 text-muted-foreground'>
-							<summary>
-								Advanced <CaretUpDownIcon />
-							</summary>
-						</Button>
-						<FieldGroup className='mt-4 gap-4'>
+				<ErrorBoundary
+					fallback={
+						<Alert variant='destructive' className='my-6'>
+							<WarningIcon />
+							<AlertTitle>Something went wrong! Please try again later.</AlertTitle>
+						</Alert>
+					}
+				>
+					<form onSubmit={form.handleSubmit(onSubmit)}>
+						<FieldGroup className='gap-4'>
 							<Controller
-								name='description'
+								name='clientData'
 								control={form.control}
 								render={({ field, fieldState }) => (
-									<Field orientation='responsive'>
+									<Field orientation='horizontal'>
 										<FieldLabel
-											htmlFor='description'
-											className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
+											htmlFor='clientId'
+											className='-translate-y-1/2 !grow-0 mt-4.5 self-start'
 										>
-											Description
-											<InfoTip side='right'>Printed below the invoice reference</InfoTip>
+											Bill To
 										</FieldLabel>
-										<div className='flex flex-col gap-1'>
-											<Textarea
-												placeholder='Optional'
+										<div className='flex grow flex-col items-end gap-1'>
+											<Combobox
+												options={
+													clientsData
+														? clientsData.map(client => ({
+																value: client.data.scdId,
+																label: client.data.name,
+															}))
+														: []
+												}
+												disabled={isClientsLoading || isClientsError || !clientsData}
+												noun={{ singular: 'client', plural: 'clients' }}
+												className={cn(
+													'max-w-80',
+													isClientsLoading && 'disabled:cursor-wait disabled:opacity-100',
+												)}
+												id='clientId'
 												{...field}
-												className='@md/field-group:w-80'
 											/>
 											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 										</div>
@@ -218,91 +180,141 @@ export function CreateInvoiceDialog({
 								)}
 							/>
 							<Controller
-								name='notes'
+								name='title'
 								control={form.control}
 								render={({ field, fieldState }) => (
-									<Field orientation='responsive'>
+									<Field orientation='horizontal'>
 										<FieldLabel
-											htmlFor='notes'
-											className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
+											htmlFor='title'
+											className='-translate-y-1/2 !grow-0 mt-4.5 self-start'
 										>
-											Notes
-											<InfoTip side='right'>Your own private notes</InfoTip>
+											Title
 										</FieldLabel>
-										<div className='flex flex-col gap-1'>
-											<Textarea
-												placeholder='Optional'
-												{...field}
-												className='@md/field-group:w-80'
-											/>
+										<div className='flex grow flex-col items-end gap-1'>
+											<Input id='title' placeholder='Optional' {...field} className='max-w-80' />
 											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 										</div>
 									</Field>
 								)}
 							/>
-
-							<div className='mt-2 grid grid-cols-2 gap-3'>
-								<Controller
-									name='issuedAt'
-									control={form.control}
-									disabled
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor='issuedAt'>Date of issue</FieldLabel>
-											<DatePicker
-												className='min-w-0'
-												id='issuedAt'
-												startMonth={new Date()}
-												timeZone={config.timezone}
-												{...field}
-											/>
-											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-										</Field>
-									)}
-								/>
-								<Controller
-									name='dueAt'
-									control={form.control}
-									render={({ field, fieldState }) => (
-										<Field data-invalid={fieldState.invalid}>
-											<FieldLabel htmlFor='dueAt'>Due date</FieldLabel>
-											<DatePicker
-												className='min-w-0'
-												id='dueAt'
-												disabledDays={[{ before: new Date() }, new Date()]}
-												startMonth={new Date()}
-												timeZone={config.timezone}
-												{...field}
-											/>
-											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-										</Field>
-									)}
-								/>
-							</div>
 						</FieldGroup>
-					</details>
-					<FieldSeparator className='-mx-6 my-6'>Items</FieldSeparator>
+						<details className='mt-6'>
+							<Button asChild size='sm' variant='ghost' className='!-ml-2.5 text-muted-foreground'>
+								<summary>
+									Advanced <CaretUpDownIcon />
+								</summary>
+							</Button>
+							<FieldGroup className='mt-4 gap-4'>
+								<Controller
+									name='description'
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<Field orientation='responsive'>
+											<FieldLabel
+												htmlFor='description'
+												className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
+											>
+												Description
+												<InfoTip side='right'>Printed below the invoice reference</InfoTip>
+											</FieldLabel>
+											<div className='flex flex-col gap-1'>
+												<Textarea
+													placeholder='Optional'
+													{...field}
+													className='@md/field-group:w-80'
+												/>
+												{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+											</div>
+										</Field>
+									)}
+								/>
+								<Controller
+									name='notes'
+									control={form.control}
+									render={({ field, fieldState }) => (
+										<Field orientation='responsive'>
+											<FieldLabel
+												htmlFor='notes'
+												className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
+											>
+												Notes
+												<InfoTip side='right'>Your own private notes</InfoTip>
+											</FieldLabel>
+											<div className='flex flex-col gap-1'>
+												<Textarea
+													placeholder='Optional'
+													{...field}
+													className='@md/field-group:w-80'
+												/>
+												{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+											</div>
+										</Field>
+									)}
+								/>
 
-					<InvoiceItemsField
-						config={config}
-						control={form.control}
-						getValues={form.getValues}
-						className='mb-6'
-					/>
-				</form>
+								<div className='mt-2 grid grid-cols-2 gap-3'>
+									<Controller
+										name='issuedAt'
+										control={form.control}
+										disabled
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='issuedAt'>Date of issue</FieldLabel>
+												<DatePicker
+													className='min-w-0'
+													id='issuedAt'
+													startMonth={new Date()}
+													timeZone={config.timezone}
+													{...field}
+												/>
+												{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+											</Field>
+										)}
+									/>
+									<Controller
+										name='dueAt'
+										control={form.control}
+										render={({ field, fieldState }) => (
+											<Field data-invalid={fieldState.invalid}>
+												<FieldLabel htmlFor='dueAt'>Due date</FieldLabel>
+												<DatePicker
+													className='min-w-0'
+													id='dueAt'
+													disabledDays={[{ before: new Date() }, new Date()]}
+													startMonth={new Date()}
+													timeZone={config.timezone}
+													{...field}
+												/>
+												{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+											</Field>
+										)}
+									/>
+								</div>
+							</FieldGroup>
+						</details>
+						<FieldSeparator className='-mx-6 my-6'>Items</FieldSeparator>
 
-				<DialogFooter>
-					<Button variant='primary' type='submit' onClick={form.handleSubmit(onSubmit)}>
-						Submit
-					</Button>
-					<DialogClose
-						className='order-first'
-						onClick={() => setTimeout(() => form.reset(), 200)}
-						asChild
-					>
-						<Button variant='secondary'>Cancel</Button>
-					</DialogClose>
-				</DialogFooter>
+						<InvoiceItemsField
+							config={config}
+							control={form.control}
+							getValues={form.getValues}
+							className='mb-6'
+						/>
+					</form>
+
+					<DialogFooter>
+						<Button variant='primary' type='submit' onClick={form.handleSubmit(onSubmit)}>
+							Submit
+						</Button>
+						<DialogClose
+							className='order-first'
+							onClick={() => setTimeout(() => form.reset(), 200)}
+							asChild
+						>
+							<Button variant='secondary'>Cancel</Button>
+						</DialogClose>
+					</DialogFooter>
+				</ErrorBoundary>
 			</DialogContent>
 		</Dialog>
 	);
