@@ -195,7 +195,11 @@ function Card({
 			{/* Outside of Link for semantics: <button> may not be within <a> */}
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button size='icon-sm' variant='ghost' className={cn('relative z-10 mx-2 translate-y-2')}>
+					<Button
+						size='icon-sm'
+						variant='ghost'
+						className='relative z-10 mx-2 translate-y-2 text-inherit'
+					>
 						<DotsThreeIcon />
 					</Button>
 				</DropdownMenuTrigger>
