@@ -8,7 +8,7 @@ import {
 	getFilteredRowModel,
 	useReactTable,
 } from '@tanstack/react-table';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, type HTMLMotionProps, motion } from 'motion/react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -19,11 +19,9 @@ import { cn, type ElementType, pluralize } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import {
 	DropdownMenu,
-	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuLabel,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
 import { Input } from '@/ui/input';
@@ -112,8 +110,12 @@ export function Table({ data }: { data: Client[] }) {
 			{table.getRowModel().rows.length ? (
 				<section className='grid grid-cols-4 gap-4'>
 					<AnimatePresence mode='popLayout' initial={false}>
-						{table.getRowModel().rows.map(client => (
-							<Card key={client.id} client={client.original} />
+						{table.getRowModel().rows.map((client, i) => (
+							<Card
+								style={{ zIndex: table.getRowCount() - i }}
+								key={client.id}
+								client={client.original}
+							/>
 						))}
 					</AnimatePresence>
 				</section>
@@ -129,12 +131,12 @@ function Card({
 	className,
 	ref,
 	variant = 'outline',
+	...props
 }: {
 	client: Client;
-	className?: string;
 	ref?: React.Ref<HTMLDivElement>;
 	variant?: 'primary' | 'outline';
-}) {
+} & HTMLMotionProps<'div'>) {
 	const { mutate } = useClients();
 
 	const setFavorite = (v: boolean) => {
@@ -173,6 +175,7 @@ function Card({
 				variant === 'primary' && 'text-primary-foreground',
 				className,
 			)}
+			{...props}
 		>
 			{/* Outside of Link for semantics: <button> may not be within <a> */}
 			<DropdownMenu>
