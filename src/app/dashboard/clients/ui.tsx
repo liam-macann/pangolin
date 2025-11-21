@@ -17,6 +17,15 @@ import { updateClientFavorite } from '@/lib/actions/client';
 import { useClients } from '@/lib/hooks';
 import { cn, type ElementType, pluralize } from '@/lib/utils';
 import { Button } from '@/ui/button';
+import {
+	DropdownMenu,
+	DropdownMenuCheckboxItem,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/ui/dropdown-menu';
 import { Input } from '@/ui/input';
 import { Toggle } from '@/ui/toggle';
 
@@ -53,11 +62,7 @@ export function Clients({ initial }: { initial: Client[] }) {
 					<section className='grid grid-cols-4 gap-4'>
 						<AnimatePresence mode='popLayout' initial={false}>
 							{favorites.map(client => (
-								<Card
-									key={client.id}
-									client={client}
-									className='!border-black/20 bg-primary **:text-primary-foreground'
-								/>
+								<Card key={client.id} client={client} variant='primary' />
 							))}
 						</AnimatePresence>
 					</section>
@@ -123,12 +128,32 @@ function Card({
 	client,
 	className,
 	ref,
+	variant = 'outline',
 }: {
 	client: Client;
 	className?: string;
 	ref?: React.Ref<HTMLDivElement>;
+	variant?: 'primary' | 'outline';
 }) {
 	const { mutate } = useClients();
+
+	const setFavorite = (v: boolean) => {
+		const id = client.id;
+		mutate(
+			async curr => {
+				await updateClientFavorite(id, v).catch(err => {
+					toast.error('Failed to update client. Please try again later.');
+					throw err;
+				});
+
+				return curr?.map(item => (item.id === id ? { ...item, isFavorite: v } : item));
+			},
+			{
+				optimisticData: curr =>
+					curr ? curr.map(item => (item.id === id ? { ...item, isFavorite: v } : item)) : [],
+			},
+		);
+	};
 
 	return (
 		<motion.div
@@ -143,57 +168,63 @@ function Card({
 			key={client.id}
 			layout='position'
 			ref={ref}
-			className='relative'
+			className={cn(
+				'relative flex flex-col',
+				variant === 'primary' && 'text-primary-foreground',
+				className,
+			)}
 		>
+			{/* Outside of Link for semantics: <button> may not be within <a> */}
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<Button size='icon-sm' variant='ghost' className={cn('relative z-10 mx-2 translate-y-2')}>
+						<DotsThreeIcon />
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent side='left' align='start'>
+					<DropdownMenuLabel>Actions</DropdownMenuLabel>
+					<DropdownMenuItem onClick={() => setFavorite(!client.isFavorite)}>
+						{client.isFavorite ? 'Unpin client' : 'Pin client'}
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
 			<Link
 				href={`clients/${client.id}`}
 				className={cn(
-					'relative inset-0 block rounded-md border bg-card p-4 outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px]',
-					className,
+					'-my-8 !pt-12',
+					'relative inset-0 block rounded-md border p-4 outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px]',
+					variant === 'outline' && 'bg-card',
+					variant === 'primary' && 'border-black/20 bg-primary',
 				)}
 			>
-				<Button size='icon-sm' variant='ghost' className='-m-2 mb-2 text-muted-foreground'>
-					<DotsThreeIcon />
-				</Button>
 				<h2 className='font-medium'>{client.data.name}</h2>
-				<div className='flex justify-between'>
-					<p className='text-muted-foreground text-sm'>
-						{client.invoiceCount || 'No'} {pluralize(client.invoiceCount, 'invoice', 'invoices')}
-					</p>
-					<Toggle
-						pressed={client.isFavorite}
-						onClick={e => e.stopPropagation()}
-						onPressedChange={v => {
-							const id = client.id;
-							mutate(
-								async curr => {
-									await updateClientFavorite(id, v).catch(err => {
-										toast.error('Failed to update client. Please try again later.');
-										throw err;
-									});
-
-									return curr?.map(item => (item.id === id ? { ...item, isFavorite: v } : item));
-								},
-								{
-									optimisticData: curr =>
-										curr
-											? curr.map(item => (item.id === id ? { ...item, isFavorite: v } : item))
-											: [],
-								},
-							);
-						}}
-						size='icon-sm'
-						variant='ghost'
-						className='-m-2 !bg-transparent'
-					>
-						<span className='sr-only'>Favourite</span>
-						<StarIcon
-							weight={client.isFavorite ? 'fill' : undefined}
-							className='text-muted-foreground'
-						/>
-					</Toggle>
-				</div>
+				<p
+					className={cn(
+						'translate-y-0.5', // Optical alignment with star
+						'text-sm opacity-70',
+					)}
+				>
+					{client.invoiceCount || 'No'} {pluralize(client.invoiceCount, 'invoice', 'invoices')}
+				</p>
 			</Link>
+
+			{/* Outside of Link for semantics: <button> may not be within <a> */}
+			<Toggle
+				pressed={client.isFavorite}
+				onClick={e => e.stopPropagation}
+				onPressedChange={setFavorite}
+				size='icon-sm'
+				variant='ghost'
+				className={cn(
+					'-translate-y-2 relative z-10 mx-2 self-end',
+					client.isFavorite && '!bg-transparent',
+					variant === 'outline' && 'text-muted-foreground',
+					variant === 'primary' && '!text-primary-foreground',
+				)}
+			>
+				<span className='sr-only'>Favourite</span>
+				<StarIcon weight={client.isFavorite ? 'fill' : undefined} className={cn()} />
+			</Toggle>
 		</motion.div>
 	);
 }

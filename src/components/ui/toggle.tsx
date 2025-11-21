@@ -20,7 +20,7 @@ function Toggle({
 			data-slot='toggle'
 			className={cn(
 				buttonVariants({ variant, size }),
-				'data-[state=on]:!text-accent-foreground not-disabled:hover:bg-muted not-disabled:hover:text-muted-foreground data-[state=on]:bg-accent',
+				'not-disabled:hover:bg-muted not-data-[state=on]:not-disabled:hover:text-muted-foreground data-[state=on]:bg-accent data-[state=on]:text-accent-foreground',
 				className,
 			)}
 			{...props}
