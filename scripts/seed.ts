@@ -6,8 +6,8 @@ globalThis.WebSocket = WebSocket;
 globalThis.fetch = fetch;
 
 import { reset, seed } from 'drizzle-seed';
-import { db } from './index';
-import * as schema from './schema';
+import { db } from '../src/db';
+import * as schema from '../src/db/schema';
 
 // biome-ignore lint/correctness/noUnusedVariables: Discard properties
 const { accounts, authenticators, sessions, ...include } = schema;
@@ -43,12 +43,20 @@ async function main(uuid?: string) {
 					}
 				: { name: f.fullName() },
 			with: {
-				clients: 8,
+				clients: 16,
 				config: 1,
 				invoices: invoiceCount,
 			},
 		},
-		clients: { with: { clientData: 1 } },
+		clients: {
+			columns: {
+				isFavorite: f.weightedRandom([
+					{ weight: 0.2, value: f.default({ defaultValue: true }) },
+					{ weight: 0.8, value: f.default({ defaultValue: false }) },
+				]),
+			},
+			with: { clientData: 1 },
+		},
 		clientData: {
 			columns: {
 				name: f.fullName(),

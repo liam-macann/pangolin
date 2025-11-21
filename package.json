@@ -8,7 +8,7 @@
 		"format": "biome format --write",
 		"check": "biome check --write",
 		"prepare": "husky",
-		"db:seed": "node --import tsx --env-file=.env.local ./src/db/seed.ts"
+		"db:seed": "node --import tsx --env-file=.env.local ./scripts/seed.ts"
 	},
 	"lint-staged": {
 		"*": ["biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"]
