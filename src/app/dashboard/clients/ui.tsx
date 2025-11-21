@@ -158,7 +158,7 @@ function Card({
 				<h2 className='font-medium'>{client.data.name}</h2>
 				<div className='flex justify-between'>
 					<p className='text-muted-foreground text-sm'>
-						{client.invoiceCount} {pluralize(client.invoiceCount, 'invoice', 'invoices')}
+						{client.invoiceCount || 'No'} {pluralize(client.invoiceCount, 'invoice', 'invoices')}
 					</p>
 					<Toggle
 						pressed={client.isFavorite}
