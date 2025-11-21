@@ -148,7 +148,7 @@ async function main(uuid?: string) {
 		},
 		config: {
 			columns: {
-				timezone: f.valuesFromArray({ values: ['Sydney/Australia'] }),
+				timezone: f.valuesFromArray({ values: ['Australia/Sydney'] }),
 				currency: f.valuesFromArray({ values: ['AUD', 'GBP', 'USD'] }),
 				locale: f.valuesFromArray({ values: ['en-AU', 'en-GB', 'en-US'] }),
 				validTo: f.default({ defaultValue: null }),
