@@ -122,7 +122,7 @@ function invoiceQuery<Detailed extends boolean>(
 		.innerJoin(configSchema, eq(invoices.config, configSchema.id))
 		.leftJoin(itemsAgg, eq(invoices.id, itemsAgg.invoiceId))
 		.leftJoin(itemsAggDetailed, eq(invoices.id, itemsAggDetailed.invoiceId))
-		.orderBy(desc(invoices.createdAt));
+		.orderBy(desc(invoices.index));
 }
 
 /** Fetch all invoices for authenticated user, including basic relational data */
