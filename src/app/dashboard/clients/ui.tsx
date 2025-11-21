@@ -9,6 +9,7 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 import { AnimatePresence, motion } from 'motion/react';
+import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { Data as ClientData } from '@/api/clients/route';
@@ -55,7 +56,7 @@ export function Clients({ initial }: { initial: Client[] }) {
 								<Card
 									key={client.id}
 									client={client}
-									className='border-black/20 bg-primary **:text-primary-foreground'
+									className='!border-black/20 bg-primary **:text-primary-foreground'
 								/>
 							))}
 						</AnimatePresence>
@@ -142,48 +143,57 @@ function Card({
 			key={client.id}
 			layout='position'
 			ref={ref}
-			className={cn('flex flex-col gap-y-0.5 rounded-md border bg-card p-4', className)}
+			className='relative'
 		>
-			<Button size='icon-sm' variant='ghost' className='-m-2 mb-2 self-end text-muted-foreground'>
-				<DotsThreeIcon />
-			</Button>
-			<h2 className='font-medium'>{client.data.name}</h2>
-			<div className='flex justify-between'>
-				<p className='text-muted-foreground text-sm'>
-					{client.invoiceCount} {pluralize(client.invoiceCount, 'invoice', 'invoices')}
-				</p>
-				<Toggle
-					pressed={client.isFavorite}
-					onPressedChange={v => {
-						const id = client.id;
-						mutate(
-							async curr => {
-								await updateClientFavorite(id, v).catch(err => {
-									toast.error('Failed to update client. Please try again later.');
-									throw err;
-								});
+			<Link
+				href={`clients/${client.id}`}
+				className={cn(
+					'relative inset-0 block rounded-md border bg-card p-4 outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px]',
+					className,
+				)}
+			>
+				<Button size='icon-sm' variant='ghost' className='-m-2 mb-2 text-muted-foreground'>
+					<DotsThreeIcon />
+				</Button>
+				<h2 className='font-medium'>{client.data.name}</h2>
+				<div className='flex justify-between'>
+					<p className='text-muted-foreground text-sm'>
+						{client.invoiceCount} {pluralize(client.invoiceCount, 'invoice', 'invoices')}
+					</p>
+					<Toggle
+						pressed={client.isFavorite}
+						onClick={e => e.stopPropagation()}
+						onPressedChange={v => {
+							const id = client.id;
+							mutate(
+								async curr => {
+									await updateClientFavorite(id, v).catch(err => {
+										toast.error('Failed to update client. Please try again later.');
+										throw err;
+									});
 
-								return curr?.map(item => (item.id === id ? { ...item, isFavorite: v } : item));
-							},
-							{
-								optimisticData: curr =>
-									curr
-										? curr.map(item => (item.id === id ? { ...item, isFavorite: v } : item))
-										: [],
-							},
-						);
-					}}
-					size='icon-sm'
-					variant='ghost'
-					className='-m-2 !bg-transparent'
-				>
-					<span className='sr-only'>Favourite</span>
-					<StarIcon
-						weight={client.isFavorite ? 'fill' : undefined}
-						className='text-muted-foreground'
-					/>
-				</Toggle>
-			</div>
+									return curr?.map(item => (item.id === id ? { ...item, isFavorite: v } : item));
+								},
+								{
+									optimisticData: curr =>
+										curr
+											? curr.map(item => (item.id === id ? { ...item, isFavorite: v } : item))
+											: [],
+								},
+							);
+						}}
+						size='icon-sm'
+						variant='ghost'
+						className='-m-2 !bg-transparent'
+					>
+						<span className='sr-only'>Favourite</span>
+						<StarIcon
+							weight={client.isFavorite ? 'fill' : undefined}
+							className='text-muted-foreground'
+						/>
+					</Toggle>
+				</div>
+			</Link>
 		</motion.div>
 	);
 }

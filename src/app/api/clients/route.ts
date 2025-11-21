@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { fetchClients } from '@/lib/data';
 import type { ApiResponse, RouteResponse } from '../types';
 
-export type Data = Awaited<ReturnType<typeof fetchClients>>;
+// Helper that simulates calling the function without params (overloaded function)
+const _inferData = () => fetchClients();
+export type Data = Awaited<ReturnType<typeof _inferData>>;
 
 export async function GET(): RouteResponse<Data> {
 	try {

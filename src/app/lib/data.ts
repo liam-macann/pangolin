@@ -224,8 +224,23 @@ export async function getUser() {
 	return user;
 }
 
-/** Fetch all clients for authenticated user */
-export async function fetchClients() {
+export interface ClientResult {
+	id: string;
+	isFavorite: boolean;
+	isDeleted: boolean;
+	invoiceCount: number;
+	data: {
+		scdId: string;
+		name: string;
+		email: string;
+	};
+}
+
+export async function fetchClients(): Promise<ClientResult[]>;
+export async function fetchClients(id: string): Promise<ClientResult>;
+
+/** Fetch all clients for authenticated user, or a single client if `id` is provided */
+export async function fetchClients(id?: string) {
 	const session = await auth();
 
 	try {
@@ -257,9 +272,10 @@ export async function fetchClients() {
 			.from(clients)
 			.innerJoin(clientData, and(eq(clients.id, clientData.clientId), isNull(clientData.validTo)))
 			.leftJoin(invoiceCounts, eq(clients.id, invoiceCounts.clientId))
-			.where(eq(clients.userId, session.user.id))
+			.where(and(eq(clients.userId, session.user.id), id ? eq(clients.id, id) : undefined))
 			.groupBy(clients.id, clientData.name, clientData.email, invoiceCounts.count)
-			.orderBy(clientData.name);
+			.orderBy(clientData.name)
+			.then(res => (id ? res[0] : res));
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoices.');
