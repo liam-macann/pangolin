@@ -249,12 +249,13 @@ export async function fetchClients() {
 				isDeleted: clients.isDeleted,
 				invoiceCount: invoiceCounts.count,
 				data: jsonbBuildObject({
+					scdId: clients.id,
 					name: clientData.name,
 					email: clientData.email,
 				}),
 			})
 			.from(clients)
-			.leftJoin(clientData, and(eq(clients.id, clientData.clientId), isNull(clientData.validTo)))
+			.innerJoin(clientData, and(eq(clients.id, clientData.clientId), isNull(clientData.validTo)))
 			.leftJoin(invoiceCounts, eq(clients.id, invoiceCounts.clientId))
 			.where(eq(clients.userId, session.user.id))
 			.groupBy(clients.id, clientData.name, clientData.email, invoiceCounts.count)

@@ -8,7 +8,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { InfoTip } from '@/components/info';
-import { type clients as clientsSchema, invoices as invoicesSchema } from '@/db/schema';
+import { invoices as invoicesSchema } from '@/db/schema';
 import { createInvoice } from '@/lib/actions/invoice';
 import type { getUserConfig } from '@/lib/data';
 import { useClients, useInvoices } from '@/lib/hooks';
@@ -32,7 +32,7 @@ import { Textarea } from '@/ui/textarea';
 import { InvoiceItemsField, itemsArraySchema } from './invoiceItems';
 
 const schema = createInsertSchema(invoicesSchema, {
-	clientId: z.uuid({ error: 'Please select a client' }),
+	clientData: z.uuid({ error: 'Please select a client' }),
 	title: z
 		.string()
 		.optional()
@@ -52,7 +52,7 @@ const schema = createInsertSchema(invoicesSchema, {
 	dueAt: z.date({ error: 'Please enter a due date' }),
 })
 	.pick({
-		clientId: true,
+		clientData: true,
 		title: true,
 		description: true,
 		notes: true,
@@ -69,7 +69,6 @@ export function CreateInvoiceDialog({
 	config,
 }: {
 	children: React.ReactNode;
-	clients?: (typeof clientsSchema.$inferSelect)[];
 	config: Prettify<
 		Pick<
 			Awaited<ReturnType<typeof getUserConfig>>,
@@ -84,13 +83,13 @@ export function CreateInvoiceDialog({
 	const form = useForm<z.input<typeof schema>>({
 		resolver: zodResolver(schema),
 		defaultValues: {
-			clientId: '',
-			issuedAt: new Date(),
-			dueAt: new Date(new Date().setDate(new Date().getDate() + 14)),
+			clientData: '',
 			items: [],
 			title: '',
 			description: '',
 			status: 'unpaid',
+			issuedAt: new Date(),
+			dueAt: new Date(new Date().setDate(new Date().getDate() + 14)),
 		},
 	});
 
@@ -135,7 +134,7 @@ export function CreateInvoiceDialog({
 				<form onSubmit={form.handleSubmit(onSubmit)}>
 					<FieldGroup className='gap-4'>
 						<Controller
-							name='clientId'
+							name='clientData'
 							control={form.control}
 							render={({ field, fieldState }) => (
 								<Field orientation='horizontal'>
@@ -150,8 +149,8 @@ export function CreateInvoiceDialog({
 											options={
 												clientsData
 													? clientsData.map(client => ({
-															value: client.id,
-															label: client.name,
+															value: client.data.scdId,
+															label: client.data.name,
 														}))
 													: []
 											}
