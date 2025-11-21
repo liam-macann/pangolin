@@ -108,7 +108,7 @@ export function Table({ data }: { data: Client[] }) {
 			/>
 
 			{table.getRowModel().rows.length ? (
-				<section className='grid grid-cols-4 gap-4'>
+				<section className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
 					<AnimatePresence mode='popLayout' initial={false}>
 						{table.getRowModel().rows.map((client, i) => (
 							<Card
@@ -195,7 +195,7 @@ function Card({
 				href={`clients/${client.id}`}
 				className={cn(
 					'-my-8 !pt-12',
-					'relative inset-0 block rounded-md border p-4 outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px]',
+					'relative inset-0 flex h-full flex-col justify-end rounded-md border p-4 outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px]',
 					variant === 'outline' && 'bg-card',
 					variant === 'primary' && 'border-black/20 bg-primary',
 				)}
