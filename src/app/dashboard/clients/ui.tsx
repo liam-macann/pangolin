@@ -10,6 +10,7 @@ import {
 } from '@tanstack/react-table';
 import { AnimatePresence, type HTMLMotionProps, motion } from 'motion/react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { Data as ClientData } from '@/api/clients/route';
@@ -75,10 +76,13 @@ export function Clients({ initial }: { initial: Client[] }) {
 }
 
 export function Table({ data }: { data: Client[] }) {
+	const router = useRouter();
 	const [filter, setFilter] = useState('');
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
 		{ id: 'isFavorite', value: false },
 	]);
+
+	const [isFiltering, setIsFiltering] = useState(false);
 
 	const table = useReactTable({
 		data,
@@ -103,6 +107,14 @@ export function Table({ data }: { data: Client[] }) {
 				aria-label='Search'
 				placeholder='Search clients…'
 				onChange={e => table.setGlobalFilter(e.target.value)}
+				onKeyDown={e => {
+					if (e.key === 'Enter' && e.currentTarget.value !== '') {
+						const id = table.getRowModel().rows[0]?.original?.id;
+						if (id) router.push(`/dashboard/clients/${id}`);
+					}
+				}}
+				onFocus={() => setIsFiltering(true)}
+				onBlur={() => setIsFiltering(false)}
 				value={filter}
 				prefix={<MagnifyingGlassIcon />}
 			/>
@@ -112,8 +124,11 @@ export function Table({ data }: { data: Client[] }) {
 					<AnimatePresence mode='popLayout' initial={false}>
 						{table.getRowModel().rows.map((client, i) => (
 							<Card
+								className={cn(
+									i === 0 && isFiltering && filter !== '' && '[&>a]:border-ring [&>a]:ring-[3px]',
+								)}
 								style={{ zIndex: table.getRowCount() - i }}
-								key={client.id}
+								key={client.original.id}
 								client={client.original}
 							/>
 						))}
