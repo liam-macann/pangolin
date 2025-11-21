@@ -49,7 +49,6 @@ export function Clients({ initial }: { initial: Client[] }) {
 		<>
 			{favorites.length > 0 && (
 				<>
-					<h1 className='mb-3 font-semibold text-lg'>Pinned</h1>
 					<section className='grid grid-cols-4 gap-4'>
 						<AnimatePresence mode='popLayout' initial={false}>
 							{favorites.map(client => (
@@ -135,7 +134,11 @@ function Card({
 			initial={{ scale: 0.95, opacity: 0, filter: 'blur(2px)', pointerEvents: 'none' }}
 			animate={{ scale: 1, opacity: 1, filter: 'blur(0px)', pointerEvents: 'auto' }}
 			exit={{ scale: 0.95, opacity: 0, filter: 'blur(1px)', pointerEvents: 'none' }}
-			transition={{ mass: 0.2, stiffness: 150, damping: 10, type: 'spring' }}
+			transition={{
+				default: { mass: 0.2, stiffness: 150, damping: 10, type: 'spring' },
+				opacity: { duration: 0.2, ease: 'easeOut' },
+				filter: { duration: 0.2, ease: 'easeOut' },
+			}}
 			key={client.id}
 			layout='position'
 			ref={ref}
