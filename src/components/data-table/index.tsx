@@ -12,9 +12,9 @@ import {
 	type TableOptions,
 	useReactTable,
 } from '@tanstack/react-table';
-import { init } from 'next/dist/compiled/webpack/webpack';
 import { type DetailedHTMLProps, type HTMLAttributes, useState } from 'react';
 import { Button } from '@/ui/button';
+import { ButtonGroup } from '@/ui/button-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 
 interface DataTableProps<TData, TValue> {
@@ -125,29 +125,36 @@ export function DataTable<TData, TValue>({
 			</div>
 
 			<div className='flex items-center justify-end gap-2 py-4'>
-				{table.getPageCount() > 0 && (
-					<span className='mx-2 font-medium text-muted-foreground text-sm'>
-						{table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
-					</span>
+				{table.getPageCount() > 1 && (
+					<ButtonGroup>
+						<Button
+							variant='secondary'
+							size='sm'
+							onClick={() => table.previousPage()}
+							disabled={!table.getCanPreviousPage()}
+						>
+							<span className='sr-only'>Previous</span>
+							<CaretLeftIcon />
+						</Button>
+						<Button
+							variant='secondary'
+							size='sm'
+							className='bg-secondary px-2 font-medium text-muted-foreground text-sm tabular-nums'
+							onClick={() => table.resetPageIndex()}
+						>
+							{table.getState().pagination.pageIndex + 1}
+						</Button>
+						<Button
+							variant='secondary'
+							size='sm'
+							onClick={() => table.nextPage()}
+							disabled={!table.getCanNextPage()}
+						>
+							<span className='sr-only'>Next</span>
+							<CaretRightIcon />
+						</Button>
+					</ButtonGroup>
 				)}
-				<Button
-					variant='outline'
-					size='sm'
-					onClick={() => table.previousPage()}
-					disabled={!table.getCanPreviousPage()}
-				>
-					<span className='sr-only'>Previous</span>
-					<CaretLeftIcon />
-				</Button>
-				<Button
-					variant='outline'
-					size='sm'
-					onClick={() => table.nextPage()}
-					disabled={!table.getCanNextPage()}
-				>
-					<span className='sr-only'>Next</span>
-					<CaretRightIcon />
-				</Button>
 			</div>
 		</div>
 	);
