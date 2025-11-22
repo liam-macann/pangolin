@@ -1,6 +1,6 @@
 'use client';
 
-import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
+import { CaretLeftIcon, CaretRightIcon, MagnifyingGlassIcon } from '@phosphor-icons/react';
 import {
 	type ColumnDef,
 	flexRender,
@@ -8,154 +8,214 @@ import {
 	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
-	type SortingState,
 	type TableOptions,
+	type Table as TanstackTable,
 	useReactTable,
 } from '@tanstack/react-table';
-import { type DetailedHTMLProps, type HTMLAttributes, useState } from 'react';
+import {
+	type ComponentProps,
+	createContext,
+	type DetailedHTMLProps,
+	type HTMLAttributes,
+	useContext,
+	useState,
+} from 'react';
 import { Button } from '@/ui/button';
 import { ButtonGroup } from '@/ui/button-group';
+import { Input } from '@/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 
-interface DataTableProps<TData, TValue> {
-	columns: ColumnDef<TData, TValue>[];
-	data: TData[];
-	globalFilter?: string;
+/** Component factory, to create a typed data table */
+export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>[]) {
+	const TableContext = createContext<TanstackTable<TData> | null>(null);
 
-	/** Set attributes according to row data
-	 *
-	 * @example
-	 * ```ts
-	 * getRowAttr={row => ({ 'data-void': row.isVoid })}
-	 * ```
-	 */
-	getRowAttr?: (row: TData) => Omit<
-		DetailedHTMLProps<HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement> & {
-			[key: `data-${string}`]: string | boolean | number | undefined;
-		},
-		'data-state' | 'key'
-	>;
-}
+	type DataTableRootProps = {
+		data: TData[];
+		children: React.ReactNode;
+	} & Pick<TableOptions<TData>, 'initialState' | 'enableSortingRemoval'>;
 
-export function DataTable<TData, TValue>({
-	columns,
-	data,
-	globalFilter,
-	getRowAttr: getRowDataAttr,
-	initialState: _initialState = {},
-	...options
-}: DataTableProps<TData, TValue> &
-	Pick<TableOptions<TData>, 'initialState' | 'enableSortingRemoval'>) {
-	// Separate controlled and uncontrolled from initial state
-	const { sorting: initialSorting, ...initialState } = _initialState;
+	function Root({ data, initialState = {}, children, ...options }: DataTableRootProps) {
+		const [globalFilter, setGlobalFilter] = useState<string>('');
 
-	const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
+		const table = useReactTable({
+			data,
+			columns,
 
-	const table = useReactTable({
-		data,
-		columns,
-		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		/** Prevent page reset on data revalidation */
-		autoResetPageIndex: false,
-		onSortingChange: setSorting,
-		...options,
-		state: { globalFilter, sorting },
-		initialState: { pagination: { pageSize: 20 }, ...initialState },
-	});
+			getCoreRowModel: getCoreRowModel(),
+			getFilteredRowModel: getFilteredRowModel(),
+			getSortedRowModel: getSortedRowModel(),
+			getPaginationRowModel: getPaginationRowModel(),
 
-	const [prevFilter, setPrevFilter] = useState(globalFilter);
-	if (prevFilter !== globalFilter) {
-		setPrevFilter(globalFilter);
-		table.resetPageIndex();
+			/** Prevent page reset on data revalidation */
+			autoResetPageIndex: false,
+			onGlobalFilterChange: val => {
+				table.resetPageIndex();
+				setGlobalFilter(val);
+			},
+
+			...options,
+			state: { globalFilter },
+			initialState: { pagination: { pageSize: 20 }, ...initialState },
+		});
+
+		return <TableContext value={{ ...table }}>{children}</TableContext>;
 	}
 
-	return (
-		<div>
-			<div className='overflow-hidden'>
-				<Table>
-					<TableHeader className='border-y-2'>
-						{table.getHeaderGroups().map(headerGroup => (
-							<TableRow key={headerGroup.id}>
-								{headerGroup.headers.map(header => {
-									return (
-										<TableHead
-											style={{
-												width: `${header.getSize()}px`,
-												minWidth: `${header.column.columnDef.minSize}px`,
-												maxWidth: `${header.column.columnDef.maxSize}px`,
-											}}
-											key={header.id}
-										>
-											{header.isPlaceholder
-												? null
-												: flexRender(header.column.columnDef.header, header.getContext())}
-										</TableHead>
-									);
-								})}
-							</TableRow>
-						))}
-					</TableHeader>
-					<TableBody>
-						{table.getRowModel().rows?.length ? (
-							table.getRowModel().rows.map(row => (
-								<TableRow
-									key={row.id}
-									data-state={row.getIsSelected() && 'selected'}
-									{...getRowDataAttr?.(row.original)}
-								>
-									{row.getVisibleCells().map(cell => (
-										<TableCell key={cell.id}>
-											{flexRender(cell.column.columnDef.cell, cell.getContext())}
-										</TableCell>
-									))}
-								</TableRow>
-							))
-						) : (
-							<TableRow>
-								<TableCell colSpan={columns.length} className='h-24 text-center'>
-									No results.
-								</TableCell>
-							</TableRow>
-						)}
-					</TableBody>
-				</Table>
-			</div>
+	interface DataTableProps {
+		/** Set attributes according to row data
+		 *
+		 * @example
+		 * ```ts
+		 * getRowAttr={row => ({ 'data-void': row.isVoid })}
+		 * ```
+		 */
+		getRowAttr?: (row: TData) => Omit<
+			DetailedHTMLProps<HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement> & {
+				[key: `data-${string}`]: string | boolean | number | undefined;
+			},
+			'data-state' | 'key'
+		>;
+	}
 
-			<div className='flex items-center justify-end gap-2 py-4'>
-				{table.getPageCount() > 1 && (
-					<ButtonGroup>
-						<Button
-							variant='secondary'
-							size='sm'
-							onClick={() => table.previousPage()}
-							disabled={!table.getCanPreviousPage()}
-						>
-							<span className='sr-only'>Previous</span>
-							<CaretLeftIcon />
-						</Button>
-						<Button
-							variant='secondary'
-							size='sm'
-							className='bg-secondary px-2 font-medium text-muted-foreground text-sm tabular-nums'
-							onClick={() => table.resetPageIndex()}
-						>
-							{table.getState().pagination.pageIndex + 1}
-						</Button>
-						<Button
-							variant='secondary'
-							size='sm'
-							onClick={() => table.nextPage()}
-							disabled={!table.getCanNextPage()}
-						>
-							<span className='sr-only'>Next</span>
-							<CaretRightIcon />
-						</Button>
-					</ButtonGroup>
-				)}
+	function Content({ getRowAttr }: DataTableProps) {
+		const table = useContext(TableContext);
+		if (table === null) throw new Error('Content must be used within a DataTable.Root');
+
+		return (
+			<div>
+				<div className='overflow-hidden'>
+					<Table>
+						<TableHeader className='border-y-2'>
+							{table.getHeaderGroups().map(headerGroup => (
+								<TableRow key={headerGroup.id}>
+									{headerGroup.headers.map(header => {
+										return (
+											<TableHead
+												style={{
+													width: `${header.getSize()}px`,
+													minWidth: `${header.column.columnDef.minSize}px`,
+													maxWidth: `${header.column.columnDef.maxSize}px`,
+												}}
+												key={header.id}
+											>
+												{header.isPlaceholder
+													? null
+													: flexRender(header.column.columnDef.header, header.getContext())}
+											</TableHead>
+										);
+									})}
+								</TableRow>
+							))}
+						</TableHeader>
+						<TableBody>
+							{table.getRowModel().rows?.length ? (
+								table.getRowModel().rows.map(row => (
+									<TableRow
+										key={row.id}
+										data-state={row.getIsSelected() && 'selected'}
+										{...getRowAttr?.(row.original)}
+									>
+										{row.getVisibleCells().map(cell => (
+											<TableCell key={cell.id}>
+												{flexRender(cell.column.columnDef.cell, cell.getContext())}
+											</TableCell>
+										))}
+									</TableRow>
+								))
+							) : (
+								<TableRow>
+									<TableCell
+										colSpan={columns.length}
+										className='py-12 text-center text-base text-muted-foreground'
+									>
+										<div className='flex flex-col items-center gap-3'>
+											<span>No results</span>
+											<Button
+												variant='secondary'
+												onClick={() => {
+													table.resetColumnFilters();
+													table.setGlobalFilter('');
+												}}
+											>
+												Clear filters
+											</Button>
+										</div>
+									</TableCell>
+								</TableRow>
+							)}
+						</TableBody>
+					</Table>
+				</div>
 			</div>
-		</div>
-	);
+		);
+	}
+
+	function PaginationControls({
+		conditional = true,
+	}: {
+		/** Whether controls should be hidden when there is only one page */
+		conditional?: boolean;
+	}) {
+		const table = useContext(TableContext);
+		if (table === null) throw new Error('PaginationControls must be used within a DataTable.Root');
+
+		return (
+			(conditional ? table.getPageCount() > 1 : true) && (
+				<ButtonGroup>
+					<Button
+						variant='secondary'
+						size='sm'
+						onClick={() => table.previousPage()}
+						disabled={!table.getCanPreviousPage()}
+					>
+						<span className='sr-only'>Previous</span>
+						<CaretLeftIcon />
+					</Button>
+					<Button
+						variant='secondary'
+						size='sm'
+						className='bg-secondary px-2 font-medium text-muted-foreground text-sm tabular-nums'
+						onClick={() => table.resetPageIndex()}
+					>
+						{table.getState().pagination.pageIndex + 1}
+					</Button>
+					<Button
+						variant='secondary'
+						size='sm'
+						onClick={() => table.nextPage()}
+						disabled={!table.getCanNextPage()}
+					>
+						<span className='sr-only'>Next</span>
+						<CaretRightIcon />
+					</Button>
+				</ButtonGroup>
+			)
+		);
+	}
+
+	function Search({ onChange, ...props }: ComponentProps<typeof Input>) {
+		const table = useContext(TableContext);
+		if (table === null) throw new Error('Search must be used within a DataTable.Root');
+
+		return (
+			<Input
+				aria-label='Search'
+				placeholder='Search invoices…'
+				value={table.getState().globalFilter}
+				onChange={e => {
+					onChange?.(e);
+					table.setGlobalFilter(e.target.value);
+				}}
+				prefix={<MagnifyingGlassIcon />}
+				{...props}
+			/>
+		);
+	}
+
+	return {
+		Root,
+		Content,
+		PaginationControls,
+		Search,
+	};
 }
