@@ -5,6 +5,8 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { type JSX, useState } from 'react';
 import { toast } from 'sonner';
 import type { Data as InvoiceData } from '@/api/invoices/route';
+import { DataTable } from '@/components/data-table';
+import { ToggleHeader } from '@/components/data-table/column-header';
 import type { statusEnum } from '@/db/schema';
 import { updateInvoiceStatus, voidInvoice } from '@/lib/actions/invoice';
 import { useInvoices } from '@/lib/hooks';
@@ -22,7 +24,6 @@ import {
 	AlertDialogTrigger,
 } from '@/ui/alert-dialog';
 import { Button } from '@/ui/button';
-import { DataTable } from '@/ui/data-table';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -45,8 +46,15 @@ type Invoice = ElementType<InvoiceData>;
 
 export const columns: ColumnDef<Invoice>[] = [
 	{
-		accessorKey: 'reference',
-		header: 'Reference',
+		accessorKey: 'formatted.reference',
+		// Numeric sorting faster than alphanumeric, and works across all numbering schemes
+		sortingFn: (a, b) => {
+			const iA = a.original.index;
+			const iB = b.original.index;
+			return iA > iB ? 1 : iA < iB ? -1 : 0;
+		},
+		sortDescFirst: true,
+		header: ({ column }) => <ToggleHeader column={column} title='Reference' />,
 		cell: ({ row }) => (
 			<div className='font-medium'>
 				<span className='sr-only'>{row.original.isVoid && 'Void, '}</span>
@@ -58,14 +66,14 @@ export const columns: ColumnDef<Invoice>[] = [
 	{
 		accessorFn: row => row.client.name,
 		accessorKey: 'client.name',
-		header: 'Name',
+		header: ({ column }) => <ToggleHeader column={column} title='Name' />,
 		minSize: 200,
 		maxSize: 400,
 		cell: ({ row }) => <div className='truncate'>{row.original.client.name}</div>,
 	},
 	{
 		accessorKey: 'status',
-		header: 'Status',
+		header: ({ column }) => <ToggleHeader column={column} title='Status' />,
 		cell: function StatusSelect({ row }) {
 			const status: Enum<typeof statusEnum> = row.getValue('status');
 			const id = row.original.id;
@@ -124,19 +132,29 @@ export const columns: ColumnDef<Invoice>[] = [
 	},
 	{
 		accessorKey: 'issuedAt',
-		header: 'Date',
+		header: ({ column }) => <ToggleHeader column={column} title='Date' />,
 		cell: ({ row }) => row.original.formatted.issuedAt,
+		sortingFn: 'datetime',
 		size: 150,
 	},
 	{
-		accessorKey: 'grossTotal',
-		header: () => <div className='text-right'>Amount</div>,
+		accessorKey: 'formatted.grossTotal',
+		header: ({ column }) => (
+			<div className='text-right'>
+				<ToggleHeader column={column} title='Amount' />
+			</div>
+		),
 		cell: ({ row }) => {
 			return (
 				<div className='text-right font-medium tabular-nums decoration-2 group-data-void/row:line-through'>
 					{row.original.formatted.grossTotal}
 				</div>
 			);
+		},
+		sortingFn: (a, b) => {
+			const iA = a.original.grossTotal;
+			const iB = b.original.grossTotal;
+			return iA > iB ? 1 : iA < iB ? -1 : 0;
 		},
 		size: 150,
 	},
@@ -253,7 +271,7 @@ export default function Table({ header, initial }: { header?: JSX.Element; initi
 			</div>
 			<DataTable
 				columns={columns}
-				data={data}
+				data={data.map(invoice => ({ ...invoice, grossTotal: Number(invoice.grossTotal) }))}
 				globalFilter={filter}
 				getRowAttr={row => ({
 					'data-void': row.isVoid || undefined,
@@ -270,6 +288,8 @@ export default function Table({ header, initial }: { header?: JSX.Element; initi
 						: undefined,
 					className: 'data-void:opacity-50 group/row',
 				})}
+				enableSortingRemoval={false}
+				initialState={{ sorting: [{ id: 'formatted_reference', desc: true }] }}
 			/>
 		</>
 	);

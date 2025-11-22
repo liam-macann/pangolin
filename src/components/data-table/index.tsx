@@ -7,11 +7,14 @@ import {
 	getCoreRowModel,
 	getFilteredRowModel,
 	getPaginationRowModel,
+	getSortedRowModel,
+	type SortingState,
+	type TableOptions,
 	useReactTable,
 } from '@tanstack/react-table';
+import { init } from 'next/dist/compiled/webpack/webpack';
 import { type DetailedHTMLProps, type HTMLAttributes, useState } from 'react';
 import { Button } from '@/ui/button';
-
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 
 interface DataTableProps<TData, TValue> {
@@ -39,17 +42,28 @@ export function DataTable<TData, TValue>({
 	data,
 	globalFilter,
 	getRowAttr: getRowDataAttr,
-}: DataTableProps<TData, TValue>) {
+	initialState: _initialState = {},
+	...options
+}: DataTableProps<TData, TValue> &
+	Pick<TableOptions<TData>, 'initialState' | 'enableSortingRemoval'>) {
+	// Separate controlled and uncontrolled from initial state
+	const { sorting: initialSorting, ...initialState } = _initialState;
+
+	const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
+
 	const table = useReactTable({
 		data,
 		columns,
 		getCoreRowModel: getCoreRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
+		getSortedRowModel: getSortedRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
 		/** Prevent page reset on data revalidation */
 		autoResetPageIndex: false,
-		state: { globalFilter },
-		initialState: { pagination: { pageSize: 20 } },
+		onSortingChange: setSorting,
+		...options,
+		state: { globalFilter, sorting },
+		initialState: { pagination: { pageSize: 20 }, ...initialState },
 	});
 
 	const [prevFilter, setPrevFilter] = useState(globalFilter);
