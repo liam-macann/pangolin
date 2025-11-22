@@ -54,6 +54,10 @@ async function main(uuid?: string) {
 					{ weight: 0.2, value: f.default({ defaultValue: true }) },
 					{ weight: 0.8, value: f.default({ defaultValue: false }) },
 				]),
+				isDeleted: f.weightedRandom([
+					{ weight: 0.1, value: f.default({ defaultValue: true }) },
+					{ weight: 0.9, value: f.default({ defaultValue: false }) },
+				]),
 			},
 			with: { clientData: 1 },
 		},

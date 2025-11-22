@@ -272,7 +272,12 @@ export async function fetchClients(id?: string) {
 			.from(clients)
 			.innerJoin(clientData, and(eq(clients.id, clientData.clientId), isNull(clientData.validTo)))
 			.leftJoin(invoiceCounts, eq(clients.id, invoiceCounts.clientId))
-			.where(and(eq(clients.userId, session.user.id), id ? eq(clients.id, id) : undefined))
+			.where(
+				and(
+					eq(clients.userId, session.user.id),
+					id ? eq(clients.id, id) : eq(clients.isDeleted, false),
+				),
+			)
 			.groupBy(clients.id, clientData.name, clientData.email, invoiceCounts.count)
 			.orderBy(clientData.name)
 			.then(res => (id ? res[0] : res));
