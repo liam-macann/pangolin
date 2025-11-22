@@ -170,7 +170,7 @@ export const columns: ColumnDef<Invoice>[] = [
 						<Button
 							size='sm'
 							variant='ghost'
-							className='pointer-fine:opacity-0 transition-none group-hover/row:opacity-100'
+							className='pointer-fine:opacity-0 transition-none group-hocus-within/row:opacity-100'
 							asChild
 						>
 							<a href={`/dashboard/invoices/${invoice.id}`}>

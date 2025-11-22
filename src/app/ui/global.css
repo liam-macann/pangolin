@@ -78,6 +78,13 @@
 	}
 }
 
+@custom-variant hocus-within {
+	&:hover,
+	&:focus-within {
+		@slot;
+	}
+}
+
 @layer base {
 	.font-display {
 		font-weight: var(--font-weight-bold);
