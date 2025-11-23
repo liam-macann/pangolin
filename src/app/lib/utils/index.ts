@@ -65,12 +65,20 @@ export function pluralize(count: number, singular: string, plural: string) {
 	}
 }
 
+/** Drop specified properties from an object. Returns a shallow copy. */
+export function omit<T extends Record<string, unknown>, K extends keyof T>(
+	source: T,
+	paths: readonly K[],
+): Omit<T, K> {
+	const output = { ...source };
+	for (const val in paths) delete output[val];
+
+	return output;
+}
+
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-
-export function cn(...inputs: ClassValue[]) {
-	return twMerge(clsx(inputs));
-}
+export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
 export type ElementType<T extends Iterable<unknown>> = T extends Iterable<infer E> ? E : never;
 

@@ -1,5 +1,16 @@
-import { and, asc, count, desc, eq, getTableColumns, isNotNull, isNull, sql } from 'drizzle-orm';
-import type { PgSelectBase, PgSelectBuilder } from 'drizzle-orm/pg-core';
+import {
+	and,
+	asc,
+	count,
+	desc,
+	eq,
+	getTableColumns,
+	isNotNull,
+	isNull,
+	sql,
+	sum,
+} from 'drizzle-orm';
+import type { PgSelectBase } from 'drizzle-orm/pg-core';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import {
@@ -8,12 +19,13 @@ import {
 	config as configSchema,
 	invoiceItems,
 	invoices,
+	invoicesWithSum,
 	itemsWithTax,
 	itemTaxes,
 	taxes as taxesSchema,
 	users,
 } from '@/db/schema';
-import { formatCurrency, formatDateToLocal, invoiceReference } from '@/lib/utils';
+import { formatCurrency, formatDateToLocal, invoiceReference, omit } from '@/lib/utils';
 import { jsonbAgg, jsonbBuildObject } from '@/lib/utils/drizzle';
 
 /** Builder to return a single, aggregated query for invoices.
@@ -24,17 +36,6 @@ function invoiceQuery<Detailed extends boolean>(
 	detailed?: Detailed,
 	tx: ReturnType<typeof db.with> | typeof db = db,
 ) {
-	// Subquery to avoid grouping by every column on main query. Calculates total over entire invoice.
-	const itemsAgg = tx
-		.select({
-			invoiceId: itemsWithTax.invoiceId,
-			netTotal: sql<number>`COALESCE(SUM(${itemsWithTax.netAmount}), 0)`.as('net_total'),
-			grossTotal: sql<number>`COALESCE(SUM(${itemsWithTax.grossAmount}), 0)`.as('gross_total'),
-		} as const)
-		.from(itemsWithTax)
-		.groupBy(itemsWithTax.invoiceId)
-		.as('items_agg');
-
 	// First-level aggregation: items + taxes
 	const itemWithTaxes = tx
 		.select({
@@ -79,31 +80,22 @@ function invoiceQuery<Detailed extends boolean>(
 		.as('items_agg_detailed');
 
 	const baseSelect = {
-		id: invoices.id,
-		status: invoices.status,
-		isVoid: invoices.isVoid,
-		createdAt: invoices.createdAt,
-		index: invoices.index,
-		yearIndex: invoices.yearIndex,
-		issuedAt: invoices.issuedAt,
-		dueAt: invoices.dueAt,
-		issueYear: invoices.issueYear,
-		title: invoices.title,
-		description: invoices.description,
+		id: invoicesWithSum.id,
+		status: invoicesWithSum.status,
+		isVoid: invoicesWithSum.isVoid,
+		createdAt: invoicesWithSum.createdAt,
+		index: invoicesWithSum.index,
+		yearIndex: invoicesWithSum.yearIndex,
+		issuedAt: invoicesWithSum.issuedAt,
+		dueAt: invoicesWithSum.dueAt,
+		issueYear: invoicesWithSum.issueYear,
+		title: invoicesWithSum.title,
+		description: invoicesWithSum.description,
+		netTotal: invoicesWithSum.netTotal,
+		grossTotal: invoicesWithSum.grossTotal,
 
 		client: getTableColumns(clientData),
-
-		config: {
-			timezone: configSchema.timezone,
-			locale: configSchema.locale,
-			currency: configSchema.currency,
-			taxRegistration: configSchema.taxRegistration,
-			numberingScheme: configSchema.numberingScheme,
-			colorScheme: configSchema.colorScheme,
-		},
-
-		netTotal: itemsAgg.netTotal,
-		grossTotal: itemsAgg.grossTotal,
+		config: omit(getTableColumns(configSchema), ['validFrom', 'validTo', 'id', 'userId']),
 	} as const;
 
 	const detailedSelect = {
@@ -111,19 +103,20 @@ function invoiceQuery<Detailed extends boolean>(
 		items: itemsAggDetailed.items,
 	};
 
-	const query = tx.select(detailed ? detailedSelect : baseSelect).from(invoices) as PgSelectBase<
-		'invoice',
+	const query = tx
+		.select(detailed ? detailedSelect : baseSelect)
+		.from(invoicesWithSum) as PgSelectBase<
+		'invoice_with_sum',
 		Detailed extends true ? typeof detailedSelect : typeof baseSelect,
 		'partial'
 	>;
 
 	return query
-		.where(eq(invoices.userId, sql.placeholder('userId')))
-		.innerJoin(clientData, eq(invoices.clientData, clientData.id))
-		.innerJoin(configSchema, eq(invoices.config, configSchema.id))
-		.leftJoin(itemsAgg, eq(invoices.id, itemsAgg.invoiceId))
-		.leftJoin(itemsAggDetailed, eq(invoices.id, itemsAggDetailed.invoiceId))
-		.orderBy(desc(invoices.index));
+		.where(eq(invoicesWithSum.userId, sql.placeholder('userId')))
+		.innerJoin(clientData, eq(invoicesWithSum.clientData, clientData.id))
+		.innerJoin(configSchema, eq(invoicesWithSum.config, configSchema.id))
+		.leftJoin(itemsAggDetailed, eq(invoicesWithSum.id, itemsAggDetailed.invoiceId))
+		.orderBy(desc(invoicesWithSum.index));
 }
 
 /** Fetch all invoices for authenticated user, including basic relational data */
@@ -168,7 +161,7 @@ export async function fetchInvoicesForClient(clientId: string, limit?: number) {
 
 	const query = invoiceQuery(false, db.with(clientDataId)).innerJoin(
 		clientDataId,
-		eq(invoices.clientData, clientDataId.id),
+		eq(invoicesWithSum.clientData, clientDataId.id),
 	);
 
 	if (limit) query.limit(limit);
@@ -226,7 +219,7 @@ export async function fetchInvoice(id: string) {
 		const [[res], tax] = await Promise.all([
 			invoiceQuery(true)
 				.$dynamic()
-				.where(and(eq(invoices.id, id), eq(invoices.userId, session.user.id)))
+				.where(and(eq(invoicesWithSum.id, id), eq(invoicesWithSum.userId, session.user.id)))
 				.limit(1),
 
 			// Get all active taxes, and calculate sum for display in the invoice subtotals
@@ -292,6 +285,7 @@ export async function fetchClients(id?: string) {
 			db
 				.select({
 					clientId: clients.id,
+					/** Includes voided invoices */
 					count: count(invoices).as('count'),
 				})
 				.from(clients)

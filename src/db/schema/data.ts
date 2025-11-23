@@ -261,3 +261,18 @@ export const itemsWithTax = pgView('items_with_tax').as(qb =>
 		.leftJoin(config, eq(invoices.config, config.id))
 		.groupBy(invoiceItems.id, config.id),
 );
+
+export const invoicesWithSum = pgView('invoice_with_sum').as(qb =>
+	qb
+		.select({
+			...getTableColumns(invoices),
+			taxRegistration: config.taxRegistration,
+			netTotal: sum(itemsWithTax.netAmount).mapWith(Number).as('net_total'),
+			/** @remarks This can safely be used regardless of tax registration. Unregistered taxes will not be applied. */
+			grossTotal: sum(itemsWithTax.grossAmount).mapWith(Number).as('gross_total'),
+		})
+		.from(invoices)
+		.leftJoin(config, eq(invoices.config, config.id))
+		.leftJoin(itemsWithTax, eq(itemsWithTax.invoiceId, invoices.id))
+		.groupBy(invoices.id, config.id),
+);
