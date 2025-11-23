@@ -140,15 +140,18 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 									>
 										<div className='flex flex-col items-center gap-3'>
 											<span>No results</span>
-											<Button
-												variant='secondary'
-												onClick={() => {
-													table.resetColumnFilters();
-													table.setGlobalFilter('');
-												}}
-											>
-												Clear filters
-											</Button>
+											{(table.getState().globalFilter ||
+												table.getState().columnFilters.length > 0) && (
+												<Button
+													variant='secondary'
+													onClick={() => {
+														table.resetColumnFilters();
+														table.setGlobalFilter('');
+													}}
+												>
+													Clear filters
+												</Button>
+											)}
 										</div>
 									</TableCell>
 								</TableRow>
