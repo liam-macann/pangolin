@@ -32,9 +32,16 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 	type DataTableRootProps = {
 		data: TData[];
 		children: React.ReactNode;
+		pagination?: number | false;
 	} & Pick<TableOptions<TData>, 'initialState' | 'enableSortingRemoval'>;
 
-	function Root({ data, initialState = {}, children, ...options }: DataTableRootProps) {
+	function Root({
+		data,
+		initialState = {},
+		children,
+		pagination = 20,
+		...options
+	}: DataTableRootProps) {
 		const [globalFilter, setGlobalFilter] = useState<string>('');
 
 		const table = useReactTable({
@@ -44,7 +51,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 			getCoreRowModel: getCoreRowModel(),
 			getFilteredRowModel: getFilteredRowModel(),
 			getSortedRowModel: getSortedRowModel(),
-			getPaginationRowModel: getPaginationRowModel(),
+			...(pagination !== false && { getPaginationRowModel: getPaginationRowModel() }),
 
 			/** Prevent page reset on data revalidation */
 			autoResetPageIndex: false,
@@ -55,7 +62,10 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 
 			...options,
 			state: { globalFilter },
-			initialState: { pagination: { pageSize: 20 }, ...initialState },
+			initialState: {
+				pagination: { pageSize: pagination || 20 },
+				...initialState,
+			},
 		});
 
 		return <TableContext value={{ ...table }}>{children}</TableContext>;
