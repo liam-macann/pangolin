@@ -23,7 +23,7 @@ const buttonVariants = cva(
 					'bg-linear-to-b from-80% from-transparent to-black/2 not-disabled:hover:bg-accent dark:bg-input/30 dark:not-disabled:hover:bg-input/50',
 				],
 				secondary:
-					'border border-foreground/2 bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary/80 not-disabled:active:scale-[98%]',
+					'inset-shadow-white/5 inset-shadow-xs border border-foreground/2 bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary/80 not-disabled:active:scale-[98%]',
 				ghost: 'text-accent-foreground not-disabled:hover:bg-accent',
 				link: 'text-primary underline-offset-4 not-disabled:hover:underline',
 			},
