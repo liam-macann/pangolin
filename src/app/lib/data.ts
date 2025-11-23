@@ -1,5 +1,5 @@
 import { and, asc, count, desc, eq, getTableColumns, isNotNull, isNull, sql } from 'drizzle-orm';
-import type { PgSelectBase } from 'drizzle-orm/pg-core';
+import type { PgSelectBase, PgSelectBuilder } from 'drizzle-orm/pg-core';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import {
@@ -22,9 +22,10 @@ import { jsonbAgg, jsonbBuildObject } from '@/lib/utils/drizzle';
 function invoiceQuery<Detailed extends boolean>(
 	/** Detailed access required to print an entire invoice */
 	detailed?: Detailed,
+	tx: ReturnType<typeof db.with> | typeof db = db,
 ) {
 	// Subquery to avoid grouping by every column on main query. Calculates total over entire invoice.
-	const itemsAgg = db
+	const itemsAgg = tx
 		.select({
 			invoiceId: itemsWithTax.invoiceId,
 			netTotal: sql<number>`COALESCE(SUM(${itemsWithTax.netAmount}), 0)`.as('net_total'),
@@ -35,7 +36,7 @@ function invoiceQuery<Detailed extends boolean>(
 		.as('items_agg');
 
 	// First-level aggregation: items + taxes
-	const itemWithTaxes = db
+	const itemWithTaxes = tx
 		.select({
 			id: itemsWithTax.id,
 			invoiceId: itemsWithTax.invoiceId,
@@ -68,7 +69,7 @@ function invoiceQuery<Detailed extends boolean>(
 		.as('item_with_taxes');
 
 	// Second-level aggregation: invoice-level aggregation of items
-	const itemsAggDetailed = db
+	const itemsAggDetailed = tx
 		.select({
 			invoiceId: itemWithTaxes.invoiceId,
 			items: jsonbAgg(itemWithTaxes.item).as('invoice_items'),
@@ -110,7 +111,7 @@ function invoiceQuery<Detailed extends boolean>(
 		items: itemsAggDetailed.items,
 	};
 
-	const query = db.select(detailed ? detailedSelect : baseSelect).from(invoices) as PgSelectBase<
+	const query = tx.select(detailed ? detailedSelect : baseSelect).from(invoices) as PgSelectBase<
 		'invoice',
 		Detailed extends true ? typeof detailedSelect : typeof baseSelect,
 		'partial'
@@ -134,6 +135,49 @@ export async function fetchInvoices() {
 		const [currentConfig, result] = await Promise.all([
 			getUserConfig(),
 			invoiceQuery().execute({ userId: session.user.id }),
+		]);
+
+		return result.map(res => ({
+			...res,
+			/** Values formatted according to current locale */
+			formatted: {
+				grossTotal: formatCurrency(res.grossTotal, res.config.currency, currentConfig.locale),
+				issuedAt: formatDateToLocal(res.issuedAt, false, currentConfig.locale),
+				reference: invoiceReference(res, res.config.numberingScheme),
+			},
+		}));
+	} catch (error) {
+		console.error('Database Error:', error);
+		throw new Error('Failed to fetch invoices');
+	}
+}
+
+/** Fetch all invoices for a given client. Accepts logical client ID, not SCD ID. */
+export async function fetchInvoicesForClient(clientId: string, limit?: number) {
+	const session = await auth();
+
+	const clientDataId = db
+		.$with('clientDataId')
+		.as(
+			db
+				.select({ id: clientData.id })
+				.from(clients)
+				.where(eq(clients.id, clientId))
+				.innerJoin(clientData, eq(clientData.clientId, clients.id)),
+		);
+
+	const query = invoiceQuery(false, db.with(clientDataId)).innerJoin(
+		clientDataId,
+		eq(invoices.clientData, clientDataId.id),
+	);
+
+	if (limit) query.limit(limit);
+
+	try {
+		// Get current config to format historical invoices
+		const [currentConfig, result] = await Promise.all([
+			getUserConfig(),
+			query.execute({ userId: session.user.id }),
 		]);
 
 		return result.map(res => ({
