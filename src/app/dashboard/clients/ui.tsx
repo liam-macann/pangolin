@@ -74,7 +74,7 @@ export function Clients({ initial }: { initial: Client[] }) {
 									key={client.id}
 									client={client}
 									className='shrink-0 basis-60 max-lg:max-w-[90%]'
-									variant='primary'
+									variant='secondary'
 								/>
 							))}
 						</AnimatePresence>
@@ -203,7 +203,7 @@ function Card({
 }: {
 	client: Client;
 	ref?: React.Ref<HTMLDivElement>;
-	variant?: 'primary' | 'outline';
+	variant?: 'secondary' | 'outline';
 } & HTMLMotionProps<'div'>) {
 	const { mutate } = useClients();
 
@@ -238,11 +238,7 @@ function Card({
 			key={client.id}
 			layout='position'
 			ref={ref}
-			className={cn(
-				'relative flex flex-col',
-				variant === 'primary' && 'text-primary-foreground',
-				className,
-			)}
+			className={cn('relative flex flex-col', className)}
 			{...props}
 		>
 			{/* Outside of Link for semantics: <button> may not be within <a> */}
@@ -268,8 +264,8 @@ function Card({
 				className={cn(
 					'-my-8 !pt-12',
 					'relative inset-0 flex h-full flex-col justify-end rounded-md border p-4 pr-10 outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px]',
-					variant === 'outline' && 'bg-card',
-					variant === 'primary' && 'border-black/20 bg-primary',
+					'bg-card',
+					variant === 'secondary' && 'bg-secondary',
 				)}
 			>
 				<h2 className='font-medium'>{client.data.name}</h2>
@@ -293,8 +289,7 @@ function Card({
 				className={cn(
 					'-translate-y-2 relative z-10 mx-2 self-end',
 					client.isFavorite && '!bg-transparent',
-					variant === 'outline' && 'text-muted-foreground',
-					variant === 'primary' && '!text-primary-foreground',
+					'text-muted-foreground',
 				)}
 			>
 				<span className='sr-only'>Favourite</span>

@@ -41,6 +41,7 @@
 
 @variant dark {
 	:root {
+		--primary: var(--color-gray-10);
 		--destructive-background: var(--color-red-8);
 		--card: var(--color-gray-2);
 		--chart-1: oklch(0.488 0.243 264.376);
