@@ -2,6 +2,7 @@ import { ArchiveIcon, ArrowLeftIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 import { InfoTip } from '@/components/info';
 import { fetchClientStats, fetchClients, fetchInvoicesForClient, getUserConfig } from '@/lib/data';
 import { cn, formatCurrency, pluralize } from '@/lib/utils';
@@ -16,11 +17,9 @@ export const metadata: Metadata = {
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 
-	const [config, client, invoices, stats] = await Promise.all([
-		getUserConfig(),
+	const [client, invoices] = await Promise.all([
 		fetchClients(id),
 		fetchInvoicesForClient(id, 5),
-		fetchClientStats(id),
 	]).catch(err => {
 		console.error(err);
 		notFound();
@@ -48,44 +47,29 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 				{/*<p className='text-muted-foreground'>{client.data.email}</p>*/}
 
 				<div className='grid grid-cols-3 gap-2'>
-					<StatCard title='Valid issuances'>
-						{stats.validCount} {pluralize(stats.validCount, 'invoice', 'invoices')}
-					</StatCard>
-					<StatCard
-						title={
-							<span className='flex w-full items-center justify-between'>
-								Gross total<InfoTip side='top'>Excludes void and refunded invoices</InfoTip>
-							</span>
-						}
-						footer={
-							stats.totals.length - 1 > 0 && (
-								<span className='ml-auto'>
-									+{stats.totals.length - 1} more{' '}
-									{pluralize(stats.totals.length - 1, 'currency', 'currencies')}
-								</span>
-							)
+					<Suspense
+						fallback={
+							<>
+								<StatCard title='Valid issuances'>
+									<div className='my-1 h-[1em] w-24 animate-pulse rounded bg-muted' />
+								</StatCard>
+								<StatCard
+									title={
+										<span className='flex w-full items-center justify-between'>
+											Gross total<InfoTip side='top'>Excludes void and refunded invoices</InfoTip>
+										</span>
+									}
+								>
+									<div className='my-1 h-[1em] w-24 animate-pulse rounded bg-muted' />
+								</StatCard>
+								<StatCard title='Outstanding (gross)'>
+									<div className='my-1 h-[1em] w-24 animate-pulse rounded bg-muted' />
+								</StatCard>
+							</>
 						}
 					>
-						{formatCurrency(stats.totals[0].grossSum, stats.totals[0].currency, config.locale)}
-					</StatCard>
-					<StatCard
-						title='Outstanding (gross)'
-						footer={
-							stats.totals.length - 1 > 0 && (
-								<span className='ml-auto'>
-									+{stats.totals.length - 1} more{' '}
-									{pluralize(stats.totals.length - 1, 'currency', 'currencies')}
-								</span>
-							)
-						}
-						className={cn(stats.totals[0].grossOutstanding > 0 && 'text-destructive')}
-					>
-						{formatCurrency(
-							stats.totals[0].grossOutstanding,
-							stats.totals[0].currency,
-							config.locale,
-						)}
-					</StatCard>
+						<SummaryCards id={id} />
+					</Suspense>
 				</div>
 			</section>
 			<section className='mt-16'>
@@ -116,8 +100,51 @@ function StatCard({
 			)}
 		>
 			{title && <p className='flex text-muted-foreground text-sm'>{title}</p>}
-			<div className='flex grow flex-col justify-center'>{children}</div>
+			<div className='flex grow flex-col justify-center text-xl'>{children}</div>
 			{footer && <p className='flex text-muted-foreground text-sm'>{footer}</p>}
 		</div>
+	);
+}
+
+async function SummaryCards({ id }: { id: string }) {
+	const [config, stats] = await Promise.all([getUserConfig(), fetchClientStats(id)]);
+
+	return (
+		<>
+			<StatCard title='Valid issuances'>
+				{stats.validCount} {pluralize(stats.validCount, 'invoice', 'invoices')}
+			</StatCard>
+			<StatCard
+				title={
+					<span className='flex w-full items-center justify-between'>
+						Gross total<InfoTip side='top'>Excludes void and refunded invoices</InfoTip>
+					</span>
+				}
+				footer={
+					stats.totals.length - 1 > 0 && (
+						<span className='ml-auto'>
+							+{stats.totals.length - 1} more{' '}
+							{pluralize(stats.totals.length - 1, 'currency', 'currencies')}
+						</span>
+					)
+				}
+			>
+				{formatCurrency(stats.totals[0].grossSum, stats.totals[0].currency, config.locale)}
+			</StatCard>
+			<StatCard
+				title='Outstanding (gross)'
+				footer={
+					stats.totals.length - 1 > 0 && (
+						<span className='ml-auto'>
+							+{stats.totals.length - 1} more{' '}
+							{pluralize(stats.totals.length - 1, 'currency', 'currencies')}
+						</span>
+					)
+				}
+				className={cn(stats.totals[0].grossOutstanding > 0 && 'text-destructive')}
+			>
+				{formatCurrency(stats.totals[0].grossOutstanding, stats.totals[0].currency, config.locale)}
+			</StatCard>
+		</>
 	);
 }
