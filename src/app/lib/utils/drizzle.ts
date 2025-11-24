@@ -8,7 +8,9 @@ export type ColumnType<T> = T extends PgColumn<infer C>
 		: C['data'] | null
 	: T extends SQL<infer S>
 		? S
-		: never;
+		: T extends SQL.Aliased<infer A>
+			? A
+			: never;
 
 /** Derive type from PgEnum definition
  *
@@ -20,20 +22,26 @@ export type Enum<T extends PgEnum<any>> = T['enumValues'][number];
 const _jsonbAgg = <T>(expression: SQL<T> | SQL.Aliased<T>) => sql<T[]>`jsonb_agg(${expression})`;
 
 /** Pass a PgColumn to filter the aggregation where column is not null */
-export function jsonbAgg<T>(expression: SQL<T> | SQL.Aliased<T>, filter?: SQL) {
+export function jsonbAgg<T>(expression: SQL<T> | SQL.Aliased<T>, filter?: SQL, order?: SQL) {
 	if (!filter) return _jsonbAgg(expression);
 
-	return sql<T[]>`COALESCE(
-        ${_jsonbAgg(expression)}
-        FILTER (WHERE ${filter}),
+	const query = sql<T[]>`COALESCE(
+        ${_jsonbAgg(expression)}`;
+
+	if (filter) query.append(sql` FILTER (WHERE ${filter})`);
+	if (order) query.append(sql` ORDER BY ${order}`);
+
+	query.append(sql`,
         '[]'::jsonb
-      )`;
+      )`);
+
+	return query;
 }
 
 /**
  * @param shape Potential for SQL injections, so you shouldn't allow user-specified key names
  */
-export function jsonbBuildObject<T extends Record<string, PgColumn | SQL>>(shape: T) {
+export function jsonbBuildObject<T extends Record<string, PgColumn | SQL | SQL.Aliased>>(shape: T) {
 	const entries = Object.entries(shape).map(([key, value]) => sql`'${sql.raw(key)}', ${value}`);
 
 	return sql<{
