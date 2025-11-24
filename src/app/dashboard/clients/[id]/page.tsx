@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { InfoTip } from '@/components/info';
 import { fetchClientStats, fetchClients, fetchInvoicesForClient, getUserConfig } from '@/lib/data';
-import { formatCurrency, pluralize } from '@/lib/utils';
+import { cn, formatCurrency, pluralize } from '@/lib/utils';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 import { Table } from './ui';
@@ -78,6 +78,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 								</span>
 							)
 						}
+						className={cn(stats.totals[0].grossOutstanding > 0 && 'text-destructive')}
 					>
 						{formatCurrency(
 							stats.totals[0].grossOutstanding,
@@ -87,7 +88,6 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 					</StatCard>
 				</div>
 			</section>
-
 			<section className='mt-16'>
 				<h2 className='mb-4 font-display font-semibold text-2xl'>Recent activity</h2>
 				<p></p>
@@ -101,13 +101,20 @@ function StatCard({
 	title,
 	children,
 	footer,
+	className,
 }: {
 	title?: React.ReactNode;
 	children: React.ReactNode;
 	footer?: React.ReactNode;
+	className?: string;
 }) {
 	return (
-		<div className='mt-8 flex flex-col gap-1 rounded-md border bg-card p-6 py-4 font-medium text-xl'>
+		<div
+			className={cn(
+				'mt-8 flex flex-col gap-1 rounded-md border bg-card p-6 py-4 font-medium text-xl',
+				className,
+			)}
+		>
 			{title && <p className='flex text-muted-foreground text-sm'>{title}</p>}
 			<div className='flex grow flex-col justify-center'>{children}</div>
 			{footer && <p className='flex text-muted-foreground text-sm'>{footer}</p>}
