@@ -67,6 +67,7 @@
 		"react-error-boundary": "^6.0.0",
 		"react-hook-form": "^7.62.0",
 		"react-wrap-balancer": "^1.1.1",
+		"scrollyfills": "^1.0.4",
 		"sonner": "^2.0.7",
 		"swr": "^2.3.6",
 		"tailwind-merge": "^3.3.1",

@@ -18,7 +18,8 @@ import {
 import { AnimatePresence, type HTMLMotionProps, motion } from 'motion/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { type JSX, useEffect, useRef, useState } from 'react';
+import 'scrollyfills';
 import { toast } from 'sonner';
 import type { Data as ClientData } from '@/api/clients/route';
 import { ButtonGroup } from '@/components/ui/button-group';
@@ -83,7 +84,9 @@ export function Clients({ initial }: { initial: Client[] }) {
 				</>
 			)}
 
-			<Table data={data} />
+			<PinHeight>
+				<Table data={data} />
+			</PinHeight>
 		</>
 	);
 }
@@ -298,5 +301,41 @@ function Card({
 				<StarIcon weight={client.isFavorite ? 'fill' : undefined} className={cn()} />
 			</Toggle>
 		</motion.div>
+	);
+}
+
+/** Prevents visible contraction. If a child element shrinks, it will maintain the same height — recalculating to contract after scroll. */
+function PinHeight({ children }: { children: JSX.Element }) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	const [height, setHeight] = useState(0);
+
+	useEffect(() => {
+		const callback = () => {
+			if (!ref.current) return;
+
+			const rect = ref.current.getBoundingClientRect();
+			const visibleHeight = Math.min(window.innerHeight - rect.top, rect.height);
+
+			setHeight(visibleHeight);
+		};
+
+		// Set initial value on page load
+		callback();
+
+		// Polyfilled event
+		window.addEventListener('scrollend', callback);
+		window.addEventListener('resize', callback);
+
+		return () => {
+			removeEventListener('scrollend', callback);
+			removeEventListener('resize', callback);
+		};
+	}, []);
+
+	return (
+		<div ref={ref} style={{ minHeight: height }}>
+			{children}
+		</div>
 	);
 }
