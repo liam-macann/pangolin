@@ -90,7 +90,7 @@ export function TaxRateField<T extends FormValues>({
 				</FieldDescription>
 				{state.error?.root && <FieldError errors={[state.error?.root]} />}
 			</FieldContent>
-			<TaxRateInput className='mt-2' control={control} />
+			<TaxRateInput control={control} />
 		</FieldSet>
 	);
 }

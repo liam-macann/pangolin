@@ -11,7 +11,6 @@ import { InfoTip } from '@/components/info';
 import { config } from '@/db/schema/data';
 import { updateUserConfig } from '@/lib/actions/config';
 import type { getUserConfig } from '@/lib/data';
-import { Enum } from '@/lib/utils/drizzle';
 import schemes from '@/src/app/ui/colorSchemes';
 import { Button } from '@/ui/button';
 import { Checkbox } from '@/ui/checkbox';
@@ -129,19 +128,21 @@ export default function ConfigForm({
 					render={({ field, fieldState }) => {
 						return (
 							<FieldSet className='mt-4'>
-								<FieldLegend className='flex items-center gap-2'>
-									Numbering scheme
-									<InfoTip side='right'>
-										Existing invoices will not be affected by changes to numbering scheme
-									</InfoTip>
-								</FieldLegend>
-								<FieldDescription>
-									Choose the method used to identify your invoices.
-								</FieldDescription>
+								<FieldContent>
+									<FieldLegend className='flex items-center gap-2'>
+										Numbering scheme
+										<InfoTip side='right'>
+											Existing invoices will not be affected by changes to numbering scheme
+										</InfoTip>
+									</FieldLegend>
+									<FieldDescription>
+										Choose the method used to identify your invoices.
+									</FieldDescription>
+								</FieldContent>
 								<RadioGroup
 									{...field}
 									onValueChange={field.onChange}
-									className='flex max-sm:flex-col'
+									className='mt-1 flex max-sm:flex-col'
 								>
 									<FieldLabel>
 										<Field orientation='vertical' className='h-full justify-between'>
