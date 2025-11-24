@@ -1,3 +1,4 @@
+'use no memo';
 'use client';
 
 import { DotsThreeIcon } from '@phosphor-icons/react';
@@ -289,7 +290,11 @@ export function createInvoiceTable<TValue>(columns: ColumnDef<Invoice, TValue>[]
 		/>
 	);
 
-	return { ...FactoryDataTable, Root, Content };
+	const Search = (props: ComponentProps<typeof FactoryDataTable.Search>) => (
+		<FactoryDataTable.Search placeholder='Search invoices…' {...props} />
+	);
+
+	return { ...FactoryDataTable, Root, Content, Search };
 }
 
 export const DataTable = createInvoiceTable(columns);

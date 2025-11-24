@@ -1,3 +1,4 @@
+'use no memo';
 'use client';
 
 import { CaretLeftIcon, CaretRightIcon, MagnifyingGlassIcon } from '@phosphor-icons/react';
@@ -213,7 +214,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		return (
 			<Input
 				aria-label='Search'
-				placeholder='Search invoices…'
+				placeholder='Search…'
 				value={table.getState().globalFilter}
 				onChange={e => {
 					onChange?.(e);
@@ -230,5 +231,6 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		Content,
 		PaginationControls,
 		Search,
+		Context: TableContext,
 	};
 }
