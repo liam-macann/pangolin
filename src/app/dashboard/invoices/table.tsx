@@ -3,6 +3,7 @@
 
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { cva } from 'class-variance-authority';
 import type { ComponentProps } from 'react';
 import { toast } from 'sonner';
 import type { Data as InvoiceData } from '@/api/invoices/route';
@@ -42,6 +43,18 @@ import {
 	SelectValue,
 } from '@/ui/select';
 
+export const statusVariants = cva('!px-2 rounded-sm border py-1 capitalize', {
+	variants: {
+		variant: {
+			unpaid:
+				'!border-red-6 focus-visible:!border-red-7 !ring-red-6/50 !bg-red-3 dark:!bg-red-4 dark:!border-red-6 text-red-12',
+			paid: '!border-blue-6 focus-visible:!border-blue-7 !ring-blue-6/50 !bg-blue-3 dark:!bg-blue-4 dark:!border-blue-6 text-blue-12',
+			refunded:
+				'!border-orange-6 focus-visible:!border-orange-7 !ring-orange-6/50 !bg-orange-3 dark:!bg-orange-4 dark:!border-orange-6 text-orange-12',
+		},
+	},
+});
+
 type Invoice = ElementType<InvoiceData>;
 
 /** Column definitions for invoices */
@@ -57,7 +70,7 @@ export const columns: ColumnDef<Invoice>[] = [
 		sortDescFirst: true,
 		header: ({ column }) => <ToggleHeader column={column} title='Reference' />,
 		cell: ({ row }) => (
-			<div className='font-medium'>
+			<div className='font-medium tabular-nums'>
 				<span className='sr-only'>{row.original.isVoid && 'Void, '}</span>
 				{row.original.formatted.reference}
 			</div>
@@ -75,7 +88,11 @@ export const columns: ColumnDef<Invoice>[] = [
 	},
 	{
 		accessorKey: 'status',
+		id: 'status',
 		header: ({ column }) => <ToggleHeader column={column} title='Status' />,
+		meta: {
+			'data-test': 're',
+		},
 		cell: function StatusSelect({ row }) {
 			const status: Enum<typeof statusEnum> = row.getValue('status');
 			const id = row.original.id;
@@ -108,15 +125,7 @@ export const columns: ColumnDef<Invoice>[] = [
 					>
 						<SelectTrigger
 							size='sm'
-							className={cn(
-								'!px-2 h-auto gap-1 rounded-sm py-1 capitalize',
-								status === 'unpaid' &&
-									'!border-red-6 focus-visible:!border-red-7 !ring-red-6/50 !bg-red-3 dark:!bg-red-4 dark:!border-red-6 text-red-12',
-								status === 'paid' &&
-									'!border-blue-6 focus-visible:!border-blue-7 !ring-blue-6/50 !bg-blue-3 dark:!bg-blue-4 dark:!border-blue-6 text-blue-12',
-								status === 'refunded' &&
-									'!border-orange-6 focus-visible:!border-orange-7 !ring-orange-6/50 !bg-orange-3 dark:!bg-orange-4 dark:!border-orange-6 text-orange-12',
-							)}
+							className={cn('h-auto gap-1', statusVariants({ variant: status }))}
 						>
 							<SelectValue placeholder='Update status…'>{status}</SelectValue>
 						</SelectTrigger>
