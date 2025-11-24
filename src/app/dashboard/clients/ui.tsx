@@ -1,11 +1,18 @@
 'use client';
 
-import { DotsThreeIcon, MagnifyingGlassIcon, StarIcon } from '@phosphor-icons/react/ssr';
+import {
+	CaretLeftIcon,
+	CaretRightIcon,
+	DotsThreeIcon,
+	MagnifyingGlassIcon,
+	StarIcon,
+} from '@phosphor-icons/react/ssr';
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
 	getCoreRowModel,
 	getFilteredRowModel,
+	getPaginationRowModel,
 	useReactTable,
 } from '@tanstack/react-table';
 import { AnimatePresence, type HTMLMotionProps, motion } from 'motion/react';
@@ -14,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { Data as ClientData } from '@/api/clients/route';
+import { ButtonGroup } from '@/components/ui/button-group';
 import { updateClientFavorite } from '@/lib/actions/client';
 import { useClients } from '@/lib/hooks';
 import { cn, type ElementType, pluralize } from '@/lib/utils';
@@ -89,9 +97,13 @@ export function Table({ data }: { data: Client[] }) {
 		columns,
 		getCoreRowModel: getCoreRowModel(),
 		getFilteredRowModel: getFilteredRowModel(),
+		getPaginationRowModel: getPaginationRowModel(),
 		state: {
 			globalFilter: filter,
 			columnFilters,
+		},
+		initialState: {
+			pagination: { pageSize: 40 },
 		},
 		onGlobalFilterChange: val => {
 			setColumnFilters(val === '' ? [{ id: 'isFavorite', value: false }] : []);
@@ -136,6 +148,39 @@ export function Table({ data }: { data: Client[] }) {
 				</section>
 			) : (
 				<div className='py-6 text-center text-muted-foreground'>No results</div>
+			)}
+
+			{table.getPageCount() > 1 && (
+				<div className='mt-8 flex justify-end'>
+					<ButtonGroup>
+						<Button
+							variant='secondary'
+							size='sm'
+							onClick={() => table.previousPage()}
+							disabled={!table.getCanPreviousPage()}
+						>
+							<span className='sr-only'>Previous</span>
+							<CaretLeftIcon />
+						</Button>
+						<Button
+							variant='secondary'
+							size='sm'
+							className='bg-secondary px-2 font-medium text-muted-foreground text-sm tabular-nums'
+							onClick={() => table.resetPageIndex()}
+						>
+							{table.getState().pagination.pageIndex + 1}
+						</Button>
+						<Button
+							variant='secondary'
+							size='sm'
+							onClick={() => table.nextPage()}
+							disabled={!table.getCanNextPage()}
+						>
+							<span className='sr-only'>Next</span>
+							<CaretRightIcon />
+						</Button>
+					</ButtonGroup>
+				</div>
 			)}
 		</>
 	);
