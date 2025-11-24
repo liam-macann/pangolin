@@ -6,7 +6,7 @@ export default function Page() {
 	return (
 		<div className='flex flex-col items-center justify-center py-12'>
 			<div>
-				<h1 className='mb-2 font-bold text-3xl'>404</h1>
+				<h1 className='mb-2 font-semibold text-2xl'>404</h1>
 				<p>This page could not be found.</p>
 				<Button onClick={() => history.back()} className='mt-8'>
 					Go back
