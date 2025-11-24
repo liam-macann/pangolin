@@ -183,7 +183,7 @@ export const columns: ColumnDef<Invoice>[] = [
 						<Button
 							size='sm'
 							variant='ghost'
-							className='pointer-fine:opacity-0 transition-none group-hocus-within/row:opacity-100'
+							className='pointer-fine:opacity-0 transition-none group-hocus-within/row:opacity-100 max-md:hidden'
 							asChild
 						>
 							<a href={`/dashboard/invoices/${invoice.id}`}>
@@ -199,6 +199,10 @@ export const columns: ColumnDef<Invoice>[] = [
 							</DropdownMenuTrigger>
 							<DropdownMenuContent side='right' align='start'>
 								<DropdownMenuLabel>Actions</DropdownMenuLabel>
+
+								<DropdownMenuItem asChild>
+									<a href={`/dashboard/invoices/${invoice.id}`}>Download</a>
+								</DropdownMenuItem>
 								<DropdownMenuItem
 									onClick={() => navigator.clipboard.writeText(invoice.formatted.reference)}
 								>
