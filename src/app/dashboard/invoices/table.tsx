@@ -144,7 +144,9 @@ export const columns: ColumnDef<Invoice>[] = [
 	{
 		accessorKey: 'issuedAt',
 		header: ({ column }) => <ToggleHeader column={column} title='Date' />,
-		cell: ({ row }) => row.original.formatted.issuedAt,
+		cell: ({ row }) => (
+			<span className='text-muted-foreground'>{row.original.formatted.issuedAt}</span>
+		),
 		sortingFn: 'datetime',
 		size: 150,
 	},
