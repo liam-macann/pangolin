@@ -2,7 +2,7 @@ import { ArchiveIcon, ArrowLeftIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-
+import { InfoTip } from '@/components/info';
 import { fetchClientStats, fetchClients, fetchInvoicesForClient, getUserConfig } from '@/lib/data';
 import { formatCurrency, pluralize } from '@/lib/utils';
 import { Badge } from '@/ui/badge';
@@ -52,7 +52,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 						{stats.validCount} {pluralize(stats.validCount, 'invoice', 'invoices')}
 					</StatCard>
 					<StatCard
-						title='Gross total'
+						title={
+							<span className='flex w-full items-center justify-between'>
+								Gross total<InfoTip side='top'>Excludes void and refunded invoices</InfoTip>
+							</span>
+						}
 						footer={
 							stats.totals.length - 1 > 0 && (
 								<span className='ml-auto'>

@@ -10,6 +10,7 @@ import {
 	isNotNull,
 	isNull,
 	max,
+	ne,
 	type SQL,
 	sql,
 	sumDistinct,
@@ -255,8 +256,14 @@ export async function fetchClientStats(id: string) {
 	const totals = db
 		.with(validityFilter)
 		.select({
-			netSum: sumDistinct(validityFilter.netTotal).mapWith(Number).as('net_sum'),
-			grossSum: sumDistinct(validityFilter.grossTotal).mapWith(Number).as('gross_sum'),
+			netSum: withFilter(
+				sumDistinct(validityFilter.netTotal).mapWith(Number),
+				ne(validityFilter.status, 'refunded'),
+			).as('net_sum'),
+			grossSum: withFilter(
+				sumDistinct(validityFilter.grossTotal).mapWith(Number),
+				ne(validityFilter.status, 'refunded'),
+			).as('gross_sum'),
 			grossOutstanding: withFilter(
 				sumDistinct(validityFilter.grossTotal).mapWith(Number),
 				eq(validityFilter.status, 'unpaid'),

@@ -1,3 +1,5 @@
+'use client';
+
 import { InfoIcon } from '@phosphor-icons/react';
 import * as Popover from '@radix-ui/react-popover';
 import { useRef, useState } from 'react';
