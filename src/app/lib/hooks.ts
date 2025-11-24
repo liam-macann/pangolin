@@ -26,7 +26,7 @@ export function useInvoices<C extends Config>(initial?: InvoiceData, config?: C)
 		...(initial ? { fallbackData: initial } : {}),
 	});
 
-	// Necessary to maintain discriminated types
+	// Cast necessary to maintain discriminated types
 	return {
 		...swr,
 		isError: swr.error !== undefined,

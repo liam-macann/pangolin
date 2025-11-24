@@ -2,13 +2,17 @@ import {
 	and,
 	asc,
 	count,
+	countDistinct,
 	desc,
 	eq,
 	getTableColumns,
+	getViewSelectedFields,
 	isNotNull,
 	isNull,
+	max,
+	type SQL,
 	sql,
-	sum,
+	sumDistinct,
 } from 'drizzle-orm';
 import type { PgSelectBase } from 'drizzle-orm/pg-core';
 import { auth } from '@/auth';
@@ -26,7 +30,7 @@ import {
 	users,
 } from '@/db/schema';
 import { formatCurrency, formatDateToLocal, invoiceReference, omit } from '@/lib/utils';
-import { jsonbAgg, jsonbBuildObject } from '@/lib/utils/drizzle';
+import { jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
 
 /** Builder to return a single, aggregated query for invoices.
  *
@@ -56,17 +60,7 @@ function invoiceQuery<Detailed extends boolean>(
 		.from(itemsWithTax)
 		.leftJoin(itemTaxes, eq(itemsWithTax.id, itemTaxes.itemId))
 		.leftJoin(taxesSchema, eq(itemTaxes.taxId, taxesSchema.id))
-		.groupBy(
-			itemsWithTax.id,
-			itemsWithTax.invoiceId,
-			itemsWithTax.label,
-			itemsWithTax.note,
-			itemsWithTax.quantity,
-			itemsWithTax.unit,
-			itemsWithTax.unitCost,
-			itemsWithTax.netAmount,
-			itemsWithTax.order,
-		)
+		.groupBy(...Object.values(getViewSelectedFields(itemsWithTax)))
 		.as('item_with_taxes');
 
 	// Second-level aggregation: invoice-level aggregation of items
@@ -80,19 +74,7 @@ function invoiceQuery<Detailed extends boolean>(
 		.as('items_agg_detailed');
 
 	const baseSelect = {
-		id: invoicesWithSum.id,
-		status: invoicesWithSum.status,
-		isVoid: invoicesWithSum.isVoid,
-		createdAt: invoicesWithSum.createdAt,
-		index: invoicesWithSum.index,
-		yearIndex: invoicesWithSum.yearIndex,
-		issuedAt: invoicesWithSum.issuedAt,
-		dueAt: invoicesWithSum.dueAt,
-		issueYear: invoicesWithSum.issueYear,
-		title: invoicesWithSum.title,
-		description: invoicesWithSum.description,
-		netTotal: invoicesWithSum.netTotal,
-		grossTotal: invoicesWithSum.grossTotal,
+		...getViewSelectedFields(invoicesWithSum),
 
 		client: getTableColumns(clientData),
 		config: omit(getTableColumns(configSchema), ['validFrom', 'validTo', 'id', 'userId']),
@@ -248,6 +230,75 @@ export async function fetchInvoice(id: string) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoice');
 	}
+}
+
+export async function fetchClientStats(id: string) {
+	const session = await auth();
+
+	/** Access all invoices for a given client that have not been voided */
+	const validityFilter = db
+		.select({ ...getViewSelectedFields(invoicesWithSum) })
+		.from(clients)
+		.leftJoin(clientData, eq(clientData.clientId, clients.id))
+		.leftJoin(invoicesWithSum, eq(invoicesWithSum.clientData, clientData.id))
+		.where(
+			and(
+				eq(clients.userId, session.user.id),
+				eq(invoicesWithSum.isVoid, false),
+				eq(clients.id, id),
+			),
+		)
+		.as('validity_filter');
+
+	// Currency may change when configuration is updated.
+	// Figures are not aware of currency, hence may not be aggregated over the entire table.
+	const totals = db
+		.with(validityFilter)
+		.select({
+			netSum: sumDistinct(validityFilter.netTotal).mapWith(Number).as('net_sum'),
+			grossSum: sumDistinct(validityFilter.grossTotal).mapWith(Number).as('gross_sum'),
+			grossOutstanding: withFilter(
+				sumDistinct(validityFilter.grossTotal).mapWith(Number),
+				eq(validityFilter.status, 'unpaid'),
+			).as('gross_outstanding'),
+
+			currency: validityFilter.currency,
+			maxCreatedAt: max(validityFilter.createdAt).as('max_created_at'),
+		})
+		.from(validityFilter)
+		.groupBy(validityFilter.currency)
+		.as('sum_per_currency');
+
+	const aggTotals = db.$with('agg').as(
+		db
+			.select({
+				totals: jsonbAgg(
+					jsonbBuildObject({
+						netSum: totals.netSum,
+						grossSum: totals.grossSum,
+						grossOutstanding: totals.grossOutstanding,
+						currency: totals.currency as unknown as SQL<string>, // Assertion necessary to correct type non-nullability
+						updatedAt: totals.maxCreatedAt,
+					}),
+					undefined,
+					// Sort currency by recency of invoices
+					desc(totals.maxCreatedAt),
+				).as('totals'),
+			})
+			.from(totals),
+	);
+
+	return await db
+		.with(validityFilter, aggTotals)
+		.select({
+			/** Excludes voided invoices */
+			validCount: countDistinct(validityFilter.id).as('count'),
+			totals: aggTotals.totals,
+		})
+		.from(validityFilter)
+		.leftJoin(aggTotals, isNotNull(aggTotals.totals))
+		.groupBy(aggTotals.totals)
+		.then(([v]) => v);
 }
 
 export async function getUser() {
