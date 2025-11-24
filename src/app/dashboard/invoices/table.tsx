@@ -205,10 +205,10 @@ export const columns: ColumnDef<Invoice>[] = [
 
 					<AlertDialogContent>
 						<AlertDialogHeader>
-							<AlertDialogTitle>Are you sure?</AlertDialogTitle>
+							<AlertDialogTitle>Voiding an invoice is permanent</AlertDialogTitle>
 							<AlertDialogDescription>
-								This action cannot be undone. You will still be able to access the invoice, but it
-								will be marked as void.
+								This action cannot be undone. You will still be able to view the invoice, but it
+								will be no longer be included in any reports or summaries.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
