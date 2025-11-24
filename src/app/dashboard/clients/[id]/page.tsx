@@ -73,9 +73,15 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 				</div>
 			</section>
 			<section className='mt-16'>
-				<h2 className='mb-4 font-display font-semibold text-2xl'>Recent activity</h2>
-				<p></p>
+				<h2 className='mb-6 font-display font-semibold text-2xl'>Recent activity</h2>
 				<Table data={invoices} />
+
+				{client.invoiceCount > 5 && (
+					<div className='mt-3 ml-4 rounded-md font-medium text-muted-foreground text-sm'>
+						+ {client.invoiceCount - 5} more{' '}
+						{pluralize(client.invoiceCount - 5, 'invoice', 'invoices')}
+					</div>
+				)}
 			</section>
 		</>
 	);

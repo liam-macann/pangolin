@@ -26,9 +26,6 @@ export function Table({ data }: { data: Data }) {
 	return (
 		<DataTable.Root pagination={false} data={data}>
 			<DataTable.Content />
-			<div className='flex items-center justify-end gap-2 py-4'>
-				<DataTable.PaginationControls />
-			</div>
 		</DataTable.Root>
 	);
 }
