@@ -6,6 +6,9 @@ globalThis.WebSocket = WebSocket;
 globalThis.fetch = fetch;
 
 import { reset, seed } from 'drizzle-seed';
+// Temporary. This breaks determinism, but the Drizzle uuid func does not adhere to spec:
+// https://github.com/drizzle-team/drizzle-orm/issues/3690
+import { v4 as uuidv4 } from 'uuid';
 import { db } from '../src/db';
 import * as schema from '../src/db/schema';
 
@@ -28,7 +31,7 @@ async function main(uuid?: string) {
 
 	await reset(db, include);
 
-	const invoiceCount = 24;
+	const invoiceCount = 200;
 	await seed(db, include, { seed: 42, count: 10, version: '2' }).refine(f => ({
 		users: {
 			count: 1,
@@ -43,13 +46,17 @@ async function main(uuid?: string) {
 					}
 				: { name: f.fullName() },
 			with: {
-				clients: 16,
+				clients: 48,
 				config: 1,
 				invoices: invoiceCount,
 			},
 		},
 		clients: {
 			columns: {
+				id: f.valuesFromArray({
+					values: Array.from({ length: 100 }, () => uuidv4()),
+					isUnique: true,
+				}),
 				isFavorite: f.weightedRandom([
 					{ weight: 0.2, value: f.default({ defaultValue: true }) },
 					{ weight: 0.8, value: f.default({ defaultValue: false }) },
@@ -63,13 +70,20 @@ async function main(uuid?: string) {
 		},
 		clientData: {
 			columns: {
+				id: f.valuesFromArray({
+					values: Array.from({ length: 100 }, () => uuidv4()),
+					isUnique: true,
+				}),
 				name: f.fullName(),
 				validTo: f.default({ defaultValue: null }),
 			},
 		},
 		invoices: {
 			columns: {
-				id: f.uuid(),
+				id: f.valuesFromArray({
+					values: Array.from({ length: invoiceCount }, () => uuidv4()),
+					isUnique: true,
+				}),
 				description: f.weightedRandom([
 					{ weight: 0.2, value: f.loremIpsum({ sentencesCount: 3 }) },
 					{ weight: 0.8, value: f.default({ defaultValue: '' }) },
@@ -146,6 +160,10 @@ async function main(uuid?: string) {
 		taxes: {
 			count: 3,
 			columns: {
+				id: f.valuesFromArray({
+					values: Array.from({ length: 100 }, () => uuidv4()),
+					isUnique: true,
+				}),
 				name: f.valuesFromArray({ values: ['GST', 'VAT', 'EXP', 'LCT', 'WET'] }),
 				rate: f.number({ precision: 10, minValue: 0, maxValue: 0.3 }),
 			},
