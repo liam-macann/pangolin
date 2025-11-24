@@ -15,7 +15,10 @@
 	--muted-foreground: var(--color-gray-11);
 	--accent: var(--color-gray-a-3);
 	--accent-foreground: var(--secondary-foreground);
-	--destructive: var(--color-red-11);
+	--destructive: var(--color-red-11); /** Used for destructive text */
+	--destructive-background: var(
+		--color-red-11
+	); /** Used for destructive background (eg. buttons) */
 	--border: var(--color-gray-6);
 	--input: var(
 		--color-gray-6
@@ -38,6 +41,7 @@
 
 @variant dark {
 	:root {
+		--destructive-background: var(--color-red-8);
 		--card: var(--color-gray-2);
 		--chart-1: oklch(0.488 0.243 264.376);
 		--chart-2: oklch(0.696 0.17 162.48);
@@ -68,6 +72,7 @@
 	--color-accent: var(--accent);
 	--color-accent-foreground: var(--accent-foreground);
 	--color-destructive: var(--destructive);
+	--color-destructive-background: var(--destructive-background);
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
