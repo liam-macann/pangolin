@@ -104,7 +104,7 @@ export default function ConfigForm({
 					rules={{ required: true }}
 					render={({ field, fieldState }) => (
 						<Field
-							orientation='horizontal'
+							orientation='responsive'
 							className='!items-center'
 							data-invalid={fieldState.invalid}
 						>
@@ -326,7 +326,7 @@ function ColorPalette({
 }: ControllerRenderProps<z.infer<typeof formSchema>, 'colorScheme'>) {
 	const [hover, setHover] = useState<string | null>(null);
 	return (
-		<div className='flex flex-col items-end gap-2'>
+		<div className='flex flex-col @md/field-group:items-end gap-2'>
 			<RadioGroup
 				className='flex'
 				{...field}
