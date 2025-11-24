@@ -17,7 +17,7 @@ export default async function Page() {
 				<h1 className='font-display text-3xl'>Clients</h1>
 				<Button variant='outline' disabled>
 					<UserCirclePlusIcon />
-					<span className='hidden sm:block'>New client</span>
+					<span>New client</span>
 				</Button>
 			</div>
 

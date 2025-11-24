@@ -66,10 +66,15 @@ export function Clients({ initial }: { initial: Client[] }) {
 		<>
 			{favorites.length > 0 && (
 				<>
-					<section className='grid grid-cols-4 gap-4'>
+					<section className='max-lg:-mx-6 max-lg:-mb-4 flex gap-4 max-lg:overflow-scroll max-lg:px-6 max-lg:pb-4 lg:grid lg:grid-cols-4'>
 						<AnimatePresence mode='popLayout' initial={false}>
 							{favorites.map(client => (
-								<Card key={client.id} client={client} variant='primary' />
+								<Card
+									key={client.id}
+									client={client}
+									className='shrink-0 basis-60 max-lg:max-w-[90%]'
+									variant='primary'
+								/>
 							))}
 						</AnimatePresence>
 					</section>
@@ -259,7 +264,7 @@ function Card({
 				href={`clients/${client.id}`}
 				className={cn(
 					'-my-8 !pt-12',
-					'relative inset-0 flex h-full flex-col justify-end rounded-md border p-4 outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px]',
+					'relative inset-0 flex h-full flex-col justify-end rounded-md border p-4 pr-10 outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px]',
 					variant === 'outline' && 'bg-card',
 					variant === 'primary' && 'border-black/20 bg-primary',
 				)}
