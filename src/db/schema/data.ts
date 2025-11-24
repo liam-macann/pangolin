@@ -24,7 +24,7 @@ export const statusEnum = pgEnum('status', ['unpaid', 'paid', 'refunded']);
 export const invoices = pgTable(
 	'invoice',
 	{
-		id: uuid().default(sql`uuid_generate_v4()`).primaryKey().notNull(),
+		id: uuid().defaultRandom().primaryKey().notNull(),
 		userId: uuid('user_id')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
@@ -89,7 +89,7 @@ export const invoices = pgTable(
 
 export const unitEnum = pgEnum('unit', ['items', 'hours']);
 export const invoiceItems = pgTable('invoice_item', {
-	id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
+	id: uuid().defaultRandom().primaryKey(),
 	invoiceId: uuid('invoice_id')
 		.notNull()
 		.references(() => invoices.id, { onDelete: 'cascade' }),
@@ -133,7 +133,7 @@ export const itemTaxes = pgTable(
 export const taxes = pgTable(
 	'tax',
 	{
-		id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
+		id: uuid().defaultRandom().primaryKey(),
 		userId: uuid('user_id')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
@@ -163,7 +163,7 @@ export const invoiceCount = pgTable('invoice_count', {
 export const clients = pgTable(
 	'client',
 	{
-		id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
+		id: uuid().defaultRandom().primaryKey(),
 		userId: uuid('user_id')
 			.references(() => users.id, { onDelete: 'cascade' })
 			.notNull(),
@@ -190,7 +190,7 @@ const scdDates = {
 export const clientData = pgTable(
 	'client_data',
 	{
-		id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
+		id: uuid().defaultRandom().primaryKey(),
 		// Denormalised to allow DB-level ownership constraint
 		userId: uuid('user_id')
 			.references(() => users.id, { onDelete: 'cascade' })
@@ -218,7 +218,7 @@ export const numberingScheme = pgEnum('numbering_scheme', ['sequential', 'annual
 export const config = pgTable(
 	'config',
 	{
-		id: uuid().default(sql`uuid_generate_v4()`).primaryKey(),
+		id: uuid().defaultRandom().primaryKey(),
 		userId: uuid('user_id')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
