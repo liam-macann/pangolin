@@ -48,3 +48,11 @@ export function jsonbBuildObject<T extends Record<string, PgColumn | SQL | SQL.A
 		[K in keyof T]: ColumnType<T[K]>;
 	}>`jsonb_build_object(${sql.join(entries, sql.raw(', '))})`;
 }
+
+/**
+ * Appends a SQL "FILTER (WHERE ...)" clause to an aggregate function.
+ * @param aggregate - The aggregate function: `sum(col)`, `count(col)`
+ * @param condition - The filter condition: `eq(col, 1)`
+ */
+export const withFilter = <T>(aggregate: SQL<T>, condition: SQL) =>
+	sql<T>`${aggregate} filter (where ${condition})`;
