@@ -1,0 +1,53 @@
+import { boolean, foreignKey, pgTable, unique, uuid, varchar } from 'drizzle-orm/pg-core';
+
+import { users } from '../auth';
+import { scdDates } from './_helpers';
+
+// Logical client. Data is stored in SCD table.
+export const clients = pgTable(
+	'client',
+	{
+		id: uuid().defaultRandom().primaryKey(),
+		userId: uuid('user_id')
+			.references(() => users.id, { onDelete: 'cascade' })
+			.notNull(),
+		isFavorite: boolean('is_favorite').notNull().default(false),
+		isDeleted: boolean('is_deleted').notNull().default(false),
+	},
+	// Necessary for ownership constraint on clientData
+	t => [unique('client_user_unique').on(t.id, t.userId)],
+);
+
+//
+//
+//
+// SCD v2
+//
+// Slowly changing dimension (SCD) — history table necessary for stable invoice references
+
+// All data used to construct invoice should be here
+export const clientData = pgTable(
+	'client_data',
+	{
+		id: uuid().defaultRandom().primaryKey(),
+		// Denormalised to allow DB-level ownership constraint
+		userId: uuid('user_id')
+			.references(() => users.id, { onDelete: 'cascade' })
+			.notNull(),
+		clientId: uuid('client_id').references(() => clients.id, { onDelete: 'cascade' }),
+		name: varchar({ length: 255 }).notNull(),
+		email: varchar({ length: 255 }).notNull(),
+		...scdDates,
+	},
+	t => [
+		// Necessary for ownership constraint on clientData
+		unique('client_data_user_unique').on(t.id, t.userId),
+		// Ensure that a client has only one valid configuration (multiple null values will conflict)
+		unique('client_version').on(t.clientId, t.validTo),
+		foreignKey({
+			name: 'client_data_ownership_fk',
+			columns: [t.clientId, t.userId],
+			foreignColumns: [clients.id, clients.userId],
+		}),
+	],
+);
