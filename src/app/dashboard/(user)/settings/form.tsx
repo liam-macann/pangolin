@@ -335,20 +335,25 @@ function ColorPalette({
 				onPointerLeave={() => setHover(null)}
 			>
 				{Object.entries(schemes).map(([key, scheme]) => (
-					<Button variant='primary' size='icon-sm' key={key} asChild>
-						<RadioGroupItem
-							className='rounded-full border-gray-12/20 text-white outline-gray-11 data-[state="checked"]:outline'
-							style={{ backgroundColor: scheme.accent }}
-							value={key}
-							onMouseEnter={() => setHover(key)}
-						>
-							<CheckIcon className='fade-in-0 zoom-in-90 animate-in duration-150' weight='bold' />
-						</RadioGroupItem>
-					</Button>
+					<div key={key} className='flex flex-col'>
+						<Button variant='primary' size='icon-sm' asChild>
+							<RadioGroupItem
+								className='peer rounded-full border-gray-12/20 text-white outline-gray-11 data-[state="checked"]:outline'
+								style={{ backgroundColor: scheme.accent }}
+								value={key}
+								onMouseEnter={() => setHover(key)}
+							>
+								<CheckIcon className='fade-in-0 zoom-in-90 animate-in duration-150' weight='bold' />
+							</RadioGroupItem>
+						</Button>
+						{key === (hover || field.value) && (
+							<FieldDescription className='text-center text-xs capitalize'>
+								<span className='-translate-x-1/2 absolute mt-2'>{key}</span>
+							</FieldDescription>
+						)}
+					</div>
 				))}
 			</RadioGroup>
-
-			<FieldDescription className='text-xs capitalize'>{hover || field.value}</FieldDescription>
 		</div>
 	);
 }
