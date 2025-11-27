@@ -72,7 +72,7 @@ export const invoices = pgTable(
 	},
 	t => [
 		foreignKey({
-			name: 'invoice_ownership_fk',
+			name: 'invoice_client_ownership_fk',
 			columns: [t.clientData, t.userId],
 			foreignColumns: [clientData.id, clientData.userId],
 		}),
