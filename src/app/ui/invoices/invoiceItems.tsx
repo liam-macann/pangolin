@@ -456,21 +456,36 @@ function SortableActions({
 	SortableProps,
 	'index' | 'control' | 'config' | 'getValues' | 'children'
 >) {
-	// Not ideal, but useWatch causes stale conflict issues with AnimatePresence. This keeps state updated onChange.
 	const [activeTaxes, setActiveTaxes] = useState(
 		getValues(`items.${index}.taxes`)
 			.values()
 			.reduce((acc, value) => acc + Number(value), 0),
 	);
 
+	const state = useFormState({ control, name: `items.${index}.taxes` });
+	const itemErrors = state.errors.items?.[index];
+
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button size='icon' className={cn('relative bg-background', className)} variant='outline'>
+				<Button
+					size='icon'
+					className={cn(
+						'relative bg-background',
+						itemErrors?.taxes && 'border-destructive/40',
+						className,
+					)}
+					variant='outline'
+				>
 					<DotsThreeIcon />
 					<span className='sr-only'>Actions</span>
 					{config.taxRegistration && (
-						<div className='-translate-y-1/2 absolute top-0 right-0 flex h-4.5 min-w-4.5 translate-x-1/2 items-center justify-center rounded-full border bg-background px-1 text-muted-foreground text-xs'>
+						<div
+							className={cn(
+								'-translate-y-1/2 absolute top-0 right-0 flex h-4.5 min-w-4.5 translate-x-1/2 items-center justify-center rounded-full border bg-background px-1 text-muted-foreground text-xs',
+								itemErrors?.taxes && 'border-black/20 bg-destructive-background text-white',
+							)}
+						>
 							{activeTaxes}
 						</div>
 					)}
@@ -512,7 +527,12 @@ function SortableActions({
 										);
 									})}
 									{fieldState.invalid && (
-										<FieldError className='text-xs' errors={[fieldState.error]} />
+										<FieldError
+											className='mx-1 my-1.5 mr-2 text-xs'
+											errors={Object.values(
+												fieldState.error as Record<string, { message?: string }>,
+											)}
+										/>
 									)}
 								</DropdownMenuGroup>
 							)}
