@@ -1,8 +1,10 @@
-import { type SQL, sql } from 'drizzle-orm';
-import type { PgColumn, PgEnum } from 'drizzle-orm/pg-core';
+import { type Column, type SQL, sql } from 'drizzle-orm';
+import type { PgEnum } from 'drizzle-orm/pg-core';
+
+type AnySql = SQL | Column | SQL.Aliased;
 
 /** Helper type to extract the TypeScript type from a PgColumn or SQL */
-export type ColumnType<T> = T extends PgColumn<infer C>
+export type ColumnType<T> = T extends Column<infer C>
 	? C['notNull'] extends true
 		? C['data']
 		: C['data'] | null
@@ -41,7 +43,7 @@ export function jsonbAgg<T>(expression: SQL<T> | SQL.Aliased<T>, filter?: SQL, o
 /**
  * @param shape Potential for SQL injections, so you shouldn't allow user-specified key names
  */
-export function jsonbBuildObject<T extends Record<string, PgColumn | SQL | SQL.Aliased>>(shape: T) {
+export function jsonbBuildObject<T extends Record<string, AnySql>>(shape: T) {
 	const entries = Object.entries(shape).map(([key, value]) => sql`'${sql.raw(key)}', ${value}`);
 
 	return sql<{
@@ -56,3 +58,24 @@ export function jsonbBuildObject<T extends Record<string, PgColumn | SQL | SQL.A
  */
 export const withFilter = <T>(aggregate: SQL<T>, condition: SQL) =>
 	sql<T>`${aggregate} filter (where ${condition})`;
+
+// type ExtractSqlType<S> = S extends SQL<infer T>
+// 	? T
+// 	: S extends Column
+// 		? GetColumnData<S, 'query'>
+// 		: never;
+
+type Coalesce<Array extends SqlOrPrimitive[]> = Array extends [...infer Optionals, infer Last]
+	? Exclude<ColumnType<Optionals[number]>, null | undefined> | ColumnType<Last>
+	: never;
+
+type SqlOrPrimitive = AnySql | string | number | boolean;
+
+export function coalesce<Args extends [SqlOrPrimitive, SqlOrPrimitive, ...SqlOrPrimitive[]]>(
+	...args: Args
+) {
+	return sql<Coalesce<Args>>`coalesce(${sql.join(
+		args.map(a => (typeof a === 'string' ? sql`'${a}'` : sql`${a}`) as AnySql),
+		sql.raw(','),
+	)})`;
+}
