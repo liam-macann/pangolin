@@ -4,6 +4,7 @@ import {
 	numeric,
 	pgEnum,
 	pgTable,
+	primaryKey,
 	text,
 	unique,
 	uuid,
@@ -15,22 +16,30 @@ import { users } from '../auth';
 import { scdDates } from './_helpers';
 
 // Records should be immutable if referenced
-export const taxes = pgTable(
-	'tax',
+export const taxes = pgTable('tax', {
+	id: uuid().defaultRandom().primaryKey(),
+	userId: uuid('user_id')
+		.notNull()
+		.references(() => users.id, { onDelete: 'cascade' }),
+	name: varchar({ length: 10 }).notNull(),
+	rate: numeric({ precision: 5, scale: 4, mode: 'number' }).notNull(),
+});
+
+/** Join table for invoice items and taxes */
+export const configTaxes = pgTable(
+	'config_tax',
 	{
-		id: uuid().defaultRandom().primaryKey(),
-		userId: uuid('user_id')
+		order: integer().notNull(),
+		configId: uuid('config_id')
 			.notNull()
-			.references(() => users.id, { onDelete: 'cascade' }),
-		name: varchar({ length: 10 }).notNull(),
-		rate: numeric({ precision: 5, scale: 4, mode: 'number' }).notNull(),
-		/** True deletion is disallowed. Can be restored on upsert to reduce redundancy. */
-		deleted: boolean().notNull().default(false),
-		order: integer(),
+			.references(() => config.id, { onDelete: 'cascade' }),
+		taxId: uuid('tax_id')
+			.notNull()
+			.references(() => taxes.id),
 	},
 	t => [
-		// Ensure that a user cannot define duplicate taxes (restore deleted records on upsert)
-		unique('user_name_rate').on(t.userId, t.name, t.rate),
+		primaryKey({ name: 'config_tax_pkey', columns: [t.configId, t.taxId] }),
+		unique('uq_config_tax_order').on(t.configId, t.order),
 	],
 );
 

@@ -7,8 +7,13 @@ import { SortableContext } from '@dnd-kit/sortable';
 import { DotsSixIcon, DotsThreeIcon, TrashIcon } from '@phosphor-icons/react';
 import { createInsertSchema } from 'drizzle-zod';
 import { useRef } from 'react';
-import { type Control, Controller, type FieldValues, useFieldArray } from 'react-hook-form';
-import { v4 as uuid } from 'uuid';
+import {
+	type Control,
+	Controller,
+	type FieldArrayWithId,
+	type FieldValues,
+	useFieldArray,
+} from 'react-hook-form';
 import { z } from 'zod';
 import { InfoTip } from '@/components/info';
 import { taxes } from '@/db/schema';
@@ -35,7 +40,6 @@ import { Input } from '@/ui/input';
 
 export const taxArraySchema = z.array(
 	createInsertSchema(taxes, {
-		id: s => z.uuid().pipe(s),
 		name: s =>
 			z
 				.string()
@@ -51,11 +55,11 @@ export const taxArraySchema = z.array(
 					.max(200, 'Tax may not exceed 200%'),
 				'Please enter a quantity',
 			).pipe(s),
-	}),
+	}).pick({ name: true, rate: true, id: true }),
 );
 
 type TaxField = Prettify<
-	Pick<typeof taxes.$inferSelect, 'name' | 'id'> & {
+	Pick<typeof taxes.$inferSelect, 'name'> & {
 		/** Widened type to allow blank default value */
 		rate: number | '';
 	}
@@ -103,7 +107,7 @@ function TaxRateInput({
 	control: Control<FormValues>;
 }) {
 	const { fields, append, remove, move } = useFieldArray({ control, name: 'taxes' });
-	const addTax = () => append({ id: uuid(), name: '', rate: '' });
+	const addTax = () => append({ name: '', rate: '' });
 
 	return (
 		<DragDropProvider
@@ -171,7 +175,7 @@ function TaxRateInput({
 }
 
 interface SortableProps {
-	tax: TaxField;
+	tax: Prettify<FieldArrayWithId<FormValues, 'taxes', 'id'>>;
 	index: number;
 	control: Control<FormValues>;
 	children: React.ReactNode;

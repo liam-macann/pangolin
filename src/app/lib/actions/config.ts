@@ -1,70 +1,17 @@
 'use server';
 
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql, type WithSubqueryWithoutSelection } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 import { revalidatePath } from 'next/cache';
+import { v4 as uuid } from 'uuid';
 import z from 'zod';
 import { auth } from '@/auth';
 import { db } from '@/db';
-import { config as configSchema, taxes as taxesSchema } from '@/db/schema';
+import { config as configSchema, configTaxes, taxes as taxesSchema } from '@/db/schema';
 import type { Prettify } from '@/lib/utils';
 
 /** Minimal insertion record for database configuration, excluding generated fields */
-type TaxesSchema = Prettify<Pick<typeof taxesSchema.$inferInsert, 'name' | 'rate' | 'deleted'>>;
-
-/** Accepts array of tax data for a given user.
- *
- * Pushes provided state, and not merely changes (ie. implicit deletion of all existing taxes)
- *
- * @internal
- */
-function updateUserTaxesCTEs(taxes: TaxesSchema[], userId: string) {
-	// Validate the input data
-	const safeTaxes = z
-		.array(
-			createInsertSchema(taxesSchema).pick({
-				name: true,
-				rate: true,
-				deleted: true,
-			}),
-		)
-		.parse(taxes);
-
-	// Avoid spread to ensure disallowed fields are not inserted, without requiring strict object validation
-	const values = safeTaxes.map((t, i) => ({
-		name: t.name,
-		rate: t.rate,
-		order: i,
-		deleted: t.deleted,
-		userId,
-	}));
-
-	return [
-		db
-			// Reset all taxes to deleted. This avoids reconciliation (input taxes are representative of desired state)
-			.$with('reset_taxes')
-			.as(db.update(taxesSchema).set({ deleted: true }).where(eq(taxesSchema.userId, userId))),
-
-		db
-			// Push new state
-			.$with('update_taxes')
-			.as(
-				db
-					.insert(taxesSchema)
-					.values(values)
-					.onConflictDoUpdate({
-						target: [taxesSchema.userId, taxesSchema.name, taxesSchema.rate],
-						set: { deleted: sql`excluded.deleted`, order: sql`excluded.order` },
-					}),
-			),
-	];
-}
-
-//
-//
-//
-// Sole exported endpoint
-//
+type TaxesSchema = Prettify<Pick<typeof taxesSchema.$inferInsert, 'name' | 'rate' | 'id'>>;
 
 /** Complete insertion record for database configuration, excluding generated fields */
 type ConfigSchema = Prettify<
@@ -87,7 +34,33 @@ export async function updateUserConfig(config: ConfigSchema, taxes?: TaxesSchema
 		.strict()
 		.parse(config);
 
-	const ctes = [
+	const safeTaxes = z
+		.array(
+			createInsertSchema(taxesSchema).pick({
+				id: true,
+				name: true,
+				rate: true,
+			}),
+		)
+		.parse(taxes)
+		.map((tax, i) => ({
+			// ID must be known for both insertion and junction CTEs.
+			// Allow provided data to override, so that taxes are not duplicated on each config update.
+			id: uuid(),
+			...tax,
+			userId: session.user.id,
+			order: i,
+		}));
+
+	const configId = uuid();
+
+	// Define as CTEs for transactional behaviour
+	const actions: WithSubqueryWithoutSelection<string>[] = [
+		// Insert new config
+		db
+			.$with('create_config')
+			.as(db.insert(configSchema).values({ ...safeConfig, id: configId, userId: session.user.id })),
+
 		// Void previously active config
 		db
 			.$with('void_config')
@@ -97,15 +70,35 @@ export async function updateUserConfig(config: ConfigSchema, taxes?: TaxesSchema
 					.set({ validTo: sql`now()` })
 					.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo))),
 			),
-		// Push new tax config
-		...(taxes ? updateUserTaxesCTEs(taxes, session.user.id) : []),
+
+		// If taxes are defined
+		...(safeTaxes?.length > 0
+			? [
+					// Insert new taxes
+					db
+						.$with('define_taxes')
+						.as(db.insert(taxesSchema).values(safeTaxes).onConflictDoNothing()),
+
+					// Insert new tax-config junctions
+					db
+						.$with('tax_config_junction')
+						.as(
+							db.insert(configTaxes).values(
+								safeTaxes.map(tax => ({
+									configId,
+									taxId: tax.id,
+									order: tax.order,
+								})),
+							),
+						),
+				]
+			: []),
 	];
 
-	// Executes as implicit transaction
 	return db
-		.with(...ctes)
-		.insert(configSchema)
-		.values({ ...safeConfig, userId: session.user.id })
+		.with(...actions)
+		.select()
+		.from(configSchema)
 		.then(() => {
 			// Revalidate the cache for the invoices page, where the formatting may have changed.
 			revalidatePath('/dashboard/invoices');

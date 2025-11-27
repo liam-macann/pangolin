@@ -4,13 +4,14 @@ import {
 	clientData,
 	clients,
 	config,
+	configTaxes,
 	invoiceItems,
 	invoices,
 	itemTaxes,
 	sessions,
 	taxes,
 	users,
-} from '@/db/schema';
+} from './schema';
 
 export const invoicesRelations = relations(invoices, ({ one, many }) => ({
 	clientData: one(clientData, {
@@ -66,10 +67,22 @@ export const clientRelations = relations(clients, ({ many }) => ({
 	clientData: many(clientData),
 }));
 
-export const configRelations = relations(config, ({ one }) => ({
+export const configRelations = relations(config, ({ one, many }) => ({
 	user: one(users, {
 		fields: [config.userId],
 		references: [users.id],
+	}),
+	configTax: many(configTaxes),
+}));
+
+export const configTaxRelations = relations(configTaxes, ({ one }) => ({
+	config: one(config, {
+		fields: [configTaxes.configId],
+		references: [config.id],
+	}),
+	tax: one(taxes, {
+		fields: [configTaxes.taxId],
+		references: [taxes.id],
 	}),
 }));
 

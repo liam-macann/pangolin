@@ -22,6 +22,7 @@ import {
 	clientData,
 	clients,
 	config as configSchema,
+	configTaxes,
 	invoiceItems,
 	invoices,
 	invoicesWithSum,
@@ -47,15 +48,8 @@ function invoiceQuery<Detailed extends boolean>(
 			id: itemsWithTax.id,
 			invoiceId: itemsWithTax.invoiceId,
 			item: jsonbBuildObject({
-				id: itemsWithTax.id,
-				label: itemsWithTax.label,
-				note: itemsWithTax.note,
-				quantity: itemsWithTax.quantity,
-				unit: itemsWithTax.unit,
-				unitCost: itemsWithTax.unitCost,
-				netAmount: itemsWithTax.netAmount,
-				order: itemsWithTax.order,
 				taxes: jsonbAgg(jsonbBuildObject(getTableColumns(taxesSchema)), isNotNull(taxesSchema.id)),
+				...getViewSelectedFields(itemsWithTax),
 			}).as('item'),
 		})
 		.from(itemsWithTax)
@@ -181,24 +175,6 @@ export async function fetchInvoice(id: string) {
 	const session = await auth();
 
 	try {
-		const taxContributions = db.$with('tax_contributions').as(
-			db
-				.select({
-					taxId: itemTaxes.taxId,
-					contribution:
-						sql`SUM(${invoiceItems.netAmount} * ${taxesSchema.rate} * ${configSchema.taxRegistration}::INT)`
-							.mapWith(Number)
-							.as('contribution'),
-				})
-				.from(invoiceItems)
-				.innerJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
-				.innerJoin(taxesSchema, eq(taxesSchema.id, itemTaxes.taxId))
-				.innerJoin(invoices, eq(invoiceItems.invoiceId, invoices.id))
-				.innerJoin(configSchema, eq(invoices.config, configSchema.id))
-				.where(eq(invoiceItems.invoiceId, id))
-				.groupBy(itemTaxes.taxId),
-		);
-
 		const [[res], tax] = await Promise.all([
 			invoiceQuery(true)
 				.$dynamic()
@@ -207,16 +183,26 @@ export async function fetchInvoice(id: string) {
 
 			// Get all active taxes, and calculate sum for display in the invoice subtotals
 			db
-				.with(taxContributions)
 				.select({
+					contribution:
+						sql<number>`${withFilter(sumDistinct(invoiceItems.netAmount), eq(itemTaxes.taxId, taxesSchema.id))} * ${taxesSchema.rate} * ${configSchema.taxRegistration}::int`
+							.mapWith(Number)
+							.as('contribution'),
+
+					taxId: taxesSchema.id,
+					config: configSchema.id,
 					name: taxesSchema.name,
 					rate: taxesSchema.rate,
-					contribution: sql`COALESCE(${taxContributions.contribution}, 0)`.mapWith(Number),
 				})
-				.from(taxesSchema)
-				.leftJoin(taxContributions, eq(taxContributions.taxId, taxesSchema.id))
-				.where(and(eq(taxesSchema.userId, session.user.id), eq(taxesSchema.deleted, false)))
-				.orderBy(asc(taxesSchema.order), desc(taxesSchema.rate)),
+				.from(invoices)
+				.where(eq(invoices.id, id))
+				.innerJoin(configSchema, eq(invoices.config, configSchema.id))
+				.innerJoin(configTaxes, eq(configTaxes.configId, configSchema.id))
+				.leftJoin(taxesSchema, eq(taxesSchema.id, configTaxes.taxId))
+				.leftJoin(invoiceItems, eq(invoiceItems.invoiceId, invoices.id))
+				.leftJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
+				.groupBy(configSchema.id, taxesSchema.id, configTaxes.order)
+				.orderBy(configTaxes.order),
 		]);
 
 		if (!res) throw new Error('Invoice not found');
@@ -396,36 +382,28 @@ export async function getUserConfig() {
 	const session = await auth();
 
 	try {
-		const settings = await db.query.config.findFirst({
+		const res = await db.query.config.findFirst({
 			where: and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo)),
 			with: {
 				user: {
-					with: {
-						tax: { where: (taxes, { eq }) => eq(taxes.deleted, false) },
-					},
+					columns: { password: false },
+				},
+				configTax: {
+					columns: {},
+					with: { tax: {} },
 				},
 			},
 			orderBy: [asc(taxesSchema.id), desc(configSchema.validFrom)],
 		});
 
-		if (!settings) {
-			// If user has no current config
-			throw new Error('User has no current valid config.');
-		}
+		// If user has no current config
+		if (!res) throw new Error('User has no current valid config.');
 
-		const { tax, ...user } = settings.user;
+		const { configTax, ...settings } = res;
 
 		return {
 			...settings,
-			// Omit return of (hashed) password
-			user: {
-				email: user.email,
-				emailVerified: user.emailVerified,
-				id: user.id,
-				image: user.image,
-				name: user.name,
-			},
-			tax,
+			tax: configTax.map(jn => jn.tax),
 		};
 	} catch (error) {
 		console.error('Failed to fetch config:', error);
