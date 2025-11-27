@@ -295,7 +295,7 @@ export async function fetchClientStats(id: string) {
 			.from(totals),
 	);
 
-	return await db
+	return db
 		.with(validityFilter, aggTotals)
 		.select({
 			/** Excludes voided invoices */
@@ -305,7 +305,15 @@ export async function fetchClientStats(id: string) {
 		.from(validityFilter)
 		.leftJoin(aggTotals, isNotNull(aggTotals.totals))
 		.groupBy(aggTotals.totals)
-		.then(([v]) => v);
+		.then(([v]) => {
+			// Validity filter may have no rows
+			const defaults: Omit<typeof v, 'totals'> & { totals: null } = {
+				validCount: 0, // We know that validCount is 0
+				totals: null, // Totals cannot be inferred without an invoice (grouped by currency)
+			};
+
+			return (v || defaults) as typeof v | typeof defaults;
+		});
 }
 
 export async function getUser() {

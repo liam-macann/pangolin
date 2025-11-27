@@ -127,6 +127,7 @@ async function SummaryCards({ id }: { id: string }) {
 					</span>
 				}
 				footer={
+					stats.totals &&
 					stats.totals.length - 1 > 0 && (
 						<span className='ml-auto'>
 							+{stats.totals.length - 1} more{' '}
@@ -135,11 +136,14 @@ async function SummaryCards({ id }: { id: string }) {
 					)
 				}
 			>
-				{formatCurrency(stats.totals[0].grossSum, stats.totals[0].currency, config.locale)}
+				{stats.totals
+					? formatCurrency(stats.totals[0].grossSum, stats.totals[0].currency, config.locale)
+					: '–'}
 			</StatCard>
 			<StatCard
 				title='Outstanding (gross)'
 				footer={
+					stats.totals &&
 					stats.totals.length - 1 > 0 && (
 						<span className='ml-auto'>
 							+{stats.totals.length - 1} more{' '}
@@ -147,9 +151,15 @@ async function SummaryCards({ id }: { id: string }) {
 						</span>
 					)
 				}
-				className={cn(stats.totals[0].grossOutstanding > 0 && 'text-destructive')}
+				className={cn(stats.totals && stats.totals[0].grossOutstanding > 0 && 'text-destructive')}
 			>
-				{formatCurrency(stats.totals[0].grossOutstanding, stats.totals[0].currency, config.locale)}
+				{stats.totals
+					? formatCurrency(
+							stats.totals[0].grossOutstanding,
+							stats.totals[0].currency,
+							config.locale,
+						)
+					: '–'}
 			</StatCard>
 		</>
 	);
