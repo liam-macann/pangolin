@@ -5,8 +5,6 @@ import {
 	countDistinct,
 	desc,
 	eq,
-	getTableColumns,
-	getViewSelectedFields,
 	isNotNull,
 	isNull,
 	max,
@@ -32,7 +30,7 @@ import {
 	users,
 } from '@/db/schema';
 import { formatCurrency, formatDateToLocal, invoiceReference, omit } from '@/lib/utils';
-import { jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
+import { getColumns, jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
 
 /** Builder to return a single, aggregated query for invoices.
  *
@@ -48,14 +46,14 @@ function invoiceQuery<Detailed extends boolean>(
 			id: itemsWithTax.id,
 			invoiceId: itemsWithTax.invoiceId,
 			item: jsonbBuildObject({
-				taxes: jsonbAgg(jsonbBuildObject(getTableColumns(taxesSchema)), isNotNull(taxesSchema.id)),
-				...getViewSelectedFields(itemsWithTax),
+				taxes: jsonbAgg(jsonbBuildObject(getColumns(taxesSchema)), isNotNull(taxesSchema.id)),
+				...getColumns(itemsWithTax),
 			}).as('item'),
 		})
 		.from(itemsWithTax)
 		.leftJoin(itemTaxes, eq(itemsWithTax.id, itemTaxes.itemId))
 		.leftJoin(taxesSchema, eq(itemTaxes.taxId, taxesSchema.id))
-		.groupBy(...Object.values(getViewSelectedFields(itemsWithTax)))
+		.groupBy(...Object.values(getColumns(itemsWithTax)))
 		.as('item_with_taxes');
 
 	// Second-level aggregation: invoice-level aggregation of items
@@ -69,10 +67,10 @@ function invoiceQuery<Detailed extends boolean>(
 		.as('items_agg_detailed');
 
 	const baseSelect = {
-		...getViewSelectedFields(invoicesWithSum),
+		...getColumns(invoicesWithSum),
 
-		client: getTableColumns(clientData),
-		config: omit(getTableColumns(configSchema), ['validFrom', 'validTo', 'id', 'userId']),
+		client: getColumns(clientData),
+		config: omit(getColumns(configSchema), ['validFrom', 'validTo', 'id', 'userId']),
 	} as const;
 
 	const detailedSelect = {
@@ -224,7 +222,7 @@ export async function fetchClientStats(id: string) {
 
 	/** Access all invoices for a given client that have not been voided */
 	const validityFilter = db
-		.select({ ...getViewSelectedFields(invoicesWithSum) })
+		.select({ ...getColumns(invoicesWithSum) })
 		.from(clients)
 		.leftJoin(clientData, eq(clientData.clientId, clients.id))
 		.leftJoin(invoicesWithSum, eq(invoicesWithSum.clientData, clientData.id))
