@@ -172,6 +172,32 @@ export type DetailedInvoice = Awaited<ReturnType<typeof fetchInvoice>>;
 export async function fetchInvoice(id: string) {
 	const session = await auth();
 
+	// Get all active taxes, and calculate sum for display in the invoice subtotals
+	const taxCalc = db.$with('tax_calc').as(
+		db
+			.select({
+				contribution:
+					sql<number>`${withFilter(sumDistinct(invoiceItems.netAmount), eq(itemTaxes.taxId, taxesSchema.id))} * ${taxesSchema.rate} * ${configSchema.taxRegistration}::int`
+						.mapWith(Number)
+						.as('contribution'),
+
+				taxId: taxesSchema.id,
+				config: configSchema.id,
+				order: configTaxes.order,
+				name: taxesSchema.name,
+				rate: taxesSchema.rate,
+			})
+			.from(invoices)
+			.where(eq(invoices.id, id))
+			.innerJoin(configSchema, eq(invoices.config, configSchema.id))
+			.innerJoin(configTaxes, eq(configTaxes.configId, configSchema.id))
+			.leftJoin(taxesSchema, eq(taxesSchema.id, configTaxes.taxId))
+			.leftJoin(invoiceItems, eq(invoiceItems.invoiceId, invoices.id))
+			.leftJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
+			.groupBy(configSchema.id, taxesSchema.id, configTaxes.order)
+			.orderBy(configTaxes.order),
+	);
+
 	try {
 		const [[res], tax] = await Promise.all([
 			invoiceQuery(true)
@@ -179,28 +205,16 @@ export async function fetchInvoice(id: string) {
 				.where(and(eq(invoicesWithSum.id, id), eq(invoicesWithSum.userId, session.user.id)))
 				.limit(1),
 
-			// Get all active taxes, and calculate sum for display in the invoice subtotals
+			// Collapse tax rows that share the same name
 			db
+				.with(taxCalc)
 				.select({
-					contribution:
-						sql<number>`${withFilter(sumDistinct(invoiceItems.netAmount), eq(itemTaxes.taxId, taxesSchema.id))} * ${taxesSchema.rate} * ${configSchema.taxRegistration}::int`
-							.mapWith(Number)
-							.as('contribution'),
-
-					taxId: taxesSchema.id,
-					config: configSchema.id,
-					name: taxesSchema.name,
-					rate: taxesSchema.rate,
+					name: taxCalc.name,
+					contribution: sumDistinct(taxCalc.contribution),
 				})
-				.from(invoices)
-				.where(eq(invoices.id, id))
-				.innerJoin(configSchema, eq(invoices.config, configSchema.id))
-				.innerJoin(configTaxes, eq(configTaxes.configId, configSchema.id))
-				.leftJoin(taxesSchema, eq(taxesSchema.id, configTaxes.taxId))
-				.leftJoin(invoiceItems, eq(invoiceItems.invoiceId, invoices.id))
-				.leftJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
-				.groupBy(configSchema.id, taxesSchema.id, configTaxes.order)
-				.orderBy(configTaxes.order),
+				.from(taxCalc)
+				.groupBy(taxCalc.name)
+				.orderBy(asc(sql`min(${taxCalc.order})`)),
 		]);
 
 		if (!res) throw new Error('Invoice not found');

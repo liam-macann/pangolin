@@ -4,7 +4,7 @@ import { RestrictToElement } from '@dnd-kit/dom/modifiers';
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable, useSortable } from '@dnd-kit/react/sortable';
 import { SortableContext } from '@dnd-kit/sortable';
-import { DotsSixIcon, DotsThreeIcon, TrashIcon } from '@phosphor-icons/react';
+import { DotsSixIcon, DotsThreeIcon, InfoIcon, TrashIcon } from '@phosphor-icons/react';
 import { createInsertSchema } from 'drizzle-zod';
 import { useRef } from 'react';
 import {
@@ -13,9 +13,11 @@ import {
 	type FieldArrayWithId,
 	type FieldValues,
 	useFieldArray,
+	useWatch,
 } from 'react-hook-form';
 import { z } from 'zod';
 import { InfoTip } from '@/components/info';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { taxes } from '@/db/schema';
 import { cn, type Prettify } from '@/lib/utils';
 import { intlNumber } from '@/lib/zod';
@@ -92,11 +94,30 @@ export function TaxRateField<T extends FormValues>({
 				<FieldDescription>
 					When registered for tax, each rate can be applied on a per-item basis.
 				</FieldDescription>
+				<DuplicateWarning control={control} />
 				{state.error?.root && <FieldError errors={[state.error?.root]} />}
 			</FieldContent>
 			<TaxRateInput control={control} />
 		</FieldSet>
 	);
+}
+
+function DuplicateWarning({ control }: { control: Control<FormValues> }) {
+	const taxes = useWatch({ control, name: 'taxes' });
+	const names = taxes.map(tax => tax.name);
+
+	const areDuplicates = new Set(names).size !== names.length;
+
+	return areDuplicates ? (
+		<Alert className='mt-2'>
+			<InfoIcon />
+			<AlertTitle>Duplicate tax names</AlertTitle>
+			<AlertDescription>
+				When multiple taxes share the same name, a single subtotal item will be calculated. The
+				specific rate applicable remains visible on each line item.
+			</AlertDescription>
+		</Alert>
+	) : null;
 }
 
 function TaxRateInput({
