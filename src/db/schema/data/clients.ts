@@ -15,7 +15,7 @@ export const clients = pgTable(
 		isDeleted: boolean('is_deleted').notNull().default(false),
 	},
 	// Necessary for ownership constraint on clientData
-	t => [unique('client_user_unique').on(t.id, t.userId)],
+	t => [unique('uq_client_user').on(t.id, t.userId)],
 );
 
 //
@@ -41,11 +41,12 @@ export const clientData = pgTable(
 	},
 	t => [
 		// Necessary for ownership constraint on clientData
-		unique('client_data_user_unique').on(t.id, t.userId),
+
+		unique('uq_client_data_user').on(t.id, t.userId),
 		// Ensure that a client has only one valid configuration (multiple null values will conflict)
-		unique('client_version').on(t.clientId, t.validTo),
+		unique('uq_client_version').on(t.clientId, t.validTo),
 		foreignKey({
-			name: 'client_data_ownership_fk',
+			name: 'fk_client_data_ownership',
 			columns: [t.clientId, t.userId],
 			foreignColumns: [clients.id, clients.userId],
 		}),

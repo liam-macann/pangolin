@@ -19,7 +19,7 @@ import {
 
 import { users } from '../auth';
 import { clientData } from './clients';
-import { config, taxes } from './config';
+import { config, configTaxes, taxes } from './config';
 
 export const statusEnum = pgEnum('status', ['unpaid', 'paid', 'refunded']);
 export const invoices = pgTable(
@@ -71,50 +71,69 @@ export const invoices = pgTable(
 			.references(() => config.id),
 	},
 	t => [
+		unique('uq_invoice_id_config').on(t.id, t.config),
 		foreignKey({
-			name: 'invoice_client_ownership_fk',
+			name: 'fk_invoice_client',
 			columns: [t.clientData, t.userId],
 			foreignColumns: [clientData.id, clientData.userId],
 		}),
 		// Ensure that the sequence is unique for each user
-		unique('user_index').on(t.userId, t.index),
+		unique('uq_invoice_user_index').on(t.userId, t.index),
 		// Ensure that the yearly sequence is unique for each user, for each year
-		uniqueIndex('user_year_yearindex').on(
+		uniqueIndex('uq_user_year_year_index').on(
 			t.userId,
 			sql`EXTRACT(YEAR FROM ${t.issuedAt})`,
 			t.yearIndex,
 		),
-		check('due_after_issued', sql`${t.dueAt} > ${t.issuedAt}`),
+		check('chk_due_after_issued', sql`${t.dueAt} > ${t.issuedAt}`),
 	],
 );
 
 export const unitEnum = pgEnum('unit', ['items', 'hours']);
-export const invoiceItems = pgTable('invoice_item', {
-	id: uuid().defaultRandom().primaryKey(),
-	invoiceId: uuid('invoice_id')
-		.notNull()
-		.references(() => invoices.id, { onDelete: 'cascade' }),
-	/** Invoice entry label */
-	label: varchar({ length: 60 }).notNull(),
-	/** Optional information to describe the item */
-	note: varchar({ length: 60 }),
-	quantity: numeric({ precision: 8, scale: 2, mode: 'number' }).notNull(),
-	unit: unitEnum(),
-	unitCost: numeric('unit_cost', {
-		precision: 15,
-		scale: 4,
-		mode: 'number',
-	}).notNull(),
-	netAmount: numeric('net_amount', {
-		precision: 15,
-		scale: 4,
-		mode: 'number',
-	})
-		.generatedAlwaysAs((): SQL => sql`${invoiceItems.quantity} * ${invoiceItems.unitCost}`)
-		.notNull(),
-	/** Optional sorting index */
-	order: integer(),
-});
+export const invoiceItems = pgTable(
+	'invoice_item',
+	{
+		id: uuid().defaultRandom().primaryKey(),
+		invoiceId: uuid('invoice_id')
+			.notNull()
+			.references(() => invoices.id, { onDelete: 'cascade' }),
+		/** Invoice entry label */
+		label: varchar({ length: 60 }).notNull(),
+		/** Optional information to describe the item */
+		note: varchar({ length: 60 }),
+		quantity: numeric({ precision: 8, scale: 2, mode: 'number' }).notNull(),
+		unit: unitEnum(),
+		unitCost: numeric('unit_cost', {
+			precision: 15,
+			scale: 4,
+			mode: 'number',
+		}).notNull(),
+		netAmount: numeric('net_amount', {
+			precision: 15,
+			scale: 4,
+			mode: 'number',
+		})
+			.generatedAlwaysAs((): SQL => sql`${invoiceItems.quantity} * ${invoiceItems.unitCost}`)
+			.notNull(),
+		/** Optional sorting index */
+		order: integer(),
+
+		// Config reference is propagated down to facilitate fk constraints
+		config: uuid('config_id')
+			.notNull()
+			.references(() => config.id),
+	},
+	t => [
+		unique('uq_invoice_item_id_config').on(t.id, t.config),
+
+		// Ensure this item references the same config as the associated invoice
+		foreignKey({
+			name: 'fk_invoice_item_invoice_config',
+			columns: [t.invoiceId, t.config],
+			foreignColumns: [invoices.id, invoices.config],
+		}),
+	],
+);
 
 /** Join table for invoice items and taxes */
 export const itemTaxes = pgTable(
@@ -126,8 +145,29 @@ export const itemTaxes = pgTable(
 		taxId: uuid('tax_id')
 			.notNull()
 			.references(() => taxes.id),
+
+		// Config reference is propagated down to facilitate fk constraints
+		config: uuid('config_id')
+			.notNull()
+			.references(() => config.id),
 	},
-	t => [primaryKey({ name: 'item_tax_pkey', columns: [t.itemId, t.taxId] })],
+	t => [
+		primaryKey({ name: 'item_tax_pkey', columns: [t.itemId, t.taxId] }),
+
+		// Ensure this record references the same config as the associated item
+		foreignKey({
+			name: 'fk_item_tax_invoice_item',
+			columns: [t.itemId, t.config],
+			foreignColumns: [invoiceItems.id, invoiceItems.config],
+		}),
+
+		// Ensure tax is allowed for this configuration
+		foreignKey({
+			name: 'fk_item_tax_config_tax',
+			columns: [t.config, t.taxId],
+			foreignColumns: [configTaxes.configId, configTaxes.taxId],
+		}),
+	],
 );
 
 /** Watermark table: resolves concurrency issues */

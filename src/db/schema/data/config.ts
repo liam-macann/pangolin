@@ -38,7 +38,7 @@ export const configTaxes = pgTable(
 			.references(() => taxes.id),
 	},
 	t => [
-		primaryKey({ name: 'config_tax_pkey', columns: [t.configId, t.taxId] }),
+		primaryKey({ name: 'pk_config_tax', columns: [t.configId, t.taxId] }),
 		unique('uq_config_tax_order').on(t.configId, t.order),
 	],
 );
@@ -71,6 +71,6 @@ export const config = pgTable(
 	},
 	t => [
 		// Ensure that a user has only one valid configuration (multiple null values will conflict)
-		unique('config_version').on(t.userId, t.validTo),
+		unique('uq_config_version').on(t.userId, t.validTo),
 	],
 );
