@@ -1,5 +1,7 @@
+import { sql } from 'drizzle-orm';
 import {
 	boolean,
+	check,
 	integer,
 	numeric,
 	pgEnum,
@@ -72,5 +74,6 @@ export const config = pgTable(
 	t => [
 		// Ensure that a user has only one valid configuration (multiple null values will conflict)
 		unique('uq_config_version').on(t.userId, t.validTo),
+		check('chk_config_valid', sql`${t.validFrom} <= now()`),
 	],
 );

@@ -1,4 +1,5 @@
-import { boolean, foreignKey, pgTable, unique, uuid, varchar } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { boolean, check, foreignKey, pgTable, unique, uuid, varchar } from 'drizzle-orm/pg-core';
 
 import { users } from '../auth';
 import { scdDates } from './_helpers';
@@ -50,5 +51,6 @@ export const clientData = pgTable(
 			columns: [t.clientId, t.userId],
 			foreignColumns: [clients.id, clients.userId],
 		}),
+		check('chk_client_data_valid', sql`${t.validFrom} <= now()`),
 	],
 );
