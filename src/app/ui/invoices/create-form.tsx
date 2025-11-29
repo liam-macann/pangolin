@@ -174,6 +174,9 @@ export function CreateInvoiceDialog({
 												id='clientId'
 												{...field}
 											/>
+											{isClientsError && (
+												<FieldError errors={[{ message: 'Failed to fetch clients' }]} />
+											)}
 											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 										</div>
 									</Field>

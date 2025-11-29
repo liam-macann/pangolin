@@ -17,7 +17,7 @@ import {
 	type statusEnum,
 } from '@/db/schema';
 
-import { type Enum, jsonbBuildObject } from '../utils/drizzle';
+import type { Enum } from '../utils/drizzle';
 
 const increment = (column: AnyColumn, value = 1) => sql`${column} + ${value}`;
 
@@ -128,22 +128,19 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 				});
 
 			// CTE, executed within insert to retrieve current valid config
-			const c = tx.$with('active_config').as(
-				tx
-					.select({
-						id: configSchema.id,
-						userId: configSchema.userId,
-						timezone: configSchema.timezone,
-						taxRegistration: configSchema.taxRegistration,
-					})
-					.from(configSchema)
-					.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo)))
-					.orderBy(desc(configSchema.validFrom))
-					.limit(1),
-			);
+			const [c] = await tx
+				.select({
+					id: configSchema.id,
+					userId: configSchema.userId,
+					timezone: configSchema.timezone,
+					taxRegistration: configSchema.taxRegistration,
+				})
+				.from(configSchema)
+				.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo)))
+				.orderBy(desc(configSchema.validFrom))
+				.limit(1);
 
 			const [insertedInvoice] = await tx
-				.with(c)
 				.insert(invoicesSchema)
 				.values([
 					{
@@ -156,22 +153,16 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 						notes: validated.data.notes,
 
 						issuedAt:
-							validated.data.issuedAt ||
-							sql`transaction_timestamp() AT TIME ZONE (SELECT timezone from ${c})`,
+							validated.data.issuedAt || sql`transaction_timestamp() AT TIME ZONE ${c.timezone}`,
 						dueAt: validated.data.dueAt,
 
 						index: count.count,
 						yearIndex: count.yearCount,
 
-						config: sql<string>`(SELECT id from ${c})`,
+						config: c.id,
 					},
 				])
-				.returning({
-					id: invoicesSchema.id,
-					config: jsonbBuildObject({
-						taxRegistration: sql<boolean>`(SELECT tax_registration from ${c})`,
-					}),
-				});
+				.returning({ id: invoicesSchema.id });
 
 			// Necessary to have stable ID to link taxes with items
 			const itemsWithId = items.map((item, i) => ({
@@ -196,16 +187,21 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 						unitCost: i.unitCost,
 
 						order: i.order,
+						config: c.id,
 					})),
 				)
 				.then(async () => {
 					// Link items with taxes, if registered
-					if (insertedInvoice.config.taxRegistration) {
-						await tx
-							.insert(itemTaxes)
-							.values(
-								itemsWithId.flatMap(item => item.taxes.map(taxId => ({ itemId: item.id, taxId }))),
-							);
+					if (c.taxRegistration) {
+						await tx.insert(itemTaxes).values(
+							itemsWithId.flatMap(item =>
+								item.taxes.map(taxId => ({
+									itemId: item.id,
+									taxId,
+									config: c.id,
+								})),
+							),
+						);
 					}
 				});
 		})

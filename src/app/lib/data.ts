@@ -210,7 +210,7 @@ export async function fetchInvoice(id: string) {
 				.with(taxCalc)
 				.select({
 					name: taxCalc.name,
-					contribution: sumDistinct(taxCalc.contribution),
+					contribution: sumDistinct(taxCalc.contribution).mapWith(Number),
 				})
 				.from(taxCalc)
 				.groupBy(taxCalc.name)
@@ -366,7 +366,7 @@ export async function fetchClients(id?: string) {
 				isDeleted: clients.isDeleted,
 				invoiceCount: invoiceCounts.count,
 				data: jsonbBuildObject({
-					scdId: clients.id,
+					scdId: clientData.id,
 					name: clientData.name,
 					email: clientData.email,
 				}),
@@ -380,7 +380,7 @@ export async function fetchClients(id?: string) {
 					id ? eq(clients.id, id) : eq(clients.isDeleted, false),
 				),
 			)
-			.groupBy(clients.id, clientData.name, clientData.email, invoiceCounts.count)
+			.groupBy(clients.id, clientData.id, invoiceCounts.count)
 			.orderBy(clientData.name)
 			.then(res => (id ? res[0] : res));
 	} catch (error) {
