@@ -1,5 +1,6 @@
 import { PlusCircleIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { fetchInvoices, getUserConfig } from '@/lib/data';
 import { CreateInvoiceDialog } from '@/src/app/ui/invoices/create-form';
@@ -36,7 +37,7 @@ export default async function Page(_props: {
 }
 
 async function Dialog() {
-	const config = await getUserConfig();
+	const config = await getUserConfig().catch(() => redirect('/onboarding'));
 
 	return (
 		<CreateInvoiceDialog config={config}>

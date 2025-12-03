@@ -24,3 +24,4 @@ src/env.d.ts
 # framework
 .next
 .vercel
+.env*.local

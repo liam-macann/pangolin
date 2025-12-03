@@ -22,7 +22,6 @@
 			"@/ui/*": ["src/components/ui/*"],
 			"@/db": ["src/db"],
 			"@/db/*": ["src/db/*"],
-			"@/auth": ["auth.ts"],
 			"@/*": ["./*"]
 		}
 	},

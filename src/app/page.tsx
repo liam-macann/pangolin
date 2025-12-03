@@ -1,12 +1,5 @@
-import Link from 'next/link';
-import { Button } from '@/ui/button';
+import { redirect } from 'next/navigation';
 
 export default function Page() {
-	return (
-		<div className='flex h-screen items-center justify-center'>
-			<Button asChild>
-				<Link href='/auth/login'>Login</Link>
-			</Button>
-		</div>
-	);
+	redirect('/dashboard/invoices');
 }

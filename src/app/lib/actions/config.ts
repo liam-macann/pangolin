@@ -3,9 +3,10 @@
 import { and, eq, isNull, sql, type WithSubqueryWithoutSelection } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 import { v4 as uuid } from 'uuid';
 import z from 'zod';
-import { auth } from '@/auth';
+import { getSession } from '@/auth';
 import { db } from '@/db';
 import { config as configSchema, configTaxes, taxes as taxesSchema } from '@/db/schema';
 import type { Prettify } from '@/lib/utils';
@@ -20,8 +21,8 @@ type ConfigSchema = Prettify<
 
 export async function updateUserConfig(config: ConfigSchema, taxes?: TaxesSchema[]) {
 	// Authenticate the user
-	const session = await auth();
-	if (!session?.user?.id) throw new Error('User is not authenticated');
+	const session = await getSession({ headers: await headers() });
+	if (!session) throw new Error('Request not authenticated');
 
 	// Validate the input data
 	const safeConfig = createInsertSchema(configSchema)

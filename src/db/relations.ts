@@ -89,20 +89,20 @@ export const configTaxRelations = relations(configTaxes, ({ one }) => ({
 export const userRelations = relations(users, ({ many }) => ({
 	config: many(config),
 	tax: many(taxes),
-	accounts: many(accounts),
 	sessions: many(sessions),
-}));
-
-export const accountRelations = relations(accounts, ({ one }) => ({
-	user: one(users, {
-		fields: [accounts.userId],
-		references: [users.id],
-	}),
+	accounts: many(accounts),
 }));
 
 export const sessionRelations = relations(sessions, ({ one }) => ({
 	user: one(users, {
 		fields: [sessions.userId],
+		references: [users.id],
+	}),
+}));
+
+export const accountRelations = relations(accounts, ({ one }) => ({
+	user: one(users, {
+		fields: [accounts.userId],
 		references: [users.id],
 	}),
 }));

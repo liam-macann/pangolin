@@ -14,8 +14,8 @@ export async function GET(): RouteResponse<Data> {
 		return NextResponse.json(response);
 	} catch (error) {
 		console.error(error);
-		// This will likely be rejected auth, as fetchClients throws a redirect via auth().
-		// This will eventually be rewritten to separate auth and data fetching.
+		// This will likely be rejected auth.
+		// Will eventually be rewritten to separate auth and data fetching.
 		const response: ApiResponse<null> = { success: false, error: 'Failed to fetch clients' };
 		return NextResponse.json(response, { status: 500 });
 	}

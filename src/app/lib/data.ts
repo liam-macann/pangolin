@@ -14,7 +14,8 @@ import {
 	sumDistinct,
 } from 'drizzle-orm';
 import type { PgSelectBase } from 'drizzle-orm/pg-core';
-import { auth } from '@/auth';
+import { headers } from 'next/headers';
+import { getSession } from '@/auth';
 import { db } from '@/db';
 import {
 	clientData,
@@ -96,7 +97,8 @@ function invoiceQuery<Detailed extends boolean>(
 
 /** Fetch all invoices for authenticated user, including basic relational data */
 export async function fetchInvoices() {
-	const session = await auth();
+	const session = await getSession({ headers: await headers() });
+	if (!session) throw new Error('Request not authenticated');
 
 	try {
 		// Get current config to format historical invoices
@@ -122,7 +124,8 @@ export async function fetchInvoices() {
 
 /** Fetch all invoices for a given client. Accepts logical client ID, not SCD ID. */
 export async function fetchInvoicesForClient(clientId: string, limit?: number) {
-	const session = await auth();
+	const session = await getSession({ headers: await headers() });
+	if (!session) throw new Error('Request not authenticated');
 
 	const clientDataId = db
 		.$with('clientDataId')
@@ -170,7 +173,8 @@ export type DetailedInvoice = Awaited<ReturnType<typeof fetchInvoice>>;
  * Join relational (incl. item) details with a single invoice record for authenticated user
  * @returns `Promise<InvoiceWithRelations>` */
 export async function fetchInvoice(id: string) {
-	const session = await auth();
+	const session = await getSession({ headers: await headers() });
+	if (!session) throw new Error('Request not authenticated');
 
 	// Get all active taxes, and calculate sum for display in the invoice subtotals
 	const taxCalc = db.$with('tax_calc').as(
@@ -232,7 +236,8 @@ export async function fetchInvoice(id: string) {
 }
 
 export async function fetchClientStats(id: string) {
-	const session = await auth();
+	const session = await getSession({ headers: await headers() });
+	if (!session) throw new Error('Request not authenticated');
 
 	/** Access all invoices for a given client that have not been voided */
 	const validityFilter = db
@@ -315,7 +320,8 @@ export async function fetchClientStats(id: string) {
 }
 
 export async function getUser() {
-	const session = await auth();
+	const session = await getSession({ headers: await headers() });
+	if (!session) throw new Error('Request not authenticated');
 
 	const user = await db.query.users.findFirst({
 		where: eq(users.id, session.user.id),
@@ -342,7 +348,8 @@ export async function fetchClients(id: string): Promise<ClientResult>;
 
 /** Fetch all clients for authenticated user, or a single client if `id` is provided */
 export async function fetchClients(id?: string) {
-	const session = await auth();
+	const session = await getSession({ headers: await headers() });
+	if (!session) throw new Error('Request not authenticated');
 
 	try {
 		const invoiceCounts = db.$with('invoice_counts').as(
@@ -391,15 +398,14 @@ export async function fetchClients(id?: string) {
 
 /** Gets the active configuration for the authenticated user */
 export async function getUserConfig() {
-	const session = await auth();
+	const session = await getSession({ headers: await headers() });
+	if (!session) throw new Error('Request not authenticated');
 
 	try {
 		const res = await db.query.config.findFirst({
 			where: and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo)),
 			with: {
-				user: {
-					columns: { password: false },
-				},
+				user: true,
 				configTax: {
 					columns: {},
 					with: { tax: {} },

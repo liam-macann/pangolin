@@ -1,50 +1,14 @@
 import { CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { AuthError } from 'next-auth';
 import { z } from 'zod';
-import { providerMap, signIn } from '@/auth';
-import LoginForm from '@/src/app/ui/login-form';
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
-import { Button } from '@/ui/button';
+import { Social } from './ui';
 
 export const metadata: Metadata = {
 	title: 'Login',
 };
 
-type ErrorDetails = {
-	message: string;
-	description?: string;
-};
-
-const errorDetails: Record<string, ErrorDetails> = {
-	OAuthAccountNotLinked: {
-		message: 'You already have an account',
-		description: 'Sign in to connect this provider.',
-	},
-	AccountNotLinked: {
-		message: 'You already have an account',
-		description: 'Please sign in with the method you used to create your account.',
-	},
-	OAuthCallbackError: {
-		message: 'The provider could not verify your identity',
-	},
-	OAuthSignInError: {
-		message: 'The authorisation provider could not be reached',
-	},
-	EmailSignInError: {
-		message: 'This token has expired',
-		description: 'Please log in again.',
-	},
-	MissingCSRF: {
-		message: 'Missing CSRF token',
-		description:
-			'Try disabling any script-blocking plugins and whitelisting cookies for this site.',
-	},
-	CredentialsSignin: {
-		message: 'Invalid credentials',
-	},
-};
+import { errorDetails } from '../error/page';
 
 const paramsSchema = z.object({
 	callbackUrl: z.url().catch('/dashboard'),
@@ -70,48 +34,22 @@ export default async function LoginPage({
 				{errorInfo && (
 					<Alert variant='destructive'>
 						<WarningCircleIcon className='text-destructive' />
-						<AlertTitle>{errorInfo.message}</AlertTitle>
-						{errorInfo.description && <AlertDescription>{errorInfo.description}</AlertDescription>}
+						{errorInfo.heading && <AlertTitle>{errorInfo.heading}</AlertTitle>}
+						<AlertDescription>{errorInfo.message}</AlertDescription>
 					</Alert>
 				)}
 				<div className='relative flex flex-col gap-y-4 rounded-md border bg-card p-4 py-8 shadow md:p-8'>
 					<h1 className={`-mt-2 mb-2 font-bold text-2xl`}>Login</h1>
 
 					<section className='flex flex-col gap-2'>
-						{Object.values(providerMap.filter(provider => provider.id !== 'credentials')).map(
-							provider => (
-								<form
-									className='grow'
-									key={provider.id}
-									action={async () => {
-										'use server';
-										try {
-											await signIn(provider.id, { redirectTo: callbackUrl });
-										} catch (error) {
-											if (error instanceof AuthError) {
-												console.log(error.message);
-												error.name;
-												return redirect(`?error=${error.name}`);
-											}
-
-											// Remember that redirect is a thrown error internally
-											throw error;
-										}
-									}}
-								>
-									<Button size='lg' type='submit' className='w-full'>
-										<span>Sign in with {provider.name}</span>
-									</Button>
-								</form>
-							),
-						)}
+						<Social callbackURL={callbackUrl} />
 					</section>
-					{providerMap.find(provider => provider.id === 'credentials') && (
+					{/*{providerMap.find(provider => provider.id === 'credentials') && (
 						<>
 							<hr className='my-4' />
 							<LoginForm callbackUrl={callbackUrl} />
 						</>
-					)}
+					)}*/}
 				</div>
 			</section>
 			<section className='mt-12'>

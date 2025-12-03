@@ -36,13 +36,11 @@ function AvatarFallback({
 	);
 }
 
-import type { Session } from '@/auth';
-
 export default function UserAvatar({
 	image,
 	className,
 	...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root> & { image: Session['user']['image'] }) {
+}: React.ComponentProps<typeof AvatarPrimitive.Root> & { image: string | null }) {
 	return (
 		<Avatar className={cn('!bg-gray-4', className)} {...props}>
 			{image && <AvatarImage src={`/api/avatar?user=${image}`} />}

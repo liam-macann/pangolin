@@ -12,8 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { db } from '../src/db';
 import * as schema from '../src/db/schema';
 
-// biome-ignore lint/correctness/noUnusedVariables: Discard properties
-const { accounts, authenticators, sessions, ...include } = schema;
+const { accounts, sessions, ...include } = schema;
 
 async function main(uuid?: string) {
 	if (process.env.NODE_ENV) {
@@ -43,7 +42,6 @@ async function main(uuid?: string) {
 							image: f.default({ defaultValue: attachedUser.image }),
 							email: f.default({ defaultValue: attachedUser.email }),
 							emailVerified: f.default({ defaultValue: attachedUser.emailVerified }),
-							password: f.default({ defaultValue: attachedUser.password }),
 						}
 					: { name: f.fullName() },
 				with: {

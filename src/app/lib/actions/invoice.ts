@@ -3,10 +3,11 @@
 import { type AnyColumn, and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 
 import { v4 as uuid } from 'uuid';
 import type z from 'zod';
-import { auth } from '@/auth';
+import { getSession } from '@/auth';
 import { db } from '@/db';
 import {
 	config as configSchema,
@@ -46,7 +47,8 @@ interface CreateInvoiceData {
 }
 
 export async function createInvoice({ invoice, items }: CreateInvoiceData) {
-	const session = await auth();
+	const session = await getSession({ headers: await headers() });
+	if (!session) throw new Error('Request not authenticated');
 
 	// Pre request validation. Validation has also been performed on the client side.
 	const inputSchema = createInsertSchema(invoicesSchema, {
@@ -213,7 +215,9 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 }
 
 export async function updateInvoiceStatus(id: string, status: Enum<typeof statusEnum>) {
-	const session = await auth();
+	const session = await getSession({ headers: await headers() });
+	if (!session) throw new Error('Request not authenticated');
+
 	await db
 		.update(invoicesSchema)
 		.set({ status })
@@ -221,7 +225,9 @@ export async function updateInvoiceStatus(id: string, status: Enum<typeof status
 }
 
 export async function voidInvoice(id: string) {
-	const session = await auth();
+	const session = await getSession({ headers: await headers() });
+	if (!session) throw new Error('Request not authenticated');
+
 	await db
 		.update(invoicesSchema)
 		.set({ isVoid: true })

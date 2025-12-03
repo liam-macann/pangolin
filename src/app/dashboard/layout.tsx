@@ -1,7 +1,9 @@
 import { SignOutIcon, SlidersHorizontalIcon } from '@phosphor-icons/react/ssr';
+import { headers } from 'next/headers';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
-import { auth, type Session, signOut } from '@/auth';
+import { getSession, signOut } from '@/auth';
 import SideNav from '@/src/app/ui/dashboard/topnav';
 import UserAvatar, { AvatarEmpty } from '@/ui/avatar';
 import { Button } from '@/ui/button';
@@ -33,8 +35,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 }
 
 async function AccountMenuContent() {
-	const session = await auth();
-	if (!session?.user) return <AvatarEmpty />;
+	const session = await getSession({ headers: await headers() });
+	if (!session) return <AvatarEmpty className='size-8' />;
 
 	return (
 		<DropdownMenu>
@@ -57,7 +59,7 @@ async function AccountMenuContent() {
 				<DropdownMenuItem
 					onClick={async () => {
 						'use server';
-						await signOut({ redirectTo: '/' });
+						await signOut();
 					}}
 				>
 					<SignOutIcon />
@@ -71,13 +73,13 @@ async function AccountMenuContent() {
 const Trigger = ({
 	image,
 	...props
-}: { image: Session['user']['image'] } & React.ComponentProps<typeof Button>) => (
+}: { image?: string | null } & React.ComponentProps<typeof Button>) => (
 	<Button
 		variant='ghost'
 		className='relative m-0 size-8 cursor-pointer overflow-hidden rounded-full p-0'
 		{...props}
 	>
-		<UserAvatar className='absolute inset-0' image={image} />
+		<UserAvatar className='absolute inset-0' image={image || null} />
 		<div className='sr-only'>Account</div>
 	</Button>
 );
