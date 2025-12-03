@@ -1,4 +1,3 @@
-import { relations } from 'drizzle-orm';
 import { boolean, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('user', {
@@ -72,3 +71,18 @@ export const verifications = pgTable(
 	},
 	t => [index('verification_identifier_idx').on(t.identifier)],
 );
+
+export const keychain = pgTable('keychain', {
+	id: uuid()
+		.references(() => users.id)
+		.primaryKey(),
+
+	/** Wrapped DEK */
+	key: text().notNull(),
+
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+	updatedAt: timestamp('updated_at')
+		.defaultNow()
+		.$onUpdate(() => /* @__PURE__ */ new Date())
+		.notNull(),
+});

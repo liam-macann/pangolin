@@ -23,6 +23,7 @@
 		"@hookform/resolvers": "^5.2.1",
 		"@neondatabase/serverless": "^1.0.1",
 		"@next/env": "^15.5.3",
+		"@noble/ciphers": "^2.0.1",
 		"@phosphor-icons/react": "^2.1.10",
 		"@radix-ui/colors": "^3.0.0",
 		"@tailwindcss/forms": "^0.5.10",
@@ -44,6 +45,7 @@
 		"pdfmake": "0.2.20",
 		"postcss": "8.5.1",
 		"postgres": "^3.4.6",
+		"radix-ui": "latest",
 		"react": "latest",
 		"react-day-picker": "^9.11.1",
 		"react-dom": "latest",
@@ -58,8 +60,7 @@
 		"use-debounce": "^10.0.4",
 		"uuid": "^13.0.0",
 		"ws": "^8.18.3",
-		"zod": "^4.1.8",
-		"radix-ui": "latest"
+		"zod": "^4.1.8"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.4",
