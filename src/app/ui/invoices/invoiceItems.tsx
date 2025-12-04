@@ -85,7 +85,7 @@ interface FormValues extends FieldValues {
 
 type Config = Pick<
 	Awaited<ReturnType<typeof getUserConfig>>,
-	'currency' | 'locale' | 'tax' | 'taxRegistration'
+	'currency' | 'locale' | 'taxes' | 'taxRegistration'
 >;
 
 export function InvoiceItemsField<T extends FormValues>({
@@ -124,7 +124,7 @@ function ItemSum({
 
 	const subtotal = value.reduce((acc, item) => acc + item.unitCost * item.quantity, 0);
 
-	const taxes = new Map(config.tax.map(tax => [tax.id, tax]));
+	const taxes = new Map(config.taxes.map(tax => [tax.id, tax]));
 	const taxesSum = new Map<string, number>();
 
 	value.forEach(item => {
@@ -188,7 +188,7 @@ function InvoiceItemsInput({
 			quantity: '' as unknown as number, // Input condition satisfied, and we want to init empty values
 			unit: null,
 			unitCost: '' as unknown as number, // Input condition satisfied, and we want to init empty values
-			taxes: new Map(config.tax.map(tax => [tax.id, config.taxRegistration])),
+			taxes: new Map(config.taxes.map(tax => [tax.id, config.taxRegistration])),
 		});
 
 	const {
@@ -492,7 +492,7 @@ function SortableActions({
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent side='right' sideOffset={12}>
-				{config.taxRegistration && config.tax.length > 0 && (
+				{config.taxRegistration && config.taxes.length > 0 && (
 					<>
 						<DropdownMenuLabel>Taxes</DropdownMenuLabel>
 						<Controller
@@ -500,7 +500,7 @@ function SortableActions({
 							name={`items.${index}.taxes`}
 							render={({ field, fieldState }) => (
 								<DropdownMenuGroup>
-									{config.tax.map(tax => {
+									{config.taxes.map(tax => {
 										return (
 											<DropdownMenuCheckboxItem
 												key={tax.id}

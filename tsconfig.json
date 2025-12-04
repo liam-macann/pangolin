@@ -25,6 +25,6 @@
 			"@/*": ["./*"]
 		}
 	},
-	"exclude": ["node_modules", ".next", "dist", "out", "scripts/**"],
+	"exclude": ["node_modules", ".next", "dist", "out"],
 	"include": ["auth.ts", "next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", ".next/types/**/*.ts"]
 }

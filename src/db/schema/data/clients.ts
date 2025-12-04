@@ -42,7 +42,6 @@ export const clientData = pgTable(
 	},
 	t => [
 		// Necessary for ownership constraint on clientData
-
 		unique('uq_client_data_user').on(t.id, t.userId),
 		// Ensure that a client has only one valid configuration (multiple null values will conflict)
 		unique('uq_client_version').on(t.clientId, t.validTo),

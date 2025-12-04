@@ -75,7 +75,7 @@ export function CreateInvoiceDialog({
 	config: Prettify<
 		Pick<
 			Awaited<ReturnType<typeof getUserConfig>>,
-			'id' | 'currency' | 'locale' | 'timezone' | 'tax' | 'taxRegistration'
+			'id' | 'currency' | 'locale' | 'timezone' | 'taxes' | 'taxRegistration'
 		>
 	>;
 }) {
@@ -86,7 +86,7 @@ export function CreateInvoiceDialog({
 	const form = useForm<z.input<typeof schema>>({
 		resolver: zodResolver(schema),
 		defaultValues: {
-			clientData: '',
+			clientDataId: '',
 			items: [],
 			title: '',
 			description: '',

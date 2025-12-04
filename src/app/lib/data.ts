@@ -5,6 +5,7 @@ import {
 	countDistinct,
 	desc,
 	eq,
+	getColumns,
 	isNotNull,
 	isNull,
 	max,
@@ -28,10 +29,9 @@ import {
 	itemsWithTax,
 	itemTaxes,
 	taxes as taxesSchema,
-	users,
 } from '@/db/schema';
 import { formatCurrency, formatDateToLocal, invoiceReference, omit } from '@/lib/utils';
-import { getColumns, jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
+import { jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
 
 /** Builder to return a single, aggregated query for invoices.
  *
@@ -89,8 +89,8 @@ function invoiceQuery<Detailed extends boolean>(
 
 	return query
 		.where(eq(invoicesWithSum.userId, sql.placeholder('userId')))
-		.innerJoin(clientData, eq(invoicesWithSum.clientData, clientData.id))
-		.innerJoin(configSchema, eq(invoicesWithSum.config, configSchema.id))
+		.innerJoin(clientData, eq(invoicesWithSum.clientDataId, clientData.id))
+		.innerJoin(configSchema, eq(invoicesWithSum.configId, configSchema.id))
 		.leftJoin(itemsAggDetailed, eq(invoicesWithSum.id, itemsAggDetailed.invoiceId))
 		.orderBy(desc(invoicesWithSum.index));
 }
@@ -139,7 +139,7 @@ export async function fetchInvoicesForClient(clientId: string, limit?: number) {
 
 	const query = invoiceQuery(false, db.with(clientDataId)).innerJoin(
 		clientDataId,
-		eq(invoicesWithSum.clientData, clientDataId.id),
+		eq(invoicesWithSum.clientDataId, clientDataId.id),
 	);
 
 	if (limit) query.limit(limit);
@@ -193,7 +193,7 @@ export async function fetchInvoice(id: string) {
 			})
 			.from(invoices)
 			.where(eq(invoices.id, id))
-			.innerJoin(configSchema, eq(invoices.config, configSchema.id))
+			.innerJoin(configSchema, eq(invoices.configId, configSchema.id))
 			.innerJoin(configTaxes, eq(configTaxes.configId, configSchema.id))
 			.leftJoin(taxesSchema, eq(taxesSchema.id, configTaxes.taxId))
 			.leftJoin(invoiceItems, eq(invoiceItems.invoiceId, invoices.id))
@@ -244,7 +244,7 @@ export async function fetchClientStats(id: string) {
 		.select({ ...getColumns(invoicesWithSum) })
 		.from(clients)
 		.leftJoin(clientData, eq(clientData.clientId, clients.id))
-		.leftJoin(invoicesWithSum, eq(invoicesWithSum.clientData, clientData.id))
+		.leftJoin(invoicesWithSum, eq(invoicesWithSum.clientDataId, clientData.id))
 		.where(
 			and(
 				eq(clients.userId, session.user.id),
@@ -323,11 +323,9 @@ export async function getUser() {
 	const session = await getSession({ headers: await headers() });
 	if (!session) throw new Error('Request not authenticated');
 
-	const user = await db.query.users.findFirst({
-		where: eq(users.id, session.user.id),
-	});
-
+	const user = await db.query.users.findFirst({ where: { id: session.user.id } });
 	if (!user) throw new Error('User not found');
+
 	return user;
 }
 
@@ -357,11 +355,11 @@ export async function fetchClients(id?: string) {
 				.select({
 					clientId: clients.id,
 					/** Includes voided invoices */
-					count: count(invoices).as('count'),
+					count: count(invoices.id).as('count'),
 				})
 				.from(clients)
 				.leftJoin(clientData, eq(clientData.clientId, clients.id))
-				.leftJoin(invoices, eq(invoices.clientData, clientData.id))
+				.leftJoin(invoices, eq(invoices.clientDataId, clientData.id))
 				.groupBy(clients.id),
 		);
 
@@ -403,26 +401,21 @@ export async function getUserConfig() {
 
 	try {
 		const res = await db.query.config.findFirst({
-			where: and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo)),
+			where: {
+				userId: session.user.id,
+				validTo: undefined,
+			},
 			with: {
 				user: true,
-				configTax: {
-					columns: {},
-					with: { tax: {} },
-				},
+				taxes: { orderBy: { id: 'asc' } },
 			},
-			orderBy: [asc(taxesSchema.id), desc(configSchema.validFrom)],
+			orderBy: { validFrom: 'desc' },
 		});
 
 		// If user has no current config
 		if (!res) throw new Error('User has no current valid config.');
 
-		const { configTax, ...settings } = res;
-
-		return {
-			...settings,
-			tax: configTax.map(jn => jn.tax),
-		};
+		return res;
 	} catch (error) {
 		console.error('Failed to fetch config:', error);
 		throw new Error('Failed to fetch config.');

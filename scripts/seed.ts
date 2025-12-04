@@ -5,6 +5,7 @@ import { WebSocket } from 'ws';
 globalThis.WebSocket = WebSocket as any;
 globalThis.fetch = fetch as any;
 
+import { desc, eq } from 'drizzle-orm';
 import { reset, seed } from 'drizzle-seed';
 // Temporary. This breaks determinism, but the Drizzle uuid func does not adhere to spec:
 // https://github.com/drizzle-team/drizzle-orm/issues/3690
@@ -12,7 +13,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { db } from '../src/db';
 import * as schema from '../src/db/schema';
 
-const { accounts, sessions, ...include } = schema;
+const generateIds = (count: number) => ({
+	values: Array.from({ length: count }, () => uuidv4()),
+	isUnique: true,
+});
+
+const generateDates = (count: number) => ({
+	values: Array.from({ length: count }, () => new Date().toISOString()),
+	isUnique: true,
+});
 
 async function main(uuid?: string) {
 	if (process.env.NODE_ENV) {
@@ -23,16 +32,16 @@ async function main(uuid?: string) {
 		/** Get user by UUID */
 		const fetchUser = async (uuid: string) =>
 			await tx.query.users.findFirst({
-				where: (users, { eq }) => eq(users.id, uuid),
+				where: { id: uuid },
 				with: { accounts: true, sessions: true },
 			});
 
 		const attachedUser = uuid ? await fetchUser(uuid) : undefined;
 
-		await reset(tx, include);
+		await reset(tx, schema);
 
 		const invoiceCount = 200;
-		await seed(tx, include, { seed: 42, count: 10, version: '2' }).refine(f => ({
+		await seed(tx, schema, { seed: 42, count: 1, version: '2' }).refine(f => ({
 			users: {
 				count: 1,
 				columns: attachedUser
@@ -45,17 +54,17 @@ async function main(uuid?: string) {
 						}
 					: { name: f.fullName() },
 				with: {
-					clients: 48,
+					clients: 1,
 					config: 1,
+					keychain: 1,
 					invoices: invoiceCount,
 				},
 			},
 			clients: {
+				count: 1,
 				columns: {
-					id: f.valuesFromArray({
-						values: Array.from({ length: 100 }, () => uuidv4()),
-						isUnique: true,
-					}),
+					id: f.valuesFromArray(generateIds(600)),
+					userId: f.uuid(),
 					isFavorite: f.weightedRandom([
 						{ weight: 0.2, value: f.default({ defaultValue: true }) },
 						{ weight: 0.8, value: f.default({ defaultValue: false }) },
@@ -69,21 +78,18 @@ async function main(uuid?: string) {
 			},
 			clientData: {
 				columns: {
-					id: f.valuesFromArray({
-						values: Array.from({ length: 100 }, () => uuidv4()),
-						isUnique: true,
-					}),
+					id: f.valuesFromArray(generateIds(100)),
+					userId: f.uuid(),
+					clientId: f.uuid(),
 					name: f.fullName(),
 					validFrom: f.date({ maxDate: new Date(Date.now()) }),
-					validTo: f.default({ defaultValue: null }),
+					validTo: f.valuesFromArray(generateDates(100)),
 				},
 			},
 			invoices: {
 				columns: {
-					id: f.valuesFromArray({
-						values: Array.from({ length: invoiceCount }, () => uuidv4()),
-						isUnique: true,
-					}),
+					id: f.valuesFromArray(generateIds(invoiceCount)),
+					userId: f.uuid(),
 					description: f.weightedRandom([
 						{ weight: 0.2, value: f.loremIpsum({ sentencesCount: 3 }) },
 						{ weight: 0.8, value: f.default({ defaultValue: '' }) },
@@ -99,6 +105,7 @@ async function main(uuid?: string) {
 						minDate: new Date(),
 						maxDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 					}),
+					configId: f.uuid(),
 				},
 				with: {
 					invoiceItems: [
@@ -154,25 +161,27 @@ async function main(uuid?: string) {
 					]),
 					quantity: f.int({ minValue: 1, maxValue: 30 }),
 					order: f.int({ minValue: 0 }),
+					configId: f.uuid(),
 				},
 				with: { itemTaxes: 1 },
 			},
 			config: {
 				columns: {
+					userId: f.uuid(),
 					timezone: f.valuesFromArray({ values: ['Australia/Sydney'] }),
 					currency: f.valuesFromArray({ values: ['AUD', 'GBP', 'USD'] }),
 					locale: f.valuesFromArray({ values: ['en-AU', 'en-GB', 'en-US'] }),
 					validFrom: f.date({ maxDate: new Date(Date.now()) }),
-					validTo: f.default({ defaultValue: null }),
+					validTo: f.valuesFromArray({ values: [new Date().toISOString()], isUnique: true }),
 				},
 				with: { configTaxes: 3 },
 			},
+			configTaxes: {
+				columns: { configId: f.uuid() },
+			},
 			taxes: {
 				columns: {
-					id: f.valuesFromArray({
-						values: Array.from({ length: 100 }, () => uuidv4()),
-						isUnique: true,
-					}),
+					id: f.valuesFromArray(generateIds(48)),
 					name: f.valuesFromArray({ values: ['GST', 'VAT', 'EXP', 'LCT', 'WET'] }),
 					rate: f.number({ precision: 10, minValue: 0, maxValue: 0.3 }),
 				},
@@ -188,8 +197,21 @@ async function main(uuid?: string) {
 
 		if (attachedUser?.accounts.length)
 			await Promise.all([
-				tx.insert(accounts).values(attachedUser.accounts),
-				tx.insert(sessions).values(attachedUser.sessions),
+				tx
+					.update(schema.config)
+					.set({ validTo: null })
+					.where(
+						eq(
+							schema.config.id,
+							tx
+								.select({ id: schema.config.id })
+								.from(schema.config)
+								.orderBy(desc(schema.config.validFrom))
+								.limit(1),
+						),
+					),
+				tx.insert(schema.accounts).values(attachedUser.accounts),
+				tx.insert(schema.sessions).values(attachedUser.sessions),
 			]);
 	});
 }

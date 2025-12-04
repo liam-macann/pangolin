@@ -1,0 +1,3 @@
+ALTER TABLE "client_data" DROP CONSTRAINT "chk_client_data_valid", ADD CONSTRAINT "chk_client_data_valid" CHECK ("valid_from" <= now());--> statement-breakpoint
+ALTER TABLE "config" DROP CONSTRAINT "chk_config_valid", ADD CONSTRAINT "chk_config_valid" CHECK ("valid_from" <= now());--> statement-breakpoint
+ALTER TABLE "invoice" DROP CONSTRAINT "chk_due_after_issued", ADD CONSTRAINT "chk_due_after_issued" CHECK ("due_at" > "issued_at");

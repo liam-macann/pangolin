@@ -1,108 +1,124 @@
-import { relations } from 'drizzle-orm';
-import {
-	accounts,
-	clientData,
-	clients,
-	config,
-	configTaxes,
-	invoiceItems,
-	invoices,
-	itemTaxes,
-	sessions,
-	taxes,
-	users,
-} from './schema';
+import { defineRelations } from 'drizzle-orm';
+import * as schema from './schema';
 
-export const invoicesRelations = relations(invoices, ({ one, many }) => ({
-	clientData: one(clientData, {
-		fields: [invoices.clientData],
-		references: [clientData.id],
-	}),
-	user: one(users, {
-		fields: [invoices.userId],
-		references: [users.id],
-	}),
-	config: one(config, {
-		fields: [invoices.config],
-		references: [config.id],
-	}),
-	items: many(invoiceItems),
-}));
+export const relations = defineRelations(schema, r => ({
+	// ---------------------------------------------------------
+	// User Relations
+	// ---------------------------------------------------------
+	users: {
+		accounts: r.many.accounts(),
+		clients: r.many.clients(),
+		invoices: r.many.invoices(),
+		keychain: r.one.keychain({
+			from: r.users.id,
+			to: r.keychain.id,
+		}),
+		sessions: r.many.sessions(),
+	},
 
-export const invoiceItemsRelations = relations(invoiceItems, ({ one, many }) => ({
-	invoice: one(invoices, {
-		fields: [invoiceItems.invoiceId],
-		references: [invoices.id],
-	}),
-	// Once beta reaches release, this may be flattened with a {through: itemTaxes} config
-	itemTax: many(itemTaxes),
-}));
+	accounts: {
+		user: r.one.users({
+			from: r.accounts.userId,
+			to: r.users.id,
+		}),
+	},
 
-export const itemTaxRelations = relations(itemTaxes, ({ one }) => ({
-	item: one(invoiceItems, {
-		fields: [itemTaxes.itemId],
-		references: [invoiceItems.id],
-	}),
-	tax: one(taxes, {
-		fields: [itemTaxes.taxId],
-		references: [taxes.id],
-	}),
-}));
+	sessions: {
+		user: r.one.users({
+			from: r.sessions.userId,
+			to: r.users.id,
+		}),
+	},
 
-export const taxRelations = relations(taxes, ({ one }) => ({
-	user: one(users, {
-		fields: [taxes.userId],
-		references: [users.id],
-	}),
-}));
+	// ---------------------------------------------------------
+	// Client & Client Data
+	// ---------------------------------------------------------
+	clients: {
+		user: r.one.users({
+			from: r.clients.userId,
+			to: r.users.id,
+		}),
+		clientData: r.many.clientData(),
+	},
 
-export const clientDataRelations = relations(clientData, ({ one }) => ({
-	clients: one(clients, {
-		fields: [clientData.clientId],
-		references: [clients.id],
-	}),
-}));
+	clientData: {
+		client: r.one.clients({
+			from: r.clientData.clientId,
+			to: r.clients.id,
+		}),
+		user: r.one.users({
+			from: r.clientData.userId,
+			to: r.users.id,
+		}),
+		invoices: r.many.invoices({
+			from: r.clientData.id,
+			to: r.invoices.clientDataId,
+		}),
+	},
 
-export const clientRelations = relations(clients, ({ many }) => ({
-	clientData: many(clientData),
-}));
+	// ---------------------------------------------------------
+	// Invoices
+	// ---------------------------------------------------------
+	invoices: {
+		user: r.one.users({
+			from: r.invoices.userId,
+			to: r.users.id,
+		}),
+		clientData: r.one.clientData({
+			from: r.invoices.clientDataId,
+			to: r.clientData.id,
+		}),
+		config: r.one.config({
+			from: r.invoices.configId,
+			to: r.config.id,
+		}),
+		items: r.many.invoiceItems({
+			from: r.invoices.id,
+			to: r.invoiceItems.invoiceId,
+		}),
+	},
 
-export const configRelations = relations(config, ({ one, many }) => ({
-	user: one(users, {
-		fields: [config.userId],
-		references: [users.id],
-	}),
-	configTax: many(configTaxes),
-}));
+	invoiceCount: {
+		user: r.one.users({
+			from: r.invoiceCount.userId,
+			to: r.users.id,
+		}),
+	},
 
-export const configTaxRelations = relations(configTaxes, ({ one }) => ({
-	config: one(config, {
-		fields: [configTaxes.configId],
-		references: [config.id],
-	}),
-	tax: one(taxes, {
-		fields: [configTaxes.taxId],
-		references: [taxes.id],
-	}),
-}));
+	invoiceItems: {
+		taxes: r.many.taxes({
+			from: r.invoiceItems.id.through(r.itemTaxes.itemId),
+			to: r.taxes.id.through(r.itemTaxes.taxId),
+		}),
+	},
 
-export const userRelations = relations(users, ({ many }) => ({
-	config: many(config),
-	tax: many(taxes),
-	sessions: many(sessions),
-	accounts: many(accounts),
-}));
+	// ---------------------------------------------------------
+	// Taxes & Configuration
+	// ---------------------------------------------------------
+	config: {
+		user: r.one.users({
+			from: r.config.userId,
+			to: r.users.id,
+			optional: false,
+		}),
 
-export const sessionRelations = relations(sessions, ({ one }) => ({
-	user: one(users, {
-		fields: [sessions.userId],
-		references: [users.id],
-	}),
-}));
+		taxes: r.many.taxes({
+			from: r.config.id.through(r.configTaxes.configId),
+			to: r.taxes.id.through(r.configTaxes.taxId),
+		}),
 
-export const accountRelations = relations(accounts, ({ one }) => ({
-	user: one(users, {
-		fields: [accounts.userId],
-		references: [users.id],
-	}),
+		invoices: r.many.invoices({
+			from: r.config.id,
+			to: r.invoices.configId,
+		}),
+	},
+
+	taxes: {
+		configs: r.many.config(),
+
+		user: r.one.users({
+			from: r.taxes.userId,
+			to: r.users.id,
+		}),
+	},
 }));

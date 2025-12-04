@@ -65,7 +65,7 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 
 	// Explicit about accepted input to prevent injecting via spread operator
 	const defaults: z.infer<typeof inputSchema> = {
-		clientData: invoice.clientData,
+		clientDataId: invoice.clientData,
 		title: invoice.title,
 		description: invoice.description,
 		status: invoice.status || 'unpaid',
@@ -147,7 +147,7 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 				.values([
 					{
 						userId: validated.data.userId,
-						clientData: validated.data.clientData,
+						clientData: validated.data.clientDataId,
 
 						title: validated.data.title,
 						description: validated.data.description,

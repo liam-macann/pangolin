@@ -1,6 +1,5 @@
 import { type Column, type SQL, sql } from 'drizzle-orm';
 import type { PgEnum } from 'drizzle-orm/pg-core';
-import type { Prettify } from './index';
 
 type AnySql = SQL | Column | SQL.Aliased;
 
@@ -79,39 +78,4 @@ export function coalesce<Args extends [SqlOrPrimitive, SqlOrPrimitive, ...SqlOrP
 		args.map(a => (typeof a === 'string' ? sql`'${a}'` : sql`${a}`) as AnySql),
 		sql.raw(','),
 	)})`;
-}
-
-import { type ColumnsSelection, is, type Subquery, Table, View, ViewBaseConfig } from 'drizzle-orm';
-import type { AnyMySqlSelect } from 'drizzle-orm/mysql-core';
-import type { AnyPgSelect } from 'drizzle-orm/pg-core';
-import type { AnySQLiteSelect } from 'drizzle-orm/sqlite-core';
-import type { WithSubquery } from 'drizzle-orm/subquery';
-
-// See https://github.com/drizzle-team/drizzle-orm/pull/1789
-type Select = AnyPgSelect | AnyMySqlSelect | AnySQLiteSelect;
-type AnySelect = Prettify<Omit<Select, 'where'> & Partial<Pick<Select, 'where'>>>;
-
-/**
- * Get the columns of a table, view, subquery, or select.
- * @remarks This has already been merged into beta. Temporary utility.
- */
-export function getColumns<
-	T extends
-		| Table
-		| View
-		| Subquery<string, ColumnsSelection>
-		| WithSubquery<string, ColumnsSelection>
-		| AnySelect,
->(
-	table: T,
-): T extends Table
-	? T['_']['columns']
-	: T extends View | Subquery | WithSubquery | AnySelect
-		? T['_']['selectedFields']
-		: never {
-	return is(table, Table)
-		? (table as any)[(Table as any).Symbol.Columns]
-		: is(table, View)
-			? (table as any)[ViewBaseConfig].selectedFields
-			: table._.selectedFields;
 }
