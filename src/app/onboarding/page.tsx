@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { after } from 'next/server';
 import { getSession } from '@/auth';
-import { generateDEK } from '@/lib/encrypt';
 import { Button } from '@/ui/button';
 
 export const metadata: Metadata = {
@@ -13,11 +11,6 @@ export const metadata: Metadata = {
 export default async function Page() {
 	const session = await getSession({ headers: await headers() });
 	if (!session) redirect('/auth/login');
-
-	after(() => {
-		// Execute after the layout is rendered and sent to the user
-		generateDEK(session.user.id);
-	});
 
 	return (
 		<div className='flex flex-col gap-y-4 rounded-md border bg-card p-4 py-8 shadow md:p-8'>

@@ -1,4 +1,5 @@
 import { boolean, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { encrypted } from '@/lib/utils/drizzle';
 
 export const users = pgTable('user', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -78,7 +79,7 @@ export const keychain = pgTable('keychain', {
 		.primaryKey(),
 
 	/** Wrapped DEK */
-	key: text().notNull(),
+	key: encrypted().notNull(),
 
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at')

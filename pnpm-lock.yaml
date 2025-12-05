@@ -75,8 +75,8 @@ importers:
         specifier: ^17.2.2
         version: 17.2.2
       drizzle-zod:
-        specifier: ^0.8.3
-        version: 0.8.3(drizzle-orm@1.0.0-beta.2-b782ae1(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(postgres@3.4.6))(zod@4.1.8)
+        specifier: 1.0.0-beta.2-b782ae1
+        version: 1.0.0-beta.2-b782ae1(drizzle-orm@1.0.0-beta.2-b782ae1(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(postgres@3.4.6))(zod@4.1.8)
       motion:
         specifier: ^12.23.24
         version: 12.23.24(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -2316,10 +2316,10 @@ packages:
     peerDependencies:
       drizzle-orm: '>=1.0.0-beta.2'
 
-  drizzle-zod@0.8.3:
-    resolution: {integrity: sha512-66yVOuvGhKJnTdiqj1/Xaaz9/qzOdRJADpDa68enqS6g3t0kpNkwNYjUuaeXgZfO/UWuIM9HIhSlJ6C5ZraMww==}
+  drizzle-zod@1.0.0-beta.2-b782ae1:
+    resolution: {integrity: sha512-nMt4Jw0q/PBcnNPr/jFKps1vYy8wfI8ZJ+/iZIUHME8pNAMyEIVOeLPuDy/BLqd9UKhY6seAawQaxn0LgD5+iQ==}
     peerDependencies:
-      drizzle-orm: '>=0.36.0'
+      drizzle-orm: '>=1.0.0-beta.2'
       zod: ^3.25.0 || ^4.0.0
 
   dunder-proto@1.0.1:
@@ -5285,7 +5285,7 @@ snapshots:
       drizzle-orm: 1.0.0-beta.2-b782ae1(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(postgres@3.4.6)
       pure-rand: 6.1.0
 
-  drizzle-zod@0.8.3(drizzle-orm@1.0.0-beta.2-b782ae1(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(postgres@3.4.6))(zod@4.1.8):
+  drizzle-zod@1.0.0-beta.2-b782ae1(drizzle-orm@1.0.0-beta.2-b782ae1(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(postgres@3.4.6))(zod@4.1.8):
     dependencies:
       drizzle-orm: 1.0.0-beta.2-b782ae1(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(postgres@3.4.6)
       zod: 4.1.8

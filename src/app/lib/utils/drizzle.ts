@@ -1,5 +1,5 @@
 import { type Column, type SQL, sql } from 'drizzle-orm';
-import type { PgEnum } from 'drizzle-orm/pg-core';
+import { customType, type PgEnum } from 'drizzle-orm/pg-core';
 
 type AnySql = SQL | Column | SQL.Aliased;
 
@@ -79,3 +79,8 @@ export function coalesce<Args extends [SqlOrPrimitive, SqlOrPrimitive, ...SqlOrP
 		sql.raw(','),
 	)})`;
 }
+
+export const encrypted = customType<{ data: Uint8Array; driverData: Buffer }>({
+	dataType: () => 'bytea',
+	fromDriver: value => new Uint8Array(value),
+});
