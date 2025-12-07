@@ -4,15 +4,16 @@ import { customType, type PgEnum } from 'drizzle-orm/pg-core';
 type AnySql = SQL | Column | SQL.Aliased;
 
 /** Helper type to extract the TypeScript type from a PgColumn or SQL */
-export type ColumnType<T> = T extends Column<infer C>
-	? C['notNull'] extends true
-		? C['data']
-		: C['data'] | null
-	: T extends SQL<infer S>
-		? S
-		: T extends SQL.Aliased<infer A>
-			? A
-			: never;
+export type ColumnType<T> =
+	T extends Column<infer C>
+		? C['notNull'] extends true
+			? C['data']
+			: C['data'] | null
+		: T extends SQL<infer S>
+			? S
+			: T extends SQL.Aliased<infer A>
+				? A
+				: never;
 
 /** Derive type from PgEnum definition
  *

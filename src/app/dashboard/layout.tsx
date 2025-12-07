@@ -1,7 +1,6 @@
 import { SignOutIcon, SlidersHorizontalIcon } from '@phosphor-icons/react/ssr';
 import { headers } from 'next/headers';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { getSession, signOut } from '@/auth';
 import SideNav from '@/src/app/ui/dashboard/topnav';

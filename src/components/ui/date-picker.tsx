@@ -1,7 +1,6 @@
 'use client';
 
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
-import { format } from 'date-fns';
 import * as React from 'react';
 import type {
 	DateRange as DateRangeType,
@@ -39,7 +38,7 @@ type MinimalPropsBase = Omit<
 	| 'onDayTouchStart'
 > & { disabledDays?: PropsBase['disabled'] };
 
-type Expose<Type> = Type extends any ? Omit<Type, 'mode' | 'disabled'> : never;
+type Expose<Type> = Type extends unknown ? Omit<Type, 'mode' | 'disabled'> : never;
 
 type SinglePickerProps = MinimalPropsBase & Expose<PropsSingle | PropsSingleRequired>;
 type MultiPickerProps = MinimalPropsBase & Expose<PropsMulti | PropsMultiRequired>;
