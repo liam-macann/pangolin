@@ -1,39 +1,33 @@
 'use client';
-import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
-import { RestrictToElement } from '@dnd-kit/dom/modifiers';
-import { DragDropProvider } from '@dnd-kit/react';
-import { isSortable, useSortable } from '@dnd-kit/react/sortable';
-import { SortableContext } from '@dnd-kit/sortable';
-import { DotsSixIcon, DotsThreeIcon, InfoIcon, TrashIcon } from '@phosphor-icons/react';
+import { InfoIcon, TrashIcon } from '@phosphor-icons/react';
 import { createInsertSchema } from 'drizzle-zod';
-import { useRef } from 'react';
 import {
 	type Control,
 	Controller,
-	type FieldArrayWithId,
 	type FieldValues,
 	useFieldArray,
 	useWatch,
 } from 'react-hook-form';
 import { z } from 'zod';
 import { InfoTip } from '@/components/info';
+import {
+	Sortable,
+	SortableActions,
+	SortableEmpty,
+	SortableItem,
+	SortableList,
+} from '@/components/sortable-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { taxes } from '@/db/schema';
-import { cn, type Prettify } from '@/lib/utils';
+import type { Prettify } from '@/lib/utils';
 import { intlNumber } from '@/lib/zod';
 import { Button } from '@/ui/button';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from '@/ui/dropdown-menu';
+import { DropdownMenuItem } from '@/ui/dropdown-menu';
 import {
 	Field,
 	FieldContent,
 	FieldDescription,
 	FieldError,
-	FieldGroup,
 	FieldLabel,
 	FieldLegend,
 	FieldSet,
@@ -82,6 +76,9 @@ export function TaxRateField<T extends FormValues>({
 	const control = _control as unknown as Control<FormValues>;
 	const state = control.getFieldState('taxes');
 
+	const { fields, append, remove, move } = useFieldArray({ control, name: 'taxes' });
+	const addTax = () => append({ name: '', rate: '' });
+
 	return (
 		<FieldSet className={className}>
 			<FieldContent className='ml-8'>
@@ -97,7 +94,80 @@ export function TaxRateField<T extends FormValues>({
 				<DuplicateWarning control={control} />
 				{state.error?.root && <FieldError errors={[state.error?.root]} />}
 			</FieldContent>
-			<TaxRateInput control={control} />
+
+			<Sortable
+				className='flex flex-col gap-2'
+				items={fields}
+				onReorder={({ initialIndex, index }) => move(initialIndex, index)}
+			>
+				<div className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-3 group-data-[empty]/sortable:hidden'>
+					<FieldLabel className='col-start-2'>Label</FieldLabel>
+					<FieldLabel>
+						Rate
+						<InfoTip side='right'>
+							Simple percentage of item total. Compound taxes are not supported.
+						</InfoTip>
+					</FieldLabel>
+				</div>
+				<SortableList>
+					{fields.map((tax, i) => (
+						<SortableItem
+							key={tax.id}
+							id={tax.id}
+							index={i}
+							className='grid-cols-[1.5rem_1fr_1fr_2.25rem]'
+						>
+							<Controller
+								control={control}
+								name={`taxes.${i}.name`}
+								render={({ field, fieldState }) => (
+									<Field className='gap-0.5' data-invalid={fieldState.invalid}>
+										<Input type='text' placeholder='Label' {...field} />
+										{fieldState.invalid && (
+											<FieldError className='text-xs' errors={[fieldState.error]} />
+										)}
+									</Field>
+								)}
+							/>
+							<Controller
+								control={control}
+								name={`taxes.${i}.rate`}
+								render={({ field, fieldState }) => (
+									<Field className='gap-0.5' data-invalid={fieldState.invalid}>
+										<Input
+											suffix='%'
+											type='text'
+											inputMode='decimal'
+											placeholder='2.5'
+											step='any'
+											onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+											{...field}
+										/>
+										{fieldState.invalid && (
+											<FieldError className='text-xs' errors={[fieldState.error]} />
+										)}
+									</Field>
+								)}
+							/>
+							<SortableActions>
+								<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
+									<TrashIcon />
+									Delete
+								</DropdownMenuItem>
+							</SortableActions>
+						</SortableItem>
+					))}
+				</SortableList>
+
+				<SortableEmpty className='mb-7 ml-8 flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
+					<p className='font-medium text-muted-foreground text-sm'>No taxes configured</p>
+					<Button onClick={addTax}>Add Tax</Button>
+				</SortableEmpty>
+
+				<Button className='mt-3 self-end group-data-[empty]/sortable:hidden' onClick={addTax}>
+					Add Tax
+				</Button>
+			</Sortable>
 		</FieldSet>
 	);
 }
@@ -118,180 +188,4 @@ function DuplicateWarning({ control }: { control: Control<FormValues> }) {
 			</AlertDescription>
 		</Alert>
 	) : null;
-}
-
-function TaxRateInput({
-	className,
-	control,
-}: {
-	className?: string;
-	control: Control<FormValues>;
-}) {
-	const { fields, append, remove, move } = useFieldArray({ control, name: 'taxes' });
-	const addTax = () => append({ name: '', rate: '' });
-
-	return (
-		<DragDropProvider
-			onDragEnd={event => {
-				const { operation, canceled } = event;
-				const { source } = operation;
-
-				if (canceled) return;
-
-				if (isSortable(source)) {
-					const initialIndex = source.sortable.initialIndex;
-					const targetIndex = source.sortable.index;
-
-					move(initialIndex, targetIndex);
-				}
-			}}
-		>
-			<SortableContext items={fields}>
-				<FieldGroup className={cn('gap-2', className)}>
-					{fields.length > 0 ? (
-						<>
-							<div className='grid grid-cols-[1.25rem_1fr_1fr_2.25rem] gap-3'>
-								<div className='col-start-2'>
-									<FieldLabel>Label</FieldLabel>
-								</div>
-								<div>
-									<FieldLabel>
-										Rate
-										<InfoTip side='right'>
-											Simple percentage of item total. Compound taxes are not supported.
-										</InfoTip>
-									</FieldLabel>
-								</div>
-							</div>
-							<ul className='flex flex-col gap-2'>
-								{fields.map((tax, i) => (
-									<Sortable
-										control={control}
-										key={tax.id}
-										tax={tax}
-										index={i}
-										disabled={fields.length < 2}
-									>
-										<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
-											<TrashIcon />
-											Delete
-										</DropdownMenuItem>
-									</Sortable>
-								))}
-							</ul>
-							<Button className='mt-3 self-end' onClick={addTax}>
-								Add Tax
-							</Button>
-						</>
-					) : (
-						<div className='mb-7 ml-8 flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
-							<p className='font-medium text-muted-foreground text-sm'>No taxes configured</p>
-							<Button onClick={addTax}>Add Tax</Button>
-						</div>
-					)}
-				</FieldGroup>
-			</SortableContext>
-		</DragDropProvider>
-	);
-}
-
-interface SortableProps {
-	tax: Prettify<FieldArrayWithId<FormValues, 'taxes', 'id'>>;
-	index: number;
-	control: Control<FormValues>;
-	children: React.ReactNode;
-	disabled?: boolean;
-}
-
-function Sortable({ tax, index, control, children, disabled = false }: SortableProps) {
-	const ref = useRef<HTMLLIElement>(null);
-
-	const { isDragging, handleRef } = useSortable({
-		id: tax.id,
-		index,
-		element: ref,
-		disabled,
-		modifiers: [
-			RestrictToVerticalAxis,
-			RestrictToElement.configure({ element: ref.current?.parentElement }),
-		],
-	});
-
-	return (
-		<li
-			ref={ref}
-			className={cn(
-				'relative grid origin-center grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-2',
-				'transition-all duration-200',
-				isDragging && 'drop-shadow-black/7 drop-shadow-md',
-			)}
-		>
-			<Button
-				variant='link'
-				className={cn(
-					'-ml-2.5 focus:!ring-0 group touch-manipulation',
-					disabled && 'cursor-not-allowed opacity-50',
-				)}
-				size='icon'
-				ref={handleRef}
-			>
-				<DotsSixIcon
-					ref={handleRef}
-					className={cn(
-						'inline-block size-6 h-8 self-center',
-						'rounded p-1 group-focus-visible:ring-2 group-focus-visible:ring-ring/50',
-					)}
-				/>
-			</Button>
-			<Controller
-				control={control}
-				name={`taxes.${index}.name`}
-				render={({ field, fieldState }) => (
-					<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-						<Input
-							type='text'
-							className={cn(isDragging && 'border-ring/70', 'transition-colors')}
-							placeholder='Label'
-							{...field}
-						/>
-						{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
-					</Field>
-				)}
-			/>
-			<Controller
-				control={control}
-				name={`taxes.${index}.rate`}
-				render={({ field, fieldState }) => (
-					<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-						<Input
-							suffix='%'
-							className={cn(isDragging && 'border-ring/70', 'transition-colors')}
-							type='text'
-							inputMode='decimal'
-							placeholder='2.5'
-							step='any'
-							onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
-							{...field}
-						/>
-						{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
-					</Field>
-				)}
-			/>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button
-						size='icon'
-						className={cn(isDragging && 'border-ring/70', 'bg-background')}
-						variant='outline'
-					>
-						<DotsThreeIcon />
-						<span className='sr-only'>Actions</span>
-					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent className='min-w-0' side='right'>
-					{children}
-				</DropdownMenuContent>
-			</DropdownMenu>
-		</li>
-	);
 }

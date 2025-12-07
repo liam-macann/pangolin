@@ -1,14 +1,7 @@
 'use client';
-
-import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
-import { RestrictToElement } from '@dnd-kit/dom/modifiers';
-import { DragDropProvider } from '@dnd-kit/react';
-import { isSortable, useSortable } from '@dnd-kit/react/sortable';
-import { SortableContext } from '@dnd-kit/sortable';
-import { DotsSixIcon, DotsThreeIcon } from '@phosphor-icons/react';
+import { DotsThreeIcon } from '@phosphor-icons/react';
 import { createInsertSchema } from 'drizzle-zod';
-import { AnimatePresence, motion } from 'motion/react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
 	type Control,
 	Controller,
@@ -20,11 +13,11 @@ import {
 	useWatch,
 } from 'react-hook-form';
 import { z } from 'zod';
+import { Sortable, SortableEmpty, SortableItem, SortableList } from '@/components/sortable-input';
 import { invoiceItems, unitEnum } from '@/db/schema';
 import type { getUserConfig } from '@/lib/data';
 import { cn, formatCurrency, getCurrencySymbol, type Prettify } from '@/lib/utils';
 import { intlNumber } from '@/lib/zod';
-
 import { Button } from '@/ui/button';
 import {
 	DropdownMenu,
@@ -36,7 +29,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
-import { Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/ui/field';
+import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/ui/field';
 import { Input } from '@/ui/input';
 import {
 	Select,
@@ -170,12 +163,10 @@ function ItemSum({
 }
 
 function InvoiceItemsInput({
-	className,
 	control,
 	getValues,
 	config,
 }: {
-	className?: string;
 	control: Control<FormValues>;
 	getValues: UseFormGetValues<FormValues>;
 	config: Config;
@@ -196,76 +187,141 @@ function InvoiceItemsInput({
 	} = useFormState({ control, name: 'items' });
 
 	return (
-		<DragDropProvider
-			onDragEnd={event => {
-				const { operation, canceled } = event;
-				const { source } = operation;
+		<Sortable items={fields} onReorder={({ initialIndex, index }) => move(initialIndex, index)}>
+			<div className='grid grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
+				<div className='col-start-2'>
+					<FieldLabel>Description</FieldLabel>
+				</div>
+				<FieldLabel>Quantity</FieldLabel>
+				<FieldLabel>Each</FieldLabel>
+			</div>
+			<SortableList>
+				{fields.map((item, i) => (
+					<SortableItem
+						index={i}
+						key={item.id}
+						id={item.id}
+						className={cn(
+							'grid grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] bg-background py-3',
+							'border-border border-y border-t-transparent border-dotted',
+							'group-not-first/sortable-item:group-[[style*="--dnd-translate"]]/sortable-item:group-not-[[style*="--dnd-translate:_0px_0px_0"]]/sortable-item:border-t-border',
+						)}
+					>
+						{/* Occlude tax badge on drag overlap */}
+						<div className='-inset-x-3 -z-10 pointer-events-none absolute inset-0 bg-background drop-shadow-none' />
 
-				if (canceled) return;
+						<Controller
+							control={control}
+							name={`items.${i}.label`}
+							render={({ field, fieldState }) => (
+								<Field className='gap-0.5' data-invalid={fieldState.invalid}>
+									<Input type='text' placeholder='Description' {...field} />
+									{fieldState.invalid && (
+										<FieldError className='text-xs' errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+						<Controller
+							control={control}
+							name={`items.${i}.quantity`}
+							render={({ field, fieldState }) => (
+								<Field className='gap-0.5' data-invalid={fieldState.invalid}>
+									<Input
+										type='number'
+										min={0}
+										inputMode='decimal'
+										placeholder='2'
+										onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+										{...field}
+										suffix={
+											<Controller
+												control={control}
+												name={`items.${i}.units`}
+												render={({ field }) => (
+													<Select {...field} onValueChange={field.onChange} required={false}>
+														<SelectTrigger size='xs' asChild>
+															<Button
+																size='xs'
+																variant='secondary'
+																className='-mr-1.5 data-placeholder:text-muted-foreground'
+															>
+																<SelectValue placeholder='units' />
+															</Button>
+														</SelectTrigger>
+														<SelectContent>
+															<SelectGroup>
+																<SelectLabel>Units</SelectLabel>
+																<SelectClear />
+																{unitEnum.enumValues.map(unit => (
+																	<SelectItem key={unit} value={unit}>
+																		{unit}
+																	</SelectItem>
+																))}
+															</SelectGroup>
+														</SelectContent>
+													</Select>
+												)}
+											/>
+										}
+									/>
+									{fieldState.invalid && (
+										<FieldError className='text-xs' errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+						<Controller
+							control={control}
+							name={`items.${i}.unitCost`}
+							render={({ field, fieldState }) => (
+								<Field className='gap-0.5' data-invalid={fieldState.invalid}>
+									<Input
+										type='number'
+										inputMode='decimal'
+										placeholder='40'
+										onKeyDown={e => ['e', 'E', '+'].includes(e.key) && e.preventDefault()}
+										prefix={getCurrencySymbol(config.currency, config.locale)}
+										{...field}
+									/>
+									{fieldState.invalid && (
+										<FieldError className='text-xs' errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
 
-				if (isSortable(source)) {
-					const initialIndex = source.sortable.initialIndex;
-					const targetIndex = source.sortable.index;
+						<SortableActions getValues={getValues} config={config} control={control} index={i}>
+							<DropdownMenuItem onClick={() => insert(i + 1, getValues(`items.${i}`))}>
+								Duplicate
+							</DropdownMenuItem>
+							<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
+								Delete
+							</DropdownMenuItem>
+						</SortableActions>
+					</SortableItem>
+				))}
+			</SortableList>
 
-					move(initialIndex, targetIndex);
-				}
-			}}
-		>
-			<SortableContext items={fields}>
-				<FieldGroup className={cn('gap-0', className)}>
-					{fields.length > 0 ? (
-						<>
-							<div className='grid grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2'>
-								<div className='col-start-2'>
-									<FieldLabel>Description</FieldLabel>
-								</div>
-								<FieldLabel>Quantity</FieldLabel>
-								<FieldLabel>Each</FieldLabel>
-							</div>
-							<ul className='flex flex-col'>
-								<AnimatePresence initial={false}>
-									{fields.map((item, i) => (
-										<Sortable
-											control={control}
-											getValues={getValues}
-											key={item.id}
-											item={item}
-											index={i}
-											disabled={fields.length < 2}
-											config={config}
-										>
-											<DropdownMenuItem onClick={() => insert(i + 1, getValues(`items.${i}`))}>
-												Duplicate
-											</DropdownMenuItem>
-											<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
-												Delete
-											</DropdownMenuItem>
-										</Sortable>
-									))}
-								</AnimatePresence>
-							</ul>
+			<div className='mt-6 ml-7 flex justify-between gap-8 group-data-[empty]/sortable:hidden'>
+				<Button onClick={addItem} size='sm'>
+					Add Item
+				</Button>
+				<ItemSum control={control} config={config} className='min-w-48 self-end' />
+			</div>
 
-							{errors && <FieldError className='mt-3 ml-7' errors={[errors]} />}
+			{errors && (
+				<FieldError className='mt-3 ml-7 group-data-[empty]/sortable:hidden' errors={[errors]} />
+			)}
 
-							<div className='mt-6 ml-7 flex justify-between gap-8'>
-								<Button onClick={addItem} size='sm'>
-									Add Item
-								</Button>
-								<ItemSum control={control} config={config} className='min-w-48 self-end' />
-							</div>
-						</>
-					) : (
-						<div className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 max-sm:flex-col'>
-							<div className='flex flex-col gap-1'>
-								<p className='font-medium text-muted-foreground text-sm'>Add an invoice item</p>
-								{errors && <FieldError className='' errors={[errors]} />}
-							</div>
-							<Button onClick={addItem}>Add Item</Button>
-						</div>
-					)}
-				</FieldGroup>
-			</SortableContext>
-		</DragDropProvider>
+			<SortableEmpty className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 max-sm:flex-col'>
+				<div className='flex flex-col gap-1'>
+					<p className='font-medium text-muted-foreground text-sm'>Add an invoice item</p>
+					{errors && <FieldError className='' errors={[errors]} />}
+				</div>
+				<Button onClick={addItem}>Add Item</Button>
+			</SortableEmpty>
+		</Sortable>
 	);
 }
 
@@ -277,171 +333,6 @@ interface SortableProps {
 	children: React.ReactNode;
 	disabled?: boolean;
 	config: Config;
-}
-
-function Sortable({
-	item,
-	index,
-	control,
-	disabled = false,
-	config,
-	getValues,
-	children,
-}: SortableProps) {
-	const ref = useRef<HTMLLIElement>(null);
-
-	const { isDragging, handleRef } = useSortable({
-		id: item.id,
-		index,
-		element: ref,
-		disabled,
-		modifiers: [
-			RestrictToVerticalAxis,
-			RestrictToElement.configure({ element: ref.current?.parentElement }),
-		],
-	});
-
-	return (
-		<motion.li
-			ref={ref}
-			className={cn('bg-background', 'group/sortable')}
-			initial={{ height: 0, opacity: 0, pointerEvents: 'none' }}
-			animate={{ height: 'auto', scale: 1, opacity: 1, pointerEvents: 'auto' }}
-			exit={{ height: 0, opacity: 0, pointerEvents: 'none' }}
-			transition={{ duration: 0.1, ease: 'easeOut' }}
-			key={item.id}
-		>
-			<motion.div
-				className={cn(
-					'relative grid origin-top grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2 border-border border-y border-t-transparent border-dotted py-3 *:transition-[filter]',
-					isDragging && '*:drop-shadow-black/7 *:drop-shadow-md',
-					'group-not-first/sortable:group-[[style*="--dnd-translate"]]/sortable:group-not-[[style*="--dnd-translate:_0px_0px_0"]]/sortable:border-t-border',
-				)}
-				initial={{
-					opacity: 0,
-					scale: 0.98,
-					filter: 'blur(4px)',
-				}}
-				animate={{
-					opacity: 1,
-					scale: 1,
-					filter: 'blur(0px)',
-				}}
-				exit={{
-					opacity: 0,
-					scale: 0.98,
-					filter: 'blur(4px)',
-				}}
-				transition={{ duration: 0.08, ease: 'easeOut' }}
-			>
-				<Button
-					variant='link'
-					className={cn('-ml-2.5 focus:!ring-0 group touch-manipulation')}
-					size='icon'
-					disabled={disabled}
-					ref={handleRef}
-				>
-					<DotsSixIcon
-						ref={handleRef}
-						className={cn(
-							'inline-block size-6 h-8 self-center',
-							'rounded p-1 group-focus-visible:ring-2 group-focus-visible:ring-ring/50',
-						)}
-					/>
-				</Button>
-				<Controller
-					control={control}
-					name={`items.${index}.label`}
-					render={({ field, fieldState }) => (
-						<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-							<Input
-								type='text'
-								className={cn(isDragging && 'border-ring/70', 'transition-colors')}
-								placeholder='Description'
-								{...field}
-							/>
-							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
-						</Field>
-					)}
-				/>
-				<Controller
-					control={control}
-					name={`items.${index}.quantity`}
-					render={({ field, fieldState }) => (
-						<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-							<Input
-								className={cn(isDragging && 'border-ring/70', 'transition-colors')}
-								type='number'
-								min={0}
-								inputMode='decimal'
-								placeholder='2'
-								onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
-								{...field}
-								suffix={
-									<Controller
-										control={control}
-										name={`items.${index}.units`}
-										render={({ field }) => (
-											<Select {...field} onValueChange={field.onChange} required={false}>
-												<SelectTrigger size='xs' asChild>
-													<Button
-														size='xs'
-														variant='secondary'
-														className='-mr-1.5 data-placeholder:text-muted-foreground'
-													>
-														<SelectValue placeholder='units' />
-													</Button>
-												</SelectTrigger>
-												<SelectContent>
-													<SelectGroup>
-														<SelectLabel>Units</SelectLabel>
-														<SelectClear />
-														{unitEnum.enumValues.map(unit => (
-															<SelectItem key={unit} value={unit}>
-																{unit}
-															</SelectItem>
-														))}
-													</SelectGroup>
-												</SelectContent>
-											</Select>
-										)}
-									/>
-								}
-							/>
-							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
-						</Field>
-					)}
-				/>
-				<Controller
-					control={control}
-					name={`items.${index}.unitCost`}
-					render={({ field, fieldState }) => (
-						<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-							<Input
-								className={cn(isDragging && 'border-ring/70', 'transition-colors')}
-								type='number'
-								inputMode='decimal'
-								placeholder='40'
-								onKeyDown={e => ['e', 'E', '+'].includes(e.key) && e.preventDefault()}
-								prefix={getCurrencySymbol(config.currency, config.locale)}
-								{...field}
-							/>
-							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
-						</Field>
-					)}
-				/>
-				<SortableActions
-					className={cn(isDragging && 'border-ring/70')}
-					getValues={getValues}
-					config={config}
-					control={control}
-					index={index}
-				>
-					{children}
-				</SortableActions>
-			</motion.div>
-		</motion.li>
-	);
 }
 
 // Isolate re-render due to field watch
