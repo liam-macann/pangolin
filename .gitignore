@@ -25,3 +25,4 @@ src/env.d.ts
 .next
 .vercel
 .env*.local
+next-env.d.ts
