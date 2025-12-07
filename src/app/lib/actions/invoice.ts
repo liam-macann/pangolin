@@ -24,7 +24,7 @@ const increment = (column: AnyColumn, value = 1) => sql`${column} + ${value}`;
 
 type InvoiceData = Pick<
 	typeof invoicesSchema.$inferInsert,
-	'clientData' | 'title' | 'description' | 'notes'
+	'clientDataId' | 'title' | 'description' | 'notes'
 > & {
 	// These are naively accepted in timezone of record, truncated to only date. createdAt stores a tz timestamp.
 	issuedAt?: Date;
@@ -59,13 +59,13 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 			id: true,
 			index: true,
 			yearIndex: true,
-			config: true,
+			configId: true,
 			createdAt: true,
 		});
 
 	// Explicit about accepted input to prevent injecting via spread operator
 	const defaults: z.infer<typeof inputSchema> = {
-		clientDataId: invoice.clientData,
+		clientDataId: invoice.clientDataId,
 		title: invoice.title,
 		description: invoice.description,
 		status: invoice.status || 'unpaid',
@@ -147,7 +147,7 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 				.values([
 					{
 						userId: validated.data.userId,
-						clientData: validated.data.clientDataId,
+						clientDataId: validated.data.clientDataId,
 
 						title: validated.data.title,
 						description: validated.data.description,
@@ -161,7 +161,7 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 						index: count.count,
 						yearIndex: count.yearCount,
 
-						config: c.id,
+						configId: c.id,
 					},
 				])
 				.returning({ id: invoicesSchema.id });
@@ -189,7 +189,7 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 						unitCost: i.unitCost,
 
 						order: i.order,
-						config: c.id,
+						configId: c.id,
 					})),
 				)
 				.then(async () => {
@@ -200,7 +200,7 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 								item.taxes.map(taxId => ({
 									itemId: item.id,
 									taxId,
-									config: c.id,
+									configId: c.id,
 								})),
 							),
 						);

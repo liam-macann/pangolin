@@ -35,7 +35,7 @@ import { Textarea } from '@/ui/textarea';
 import { InvoiceItemsField, itemsArraySchema } from './invoiceItems';
 
 const schema = createInsertSchema(invoicesSchema, {
-	clientData: z.uuid({ error: 'Please select a client' }),
+	clientDataId: z.uuid({ error: 'Please select a client' }),
 	title: z
 		.string()
 		.optional()
@@ -55,7 +55,7 @@ const schema = createInsertSchema(invoicesSchema, {
 	dueAt: z.date({ error: 'Please enter a due date' }),
 })
 	.pick({
-		clientData: true,
+		clientDataId: true,
 		title: true,
 		description: true,
 		notes: true,
@@ -145,7 +145,7 @@ export function CreateInvoiceDialog({
 					<form onSubmit={form.handleSubmit(onSubmit)}>
 						<FieldGroup className='gap-4'>
 							<Controller
-								name='clientData'
+								name='clientDataId'
 								control={form.control}
 								render={({ field, fieldState }) => (
 									<Field orientation='horizontal'>

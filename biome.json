@@ -39,7 +39,8 @@
 		},
 		"domains": {
 			"next": "recommended",
-			"react": "recommended"
+			"react": "recommended",
+			"project": "recommended"
 		}
 	},
 	"javascript": {
