@@ -63,6 +63,7 @@ export default function ConfigForm({
 			colorScheme: config.colorScheme,
 		},
 	});
+	const [formVersion, setFormVersion] = useState(0); // Reset counter
 
 	return (
 		<form
@@ -84,7 +85,10 @@ export default function ConfigForm({
 						rate: Number(tax.rate) / 100,
 					}));
 
-					const promise = updateUserConfig(config, floatTaxes).then(() => reset(val));
+					const promise = updateUserConfig(config, floatTaxes).then(() => {
+						setFormVersion(v => v + 1);
+						reset(val);
+					});
 
 					toast.promise(promise, {
 						loading: 'Updating settings…',
@@ -212,7 +216,7 @@ export default function ConfigForm({
 					}}
 				/>
 
-				<TaxRateField control={control} className='mt-4' />
+				<TaxRateField key={formVersion} control={control} className='mt-4' />
 			</FieldGroup>
 
 			<FieldGroup className='mb-14'>
@@ -306,7 +310,10 @@ export default function ConfigForm({
 				<Button
 					type='button'
 					variant='secondary'
-					onClick={() => reset()}
+					onClick={() => {
+						setFormVersion(v => v + 1);
+						reset();
+					}}
 					disabled={!isDirty || isSubmitting}
 				>
 					Cancel

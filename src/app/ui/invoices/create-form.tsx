@@ -80,6 +80,7 @@ export function CreateInvoiceDialog({
 	>;
 }) {
 	const [open, setOpen] = useState(false);
+	const [formVersion, setFormVersion] = useState(0); // Reset counter
 	const { mutate } = useInvoices();
 	const { data: clientsData, isLoading: isClientsLoading, isError: isClientsError } = useClients();
 
@@ -112,6 +113,7 @@ export function CreateInvoiceDialog({
 			// This should really pass the action returned invoice, but that needs an identical shape to the fetcher
 			mutate();
 			setOpen(false);
+			setFormVersion(v => v + 1);
 			form.reset();
 		});
 
@@ -301,6 +303,7 @@ export function CreateInvoiceDialog({
 							config={config}
 							control={form.control}
 							getValues={form.getValues}
+							key={formVersion}
 							className='mb-6'
 						/>
 					</form>
@@ -311,7 +314,12 @@ export function CreateInvoiceDialog({
 						</Button>
 						<DialogClose
 							className='order-first'
-							onClick={() => setTimeout(() => form.reset(), 200)}
+							onClick={() =>
+								setTimeout(() => {
+									setFormVersion(v => v + 1);
+									form.reset();
+								}, 200)
+							}
 							asChild
 						>
 							<Button variant='secondary'>Cancel</Button>
