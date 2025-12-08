@@ -81,7 +81,27 @@ export function coalesce<Args extends [SqlOrPrimitive, SqlOrPrimitive, ...SqlOrP
 	)})`;
 }
 
-export const encrypted = customType<{ data: Uint8Array; driverData: Buffer }>({
-	dataType: () => 'bytea',
-	fromDriver: value => new Uint8Array(value),
-});
+export const encrypted = customType<{ data: Uint8Array; driverData: Uint8Array | Buffer | string }>(
+	{
+		dataType: () => 'bytea',
+		toDriver(value: Uint8Array | Buffer): string {
+			// Uint8Array toHex not implemented in Node.js
+			const buffer = Buffer.isBuffer(value) ? value : Buffer.from(value);
+
+			// Convert to Postgres hex format — safe to transport inside SQL param
+			return `\\x${buffer.toString('hex')}`;
+		},
+		fromDriver(value): Uint8Array {
+			// Conservatively handle DB driver behaviour with union type
+
+			if (value instanceof Uint8Array) return value;
+
+			// If returned as Buffer
+			if (Buffer.isBuffer(value)) return new Uint8Array(value);
+
+			// If hex encoded string
+			if (!value.startsWith('\\x')) throw new Error('String is not hex encoded');
+			return new Uint8Array(Buffer.from(value.slice(2), 'hex'));
+		},
+	},
+);

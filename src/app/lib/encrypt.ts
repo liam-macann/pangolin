@@ -1,18 +1,30 @@
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { hexToBytes, managedNonce, randomBytes } from '@noble/ciphers/utils.js';
 
+import { eq } from 'drizzle-orm';
+import { headers } from 'next/headers';
+import { getSession } from '@/auth';
+import { db } from '@/db';
+import { keychain } from '@/db/schema';
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const chacha = managedNonce(xchacha20poly1305);
 
-export function encrypt(value: string, DEK: Uint8Array): Uint8Array {
+/** Encrypts a string using the provided Data Encryption Key (DEK)
+ * @internal
+ */
+function encrypt(value: string, DEK: Uint8Array): Uint8Array {
 	const data = encoder.encode(value);
 	const ciphertext = chacha(DEK).encrypt(data);
 
 	return ciphertext;
 }
 
-export function decrypt(value: Uint8Array, DEK: Uint8Array): string {
+/** Decrypts a Uint8Array using the provided Data Encryption Key (DEK)
+ * @internal
+ */
+function decrypt(value: Uint8Array, DEK: Uint8Array): string {
 	try {
 		const bytestream = chacha(DEK).decrypt(value);
 		const plaintext = decoder.decode(bytestream);
@@ -24,43 +36,111 @@ export function decrypt(value: Uint8Array, DEK: Uint8Array): string {
 	}
 }
 
-const wrap = (DEK: Uint8Array, KEK: Uint8Array): Uint8Array => chacha(KEK).encrypt(DEK);
-const unwrap = (DEK: Uint8Array, KEK: Uint8Array): Uint8Array => chacha(KEK).decrypt(DEK);
+/** Retrieves and unwraps the Data Encryption Key (DEK) for an authenticated user */
+export async function crypto(uuid: string) {
+	let destroyed = false;
+	const DEK = await retrieveDEK(uuid);
 
-import { eq } from 'drizzle-orm';
-import { headers } from 'next/headers';
-import { getSession } from '@/auth';
-import { db } from '@/db';
-import { keychain } from '@/db/schema';
+	const auth = async <T>(fn: () => T) => {
+		if (destroyed) throw new Error('DEK has been destroyed');
+		const session = await getSession({ headers: await headers() });
 
-async function generateDEK(uuid: string) {
-	const SECRET_KEK = hexToBytes(process.env.DB_ENCRYPTION_SECRET as string);
-	const key = wrap(randomBytes(32), SECRET_KEK);
+		// Explicit about which user DEK is requested
+		if (session?.user.id !== uuid) {
+			destroy();
+			throw new Error('Unauthorized');
+		}
 
-	const [res] = await db
-		.insert(keychain)
-		.values({ id: uuid, key })
-		.returning({ key: keychain.key });
+		return fn();
+	};
 
-	return res;
+	const _encrypt = async (...args: string[]) => auth(() => args.map(arg => encrypt(arg, DEK)));
+	const _decrypt = async (...args: Uint8Array[]) => auth(() => args.map(arg => decrypt(arg, DEK)));
+
+	const destroy = () => {
+		DEK.fill(0);
+		destroyed = true;
+	};
+
+	return {
+		/** Encrypts into array of ciphertext */
+		encrypt: _encrypt,
+		/** Decrypts ciphertext, returning an array of strings */
+		decrypt: _decrypt,
+		/** Clear the internal DEK from memory */
+		destroy,
+	};
 }
 
-export async function retrieveDEK(uuid: string) {
+//
+//
+//
+// Key handling
+//
+
+/**
+ * Use the Key Encryption Key (KEK) to perform operations on data.
+ *
+ * @internal
+ *
+ * @param callback - The function to execute with the KEK.
+ * @returns The result of the callback function.
+ */
+function withKEK<T>(callback: (KEK: Uint8Array) => T) {
+	const SECRET_KEK = hexToBytes(process.env.DB_ENCRYPTION_SECRET as string);
+
+	const val = callback(SECRET_KEK);
+	SECRET_KEK.fill(0);
+	return val;
+}
+
+const wrap = (DEK: Uint8Array): Uint8Array => withKEK(KEK => chacha(KEK).encrypt(DEK));
+const unwrap = (DEK: Uint8Array): Uint8Array => withKEK(KEK => chacha(KEK).decrypt(DEK));
+
+//
+//
+//
+// DB operations
+//
+
+function generateWrappedDEK() {
+	const SECRET_DEK = randomBytes(32);
+	const key = wrap(SECRET_DEK);
+	SECRET_DEK.fill(0);
+
+	return key;
+}
+
+async function retrieveDEK(uuid: string) {
 	const session = await getSession({ headers: await headers() });
 
 	// Explicit about which user DEK is requested
 	if (session?.user.id !== uuid) throw new Error('Unauthorized');
 
-	const { key } = await db
-		.select({ key: keychain.key })
-		.from(keychain)
-		.where(eq(keychain.id, session.user.id))
-		// Acceptable to make second DB call on init
-		.then(async ([res]) => res ?? (await generateDEK(session.user.id)));
+	const insertDEK = async () => {
+		const [res] = await db
+			.insert(keychain)
+			.values({ id: session.user.id, key: generateWrappedDEK() })
+			.onConflictDoNothing()
+			.returning({ key: keychain.key });
+
+		// Refetch if key already exists (`onConflictDoNothing()` prevents return)
+		// Addresses concurrency issue when multiple requests are made prior to keygen
+		// (Avoids recursion to allow single retry and prevent infinite loop)
+		return res.key || fetchDEK();
+	};
+
+	const fetchDEK = async () =>
+		await db
+			.select({ key: keychain.key })
+			.from(keychain)
+			.where(eq(keychain.id, session.user.id))
+			.then(([res]) => res?.key);
+
+	const key = (await fetchDEK()) ?? (await insertDEK());
 
 	try {
-		const SECRET_KEK = hexToBytes(process.env.DB_ENCRYPTION_SECRET as string);
-		return unwrap(key, SECRET_KEK);
+		return unwrap(key);
 	} catch {
 		// Avoid leaking errors
 		throw new Error('Failed to unwrap DEK');
