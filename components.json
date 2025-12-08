@@ -17,5 +17,8 @@
 		"ui": "@/src/components/ui",
 		"lib": "@/lib",
 		"hooks": "@/lib/hooks"
+	},
+	"registries": {
+		"@basecn": "https://basecn.dev/r/{name}.json"
 	}
 }

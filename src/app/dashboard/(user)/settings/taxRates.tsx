@@ -100,7 +100,7 @@ export function TaxRateField<T extends FormValues>({
 				items={fields}
 				onReorder={({ initialIndex, index }) => move(initialIndex, index)}
 			>
-				<div className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-3 group-data-[empty]/sortable:hidden'>
+				<div className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
 					<FieldLabel className='col-start-2'>Label</FieldLabel>
 					<FieldLabel>
 						Rate

@@ -21,6 +21,9 @@ export default async function Page() {
 					<a href='#taxation'>Taxation</a>
 				</Button>
 				<Button size='sm' className='text-foreground text-sm' variant='ghost' asChild>
+					<a href='#details'>Your details</a>
+				</Button>
+				<Button size='sm' className='text-foreground text-sm' variant='ghost' asChild>
 					<a href='#localisation'>Localisation</a>
 				</Button>
 			</nav>

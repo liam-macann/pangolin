@@ -154,7 +154,7 @@ export function SortableItem({
 					<Button
 						variant='link'
 						className={cn(
-							'focus:!ring-0 group w-5 grow-0 touch-manipulation',
+							'focus:!ring-0 group w-6 grow-0 touch-manipulation',
 							disabled && 'cursor-not-allowed opacity-50',
 						)}
 						size='icon'
@@ -178,7 +178,7 @@ export function SortableActions({
 	children,
 	heading = 'Actions',
 }: {
-	children: JSX.Element;
+	children: ReactNode;
 	heading?: ReactNode;
 }) {
 	const { isDragging } = useContext(SortableItemContext);

@@ -28,6 +28,7 @@ import {
 } from '@/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
 import { TextTooltip } from '@/ui/tooltip';
+import { PaymentDetailsField, paymentArraySchema } from './paymentDetails';
 import { TaxRateField, taxArraySchema } from './taxRates';
 
 const formSchema = createInsertSchema(config)
@@ -39,7 +40,7 @@ const formSchema = createInsertSchema(config)
 		numberingScheme: true,
 		colorScheme: true,
 	})
-	.extend({ taxes: taxArraySchema });
+	.extend({ taxes: taxArraySchema, payment: paymentArraySchema });
 
 export default function ConfigForm({
 	config,
@@ -51,11 +52,13 @@ export default function ConfigForm({
 		handleSubmit,
 		control,
 		reset,
+		getFieldState,
 	} = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			taxRegistration: config.taxRegistration,
 			taxes: config.taxes.map(t => ({ ...t, rate: t.rate * 100 })),
+			payment: [],
 			timezone: config.timezone,
 			locale: config.locale,
 			currency: config.currency,
@@ -217,6 +220,26 @@ export default function ConfigForm({
 				/>
 
 				<TaxRateField key={formVersion} control={control} className='mt-4' />
+			</FieldGroup>
+
+			<FieldGroup>
+				<h2 className='flex items-baseline gap-3 font-bold text-2xl' id='details'>
+					Your details
+				</h2>
+
+				<FieldSet>
+					<FieldContent>
+						<FieldLegend className='flex items-center gap-2'>Payment information</FieldLegend>
+						<FieldDescription>
+							Bank account numbers will be printed on the invoice footer. Please ensure details are
+							accurate, and valid for the region.
+						</FieldDescription>
+						{getFieldState('taxes').error?.root && (
+							<FieldError errors={[getFieldState('taxes').error?.root]} />
+						)}
+					</FieldContent>
+					<PaymentDetailsField key={formVersion} control={control} />
+				</FieldSet>
 			</FieldGroup>
 
 			<FieldGroup className='mb-14'>
