@@ -345,7 +345,7 @@ function ColorPalette({
 					<div key={key} className='flex flex-col'>
 						<Button variant='primary' size='icon-sm' asChild>
 							<RadioGroupItem
-								className='peer !border-gray-12/20 rounded-full text-white outline-gray-11 data-[state="checked"]:outline'
+								className='peer !border-black/20 rounded-full text-white outline-gray-11 data-[state="checked"]:outline'
 								style={{ backgroundColor: scheme.accent }}
 								value={key}
 								onMouseEnter={() => setHover(key)}
