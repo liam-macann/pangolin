@@ -174,7 +174,7 @@ export function TaxRateField<T extends FormValues>({
 
 function DuplicateWarning({ control }: { control: Control<FormValues> }) {
 	const taxes = useWatch({ control, name: 'taxes' });
-	const names = taxes.map(tax => tax.name);
+	const names = taxes.map(tax => tax.name).filter(name => name.trim() !== '');
 
 	const areDuplicates = new Set(names).size !== names.length;
 
