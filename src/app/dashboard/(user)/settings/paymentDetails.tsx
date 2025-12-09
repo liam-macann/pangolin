@@ -11,6 +11,7 @@ import {
 	SortableItem,
 	SortableList,
 } from '@/components/sortable-input';
+import { cn } from '@/lib/utils';
 import {
 	Autocomplete,
 	AutocompleteEmpty,
@@ -25,36 +26,45 @@ import { DropdownMenuItem } from '@/ui/dropdown-menu';
 import { Field, FieldError, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 
-export const paymentArraySchema = z.array(
-	z.object({
-		label: z.string().min(1, 'Please enter a label'),
-		value: z.string().min(1, 'Please enter a value'),
-	}),
-);
+export const paymentArraySchema = z
+	.array(
+		z.object({
+			label: z.string().min(1, 'Please enter a label'),
+			value: z.string().min(1, 'Please enter a value'),
+		}),
+	)
+	.max(15, 'Too many payment details');
 
 type PaymentField = z.infer<typeof paymentArraySchema>;
 
 interface FormValues extends FieldValues {
-	payment: PaymentField;
+	paymentDetails: PaymentField;
 }
 
 export function PaymentDetailsField<T extends FormValues>({
 	control: _control,
+	className,
 }: {
 	control: Control<T>;
+	className?: string;
 }) {
 	// Necessary, as RHF can't extract typings from the generic
 	const control = _control as unknown as Control<FormValues>;
 
-	const { fields, append, remove, move } = useFieldArray({ control, name: 'payment' });
+	const { fields, append, remove, move } = useFieldArray({ control, name: 'paymentDetails' });
 	const addLine = () => append({ label: '', value: '' });
 
 	return (
 		<Sortable
-			className='flex flex-col gap-2'
+			className={cn('flex flex-col gap-2', className)}
 			items={fields}
 			onReorder={({ initialIndex, index }) => move(initialIndex, index)}
 		>
+			<SortableEmpty className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
+				<p className='font-medium text-muted-foreground text-sm'>No payment details provided</p>
+				<Button onClick={addLine}>Add Details</Button>
+			</SortableEmpty>
+
 			<div className='grid grid-cols-[1.5rem_1fr_2fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
 				<FieldLabel className='col-start-2'>Label</FieldLabel>
 				<FieldLabel>Value</FieldLabel>
@@ -69,11 +79,6 @@ export function PaymentDetailsField<T extends FormValues>({
 					</Item>
 				))}
 			</SortableList>
-
-			<SortableEmpty className='mb-7 flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
-				<p className='font-medium text-muted-foreground text-sm'>No payment details provided</p>
-				<Button onClick={addLine}>Add Details</Button>
-			</SortableEmpty>
 
 			<div className='mt-3 flex justify-between gap-2 self-end group-data-[empty]/sortable:hidden'>
 				<Button onClick={() => remove()} variant='secondary'>
@@ -103,7 +108,7 @@ function Item({
 		<SortableItem id={id} index={index} className='grid grid-cols-[1.5rem_1fr_2fr_2.25rem]'>
 			<Controller
 				control={control}
-				name={`payment.${index}.label`}
+				name={`paymentDetails.${index}.label`}
 				render={({ field, fieldState }) => (
 					<Field className='gap-0.5' data-invalid={fieldState.invalid}>
 						<Autocomplete
@@ -143,7 +148,7 @@ function Item({
 			/>
 			<Controller
 				control={control}
-				name={`payment.${index}.value`}
+				name={`paymentDetails.${index}.value`}
 				render={({ field, fieldState }) => (
 					<Field className='gap-0.5' data-invalid={fieldState.invalid}>
 						<Input type='text' {...field} placeholder={scheme || undefined} />

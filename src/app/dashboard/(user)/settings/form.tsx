@@ -8,7 +8,7 @@ import { Controller, type ControllerRenderProps, useForm } from 'react-hook-form
 import { toast } from 'sonner';
 import type { z } from 'zod';
 import { InfoTip } from '@/components/info';
-import { config } from '@/db/schema/data';
+import { config as configSchema } from '@/db/schema';
 import { updateUserConfig } from '@/lib/actions/config';
 import type { getUserConfig } from '@/lib/data';
 import schemes from '@/src/app/ui/colorSchemes';
@@ -29,9 +29,9 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
 import { TextTooltip } from '@/ui/tooltip';
 import { PaymentDetailsField, paymentArraySchema } from './paymentDetails';
-import { TaxRateField, taxArraySchema } from './taxRates';
+import { DuplicateWarning, TaxRateField, taxArraySchema } from './taxRates';
 
-const formSchema = createInsertSchema(config)
+const formSchema = createInsertSchema(configSchema)
 	.pick({
 		taxRegistration: true,
 		timezone: true,
@@ -40,7 +40,7 @@ const formSchema = createInsertSchema(config)
 		numberingScheme: true,
 		colorScheme: true,
 	})
-	.extend({ taxes: taxArraySchema, payment: paymentArraySchema });
+	.extend({ taxes: taxArraySchema, paymentDetails: paymentArraySchema });
 
 export default function ConfigForm({
 	config,
@@ -58,7 +58,7 @@ export default function ConfigForm({
 		defaultValues: {
 			taxRegistration: config.taxRegistration,
 			taxes: config.taxes.map(t => ({ ...t, rate: t.rate * 100 })),
-			payment: [],
+			paymentDetails: config.paymentDetails || [],
 			timezone: config.timezone,
 			locale: config.locale,
 			currency: config.currency,
@@ -219,7 +219,25 @@ export default function ConfigForm({
 					}}
 				/>
 
-				<TaxRateField key={formVersion} control={control} className='mt-4' />
+				<FieldSet className='-mb-4 mt-4'>
+					<FieldContent className='ml-8'>
+						<FieldLegend className='flex items-center gap-2'>
+							Tax rates
+							<InfoTip side='right'>
+								Taxes defined here will always be printed on invoices, even if no tax is applicable
+							</InfoTip>
+						</FieldLegend>
+						<FieldDescription>
+							When registered for tax, each rate can be applied on a per-item basis.
+						</FieldDescription>
+						<DuplicateWarning control={control} />
+						{getFieldState('taxes').error?.root && (
+							<FieldError errors={[getFieldState('taxes').error?.root]} />
+						)}
+					</FieldContent>
+
+					<TaxRateField key={formVersion} control={control} className='min-h-32' />
+				</FieldSet>
 			</FieldGroup>
 
 			<FieldGroup>
@@ -234,11 +252,11 @@ export default function ConfigForm({
 							Bank account numbers will be printed on the invoice footer. Please ensure details are
 							accurate, and valid for the region.
 						</FieldDescription>
-						{getFieldState('taxes').error?.root && (
-							<FieldError errors={[getFieldState('taxes').error?.root]} />
+						{getFieldState('paymentDetails').error?.root && (
+							<FieldError errors={[getFieldState('paymentDetails').error?.root]} />
 						)}
 					</FieldContent>
-					<PaymentDetailsField key={formVersion} control={control} />
+					<PaymentDetailsField key={formVersion} control={control} className='-mb-4 min-h-32' />
 				</FieldSet>
 			</FieldGroup>
 

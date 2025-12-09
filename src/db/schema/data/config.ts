@@ -12,6 +12,7 @@ import {
 	uuid,
 	varchar,
 } from 'drizzle-orm/pg-core';
+import { encrypted } from '@/lib/utils/drizzle';
 
 // Schema imports
 import { users } from '../auth';
@@ -67,6 +68,7 @@ export const config = pgTable(
 		locale: text().notNull(),
 		currency: varchar('currency', { length: 3 }).notNull(),
 		taxRegistration: boolean('tax_registration').notNull(),
+		paymentDetails: encrypted('payment_details').array(),
 		numberingScheme: numberingScheme('numbering_scheme').notNull(),
 		colorScheme: colorEnum('color_scheme').notNull().default('blue'),
 		...scdDates,

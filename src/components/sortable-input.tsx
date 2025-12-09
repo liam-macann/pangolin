@@ -48,7 +48,7 @@ export function Sortable({
 export function SortableList({ className, children }: { className?: string; children: ReactNode }) {
 	return (
 		<LayoutGroup>
-			<ul className={cn('', className)}>
+			<ul className={cn('group-data-[empty]/sortable:hidden', className)}>
 				<AnimatePresence initial={false}>{children}</AnimatePresence>
 			</ul>
 		</LayoutGroup>

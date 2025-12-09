@@ -19,7 +19,7 @@ import {
 } from '@/components/sortable-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { taxes } from '@/db/schema';
-import type { Prettify } from '@/lib/utils';
+import { cn, type Prettify } from '@/lib/utils';
 import { intlNumber } from '@/lib/zod';
 import { Button } from '@/ui/button';
 import { DropdownMenuItem } from '@/ui/dropdown-menu';
@@ -80,99 +80,89 @@ export function TaxRateField<T extends FormValues>({
 	const addTax = () => append({ name: '', rate: '' });
 
 	return (
-		<FieldSet className={className}>
-			<FieldContent className='ml-8'>
-				<FieldLegend className='flex items-center gap-2'>
-					Tax rates
+		<Sortable
+			className={cn('flex flex-col gap-2', className)}
+			items={fields}
+			onReorder={({ initialIndex, index }) => move(initialIndex, index)}
+		>
+			<div className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
+				<FieldLabel className='col-start-2'>Label</FieldLabel>
+				<FieldLabel>
+					Rate
 					<InfoTip side='right'>
-						Taxes defined here will always be printed on invoices, even if no tax is applicable
+						Simple percentage of item total. Compound taxes are not supported.
 					</InfoTip>
-				</FieldLegend>
-				<FieldDescription>
-					When registered for tax, each rate can be applied on a per-item basis.
-				</FieldDescription>
-				<DuplicateWarning control={control} />
-				{state.error?.root && <FieldError errors={[state.error?.root]} />}
-			</FieldContent>
+				</FieldLabel>
+			</div>
+			<SortableList>
+				{fields.map((tax, i) => (
+					<SortableItem
+						key={tax.id}
+						id={tax.id}
+						index={i}
+						className='grid-cols-[1.5rem_1fr_1fr_2.25rem]'
+					>
+						<Controller
+							control={control}
+							name={`taxes.${i}.name`}
+							render={({ field, fieldState }) => (
+								<Field className='gap-0.5' data-invalid={fieldState.invalid}>
+									<Input type='text' placeholder='Label' {...field} />
+									{fieldState.invalid && (
+										<FieldError className='text-xs' errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+						<Controller
+							control={control}
+							name={`taxes.${i}.rate`}
+							render={({ field, fieldState }) => (
+								<Field className='gap-0.5' data-invalid={fieldState.invalid}>
+									<Input
+										suffix='%'
+										type='text'
+										inputMode='decimal'
+										placeholder='2.5'
+										step='any'
+										onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+										{...field}
+									/>
+									{fieldState.invalid && (
+										<FieldError className='text-xs' errors={[fieldState.error]} />
+									)}
+								</Field>
+							)}
+						/>
+						<SortableActions>
+							<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
+								<TrashIcon />
+								Delete
+							</DropdownMenuItem>
+						</SortableActions>
+					</SortableItem>
+				))}
+			</SortableList>
 
-			<Sortable
-				className='flex flex-col gap-2'
-				items={fields}
-				onReorder={({ initialIndex, index }) => move(initialIndex, index)}
-			>
-				<div className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
-					<FieldLabel className='col-start-2'>Label</FieldLabel>
-					<FieldLabel>
-						Rate
-						<InfoTip side='right'>
-							Simple percentage of item total. Compound taxes are not supported.
-						</InfoTip>
-					</FieldLabel>
-				</div>
-				<SortableList>
-					{fields.map((tax, i) => (
-						<SortableItem
-							key={tax.id}
-							id={tax.id}
-							index={i}
-							className='grid-cols-[1.5rem_1fr_1fr_2.25rem]'
-						>
-							<Controller
-								control={control}
-								name={`taxes.${i}.name`}
-								render={({ field, fieldState }) => (
-									<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-										<Input type='text' placeholder='Label' {...field} />
-										{fieldState.invalid && (
-											<FieldError className='text-xs' errors={[fieldState.error]} />
-										)}
-									</Field>
-								)}
-							/>
-							<Controller
-								control={control}
-								name={`taxes.${i}.rate`}
-								render={({ field, fieldState }) => (
-									<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-										<Input
-											suffix='%'
-											type='text'
-											inputMode='decimal'
-											placeholder='2.5'
-											step='any'
-											onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
-											{...field}
-										/>
-										{fieldState.invalid && (
-											<FieldError className='text-xs' errors={[fieldState.error]} />
-										)}
-									</Field>
-								)}
-							/>
-							<SortableActions>
-								<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
-									<TrashIcon />
-									Delete
-								</DropdownMenuItem>
-							</SortableActions>
-						</SortableItem>
-					))}
-				</SortableList>
+			<SortableEmpty className='ml-8 flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
+				<p className='font-medium text-muted-foreground text-sm'>No taxes configured</p>
+				<Button onClick={addTax}>Add Tax</Button>
+			</SortableEmpty>
 
-				<SortableEmpty className='mb-7 ml-8 flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
-					<p className='font-medium text-muted-foreground text-sm'>No taxes configured</p>
-					<Button onClick={addTax}>Add Tax</Button>
-				</SortableEmpty>
-
-				<Button className='mt-3 self-end group-data-[empty]/sortable:hidden' onClick={addTax}>
-					Add Tax
-				</Button>
-			</Sortable>
-		</FieldSet>
+			<Button className='mt-3 self-end group-data-[empty]/sortable:hidden' onClick={addTax}>
+				Add Tax
+			</Button>
+		</Sortable>
 	);
 }
 
-function DuplicateWarning({ control }: { control: Control<FormValues> }) {
+export function DuplicateWarning<T extends FormValues>({
+	control: _control,
+}: {
+	control: Control<T>;
+}) {
+	const control = _control as unknown as Control<FormValues>;
+
 	const taxes = useWatch({ control, name: 'taxes' });
 	const names = taxes.map(tax => tax.name).filter(name => name.trim() !== '');
 

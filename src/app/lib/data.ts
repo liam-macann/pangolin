@@ -30,6 +30,7 @@ import {
 	itemTaxes,
 	taxes as taxesSchema,
 } from '@/db/schema';
+import { crypto } from '@/lib/encrypt';
 import { formatCurrency, formatDateToLocal, invoiceReference, omit } from '@/lib/utils';
 import { jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
 
@@ -71,11 +72,18 @@ function invoiceQuery<Detailed extends boolean>(
 		...getColumns(invoicesWithSum),
 
 		client: getColumns(clientData),
-		config: omit(getColumns(configSchema), ['validFrom', 'validTo', 'id', 'userId']),
+		config: omit(getColumns(configSchema), [
+			'validFrom',
+			'validTo',
+			'id',
+			'userId',
+			'paymentDetails',
+		]),
 	} as const;
 
 	const detailedSelect = {
 		...baseSelect,
+		config: { ...baseSelect.config, paymentDetails: configSchema.paymentDetails },
 		items: itemsAggDetailed.items,
 	};
 
@@ -223,10 +231,19 @@ export async function fetchInvoice(id: string) {
 
 		if (!res) throw new Error('Invoice not found');
 
+		const vault = await crypto(session.user.id);
+
 		const inv = {
 			...res,
+			config: {
+				...res.config,
+				paymentDetails:
+					res.config.paymentDetails && (await vault.decrypt(...res.config.paymentDetails)),
+			},
 			formatted: { reference: invoiceReference(res, res.config.numberingScheme) },
 		};
+
+		vault.destroy();
 
 		return { ...inv, tax };
 	} catch (error) {
@@ -400,17 +417,34 @@ export async function getUserConfig() {
 	if (!session) throw new Error('Request not authenticated');
 
 	try {
-		const res = await db.query.config.findFirst({
-			where: {
-				userId: session.user.id,
-				validTo: undefined,
-			},
-			with: {
-				user: true,
-				taxes: { orderBy: { id: 'asc' } },
-			},
-			orderBy: { validFrom: 'desc' },
-		});
+		const vault = await crypto(session.user.id);
+
+		const res = await db.query.config
+			.findFirst({
+				where: {
+					userId: session.user.id,
+					validTo: undefined,
+				},
+				with: {
+					user: true,
+					taxes: { orderBy: { id: 'asc' } },
+				},
+				orderBy: { validFrom: 'desc' },
+			})
+			.then(
+				async res =>
+					res && {
+						...res,
+						paymentDetails:
+							res.paymentDetails &&
+							(await vault.decrypt(...res.paymentDetails)).map(v => {
+								const [label, value] = v.split(': ');
+								return { label, value };
+							}),
+					},
+			);
+
+		vault.destroy();
 
 		// If user has no current config
 		if (!res) throw new Error('User has no current valid config.');

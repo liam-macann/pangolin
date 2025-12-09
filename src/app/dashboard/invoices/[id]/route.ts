@@ -6,7 +6,6 @@ import { fetchInvoice, getUser } from '@/lib/data';
 import { BottomLayout, CenteredLayout } from '@/lib/pdf-verticalalign';
 import { formatCurrency, formatDateToLocal, formatNumber, pluralize } from '@/lib/utils';
 import type { Enum } from '@/lib/utils/drizzle';
-
 import schemes from '@/src/app/ui/colorSchemes';
 
 const fontSize = {
@@ -26,9 +25,6 @@ const singularUnits: Record<Enum<typeof unitEnum>, string> = {
 /** Convert pixels to points */
 const px = (v: number) => (v / 4) * 3;
 const spacing = (i: number) => px(4 * i);
-
-/** Necessary before execution to estimate bottom margin height */
-const footerLeftContent = ['Name: First Lastname', 'BSB: 123 456', 'Acc #: 123 456 789'];
 
 const footerStyles = {
 	border: 0,
@@ -51,9 +47,9 @@ const footerMargins = {
 	safeAreaBottom: footerLineHeight(1),
 };
 
-const footerHeight = () => {
+const footerHeight = (lines: number) => {
 	// Lines incremented for safe area
-	const textHeight = footerLineHeight(footerLeftContent.length);
+	const textHeight = footerLineHeight(lines);
 
 	const tablePadding = 2; // Default pdfmake top-padding
 
@@ -68,8 +64,8 @@ const footerHeight = () => {
 };
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-	const { id } = await params;
-	const [invoice, user] = await Promise.all([fetchInvoice(id), getUser()]);
+	const { id: invoiceId } = await params;
+	const [invoice, user] = await Promise.all([fetchInvoice(invoiceId), getUser()]);
 
 	if (!invoice) {
 		return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
@@ -81,16 +77,17 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 			bold: path.resolve('./src/fonts/InstrumentSans-Semibold.ttf'),
 		},
 	};
-
 	const colors = schemes[invoice.config.colorScheme];
-
 	const printer = new PdfPrinter(fonts);
+
+	/** Necessary before execution to estimate bottom margin height */
+	const footerLeftContent: string[] = invoice.config.paymentDetails || [];
 
 	const pageMargins: [number, number, number, number] = [
 		spacing(18), // L
 		spacing(18), // T
 		spacing(18), // R
-		footerHeight(), // B
+		footerHeight(footerLeftContent.length), // B
 	];
 
 	const reference = `${invoice.config.taxRegistration ? 'Tax ' : ''}Invoice ${invoice.formatted.reference}`;
