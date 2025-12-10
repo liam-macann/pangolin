@@ -1,5 +1,37 @@
-import { defineRelations } from 'drizzle-orm';
+import { defineRelations, type ExtractTablesFromSchema, type RelationsBuilder } from 'drizzle-orm';
 import * as schema from './schema';
+
+type Tables = ExtractTablesFromSchema<typeof schema>;
+
+/** Helper function to define base relations for invoices and derived views */
+function invoiceBaseRelations(
+	r: RelationsBuilder<Tables>,
+	tableName: 'invoices' | 'invoicesWithSum',
+) {
+	const table = r[tableName];
+
+	return {
+		user: r.one.users({
+			from: table.userId,
+			to: r.users.id,
+			optional: false,
+		}),
+		clientData: r.one.clientData({
+			from: table.clientDataId,
+			to: r.clientData.id,
+			optional: false,
+		}),
+		config: r.one.config({
+			from: table.configId,
+			to: r.config.id,
+			optional: false,
+		}),
+		items: r.many.itemsWithTax({
+			from: table.id,
+			to: r.itemsWithTax.invoiceId,
+		}),
+	};
+}
 
 export const relations = defineRelations(schema, r => ({
 	// ---------------------------------------------------------
@@ -59,24 +91,8 @@ export const relations = defineRelations(schema, r => ({
 	// ---------------------------------------------------------
 	// Invoices
 	// ---------------------------------------------------------
-	invoices: {
-		user: r.one.users({
-			from: r.invoices.userId,
-			to: r.users.id,
-		}),
-		clientData: r.one.clientData({
-			from: r.invoices.clientDataId,
-			to: r.clientData.id,
-		}),
-		config: r.one.config({
-			from: r.invoices.configId,
-			to: r.config.id,
-		}),
-		items: r.many.invoiceItems({
-			from: r.invoices.id,
-			to: r.invoiceItems.invoiceId,
-		}),
-	},
+	invoices: invoiceBaseRelations(r, 'invoices'),
+	invoicesWithSum: invoiceBaseRelations(r, 'invoicesWithSum'),
 
 	invoiceCount: {
 		user: r.one.users({
@@ -85,9 +101,9 @@ export const relations = defineRelations(schema, r => ({
 		}),
 	},
 
-	invoiceItems: {
+	itemsWithTax: {
 		taxes: r.many.taxes({
-			from: r.invoiceItems.id.through(r.itemTaxes.itemId),
+			from: r.itemsWithTax.id.through(r.itemTaxes.itemId),
 			to: r.taxes.id.through(r.itemTaxes.taxId),
 		}),
 	},

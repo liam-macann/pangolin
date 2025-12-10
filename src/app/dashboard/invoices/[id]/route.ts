@@ -208,7 +208,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 								bold: true,
 							},
 						],
-						[{ stack: [{ text: 'Bill To', bold: true }, invoice.client.name], colSpan: 2 }],
+						[{ stack: [{ text: 'Bill To', bold: true }, invoice.clientData.name], colSpan: 2 }],
 					],
 				},
 				fontSize: fontSize.base,

@@ -78,13 +78,13 @@ export const columns: ColumnDef<Invoice>[] = [
 		size: 150,
 	},
 	{
-		accessorFn: row => row.client.name,
-		accessorKey: 'client.name',
+		accessorFn: row => row.clientData.name,
+		accessorKey: 'clientData.name',
 		id: 'name',
 		header: ({ column }) => <ToggleHeader column={column} title='Name' />,
 		minSize: 200,
 		maxSize: 400,
-		cell: ({ row }) => <div className='truncate'>{row.original.client.name}</div>,
+		cell: ({ row }) => <div className='truncate'>{row.original.clientData.name}</div>,
 	},
 	{
 		accessorKey: 'status',

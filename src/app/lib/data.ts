@@ -9,15 +9,17 @@ import {
 	isNotNull,
 	isNull,
 	max,
+	min,
 	ne,
+	type RelationsFilter,
 	type SQL,
 	sql,
 	sumDistinct,
 } from 'drizzle-orm';
-import type { PgSelectBase } from 'drizzle-orm/pg-core';
 import { headers } from 'next/headers';
 import { getSession } from '@/auth';
 import { db } from '@/db';
+import type { relations } from '@/db/relations';
 import {
 	clientData,
 	clients,
@@ -26,85 +28,18 @@ import {
 	invoiceItems,
 	invoices,
 	invoicesWithSum,
-	itemsWithTax,
 	itemTaxes,
 	taxes as taxesSchema,
 } from '@/db/schema';
 import { crypto } from '@/lib/encrypt';
-import { formatCurrency, formatDateToLocal, invoiceReference, omit } from '@/lib/utils';
+import { formatCurrency, formatDateToLocal, invoiceReference } from '@/lib/utils';
 import { jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
 
-/** Builder to return a single, aggregated query for invoices.
- *
- * @remarks Can be accessed and narrowed with `.$dynamic()` */
-function invoiceQuery<Detailed extends boolean>(
-	/** Detailed access required to print an entire invoice */
-	detailed?: Detailed,
-	tx: ReturnType<typeof db.with> | typeof db = db,
-) {
-	// First-level aggregation: items + taxes
-	const itemWithTaxes = tx
-		.select({
-			id: itemsWithTax.id,
-			invoiceId: itemsWithTax.invoiceId,
-			item: jsonbBuildObject({
-				taxes: jsonbAgg(jsonbBuildObject(getColumns(taxesSchema)), isNotNull(taxesSchema.id)),
-				...getColumns(itemsWithTax),
-			}).as('item'),
-		})
-		.from(itemsWithTax)
-		.leftJoin(itemTaxes, eq(itemsWithTax.id, itemTaxes.itemId))
-		.leftJoin(taxesSchema, eq(itemTaxes.taxId, taxesSchema.id))
-		.groupBy(...Object.values(getColumns(itemsWithTax)))
-		.as('item_with_taxes');
-
-	// Second-level aggregation: invoice-level aggregation of items
-	const itemsAggDetailed = tx
-		.select({
-			invoiceId: itemWithTaxes.invoiceId,
-			items: jsonbAgg(itemWithTaxes.item).as('invoice_items'),
-		})
-		.from(itemWithTaxes)
-		.groupBy(itemWithTaxes.invoiceId)
-		.as('items_agg_detailed');
-
-	const baseSelect = {
-		...getColumns(invoicesWithSum),
-
-		client: getColumns(clientData),
-		config: omit(getColumns(configSchema), [
-			'validFrom',
-			'validTo',
-			'id',
-			'userId',
-			'paymentDetails',
-		]),
-	} as const;
-
-	const detailedSelect = {
-		...baseSelect,
-		config: { ...baseSelect.config, paymentDetails: configSchema.paymentDetails },
-		items: itemsAggDetailed.items,
-	};
-
-	const query = tx
-		.select(detailed ? detailedSelect : baseSelect)
-		.from(invoicesWithSum) as PgSelectBase<
-		'invoice_with_sum',
-		Detailed extends true ? typeof detailedSelect : typeof baseSelect,
-		'partial'
-	>;
-
-	return query
-		.where(eq(invoicesWithSum.userId, sql.placeholder('userId')))
-		.innerJoin(clientData, eq(invoicesWithSum.clientDataId, clientData.id))
-		.innerJoin(configSchema, eq(invoicesWithSum.configId, configSchema.id))
-		.leftJoin(itemsAggDetailed, eq(invoicesWithSum.id, itemsAggDetailed.invoiceId))
-		.orderBy(desc(invoicesWithSum.index));
-}
-
 /** Fetch all invoices for authenticated user, including basic relational data */
-export async function fetchInvoices() {
+export async function fetchInvoices(
+	filter?: RelationsFilter<typeof relations.invoicesWithSum, typeof relations>,
+	limit?: number,
+) {
 	const session = await getSession({ headers: await headers() });
 	if (!session) throw new Error('Request not authenticated');
 
@@ -112,7 +47,31 @@ export async function fetchInvoices() {
 		// Get current config to format historical invoices
 		const [currentConfig, result] = await Promise.all([
 			getUserConfig(),
-			invoiceQuery().execute({ userId: session.user.id }),
+			db.query.invoicesWithSum.findMany({
+				where: {
+					...filter,
+					userId: { eq: session.user.id },
+				},
+				columns: {
+					clientDataId: false,
+					configId: false,
+					userId: false,
+				},
+				with: {
+					clientData: true,
+					config: {
+						columns: {
+							validFrom: false,
+							validTo: false,
+							id: false,
+							userId: false,
+							paymentDetails: false,
+						},
+					},
+				},
+				orderBy: { index: 'desc' },
+				limit,
+			}),
 		]);
 
 		return result.map(res => ({
@@ -131,48 +90,8 @@ export async function fetchInvoices() {
 }
 
 /** Fetch all invoices for a given client. Accepts logical client ID, not SCD ID. */
-export async function fetchInvoicesForClient(clientId: string, limit?: number) {
-	const session = await getSession({ headers: await headers() });
-	if (!session) throw new Error('Request not authenticated');
-
-	const clientDataId = db
-		.$with('clientDataId')
-		.as(
-			db
-				.select({ id: clientData.id })
-				.from(clients)
-				.where(eq(clients.id, clientId))
-				.innerJoin(clientData, eq(clientData.clientId, clients.id)),
-		);
-
-	const query = invoiceQuery(false, db.with(clientDataId)).innerJoin(
-		clientDataId,
-		eq(invoicesWithSum.clientDataId, clientDataId.id),
-	);
-
-	if (limit) query.limit(limit);
-
-	try {
-		// Get current config to format historical invoices
-		const [currentConfig, result] = await Promise.all([
-			getUserConfig(),
-			query.execute({ userId: session.user.id }),
-		]);
-
-		return result.map(res => ({
-			...res,
-			/** Values formatted according to current locale */
-			formatted: {
-				grossTotal: formatCurrency(res.grossTotal, res.config.currency, currentConfig.locale),
-				issuedAt: formatDateToLocal(res.issuedAt, false, currentConfig.locale),
-				reference: invoiceReference(res, res.config.numberingScheme),
-			},
-		}));
-	} catch (error) {
-		console.error('Database Error:', error);
-		throw new Error('Failed to fetch invoices');
-	}
-}
+export const fetchInvoicesForClient = (clientId: string, limit?: number) =>
+	fetchInvoices({ clientData: { client: { id: { eq: clientId } } } }, limit);
 
 /** Return type of `fetchInvoice()` */
 export type DetailedInvoice = Awaited<ReturnType<typeof fetchInvoice>>;
@@ -185,7 +104,8 @@ export async function fetchInvoice(id: string) {
 	if (!session) throw new Error('Request not authenticated');
 
 	// Get all active taxes, and calculate sum for display in the invoice subtotals
-	const taxCalc = db.$with('tax_calc').as(
+	// Executed as CTE to collapse tax rows that share the same name (eg. GST(10%) and GST(5%) would share one sum)
+	const taxContribution = db.$with('tax_calc').as(
 		db
 			.select({
 				contribution:
@@ -194,7 +114,7 @@ export async function fetchInvoice(id: string) {
 						.as('contribution'),
 
 				taxId: taxesSchema.id,
-				config: configSchema.id,
+				configId: configSchema.id,
 				order: configTaxes.order,
 				name: taxesSchema.name,
 				rate: taxesSchema.rate,
@@ -211,22 +131,39 @@ export async function fetchInvoice(id: string) {
 	);
 
 	try {
-		const [[res], tax] = await Promise.all([
-			invoiceQuery(true)
-				.$dynamic()
-				.where(and(eq(invoicesWithSum.id, id), eq(invoicesWithSum.userId, session.user.id)))
-				.limit(1),
+		const [res, tax] = await Promise.all([
+			db.query.invoicesWithSum.findFirst({
+				where: { userId: { eq: session.user.id }, id: { eq: id } },
+				columns: {
+					clientDataId: false,
+					configId: false,
+					userId: false,
+				},
+				with: {
+					clientData: true,
+					config: {
+						columns: {
+							validFrom: false,
+							validTo: false,
+							id: false,
+							userId: false,
+						},
+					},
+					items: { with: { taxes: true } },
+				},
+				orderBy: { index: 'desc' },
+			}),
 
 			// Collapse tax rows that share the same name
 			db
-				.with(taxCalc)
+				.with(taxContribution)
 				.select({
-					name: taxCalc.name,
-					contribution: sumDistinct(taxCalc.contribution).mapWith(Number),
+					name: taxContribution.name,
+					contribution: sumDistinct(taxContribution.contribution).mapWith(Number),
 				})
-				.from(taxCalc)
-				.groupBy(taxCalc.name)
-				.orderBy(asc(sql`min(${taxCalc.order})`)),
+				.from(taxContribution)
+				.groupBy(taxContribution.name)
+				.orderBy(asc(min(taxContribution.order))),
 		]);
 
 		if (!res) throw new Error('Invoice not found');

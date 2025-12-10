@@ -1,4 +1,4 @@
-import { eq, getTableColumns, sql, sum } from 'drizzle-orm';
+import { eq, getColumns, sql, sum } from 'drizzle-orm';
 import { pgView } from 'drizzle-orm/pg-core';
 
 // Schema imports
@@ -14,7 +14,7 @@ import { invoiceItems, invoices, itemTaxes } from './index';
 export const itemsWithTax = pgView('items_with_tax').as(qb =>
 	qb
 		.select({
-			...getTableColumns(invoiceItems),
+			...getColumns(invoiceItems),
 			taxRegistration: config.taxRegistration,
 			/** @remarks This can safely be used regardless of tax registration. Unregistered taxes will not be applied. */
 			grossAmount:
@@ -33,7 +33,7 @@ export const itemsWithTax = pgView('items_with_tax').as(qb =>
 export const invoicesWithSum = pgView('invoice_with_sum').as(qb =>
 	qb
 		.select({
-			...getTableColumns(invoices),
+			...getColumns(invoices),
 			taxRegistration: config.taxRegistration,
 			currency: config.currency,
 			netTotal: sum(itemsWithTax.netAmount).mapWith(Number).as('net_total'),
