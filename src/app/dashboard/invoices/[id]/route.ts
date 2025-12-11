@@ -74,8 +74,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 
 	const fonts = {
 		InstrumentSans: {
-			normal: path.resolve('./src/fonts/InstrumentSans-Regular.ttf'),
-			bold: path.resolve('./src/fonts/InstrumentSans-Semibold.ttf'),
+			normal: path.resolve('./src/fonts/InstrumentSans+Noto-Regular.ttf'),
+			bold: path.resolve('./src/fonts/InstrumentSans+Noto-Semibold.ttf'),
 		},
 	};
 	const colors = schemes[invoice.config.colorScheme];
