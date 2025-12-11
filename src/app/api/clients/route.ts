@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchClients } from '@/lib/data';
+import { fetchClients } from '@/lib/data/client';
 import type { ApiResponse, RouteResponse } from '../types';
 
 // Helper that simulates calling the function without params (overloaded function)

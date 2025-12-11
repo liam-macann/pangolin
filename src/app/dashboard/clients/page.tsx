@@ -1,6 +1,6 @@
 import { UserCirclePlusIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
-import { fetchClients } from '@/lib/data';
+import { fetchClients } from '@/lib/data/client';
 import { Button } from '@/ui/button';
 import { Clients } from './ui';
 

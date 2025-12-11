@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchInvoices } from '@/lib/data';
+import { fetchInvoices } from '@/lib/data/invoice';
 import type { ApiResponse, RouteResponse } from '../types';
 
 export type Data = Awaited<ReturnType<typeof fetchInvoices>>;
