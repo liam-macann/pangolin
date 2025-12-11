@@ -100,8 +100,8 @@ export function SortableItem({
 	const transition = {
 		type: 'spring',
 		mass: 0.2,
-		stiffness: 150,
-		damping: 10,
+		stiffness: 250,
+		damping: 15,
 	} as const;
 
 	const outer = {

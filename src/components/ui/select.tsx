@@ -31,7 +31,7 @@ function SelectTrigger({
 	return (
 		<SelectPrimitive.Trigger
 			data-slot='select-trigger'
-			className={cn('not-disabled:active:scale-100', className)}
+			className={cn('not-disabled:active:motion-safe:scale-100', className)}
 			asChild
 			{...props}
 		>
