@@ -15,6 +15,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { db } from '../src/db';
 import * as schema from '../src/db/schema';
 
+const { currencies, ...tables } = schema;
+
 const generateIds = (count: number) => ({
 	values: Array.from({ length: count }, () => uuidv4()),
 	isUnique: true,
@@ -40,10 +42,10 @@ async function main(uuid?: string) {
 
 		const attachedUser = uuid ? await fetchUser(uuid) : undefined;
 
-		await reset(tx, schema);
+		await reset(tx, tables);
 
 		const invoiceCount = 200;
-		await seed(tx, schema, { seed: 42, count: 1, version: '2' }).refine(f => ({
+		await seed(tx, tables, { seed: 42, count: 1, version: '2' }).refine(f => ({
 			users: {
 				count: 1,
 				columns: attachedUser

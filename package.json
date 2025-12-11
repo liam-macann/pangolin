@@ -76,6 +76,7 @@
 		"@types/react-dom": "19.2.3",
 		"@types/ws": "^8.18.1",
 		"@typescript/native-preview": "7.0.0-dev.20251007.1",
+		"cldr": "^8.0.0",
 		"drizzle-kit": "1.0.0-beta.2-58a4521",
 		"drizzle-orm": "1.0.0-beta.2-58a4521",
 		"drizzle-seed": "1.0.0-beta.2-58a4521",
