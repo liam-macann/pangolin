@@ -22,9 +22,9 @@ const DataTable = createInvoiceTable(
 		}),
 );
 
-export function Table({ data }: { data: Data }) {
+export function Table(props: { data: Data; locale: string }) {
 	return (
-		<DataTable.Root pagination={false} data={data}>
+		<DataTable.Root pagination={false} {...props}>
 			<DataTable.Content />
 		</DataTable.Root>
 	);

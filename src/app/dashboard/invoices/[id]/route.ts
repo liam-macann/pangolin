@@ -90,7 +90,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 		footerHeight(footerLeftContent.length), // B
 	];
 
-	const reference = `${invoice.config.taxRegistration ? 'Tax ' : ''}Invoice ${invoice.formatted.reference}`;
+	const reference = `${invoice.config.taxRegistration ? 'Tax ' : ''}Invoice ${invoice.reference}`;
 
 	const pdfDoc = printer.createPdfKitDocument({
 		version: '1.5',

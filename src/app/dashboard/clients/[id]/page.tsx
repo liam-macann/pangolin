@@ -1,7 +1,7 @@
 import { ArchiveIcon, ArrowLeftIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { InfoTip } from '@/components/info';
 import { fetchClientStats, fetchClients, fetchInvoicesForClient, getUserConfig } from '@/lib/data';
@@ -17,9 +17,10 @@ export const metadata: Metadata = {
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 
-	const [client, invoices] = await Promise.all([
+	const [client, invoices, config] = await Promise.all([
 		fetchClients(id),
 		fetchInvoicesForClient(id, 5),
+		getUserConfig().catch(() => redirect('/onboarding')),
 	]).catch(err => {
 		console.error(err);
 		notFound();
@@ -74,7 +75,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 			</section>
 			<section className='mt-16'>
 				<h2 className='mb-6 font-display font-semibold text-2xl'>Recent activity</h2>
-				<Table data={invoices} />
+				<Table locale={config.locale} data={invoices} />
 
 				{client.invoiceCount > 5 && (
 					<div className='mt-3 ml-4 rounded-md font-medium text-muted-foreground text-sm'>

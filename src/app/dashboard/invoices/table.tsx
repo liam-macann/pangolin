@@ -4,7 +4,7 @@
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { cva } from 'class-variance-authority';
-import type { ComponentProps } from 'react';
+import { type ComponentProps, createContext, memo, useContext } from 'react';
 import { toast } from 'sonner';
 import type { Data as InvoiceData } from '@/api/invoices/route';
 import { createDataTable } from '@/components/data-table';
@@ -12,7 +12,7 @@ import { ToggleHeader } from '@/components/data-table/column-header';
 import type { statusEnum } from '@/db/schema';
 import { updateInvoiceStatus, voidInvoice } from '@/lib/actions/invoice';
 import { useInvoices } from '@/lib/hooks';
-import { cn, type ElementType } from '@/lib/utils';
+import { cn, type ElementType, formatCurrency, formatDateToLocal } from '@/lib/utils';
 import type { Enum } from '@/lib/utils/drizzle';
 import {
 	AlertDialog,
@@ -60,7 +60,7 @@ type Invoice = ElementType<InvoiceData>;
 /** Column definitions for invoices */
 export const columns: ColumnDef<Invoice>[] = [
 	{
-		accessorKey: 'formatted.reference',
+		accessorKey: 'reference',
 		// Numeric sorting faster than alphanumeric, and works across all numbering schemes
 		sortingFn: (a, b) => {
 			const iA = a.original.index;
@@ -72,7 +72,7 @@ export const columns: ColumnDef<Invoice>[] = [
 		cell: ({ row }) => (
 			<div className='font-medium tabular-nums'>
 				<span className='sr-only'>{row.original.isVoid && 'Void, '}</span>
-				{row.original.formatted.reference}
+				{row.original.reference}
 			</div>
 		),
 		size: 150,
@@ -90,9 +90,6 @@ export const columns: ColumnDef<Invoice>[] = [
 		accessorKey: 'status',
 		id: 'status',
 		header: ({ column }) => <ToggleHeader column={column} title='Status' />,
-		meta: {
-			'data-test': 're',
-		},
 		cell: function StatusSelect({ row }) {
 			const status: Enum<typeof statusEnum> = row.getValue('status');
 			const id = row.original.id;
@@ -144,23 +141,29 @@ export const columns: ColumnDef<Invoice>[] = [
 	{
 		accessorKey: 'issuedAt',
 		header: ({ column }) => <ToggleHeader column={column} title='Date' />,
-		cell: ({ row }) => (
-			<span className='text-muted-foreground'>{row.original.formatted.issuedAt}</span>
-		),
+		cell: ({ row }) => {
+			const locale = useContext(LocaleContext);
+			return (
+				<span className='text-muted-foreground'>
+					{formatDateToLocal(row.original.issuedAt, false, locale)}
+				</span>
+			);
+		},
 		sortingFn: 'datetime',
 		size: 150,
 	},
 	{
-		accessorKey: 'formatted.grossTotal',
+		accessorKey: 'grossTotal',
 		header: ({ column }) => (
 			<div className='text-right'>
 				<ToggleHeader column={column} title='Amount' />
 			</div>
 		),
 		cell: ({ row }) => {
+			const locale = useContext(LocaleContext);
 			return (
 				<div className='text-right font-medium tabular-nums decoration-2 group-data-void/row:line-through'>
-					{row.original.formatted.grossTotal}
+					{formatCurrency(row.original.grossTotal, row.original.config.currency, locale)}
 				</div>
 			);
 		},
@@ -203,9 +206,7 @@ export const columns: ColumnDef<Invoice>[] = [
 								<DropdownMenuItem asChild>
 									<a href={`/dashboard/invoices/${invoice.id}`}>Download</a>
 								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={() => navigator.clipboard.writeText(invoice.formatted.reference)}
-								>
+								<DropdownMenuItem onClick={() => navigator.clipboard.writeText(invoice.reference)}>
 									Copy reference
 								</DropdownMenuItem>
 								<DropdownMenuSeparator />
@@ -268,20 +269,28 @@ export const columns: ColumnDef<Invoice>[] = [
 	},
 ];
 
+const LocaleContext = createContext<string>('en-AU');
+
 /** Component factory that returns preconfigured defaults for Invoice data. Useful if omitting columns from the exported definition. */
 export function createInvoiceTable<TValue>(columns: ColumnDef<Invoice, TValue>[]) {
 	const FactoryDataTable = createDataTable(columns);
 
-	const Root = ({ data, ...props }: ComponentProps<typeof FactoryDataTable.Root>) => (
-		<FactoryDataTable.Root
-			data={data.map(invoice => ({
-				...invoice,
-				...('grossTotal' in invoice ? { grossTotal: Number(invoice.grossTotal) } : {}),
-			}))}
-			enableSortingRemoval={false}
-			initialState={{ sorting: [{ id: 'formatted_reference', desc: true }] }}
-			{...props}
-		/>
+	const Root = ({
+		data,
+		locale,
+		...props
+	}: ComponentProps<typeof FactoryDataTable.Root> & { locale: string }) => (
+		<LocaleContext value={locale}>
+			<FactoryDataTable.Root
+				data={data.map(invoice => ({
+					...invoice,
+					...('grossTotal' in invoice ? { grossTotal: Number(invoice.grossTotal) } : {}),
+				}))}
+				enableSortingRemoval={false}
+				initialState={{ sorting: [{ id: 'reference', desc: true }] }}
+				{...props}
+			/>
+		</LocaleContext>
 	);
 
 	const Content = (props: ComponentProps<typeof FactoryDataTable.Content>) => (

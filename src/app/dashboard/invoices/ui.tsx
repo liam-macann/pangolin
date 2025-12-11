@@ -5,23 +5,31 @@ import type { Data as InvoiceData } from '@/api/invoices/route';
 import { useInvoices } from '@/lib/hooks';
 import type { ElementType } from '@/lib/utils';
 
-import DataTable from './table';
+import InvoiceTable from './table';
 
 type Invoice = ElementType<InvoiceData>;
 
-export default function Table({ header, initial }: { header?: JSX.Element; initial?: Invoice[] }) {
+export default function Table({
+	header,
+	initial,
+	locale,
+}: {
+	header?: JSX.Element;
+	initial?: Invoice[];
+	locale: string;
+}) {
 	const { data } = useInvoices(initial, { suspense: true });
 
 	return (
-		<DataTable.Root data={data}>
+		<InvoiceTable.Root data={data} locale={locale}>
 			<div className='my-4 mb-6 flex items-center justify-between gap-3 md:mt-8'>
 				{header}
-				<DataTable.Search className='h-10 grow shadow-none' />
+				<InvoiceTable.Search className='h-10 grow shadow-none' />
 			</div>
-			<DataTable.Content />
+			<InvoiceTable.Content />
 			<div className='flex items-center justify-end gap-2 py-4'>
-				<DataTable.PaginationControls />
+				<InvoiceTable.PaginationControls />
 			</div>
-		</DataTable.Root>
+		</InvoiceTable.Root>
 	);
 }

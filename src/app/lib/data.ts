@@ -32,7 +32,7 @@ import {
 	taxes as taxesSchema,
 } from '@/db/schema';
 import { crypto } from '@/lib/encrypt';
-import { formatCurrency, formatDateToLocal, invoiceReference } from '@/lib/utils';
+import { invoiceReference } from '@/lib/utils';
 import { jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
 
 /** Fetch all invoices for authenticated user, including basic relational data */
@@ -45,9 +45,8 @@ export async function fetchInvoices(
 
 	try {
 		// Get current config to format historical invoices
-		const [currentConfig, result] = await Promise.all([
-			getUserConfig(),
-			db.query.invoicesWithSum.findMany({
+		return await db.query.invoicesWithSum
+			.findMany({
 				where: {
 					...filter,
 					userId: { eq: session.user.id },
@@ -71,18 +70,13 @@ export async function fetchInvoices(
 				},
 				orderBy: { index: 'desc' },
 				limit,
-			}),
-		]);
-
-		return result.map(res => ({
-			...res,
-			/** Values formatted according to current locale */
-			formatted: {
-				grossTotal: formatCurrency(res.grossTotal, res.config.currency, currentConfig.locale),
-				issuedAt: formatDateToLocal(res.issuedAt, false, currentConfig.locale),
-				reference: invoiceReference(res, res.config.numberingScheme),
-			},
-		}));
+			})
+			.then(res =>
+				res.map(inv => ({
+					...inv,
+					reference: invoiceReference(inv, inv.config.numberingScheme),
+				})),
+			);
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoices');
@@ -172,12 +166,12 @@ export async function fetchInvoice(id: string) {
 
 		const inv = {
 			...res,
+			reference: invoiceReference(res, res.config.numberingScheme),
 			config: {
 				...res.config,
 				paymentDetails:
 					res.config.paymentDetails && (await vault.decrypt(...res.config.paymentDetails)),
 			},
-			formatted: { reference: invoiceReference(res, res.config.numberingScheme) },
 		};
 
 		vault.destroy();

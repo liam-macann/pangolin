@@ -17,7 +17,10 @@ export default async function Page(_props: {
 		page?: string;
 	}>;
 }) {
-	const invoices = await fetchInvoices();
+	const [invoices, config] = await Promise.all([
+		fetchInvoices(),
+		getUserConfig().catch(() => redirect('/onboarding')),
+	]);
 
 	return (
 		<div className='w-full'>
@@ -26,6 +29,7 @@ export default async function Page(_props: {
 			</div>
 			<Data
 				initial={invoices}
+				locale={config.locale}
 				header={
 					<Suspense fallback={<DialogTrigger />}>
 						<Dialog />
