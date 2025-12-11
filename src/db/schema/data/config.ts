@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
 	boolean,
+	char,
 	check,
 	integer,
 	numeric,
@@ -16,6 +17,7 @@ import { encrypted } from '@/lib/utils/drizzle';
 
 // Schema imports
 import { users } from '../auth';
+import { currencies } from '../i18n';
 import { scdDates } from './_helpers';
 
 // Records should be immutable if referenced
@@ -66,7 +68,9 @@ export const config = pgTable(
 		// The time zone of record, for invoice dates and yearly sequencing. This should eventually reference a table of time zones.
 		timezone: text().notNull(),
 		locale: text().notNull(),
-		currency: varchar('currency', { length: 3 }).notNull(),
+		currency: char({ length: 3 })
+			.references(() => currencies.iso)
+			.notNull(),
 		taxRegistration: boolean('tax_registration').notNull(),
 		paymentDetails: encrypted('payment_details').array(),
 		numberingScheme: numberingScheme('numbering_scheme').notNull(),

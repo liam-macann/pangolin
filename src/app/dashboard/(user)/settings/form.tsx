@@ -10,7 +10,7 @@ import type { z } from 'zod';
 import { InfoTip } from '@/components/info';
 import { config as configSchema } from '@/db/schema';
 import { updateUserConfig } from '@/lib/actions/config';
-import type { getUserConfig } from '@/lib/data';
+import type { getCurrencies, getUserConfig } from '@/lib/data';
 import schemes from '@/src/app/ui/colorSchemes';
 import { Button } from '@/ui/button';
 import { Checkbox } from '@/ui/checkbox';
@@ -44,8 +44,10 @@ const formSchema = createInsertSchema(configSchema)
 
 export default function ConfigForm({
 	config,
+	currencies,
 }: {
 	config: Awaited<ReturnType<typeof getUserConfig>>;
+	currencies: Awaited<ReturnType<typeof getCurrencies>>;
 }) {
 	const {
 		formState: { isDirty, isSubmitting },
@@ -338,10 +340,20 @@ export default function ConfigForm({
 							</FieldContent>
 							<Combobox
 								{...field}
-								disabled
 								className='min-w-60'
 								id='currency'
-								options={[{ label: 'AUD', value: 'AUD' }]}
+								noun={{ singular: 'currency', plural: 'currencies' }}
+								style={{ width: 'calc(var(--spacing) * 60)' }}
+								options={currencies.map(currency => ({
+									label: `${currency.name} (${currency.iso})`,
+									value: currency.iso,
+									item: (
+										<div className='items-baseline-last flex w-full justify-between gap-3'>
+											<span>{currency.name}</span>
+											<span className='text-muted-foreground text-xs'> {currency.iso}</span>
+										</div>
+									),
+								}))}
 							/>
 						</Field>
 					)}

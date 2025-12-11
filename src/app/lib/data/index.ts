@@ -1,7 +1,17 @@
 import { headers } from 'next/headers';
+import { cache } from 'react';
 import { getSession } from '@/auth';
 import { db } from '@/db';
 import { crypto } from '@/lib/encrypt';
+
+export const getCurrencies = cache(
+	async () =>
+		await db.query.currencies.findMany({
+			where: { isActive: { eq: true } },
+			columns: { isActive: false, minorUnit: false },
+			orderBy: { iso: 'asc', name: 'asc' },
+		}),
+);
 
 export async function getUser() {
 	const session = await getSession({ headers: await headers() });

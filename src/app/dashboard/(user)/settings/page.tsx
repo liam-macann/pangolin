@@ -1,11 +1,10 @@
-import { getUserConfig } from '@/lib/data';
+import { getCurrencies, getUserConfig } from '@/lib/data';
 import Avatar from '@/ui/avatar';
 import { Button } from '@/ui/button';
 import ConfigForm from './form';
 
 export default async function Page() {
-	// Includes auth
-	const config = await getUserConfig();
+	const [config, currencies] = await Promise.all([getUserConfig(), getCurrencies()]);
 
 	return (
 		<div className='grid-cols-[12rem_auto] gap-x-6 md:grid'>
@@ -44,7 +43,7 @@ export default async function Page() {
 
 				<hr />
 
-				<ConfigForm config={config} />
+				<ConfigForm config={config} currencies={currencies} />
 			</section>
 		</div>
 	);

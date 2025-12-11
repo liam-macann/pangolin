@@ -18,6 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
 type Option = {
 	value: string;
 	label: string;
+	item?: React.ReactNode;
 };
 
 export function Combobox({
@@ -83,7 +84,7 @@ export function Combobox({
 											value === option.value ? 'opacity-100' : 'opacity-0',
 										)}
 									/>
-									{option.label}
+									{option.item ?? option.label}
 								</CommandItem>
 							))}
 						</CommandGroup>
