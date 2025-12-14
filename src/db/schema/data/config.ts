@@ -17,7 +17,7 @@ import { encrypted } from '@/lib/utils/drizzle';
 
 // Schema imports
 import { users } from '../auth';
-import { currencies, timezoneNames } from '../i18n';
+import { currencies, supportedTimezones } from '../i18n';
 import { scdDates } from './_helpers';
 
 // Records should be immutable if referenced
@@ -67,7 +67,7 @@ export const config = pgTable(
 			.references(() => users.id, { onDelete: 'cascade' }),
 		// The time zone of record, for invoice dates and yearly sequencing. This should eventually reference a table of time zones.
 		timezone: text()
-			.references(() => timezoneNames.name)
+			.references(() => supportedTimezones.name)
 			.notNull(),
 		locale: text().notNull(),
 		currency: char({ length: 3 })

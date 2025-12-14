@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { db } from '../src/db';
 import * as schema from '../src/db/schema';
 
-const { currencies, ...tables } = schema;
+const { timezones, currencies, keychain, ...tables } = schema;
 
 const generateIds = (count: number) => ({
 	values: Array.from({ length: count }, () => uuidv4()),
@@ -60,7 +60,6 @@ async function main(uuid?: string) {
 				with: {
 					clients: 1,
 					config: 1,
-					keychain: 1,
 					invoices: invoiceCount,
 				},
 			},
@@ -175,6 +174,7 @@ async function main(uuid?: string) {
 					timezone: f.valuesFromArray({ values: ['Australia/Sydney'] }),
 					currency: f.valuesFromArray({ values: ['AUD', 'GBP', 'USD'] }),
 					locale: f.valuesFromArray({ values: ['en-AU', 'en-GB', 'en-US'] }),
+					paymentDetails: f.default({ defaultValue: null }),
 					validFrom: f.date({ maxDate: new Date(Date.now()) }),
 					validTo: f.valuesFromArray({ values: [new Date().toISOString()], isUnique: true }),
 				},

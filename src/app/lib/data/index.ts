@@ -1,7 +1,9 @@
+import { eq, getColumns } from 'drizzle-orm';
 import { headers } from 'next/headers';
 import { cache } from 'react';
 import { getSession } from '@/auth';
 import { db } from '@/db';
+import { supportedTimezones, timezones } from '@/db/schema';
 import { crypto } from '@/lib/encrypt';
 
 export const getCurrencies = cache(
@@ -12,6 +14,13 @@ export const getCurrencies = cache(
 			orderBy: { iso: 'asc', name: 'asc' },
 		}),
 );
+
+export const getTimezones = cache(async () => {
+	return await db
+		.select(getColumns(timezones))
+		.from(timezones)
+		.innerJoin(supportedTimezones, eq(timezones.name, supportedTimezones.name));
+});
 
 export async function getUser() {
 	const session = await getSession({ headers: await headers() });

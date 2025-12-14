@@ -18,6 +18,6 @@ export const timezones = pgView('pg_timezone_names', {
 }).existing();
 
 /** Enforces FK in config record */
-export const timezoneNames = pgTable('timezone', {
+export const supportedTimezones = pgTable('timezone', {
 	name: text('name').primaryKey(),
 });
