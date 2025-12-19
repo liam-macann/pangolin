@@ -20,7 +20,7 @@ const buttonVariants = cva(
 					'inset-shadow-white/10 inset-shadow-xs border border-black/10 bg-destructive-background text-white shadow-xs not-disabled:hover:bg-destructive-background/90 focus-visible:ring-destructive/20 not-disabled:active:motion-safe:scale-[98%] dark:focus-visible:ring-destructive/40',
 				outline: [
 					'border not-disabled:hover:text-accent-foreground focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%] dark:border-input',
-					'bg-linear-to-b from-80% from-transparent to-black/2 not-disabled:hover:bg-accent dark:bg-input/30 dark:not-disabled:hover:bg-input/50',
+					'bg-linear-to-b from-80% from-transparent to-black/2 not-disabled:hover:bg-accent/70 dark:bg-input/30 dark:not-disabled:hover:bg-input/50',
 				],
 				secondary:
 					'inset-shadow-white/5 inset-shadow-xs border border-foreground/2 bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary/80 focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%]',
