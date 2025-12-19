@@ -66,9 +66,6 @@ export async function updateUserConfig(
 		safeConfig.paymentDetails &&
 		(await vault.encrypt(...safeConfig.paymentDetails.map(v => `${v.label}: ${v.value}`)));
 
-	console.log('paymentDetails', paymentDetails);
-	console.log('sample', [new Uint8Array(new TextEncoder().encode('hello'))]);
-
 	// Define as CTEs for transactional behaviour
 	const actions: WithSubqueryWithoutSelection<string>[] = [
 		// Insert new config
