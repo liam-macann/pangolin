@@ -64,7 +64,7 @@ function CalendarPopover({
 				<Button
 					variant='outline'
 					aria-expanded={open}
-					className={cn('min-w-[200px] justify-between enabled:active:scale-100', className)}
+					className={cn('!scale-100 min-w-[200px] justify-between', className)}
 					{...props}
 				>
 					<span className='truncate'>{label || 'Select date…'}</span>
