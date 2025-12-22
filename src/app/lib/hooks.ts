@@ -1,6 +1,7 @@
 'use client';
 
 import useSWR, { type SWRConfiguration, type SWRResponse } from 'swr';
+import useSWRImmutable from 'swr/immutable';
 import { responseSchema } from '@/api/types';
 
 const fetcher = async <T>(url: string): Promise<T> => {
@@ -45,4 +46,18 @@ export function useClients<C extends Config>(initial?: ClientData, config?: C) {
 		...swr,
 		isError: swr.error !== undefined,
 	} as Response<ClientData, C>;
+}
+
+import type { Data as CurrencyData } from '@/api/currencies/route';
+
+export function useCurrencies<C extends Config>(initial?: CurrencyData, config?: C) {
+	const swr = useSWRImmutable('/api/currencies', fetcher<CurrencyData>, {
+		...config,
+		...(initial ? { fallbackData: initial } : {}),
+	});
+
+	return {
+		...swr,
+		isError: swr.error !== undefined,
+	} as Response<CurrencyData, C>;
 }
