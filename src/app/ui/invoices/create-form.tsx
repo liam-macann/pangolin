@@ -1,8 +1,10 @@
 'use client';
 
+import { TZDate } from '@date-fns/tz';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WarningIcon } from '@phosphor-icons/react';
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
+import { addDays } from 'date-fns';
 import { createInsertSchema } from 'drizzle-zod';
 import { useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -92,8 +94,8 @@ export function CreateInvoiceDialog({
 			title: '',
 			description: '',
 			status: 'unpaid',
-			issuedAt: new Date(),
-			dueAt: new Date(new Date().setDate(new Date().getDate() + 14)),
+			issuedAt: TZDate.tz(config.timezone),
+			dueAt: addDays(TZDate.tz(config.timezone), 14),
 		},
 	});
 
@@ -268,7 +270,7 @@ export function CreateInvoiceDialog({
 												<DatePicker
 													className='min-w-0'
 													id='issuedAt'
-													startMonth={new Date()}
+													startMonth={TZDate.tz(config.timezone)}
 													timeZone={config.timezone}
 													{...field}
 												/>
@@ -285,8 +287,11 @@ export function CreateInvoiceDialog({
 												<DatePicker
 													className='min-w-0'
 													id='dueAt'
-													disabledDays={[{ before: new Date() }, new Date()]}
-													startMonth={new Date()}
+													disabledDays={[
+														{ before: TZDate.tz(config.timezone) },
+														TZDate.tz(config.timezone),
+													]}
+													startMonth={TZDate.tz(config.timezone)}
 													timeZone={config.timezone}
 													{...field}
 												/>
