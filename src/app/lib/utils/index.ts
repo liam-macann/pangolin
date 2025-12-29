@@ -102,3 +102,6 @@ export type AllSameKeys<T extends [object, ...object[]]> = T extends [
 			: never
 		: never
 	: never;
+
+/** Omit properties without breaking discriminated unions */
+export type OmitUnion<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
