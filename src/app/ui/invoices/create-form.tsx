@@ -272,6 +272,7 @@ export function CreateInvoiceDialog({
 													id='issuedAt'
 													startMonth={TZDate.tz(config.timezone)}
 													timeZone={config.timezone}
+													locale={config.locale}
 													{...field}
 												/>
 												{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -293,6 +294,7 @@ export function CreateInvoiceDialog({
 													]}
 													startMonth={TZDate.tz(config.timezone)}
 													timeZone={config.timezone}
+													locale={config.locale}
 													{...field}
 												/>
 												{fieldState.invalid && <FieldError errors={[fieldState.error]} />}

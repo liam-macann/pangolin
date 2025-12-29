@@ -2,17 +2,18 @@
 
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
 import * as React from 'react';
-import type {
-	DateRange as DateRangeType,
-	PropsBase,
-	PropsMulti,
-	PropsMultiRequired,
-	PropsRange,
-	PropsRangeRequired,
-	PropsSingle,
-	PropsSingleRequired,
+import {
+	type DateRange as DateRangeType,
+	type PropsBase,
+	type PropsMulti,
+	type PropsMultiRequired,
+	type PropsRange,
+	type PropsRangeRequired,
+	type PropsSingle,
+	type PropsSingleRequired,
+	TZDate,
 } from 'react-day-picker';
-import { cn, formatDateToLocal } from '@/lib/utils';
+import { cn, formatDateToLocal, type OmitUnion } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { Calendar } from '@/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
@@ -94,19 +95,22 @@ export function DatePicker({
 	ref,
 	className,
 
+	locale,
+	timeZone,
+
 	disabledDays,
 	...props
-}: SinglePickerProps & RHF<Date>) {
+}: OmitUnion<SinglePickerProps, 'locale'> & RHF<Date> & { locale: string }) {
 	const [open, setOpen] = React.useState(false);
 	const [date, setDate] = React.useState<Date>();
-
+	props;
 	const value = controlledValue || date;
 
 	return (
 		<CalendarPopover
 			open={open}
 			onOpenChange={setOpen}
-			label={value && formatDateToLocal(value)}
+			label={value && formatDateToLocal(new TZDate(value, timeZone), false, locale)}
 			disabled={disabled}
 			onBlur={onBlur}
 			ref={ref}
@@ -122,6 +126,7 @@ export function DatePicker({
 					setOpen(false);
 				}}
 				disabled={disabledDays}
+				timeZone={timeZone}
 				{...props}
 			/>
 		</CalendarPopover>
@@ -159,6 +164,7 @@ export function DatePickerMultiple({
 				}}
 				disabled={disabledDays}
 				{...props}
+				required={props.required || undefined}
 			/>
 		</CalendarPopover>
 	);
@@ -171,9 +177,12 @@ export function DateRange({
 	disabled = false,
 	ref,
 
+	locale,
+	timeZone,
+
 	disabledDays,
 	...props
-}: RangePickerProps & RHF<DateRangeType>) {
+}: OmitUnion<RangePickerProps, 'locale'> & RHF<DateRangeType> & { locale: string }) {
 	const [date, setDate] = React.useState<DateRangeType>();
 
 	const value = controlledValue || date;
@@ -183,7 +192,7 @@ export function DateRange({
 			label={
 				(value?.from &&
 					value?.to &&
-					`${formatDateToLocal(value.from)} – ${formatDateToLocal(value.to)}`) ||
+					`${formatDateToLocal(new TZDate(value.from, timeZone), false, locale)} – ${formatDateToLocal(new TZDate(value.to, timeZone), false, locale)}`) ||
 				'Select dates…'
 			}
 			disabled={disabled}
@@ -199,6 +208,7 @@ export function DateRange({
 					onChange?.(v);
 				}}
 				disabled={disabledDays}
+				timeZone={timeZone}
 				{...props}
 			/>
 		</CalendarPopover>

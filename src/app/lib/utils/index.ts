@@ -32,21 +32,22 @@ export const invoiceReference = (
 	}
 };
 
-export const formatDateToLocal = (
-	date: string | Date,
-	time: boolean = false,
-	locale: string = 'en-AU',
-) => {
-	const safeDate = new Date(date);
-	const options: Intl.DateTimeFormatOptions = {
-		day: 'numeric',
-		month: 'short',
-		year: 'numeric',
-		hour: time ? 'numeric' : undefined,
-		minute: time ? 'numeric' : undefined,
-	};
-	const formatter = new Intl.DateTimeFormat(locale, options);
-	return formatter.format(safeDate);
+export const formatDateToLocal = (date: TZDate, time: boolean, locale: string) => {
+	const tz = date.timeZone;
+	if (!tz) throw new Error('Timezone is required. Ensure date is a TZDate');
+
+	return intlFormat(
+		date,
+		{
+			timeZone: tz,
+			day: 'numeric',
+			month: 'short',
+			year: 'numeric',
+			hour: time ? 'numeric' : undefined,
+			minute: time ? 'numeric' : undefined,
+		},
+		{ locale },
+	);
 };
 
 // Localisation is irrelevant as we only target English

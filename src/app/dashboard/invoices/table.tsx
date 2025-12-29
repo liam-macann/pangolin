@@ -1,10 +1,11 @@
 'use no memo';
 'use client';
 
+import { TZDate } from '@date-fns/tz';
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { cva } from 'class-variance-authority';
-import { type ComponentProps, createContext, memo, useContext } from 'react';
+import { type ComponentProps, createContext, useContext } from 'react';
 import { toast } from 'sonner';
 import type { Data as InvoiceData } from '@/api/invoices/route';
 import { createDataTable } from '@/components/data-table';
@@ -145,7 +146,11 @@ export const columns: ColumnDef<Invoice>[] = [
 			const locale = useContext(LocaleContext);
 			return (
 				<span className='text-muted-foreground'>
-					{formatDateToLocal(row.original.issuedAt, false, locale)}
+					{formatDateToLocal(
+						new TZDate(row.original.issuedAt, row.original.config.timezone),
+						false,
+						locale,
+					)}
 				</span>
 			);
 		},

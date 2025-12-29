@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { TZDate } from '@date-fns/tz';
 import { type NextRequest, NextResponse } from 'next/server';
 import PdfPrinter from 'pdfmake';
 import type { unitEnum } from '@/db/schema/data';
@@ -141,7 +142,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 								],
 							},
 							{
-								text: `Issued ${formatDateToLocal(invoice.issuedAt, false, 'en-AU')}`,
+								text: `Issued ${formatDateToLocal(new TZDate(invoice.issuedAt, invoice.config.timezone), false, invoice.config.locale)}`,
 								alignment: 'right',
 							},
 						],
@@ -204,7 +205,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 							{ text: invoice.title, bold: true },
 							{
 								width: '30%',
-								text: `Due ${formatDateToLocal(invoice.dueAt, false, invoice.config.locale)}`,
+								text: `Due ${formatDateToLocal(new TZDate(invoice.dueAt, invoice.config.timezone), false, invoice.config.locale)}`,
 								alignment: 'right',
 								bold: true,
 							},
