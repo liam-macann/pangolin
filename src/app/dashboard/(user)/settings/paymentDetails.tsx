@@ -151,7 +151,12 @@ function Item({
 				name={`paymentDetails.${index}.value`}
 				render={({ field, fieldState }) => (
 					<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-						<Input type='text' {...field} placeholder={scheme || undefined} />
+						<Input
+							type='text'
+							{...field}
+							className='tabular-nums'
+							placeholder={scheme || undefined}
+						/>
 						{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
 					</Field>
 				)}
