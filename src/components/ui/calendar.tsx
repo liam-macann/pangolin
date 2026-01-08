@@ -76,7 +76,7 @@ function Calendar({
 				table: 'w-full border-collapse',
 				weekdays: cn('mb-2 flex', defaultClassNames.weekdays),
 				weekday: cn(
-					'flex-1 select-none rounded-md font-normal text-[0.8rem] text-muted-foreground',
+					'flex-1 select-none font-normal text-[0.8rem] text-muted-foreground',
 					defaultClassNames.weekday,
 				),
 				week: cn('flex w-full', defaultClassNames.week),
@@ -89,17 +89,17 @@ function Calendar({
 					'group/day relative aspect-square h-full w-full select-none p-0 text-center',
 					defaultClassNames.day,
 				),
-				range_start: cn('rounded-l-full bg-accent', defaultClassNames.range_start),
-				range_middle: cn('*:!rounded-none', defaultClassNames.range_middle),
-				range_end: cn('rounded-r-full bg-accent', defaultClassNames.range_end),
+				range_start: cn('rounded-l-full', defaultClassNames.range_start),
+				range_middle: cn(
+					'*:before:!rounded-none text-accent-foreground *:before:inset-x-0 *:before:bg-accent',
+					defaultClassNames.range_middle,
+				),
+				range_end: cn('rounded-r-full', defaultClassNames.range_end),
 				today: cn(
 					'*:after:-bottom-0.5 *:after:absolute *:after:content-["•"]',
 					defaultClassNames.today,
 				),
-				outside: cn(
-					'text-muted-foreground aria-selected:text-muted-foreground',
-					defaultClassNames.outside,
-				),
+				outside: cn('not-aria-selected:*:text-muted-foreground', defaultClassNames.outside),
 				disabled: cn('text-muted-foreground opacity-50', defaultClassNames.disabled),
 				hidden: cn('invisible', defaultClassNames.hidden),
 				...classNames,
@@ -153,7 +153,7 @@ function CalendarDayButton({
 		<Button
 			ref={ref}
 			variant='ghost'
-			size='icon'
+			size='icon-sm'
 			data-day={day.date.toLocaleDateString()}
 			data-selected-single={
 				modifiers.selected &&
@@ -165,11 +165,15 @@ function CalendarDayButton({
 			data-range-end={modifiers.range_end}
 			data-range-middle={modifiers.range_middle}
 			className={cn(
-				'flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 rounded-full font-normal leading-none transition-none',
-				'data-[range-end=true]:!bg-primary data-[range-start=true]:!bg-primary data-[selected-single=true]:!bg-primary',
+				'!bg-transparent rounded-none font-normal transition-none', // Button reset
+				'flex aspect-square min-w-(--cell-size) flex-col gap-1 leading-none', // Sizing
+				'before:-z-10 isolate before:absolute before:inset-0.5 before:rounded-full not-disabled:hover:before:bg-accent', // Hover and selection background
+				'!ring-0 group-data-[focused=true]/day:before:border-ring group-data-[focused=true]/day:before:ring-2 group-data-[focused=true]/day:before:ring-ring/50', // Focus ring
+
+				'data-[range-end=true]:before:!bg-primary data-[range-start=true]:before:!bg-primary data-[selected-single=true]:before:!bg-primary',
+				'data-[range-end=true]:before:ring-offset-1 data-[range-start=true]:before:ring-offset-1 data-[selected-single=true]:before:ring-offset-1',
 				'data-[range-end=true]:!text-primary-foreground data-[range-start=true]:!text-primary-foreground data-[selected-single=true]:!text-primary-foreground',
-				'data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground',
-				'group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:border-ring group-data-outside/day:text-muted-foreground group-data-[focused=true]/day:ring-[3px] group-data-[focused=true]/day:ring-ring/50 dark:hover:text-accent-foreground [&>span]:text-xs [&>span]:opacity-70',
+
 				defaultClassNames.day,
 				className,
 			)}
