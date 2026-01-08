@@ -1,3 +1,5 @@
+import type { TZDate } from '@date-fns/tz';
+import { intlFormat } from 'date-fns';
 import type { invoices, numberingScheme } from '@/db/schema';
 
 export const formatCurrency = (amount: number, currency: string, locale: string) => {
@@ -17,6 +19,9 @@ export const formatNumber = (amount: number, locale: string) => {
 		style: 'decimal',
 	}).format(amount);
 };
+
+export const getTimezoneTime = (tz: string) =>
+	new Date(new Date().toLocaleString(undefined, { timeZone: tz }));
 
 export const invoiceReference = (
 	invoice: Pick<typeof invoices.$inferSelect, 'index' | 'yearIndex' | 'issueYear'>,

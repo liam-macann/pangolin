@@ -7,14 +7,15 @@ import { useState } from 'react';
 import { Controller, type ControllerRenderProps, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { z } from 'zod';
+import { CurrencySelect } from '@/components/currency-select';
 import { InfoTip } from '@/components/info';
+import { TimezoneSelect } from '@/components/timezone-select';
 import { config as configSchema } from '@/db/schema';
 import { updateUserConfig } from '@/lib/actions/config';
-import type { getCurrencies, getUserConfig } from '@/lib/data';
+import type { getUserConfig } from '@/lib/data';
 import schemes from '@/src/app/ui/colorSchemes';
 import { Button } from '@/ui/button';
 import { Checkbox } from '@/ui/checkbox';
-import { Combobox } from '@/ui/combobox';
 import {
 	Field,
 	FieldContent,
@@ -44,10 +45,8 @@ const formSchema = createInsertSchema(configSchema)
 
 export default function ConfigForm({
 	config,
-	currencies,
 }: {
 	config: Awaited<ReturnType<typeof getUserConfig>>;
-	currencies: Awaited<ReturnType<typeof getCurrencies>>;
 }) {
 	const {
 		formState: { isDirty, isSubmitting },
@@ -163,7 +162,7 @@ export default function ConfigForm({
 												<FieldDescription className='text-balance'>
 													Track invoices sequentially, over the life of the business
 												</FieldDescription>
-												<FieldDescription className='text-nowrap font-mono'>
+												<FieldDescription className='text-nowrap font-mono text-xs tracking-wide'>
 													INV–001
 												</FieldDescription>
 											</div>
@@ -179,7 +178,7 @@ export default function ConfigForm({
 												<FieldDescription className='text-balance'>
 													Reset invoice count with each new calendar year
 												</FieldDescription>
-												<FieldDescription className='text-nowrap font-mono'>
+												<FieldDescription className='text-nowrap font-mono text-xs tracking-wide'>
 													{new Date().getFullYear()}–001
 												</FieldDescription>
 											</div>
@@ -252,7 +251,7 @@ export default function ConfigForm({
 						<FieldLegend className='flex items-center gap-2'>Payment information</FieldLegend>
 						<FieldDescription>
 							Bank account numbers will be printed on the invoice footer. Please ensure details are
-							accurate, and valid for the region.
+							accurate.
 						</FieldDescription>
 						{getFieldState('paymentDetails').error?.root && (
 							<FieldError errors={[getFieldState('paymentDetails').error?.root]} />
@@ -285,13 +284,7 @@ export default function ConfigForm({
 								</FieldDescription>
 								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 							</FieldContent>
-							<Combobox
-								{...field}
-								disabled
-								className='min-w-60'
-								id='locale'
-								options={[{ label: 'Australia', value: 'en-AU' }]}
-							/>
+							<CurrencySelect {...field} onValueChange={field.onChange} />
 						</Field>
 					)}
 				/>
@@ -312,12 +305,11 @@ export default function ConfigForm({
 								</FieldDescription>
 								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 							</FieldContent>
-							<Combobox
-								{...field}
-								disabled
-								className='min-w-60'
+							<TimezoneSelect
 								id='timezone'
-								options={[{ label: 'Sydney, Australia', value: 'Australia/Sydney' }]}
+								locale={config.locale}
+								{...field}
+								onValueChange={field.onChange}
 							/>
 						</Field>
 					)}
@@ -338,23 +330,7 @@ export default function ConfigForm({
 								</FieldDescription>
 								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 							</FieldContent>
-							<Combobox
-								{...field}
-								className='min-w-60'
-								id='currency'
-								noun={{ singular: 'currency', plural: 'currencies' }}
-								style={{ width: 'calc(var(--spacing) * 60)' }}
-								options={currencies.map(currency => ({
-									label: `${currency.name} (${currency.iso})`,
-									value: currency.iso,
-									item: (
-										<div className='items-baseline-last flex w-full justify-between gap-3'>
-											<span>{currency.name}</span>
-											<span className='text-muted-foreground text-xs'> {currency.iso}</span>
-										</div>
-									),
-								}))}
-							/>
+							<CurrencySelect {...field} onValueChange={field.onChange} />
 						</Field>
 					)}
 				/>

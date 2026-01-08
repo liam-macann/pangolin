@@ -19,7 +19,7 @@ import type { getUserConfig } from '@/lib/data';
 import { useClients, useInvoices } from '@/lib/hooks';
 import { cn, type Prettify } from '@/lib/utils';
 import { Button } from '@/ui/button';
-import { Combobox } from '@/ui/combobox';
+import Combobox from '@/ui/combobox/inline';
 import { DatePicker } from '@/ui/date-picker';
 import {
 	Dialog,
@@ -65,9 +65,7 @@ const schema = createInsertSchema(invoicesSchema, {
 		dueAt: true,
 		status: true,
 	})
-	.extend({
-		items: itemsArraySchema,
-	});
+	.extend({ items: itemsArraySchema });
 
 export function CreateInvoiceDialog({
 	children,
@@ -86,7 +84,7 @@ export function CreateInvoiceDialog({
 	const { mutate } = useInvoices();
 	const { data: clientsData, isLoading: isClientsLoading, isError: isClientsError } = useClients();
 
-	const form = useForm<z.input<typeof schema>>({
+	const { control, reset, handleSubmit, getValues } = useForm<z.input<typeof schema>>({
 		resolver: zodResolver(schema),
 		defaultValues: {
 			clientDataId: '',
@@ -116,7 +114,7 @@ export function CreateInvoiceDialog({
 			mutate();
 			setOpen(false);
 			setFormVersion(v => v + 1);
-			form.reset();
+			reset();
 		});
 
 		toast.promise(result, {
@@ -146,11 +144,11 @@ export function CreateInvoiceDialog({
 						</Alert>
 					}
 				>
-					<form onSubmit={form.handleSubmit(onSubmit)}>
+					<form onSubmit={handleSubmit(onSubmit)}>
 						<FieldGroup className='gap-4'>
 							<Controller
 								name='clientDataId'
-								control={form.control}
+								control={control}
 								render={({ field, fieldState }) => (
 									<Field orientation='horizontal'>
 										<FieldLabel
@@ -161,22 +159,24 @@ export function CreateInvoiceDialog({
 										</FieldLabel>
 										<div className='flex grow flex-col items-end gap-1'>
 											<Combobox
-												options={
-													clientsData
-														? clientsData.map(client => ({
-																value: client.data.scdId,
-																label: client.data.name,
-															}))
-														: []
+												items={
+													clientsData?.map(client => ({
+														value: client.data.scdId,
+														label: client.data.name,
+													})) || []
 												}
-												disabled={isClientsLoading || isClientsError || !clientsData}
-												noun={{ singular: 'client', plural: 'clients' }}
+												required
 												className={cn(
 													'max-w-80',
-													isClientsLoading && 'disabled:cursor-wait disabled:opacity-100',
+													isClientsLoading &&
+														'*:has-disabled:cursor-wait *:has-disabled:opacity-100',
 												)}
-												id='clientId'
+												empty='No clients found.'
+												placeholder='e.g. John Smith'
+												disabled={isClientsLoading || isClientsError || !clientsData}
 												{...field}
+												onValueChange={field.onChange}
+												id='clientId'
 											/>
 											{isClientsError && (
 												<FieldError errors={[{ message: 'Failed to fetch clients' }]} />
@@ -188,7 +188,7 @@ export function CreateInvoiceDialog({
 							/>
 							<Controller
 								name='title'
-								control={form.control}
+								control={control}
 								render={({ field, fieldState }) => (
 									<Field orientation='horizontal'>
 										<FieldLabel
@@ -214,7 +214,7 @@ export function CreateInvoiceDialog({
 							<FieldGroup className='mt-4 gap-4'>
 								<Controller
 									name='description'
-									control={form.control}
+									control={control}
 									render={({ field, fieldState }) => (
 										<Field orientation='responsive'>
 											<FieldLabel
@@ -237,7 +237,7 @@ export function CreateInvoiceDialog({
 								/>
 								<Controller
 									name='notes'
-									control={form.control}
+									control={control}
 									render={({ field, fieldState }) => (
 										<Field orientation='responsive'>
 											<FieldLabel
@@ -262,7 +262,7 @@ export function CreateInvoiceDialog({
 								<div className='mt-2 grid grid-cols-2 gap-3'>
 									<Controller
 										name='issuedAt'
-										control={form.control}
+										control={control}
 										disabled
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
@@ -281,7 +281,7 @@ export function CreateInvoiceDialog({
 									/>
 									<Controller
 										name='dueAt'
-										control={form.control}
+										control={control}
 										render={({ field, fieldState }) => (
 											<Field data-invalid={fieldState.invalid}>
 												<FieldLabel htmlFor='dueAt'>Due date</FieldLabel>
@@ -308,15 +308,15 @@ export function CreateInvoiceDialog({
 
 						<InvoiceItemsField
 							config={config}
-							control={form.control}
-							getValues={form.getValues}
+							control={control}
+							getValues={getValues}
 							key={formVersion}
 							className='mb-6'
 						/>
 					</form>
 
 					<DialogFooter>
-						<Button variant='primary' type='submit' onClick={form.handleSubmit(onSubmit)}>
+						<Button variant='primary' type='submit' onClick={handleSubmit(onSubmit)}>
 							Submit
 						</Button>
 						<DialogClose
@@ -324,7 +324,7 @@ export function CreateInvoiceDialog({
 							onClick={() =>
 								setTimeout(() => {
 									setFormVersion(v => v + 1);
-									form.reset();
+									reset();
 								}, 200)
 							}
 							asChild

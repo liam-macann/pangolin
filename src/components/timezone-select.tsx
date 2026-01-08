@@ -1,0 +1,120 @@
+import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
+import { getTimeZones, type TimeZone } from '@vvo/tzdb';
+
+import {
+	Combobox,
+	ComboboxCollection,
+	ComboboxEmpty,
+	ComboboxGroup,
+	ComboboxGroupLabel,
+	ComboboxIcon,
+	ComboboxInput,
+	ComboboxItem,
+	ComboboxItemIndicator,
+	ComboboxList,
+	ComboboxPopup,
+	ComboboxPositioner,
+	ComboboxTrigger,
+	ComboboxValue,
+} from '@/components/ui/combobox';
+
+export function TimezoneSelect({
+	locale,
+	...props
+}: {
+	locale: string;
+} & React.ComponentProps<typeof Combobox>) {
+	return (
+		<Combobox items={groups} {...props}>
+			<ComboboxTrigger className='min-w-60'>
+				<ComboboxValue>
+					{(selectedValue: string) =>
+						timezones.find(tz => tz.name === selectedValue)?.alternativeName || selectedValue
+					}
+				</ComboboxValue>
+				<ComboboxIcon>
+					<CaretUpDownIcon />
+				</ComboboxIcon>
+			</ComboboxTrigger>
+			<ComboboxPositioner align='start' sideOffset={4}>
+				<ComboboxPopup className='w-80' aria-label='Select time zone'>
+					<div className='z-2 bg-popover p-1 pb-0 text-center'>
+						<ComboboxInput className='inset-shadow-xs shadow-none' />
+					</div>
+					<ComboboxEmpty>No time zone found.</ComboboxEmpty>
+					<ComboboxList>
+						{(group: GroupItem) => (
+							<ComboboxGroup key={group.value} items={group.items}>
+								<ComboboxGroupLabel>{group.value}</ComboboxGroupLabel>
+								<ComboboxCollection>
+									{(tz: TimeZone) => <Item key={tz.name} tz={tz} />}
+								</ComboboxCollection>
+							</ComboboxGroup>
+						)}
+					</ComboboxList>
+				</ComboboxPopup>
+			</ComboboxPositioner>
+		</Combobox>
+	);
+}
+
+// Separate to allow memoization
+function Item({ tz }: { tz: TimeZone }) {
+	return (
+		<ComboboxItem className='gap-3 pr-5' key={tz.name} value={tz.name}>
+			<ComboboxItemIndicator />
+			<div className='col-start-2 flex w-full flex-col gap-0.5 overflow-hidden'>
+				<div className='flex items-baseline justify-between gap-3'>
+					<span className=''>{tz.alternativeName}</span>
+					<span className='shrink-0 text-muted-foreground text-xs'>
+						{(() => {
+							const m = tz.currentTimeOffsetInMinutes;
+							const sign = m > 0 ? '+' : m < 0 ? '−' : '';
+							const hours = Math.abs(m) / 60 || '';
+							return (
+								<>
+									UTC<span className='mx-[0.25px]'>{sign}</span>
+									{hours}
+								</>
+							);
+						})()}
+					</span>
+				</div>
+				<span className='line-clamp-1 w-full truncate whitespace-pre text-muted-foreground text-xs'>
+					{tz.countryName} –{' '}
+					{tz.mainCities.slice(0, 4).map((city, i, arr) => (
+						<span key={city}>
+							{city}
+							{i < arr.length - 1 && (
+								<>
+									, <wbr />
+								</>
+							)}
+						</span>
+					))}
+				</span>
+			</div>
+		</ComboboxItem>
+	);
+}
+
+interface GroupItem {
+	value: string;
+	items: TimeZone[];
+}
+
+// This is client-side, and does not reconcile with DB supported timezones
+const timezones = getTimeZones();
+
+const continents = timezones.reduce((acc, tz) => {
+	const continent = tz.continentName;
+	acc.set(continent, [...(acc.get(continent) || []), tz]);
+	return acc;
+}, new Map<string, TimeZone[]>());
+
+const groups = [...continents]
+	.sort((a, b) => a[0].localeCompare(b[0]))
+	.map(([continent, timezones]) => ({
+		value: continent,
+		items: timezones.sort((a, b) => a.countryName.localeCompare(b.countryName)),
+	}));

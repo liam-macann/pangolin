@@ -8,10 +8,13 @@ function Input({
 	type,
 	prefix,
 	suffix,
+	focusStyles = true,
 	...props
 }: Omit<React.ComponentProps<'input'>, 'prefix' | 'suffix'> & {
 	prefix?: React.ReactNode;
 	suffix?: React.ReactNode;
+	/** Whether to apply styles to the input element when focused. */
+	focusStyles?: boolean;
 }) {
 	const ref = React.useRef<HTMLInputElement>(null);
 
@@ -19,7 +22,8 @@ function Input({
 		<span
 			className={cn(
 				'flex items-center text-base md:text-sm',
-				'has-[input:focus-visible]:border-ring has-[input:focus-visible]:ring-[3px] has-[input:focus-visible]:ring-ring/50',
+				focusStyles &&
+					'has-[input:focus-visible]:border-ring has-[input:focus-visible]:ring-[3px] has-[input:focus-visible]:ring-ring/50',
 				'file:inline-flex file:h-7 file:border-0 file:bg-transparent file:font-medium file:text-foreground file:text-sm placeholder:text-muted-foreground',
 				'flex h-9 w-full min-w-0 rounded-md border border-input shadow-xs outline-none transition-colors has-disabled:cursor-not-allowed has-disabled:opacity-50',
 				'bg-background dark:bg-input/30',

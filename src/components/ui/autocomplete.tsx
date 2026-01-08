@@ -1,4 +1,4 @@
-import { Autocomplete as AutocompletePrimitive } from '@base-ui-components/react/autocomplete';
+import { Autocomplete as AutocompletePrimitive } from '@base-ui/react/autocomplete';
 import { XIcon } from '@phosphor-icons/react/ssr';
 
 import { cn } from '@/lib/utils';
