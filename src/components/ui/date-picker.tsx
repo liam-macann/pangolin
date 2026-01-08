@@ -13,7 +13,7 @@ import {
 	type PropsSingleRequired,
 	TZDate,
 } from 'react-day-picker';
-import { cn, formatDateToLocal, type OmitUnion } from '@/lib/utils';
+import { cn, formatDateToLocal, type OmitUnion, pluralize } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { Calendar } from '@/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
@@ -39,7 +39,7 @@ type MinimalPropsBase = Omit<
 	| 'onDayTouchStart'
 > & { disabledDays?: PropsBase['disabled'] };
 
-type Expose<Type> = Type extends unknown ? Omit<Type, 'mode' | 'disabled'> : never;
+type Expose<Type> = Type extends unknown ? Omit<Type, 'mode' | 'disabled' | 'selected'> : never;
 
 type SinglePickerProps = MinimalPropsBase & Expose<PropsSingle | PropsSingleRequired>;
 type MultiPickerProps = MinimalPropsBase & Expose<PropsMulti | PropsMultiRequired>;
@@ -149,7 +149,11 @@ export function DatePickerMultiple({
 
 	return (
 		<CalendarPopover
-			label={value && value.length > 0 ? `${value.length} dates selected` : 'Select dates…'}
+			label={
+				value && value.length > 0
+					? `${value.length} ${pluralize(value.length, 'date', 'dates')} selected`
+					: 'Select dates…'
+			}
 			disabled={disabled}
 			onBlur={onBlur}
 			ref={ref}
@@ -164,7 +168,6 @@ export function DatePickerMultiple({
 				}}
 				disabled={disabledDays}
 				{...props}
-				required={props.required || undefined}
 			/>
 		</CalendarPopover>
 	);
