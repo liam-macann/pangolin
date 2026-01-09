@@ -311,6 +311,7 @@ export function createInvoiceTable<TValue>(columns: ColumnDef<Invoice, TValue>[]
                                var(--color-gray-3) 2px,
                                var(--color-gray-3) 4px
                              )`,
+							backgroundSize: 'calc(4px * sqrt(2))',
 						}
 					: undefined,
 				className: 'data-void:opacity-50 group/row',
