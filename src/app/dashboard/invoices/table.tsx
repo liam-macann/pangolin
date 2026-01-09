@@ -216,11 +216,13 @@ export const columns: ColumnDef<Invoice>[] = [
 								</DropdownMenuItem>
 								<DropdownMenuSeparator />
 
-								<AlertDialogTrigger asChild>
-									<DropdownMenuItem disabled={invoice.isVoid} variant='destructive'>
-										Void invoice
-									</DropdownMenuItem>
-								</AlertDialogTrigger>
+								<AlertDialogTrigger
+									render={
+										<DropdownMenuItem disabled={invoice.isVoid} variant='destructive'>
+											Void invoice
+										</DropdownMenuItem>
+									}
+								/>
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>

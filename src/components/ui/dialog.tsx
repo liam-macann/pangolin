@@ -1,7 +1,7 @@
 'use client';
 
+import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { XIcon } from '@phosphor-icons/react';
-import { Dialog as DialogPrimitive } from 'radix-ui';
 import type * as React from 'react';
 
 import { cn } from '@/lib/utils';
@@ -23,15 +23,15 @@ function DialogClose({ ...props }: React.ComponentProps<typeof DialogPrimitive.C
 	return <DialogPrimitive.Close data-slot='dialog-close' {...props} />;
 }
 
-function DialogOverlay({
+function DialogBackdrop({
 	className,
 	...props
-}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+}: React.ComponentProps<typeof DialogPrimitive.Backdrop>) {
 	return (
-		<DialogPrimitive.Overlay
+		<DialogPrimitive.Backdrop
 			data-slot='dialog-overlay'
 			className={cn(
-				'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50 duration-200 ease-out-quad data-[state=closed]:animate-out data-[state=open]:animate-in',
+				'fixed inset-0 z-50 bg-black/50 duration-200 ease-out-quad data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
 				className,
 			)}
 			{...props}
@@ -44,16 +44,16 @@ function DialogContent({
 	children,
 	showCloseButton = true,
 	...props
-}: React.ComponentProps<typeof DialogPrimitive.Content> & {
+}: React.ComponentProps<typeof DialogPrimitive.Popup> & {
 	showCloseButton?: boolean;
 }) {
 	return (
 		<DialogPortal data-slot='dialog-portal'>
-			<DialogOverlay />
-			<DialogPrimitive.Content
+			<DialogBackdrop />
+			<DialogPrimitive.Popup
 				data-slot='dialog-content'
 				className={cn(
-					'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-scroll rounded-lg border bg-background p-6 text-foreground shadow-lg duration-200 ease-out-quart data-[state=closed]:animate-out data-[state=open]:animate-in sm:max-w-lg',
+					'fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-scroll rounded-lg border bg-background p-6 text-foreground shadow-lg duration-200 ease-out-quart data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 sm:max-w-lg',
 					className,
 				)}
 				{...props}
@@ -63,15 +63,15 @@ function DialogContent({
 					<DialogPrimitive.Close
 						data-slot='dialog-close'
 						className='absolute top-4.5 right-4.5'
-						asChild
-					>
-						<Button variant='ghost' size='icon-xs'>
-							<XIcon />
-							<span className='sr-only'>Close</span>
-						</Button>
-					</DialogPrimitive.Close>
+						render={
+							<Button variant='ghost' size='icon-xs'>
+								<XIcon />
+								<span className='sr-only'>Close</span>
+							</Button>
+						}
+					/>
 				)}
-			</DialogPrimitive.Content>
+			</DialogPrimitive.Popup>
 		</DialogPortal>
 	);
 }
@@ -126,7 +126,7 @@ export {
 	DialogDescription,
 	DialogFooter,
 	DialogHeader,
-	DialogOverlay,
+	DialogBackdrop,
 	DialogPortal,
 	DialogTitle,
 	DialogTrigger,

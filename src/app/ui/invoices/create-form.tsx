@@ -126,9 +126,7 @@ export function CreateInvoiceDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				<span>{children}</span>
-			</DialogTrigger>
+			<DialogTrigger nativeButton={false} render={<span>{children}</span>} />
 
 			<DialogContent>
 				<DialogHeader>
