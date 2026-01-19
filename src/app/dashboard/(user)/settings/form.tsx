@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import type { z } from 'zod';
 import { CurrencySelect } from '@/components/currency-select';
 import { InfoTip } from '@/components/info';
+import { RegionSelect } from '@/components/region-select';
 import { TimezoneSelect } from '@/components/timezone-select';
 import { config as configSchema } from '@/db/schema';
 import { updateUserConfig } from '@/lib/actions/config';
@@ -36,7 +37,7 @@ const formSchema = createInsertSchema(configSchema)
 	.pick({
 		taxRegistration: true,
 		timezone: true,
-		locale: true,
+		region: true,
 		currency: true,
 		numberingScheme: true,
 		colorScheme: true,
@@ -61,7 +62,7 @@ export default function ConfigForm({
 			taxes: config.taxes.map(t => ({ ...t, rate: t.rate * 100 })),
 			paymentDetails: config.paymentDetails || [],
 			timezone: config.timezone,
-			locale: config.locale,
+			region: config.region,
 			currency: config.currency,
 			numberingScheme: config.numberingScheme,
 			colorScheme: config.colorScheme,
@@ -269,7 +270,7 @@ export default function ConfigForm({
 					</InfoTip>
 				</h2>
 				<Controller
-					name='locale'
+					name='region'
 					control={control}
 					render={({ field, fieldState }) => (
 						<Field
@@ -278,13 +279,13 @@ export default function ConfigForm({
 							data-invalid={fieldState.invalid}
 						>
 							<FieldContent>
-								<FieldLabel htmlFor='locale'>Locale</FieldLabel>
+								<FieldLabel htmlFor='region'>Region</FieldLabel>
 								<FieldDescription>
-									Adjust formatting of dates, times, and numbers to reflect your region.
+									Adjust formatting of dates, times, and numbers to reflect your locale.
 								</FieldDescription>
 								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 							</FieldContent>
-							<CurrencySelect {...field} onValueChange={field.onChange} />
+							<RegionSelect {...field} onValueChange={field.onChange} />
 						</Field>
 					)}
 				/>
