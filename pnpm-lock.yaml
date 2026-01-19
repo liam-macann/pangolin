@@ -88,8 +88,8 @@ importers:
         specifier: ^17.2.2
         version: 17.2.2
       drizzle-zod:
-        specifier: 1.0.0-beta.10-42c284e
-        version: 1.0.0-beta.10-42c284e(drizzle-orm@1.0.0-beta.10-42c284e(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6))(zod@4.1.8)
+        specifier: 1.0.0-beta.11-05230d9
+        version: 1.0.0-beta.11-05230d9(drizzle-orm@1.0.0-beta.11-05230d9(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6))(zod@4.1.8)
       match-sorter:
         specifier: ^8.2.0
         version: 8.2.0
@@ -188,14 +188,14 @@ importers:
         specifier: 7.0.0-dev.20251007.1
         version: 7.0.0-dev.20251007.1
       drizzle-kit:
-        specifier: 1.0.0-beta.10-42c284e
-        version: 1.0.0-beta.10-42c284e
+        specifier: 1.0.0-beta.11-05230d9
+        version: 1.0.0-beta.11-05230d9
       drizzle-orm:
-        specifier: 1.0.0-beta.10-42c284e
-        version: 1.0.0-beta.10-42c284e(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6)
+        specifier: 1.0.0-beta.11-05230d9
+        version: 1.0.0-beta.11-05230d9(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6)
       drizzle-seed:
-        specifier: 1.0.0-beta.10-42c284e
-        version: 1.0.0-beta.10-42c284e(drizzle-orm@1.0.0-beta.10-42c284e(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6))
+        specifier: 1.0.0-beta.11-05230d9
+        version: 1.0.0-beta.11-05230d9(drizzle-orm@1.0.0-beta.11-05230d9(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6))
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -2420,12 +2420,12 @@ packages:
     resolution: {integrity: sha512-Sf2LSQP+bOlhKWWyhFsn0UsfdK/kCWRv1iuA2gXAwt3dyNabr6QSj00I2V10pidqz69soatm9ZwZvpQMTIOd5Q==}
     engines: {node: '>=12'}
 
-  drizzle-kit@1.0.0-beta.10-42c284e:
-    resolution: {integrity: sha512-fRk0QBkl57SRnKyLBMN6UsBOeIYMzjPZ9JDaSkt1+kZH2BbVDls6TRWMg36w9Ub8M2cO+a2in4p/enxyGPbFsw==}
+  drizzle-kit@1.0.0-beta.11-05230d9:
+    resolution: {integrity: sha512-dIv1Ql5SOJsGE/6mzfUk2k8iQFQtP6Buq7JlRew/Mx1uOOkIgyPT6xAUsSbyXqjqiDQl9k2S7iXtKaOs3Cs4aw==}
     hasBin: true
 
-  drizzle-orm@1.0.0-beta.10-42c284e:
-    resolution: {integrity: sha512-/x0gvjSIyhpiLkCHBZ5YftwFN76TRw/Bwk1Zuu4KY9PMBWWiyzj4B/A7hmDRp7eIsjyVkOCZzzun4veMzbBVBg==}
+  drizzle-orm@1.0.0-beta.11-05230d9:
+    resolution: {integrity: sha512-y6i3AgHqeT5Eu/+7hsF1AWyPZQTxiBx1UOy4snEqljW7Fbpp/fO2zmWYFPvjngwOLq9prrbrn36AwCoTR+J2Bg==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -2530,13 +2530,13 @@ packages:
       sqlite3:
         optional: true
 
-  drizzle-seed@1.0.0-beta.10-42c284e:
-    resolution: {integrity: sha512-JLE3khzTRnaub5uCafZ2ndiNWaKvV38JpKEzixSNPRHlAzd8vLwRwK2mrBx/aD6+iFEPYfyHVZBIyoIMzxWlAQ==}
+  drizzle-seed@1.0.0-beta.11-05230d9:
+    resolution: {integrity: sha512-ppHJ2NoxrBXJuK1TkippMCTw6taNQ29x9qcUmooSkEU26nQUsIjoiefPKMS1heajT8yoqPfZBBkPE+SCJ91kKw==}
     peerDependencies:
       drizzle-orm: '>=1.0.0-beta.2'
 
-  drizzle-zod@1.0.0-beta.10-42c284e:
-    resolution: {integrity: sha512-XvSUIHkJPpS2zy8SaXgW+/CEFpvqTCusn17DvaXO5r0tnMrMBlc0qaLKXK/o9o1VXBwbEG84hvHmkPlGwv4PPQ==}
+  drizzle-zod@1.0.0-beta.11-05230d9:
+    resolution: {integrity: sha512-uWaoWt/TRUSCVbQqPWwavBEhddQyJUhQvy6A4OgvoIWkch2dJBcguZsJ2wSiN9D5wgd6S8rUrtpnuJ+ooqd19Q==}
     peerDependencies:
       drizzle-orm: '>=1.0.0-beta.2'
       zod: ^3.25.0 || ^4.0.0
@@ -5623,14 +5623,14 @@ snapshots:
 
   dotenv@17.2.2: {}
 
-  drizzle-kit@1.0.0-beta.10-42c284e:
+  drizzle-kit@1.0.0-beta.11-05230d9:
     dependencies:
       '@drizzle-team/brocli': 0.11.0
       '@js-temporal/polyfill': 0.5.1
       esbuild: 0.25.12
       tsx: 4.21.0
 
-  drizzle-orm@1.0.0-beta.10-42c284e(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6):
+  drizzle-orm@1.0.0-beta.11-05230d9(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6):
     dependencies:
       '@types/mssql': 9.1.8
       mssql: 11.0.1
@@ -5640,14 +5640,14 @@ snapshots:
       pg: 8.16.3
       postgres: 3.4.6
 
-  drizzle-seed@1.0.0-beta.10-42c284e(drizzle-orm@1.0.0-beta.10-42c284e(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6)):
+  drizzle-seed@1.0.0-beta.11-05230d9(drizzle-orm@1.0.0-beta.11-05230d9(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6)):
     dependencies:
-      drizzle-orm: 1.0.0-beta.10-42c284e(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6)
+      drizzle-orm: 1.0.0-beta.11-05230d9(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6)
       pure-rand: 6.1.0
 
-  drizzle-zod@1.0.0-beta.10-42c284e(drizzle-orm@1.0.0-beta.10-42c284e(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6))(zod@4.1.8):
+  drizzle-zod@1.0.0-beta.11-05230d9(drizzle-orm@1.0.0-beta.11-05230d9(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6))(zod@4.1.8):
     dependencies:
-      drizzle-orm: 1.0.0-beta.10-42c284e(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6)
+      drizzle-orm: 1.0.0-beta.11-05230d9(@neondatabase/serverless@1.0.1)(@types/mssql@9.1.8)(@types/pg@8.15.5)(mssql@11.0.1)(pg@8.16.3)(postgres@3.4.6)
       zod: 4.1.8
 
   dunder-proto@1.0.1:

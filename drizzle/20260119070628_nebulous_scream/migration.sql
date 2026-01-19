@@ -1,0 +1,2 @@
+ALTER TABLE "client_data" ADD CONSTRAINT "uq_client_version" UNIQUE NULLS NOT DISTINCT("client_id","valid_to");--> statement-breakpoint
+ALTER TABLE "config" ADD CONSTRAINT "uq_config_version" UNIQUE NULLS NOT DISTINCT("user_id","valid_to");
