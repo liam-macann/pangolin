@@ -1,3 +1,6 @@
+'use no memo';
+'use client';
+
 import {
 	CaretDownIcon,
 	CaretUpDownIcon,
