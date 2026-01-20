@@ -59,7 +59,7 @@ export async function getUserConfig() {
 						paymentDetails:
 							res.paymentDetails &&
 							(await vault.decrypt(...res.paymentDetails)).map(v => {
-								const [label, value] = v.split(': ');
+								const [label, value] = v.split(/: (.*)/s);
 								return { label, value };
 							}),
 					},
