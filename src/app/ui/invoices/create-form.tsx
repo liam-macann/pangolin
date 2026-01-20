@@ -325,10 +325,8 @@ export function CreateInvoiceDialog({
 									reset();
 								}, 200)
 							}
-							asChild
-						>
-							<Button variant='secondary'>Cancel</Button>
-						</DialogClose>
+							render={<Button variant='secondary'>Cancel</Button>}
+						/>
 					</DialogFooter>
 				</ErrorBoundary>
 			</DialogContent>
