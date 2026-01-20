@@ -83,6 +83,7 @@ export const config = pgTable(
 			.notNull(),
 		taxRegistration: boolean('tax_registration').notNull(),
 		paymentDetails: encrypted('payment_details').array(),
+		registrationNumber: encrypted('registration_number').array(),
 		numberingScheme: numberingScheme('numbering_scheme').notNull(),
 		colorScheme: colorEnum('color_scheme').notNull().default('blue'),
 		...scdDates,

@@ -174,7 +174,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 						color: colors.heavy,
 						margin: [0, 0, 0, spacing(4)],
 					},
-					{ text: 'ABN 00 000 000 000' },
+					{ stack: invoice.config.registrationNumber || [] },
 					{ text: user.email },
 				],
 			},

@@ -143,14 +143,15 @@ export async function fetchInvoice(id: string) {
 
 		const vault = await crypto(session.user.id);
 
+		const [paymentDetails, registrationNumber] = await Promise.all([
+			res.config.paymentDetails && vault.decrypt(...res.config.paymentDetails),
+			res.config.registrationNumber && vault.decrypt(...res.config.registrationNumber),
+		]);
+
 		const inv = {
 			...res,
 			reference: invoiceReference(res, res.config.numberingScheme),
-			config: {
-				...res.config,
-				paymentDetails:
-					res.config.paymentDetails && (await vault.decrypt(...res.config.paymentDetails)),
-			},
+			config: { ...res.config, paymentDetails, registrationNumber },
 		};
 
 		vault.destroy();

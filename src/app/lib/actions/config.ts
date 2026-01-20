@@ -22,6 +22,15 @@ const configInput = createInsertSchema(configSchema, {
 		)
 		.max(15)
 		.optional(),
+	registrationNumber: z
+		.array(
+			z.object({
+				label: z.string().min(1).max(255),
+				value: z.string().min(1).max(255),
+			}),
+		)
+		.max(15)
+		.optional(),
 })
 	.omit({
 		id: true,
@@ -62,10 +71,6 @@ export async function updateUserConfig(
 	const configId = uuid();
 	const vault = await crypto(session.user.id);
 
-	const paymentDetails =
-		safeConfig.paymentDetails &&
-		(await vault.encrypt(...safeConfig.paymentDetails.map(v => `${v.label}: ${v.value}`)));
-
 	// Define as CTEs for transactional behaviour
 	const actions: WithSubqueryWithoutSelection<string>[] = [
 		// Insert new config
@@ -76,7 +81,14 @@ export async function updateUserConfig(
 					...safeConfig,
 					id: configId,
 					userId: session.user.id,
-					paymentDetails: paymentDetails || null,
+					paymentDetails: safeConfig.paymentDetails
+						? await vault.encrypt(...safeConfig.paymentDetails.map(v => `${v.label}: ${v.value}`))
+						: null,
+					registrationNumber: safeConfig.registrationNumber
+						? await vault.encrypt(
+								...safeConfig.registrationNumber.map(v => `${v.label}: ${v.value}`),
+							)
+						: null,
 				}),
 			),
 

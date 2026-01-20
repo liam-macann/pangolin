@@ -52,18 +52,26 @@ export async function getUserConfig() {
 				},
 				orderBy: { validFrom: 'desc' },
 			})
-			.then(
-				async res =>
-					res && {
-						...res,
-						paymentDetails:
-							res.paymentDetails &&
-							(await vault.decrypt(...res.paymentDetails)).map(v => {
-								const [label, value] = v.split(/: (.*)/s);
-								return { label, value };
-							}),
-					},
-			);
+			.then(async res => {
+				if (!res) return;
+
+				const [paymentDetails, registrationNumber] = await Promise.all([
+					res.paymentDetails && vault.decrypt(...res.paymentDetails),
+					res.registrationNumber && vault.decrypt(...res.registrationNumber),
+				]);
+
+				return {
+					...res,
+					paymentDetails: paymentDetails?.map(v => {
+						const [label, value] = v.split(/: (.*)/s);
+						return { label, value };
+					}),
+					registrationNumber: registrationNumber?.map(v => {
+						const [label, value] = v.split(/: (.*)/s);
+						return { label, value };
+					}),
+				};
+			});
 
 		vault.destroy();
 

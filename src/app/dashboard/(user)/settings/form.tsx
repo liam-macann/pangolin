@@ -31,6 +31,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
 import { TextTooltip } from '@/ui/tooltip';
 import { PaymentDetailsField, paymentArraySchema } from './paymentDetails';
+import { RegistrationNumberField, registrationArraySchema } from './registrationNumber';
 import { DuplicateWarning, TaxRateField, taxArraySchema } from './taxRates';
 
 const formSchema = createInsertSchema(configSchema)
@@ -42,7 +43,11 @@ const formSchema = createInsertSchema(configSchema)
 		numberingScheme: true,
 		colorScheme: true,
 	})
-	.extend({ taxes: taxArraySchema, paymentDetails: paymentArraySchema });
+	.extend({
+		taxes: taxArraySchema,
+		paymentDetails: paymentArraySchema,
+		registrationNumber: registrationArraySchema,
+	});
 
 export default function ConfigForm({
 	config,
@@ -61,6 +66,7 @@ export default function ConfigForm({
 			taxRegistration: config.taxRegistration,
 			taxes: config.taxes.map(t => ({ ...t, rate: t.rate * 100 })),
 			paymentDetails: config.paymentDetails || [],
+			registrationNumber: config.registrationNumber || [],
 			timezone: config.timezone,
 			region: config.region,
 			currency: config.currency,
@@ -249,6 +255,23 @@ export default function ConfigForm({
 
 				<FieldSet>
 					<FieldContent>
+						<FieldLegend className='flex items-center gap-2'>Trading number</FieldLegend>
+						<FieldDescription>
+							Business or charity identifiers, as required for tax and legal compliance.
+						</FieldDescription>
+						{getFieldState('registrationNumber').error?.root && (
+							<FieldError errors={[getFieldState('registrationNumber').error?.root]} />
+						)}
+					</FieldContent>
+					<RegistrationNumberField
+						key={formVersion}
+						control={control}
+						className='-mb-4 -mt-1 min-h-32'
+					/>
+				</FieldSet>
+
+				<FieldSet>
+					<FieldContent>
 						<FieldLegend className='flex items-center gap-2'>Payment information</FieldLegend>
 						<FieldDescription>
 							Bank account numbers will be printed on the invoice footer. Please ensure details are
@@ -258,7 +281,11 @@ export default function ConfigForm({
 							<FieldError errors={[getFieldState('paymentDetails').error?.root]} />
 						)}
 					</FieldContent>
-					<PaymentDetailsField key={formVersion} control={control} className='-mb-4 min-h-32' />
+					<PaymentDetailsField
+						key={formVersion}
+						control={control}
+						className='-mb-4 -mt-1 min-h-32'
+					/>
 				</FieldSet>
 			</FieldGroup>
 
