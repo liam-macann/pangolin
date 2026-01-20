@@ -238,7 +238,7 @@ export default function ConfigForm({
 						)}
 					</FieldContent>
 
-					<TaxRateField key={formVersion} control={control} className='min-h-32' />
+					<TaxRateField key={formVersion} control={control} className='-mt-1 min-h-32' />
 				</FieldSet>
 			</FieldGroup>
 

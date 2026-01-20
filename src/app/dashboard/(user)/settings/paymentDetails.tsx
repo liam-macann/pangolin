@@ -80,11 +80,13 @@ export function PaymentDetailsField<T extends FormValues>({
 				))}
 			</SortableList>
 
-			<div className='mt-3 flex justify-between gap-2 self-end group-data-[empty]/sortable:hidden'>
-				<Button onClick={() => remove()} variant='secondary'>
+			<div className='mt-2 flex justify-between gap-2 self-end group-data-[empty]/sortable:hidden'>
+				<Button size='sm' onClick={() => remove()} variant='secondary'>
 					Clear
 				</Button>
-				<Button onClick={addLine}>Add Detail</Button>
+				<Button size='sm' onClick={addLine}>
+					Add Detail
+				</Button>
 			</div>
 		</Sortable>
 	);

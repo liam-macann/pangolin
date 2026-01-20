@@ -149,7 +149,11 @@ export function TaxRateField<T extends FormValues>({
 				<Button onClick={addTax}>Add Tax</Button>
 			</SortableEmpty>
 
-			<Button className='mt-3 self-end group-data-[empty]/sortable:hidden' onClick={addTax}>
+			<Button
+				size='sm'
+				className='mt-3 self-end group-data-[empty]/sortable:hidden'
+				onClick={addTax}
+			>
 				Add Tax
 			</Button>
 		</Sortable>
