@@ -8,7 +8,7 @@
 	--popover: var(--card); /* Dropdown menus, etc. */
 	--popover-foreground: var(--foreground);
 	--primary: var(--color-gray-11);
-	--primary-foreground: var(--background); /* eg. Ghost button hover text */
+	--primary-foreground: var(--color-gray-1); /* eg. Ghost button hover text */
 	--secondary: var(--color-gray-3); /* Secondary button treatment */
 	--secondary-foreground: var(--foreground);
 	--muted: var(--color-gray-3); /* Interaction state (eg. hover table row, ghost buttons) */
@@ -41,7 +41,6 @@
 
 @variant dark {
 	:root {
-		--primary: var(--color-gray-10);
 		--destructive-background: var(--color-red-8);
 		--card: var(--color-gray-2);
 		--chart-1: oklch(0.488 0.243 264.376);

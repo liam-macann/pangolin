@@ -366,7 +366,7 @@ export default function ConfigForm({
 			<div className='-mx-2 sticky bottom-0 flex grid-cols-2 gap-2 border-t bg-background px-2 py-4 pb-6 max-sm:grid max-md:fixed max-md:right-0 max-md:left-0 max-md:px-8 sm:justify-end'>
 				<Button
 					type='button'
-					variant='secondary'
+					variant='ghost'
 					onClick={() => {
 						setFormVersion(v => v + 1);
 						reset();

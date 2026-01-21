@@ -325,7 +325,7 @@ export function CreateInvoiceDialog({
 									reset();
 								}, 200)
 							}
-							render={<Button variant='secondary'>Cancel</Button>}
+							render={<Button variant='ghost'>Cancel</Button>}
 						/>
 					</DialogFooter>
 				</ErrorBoundary>
