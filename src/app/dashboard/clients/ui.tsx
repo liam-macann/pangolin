@@ -245,9 +245,9 @@ function Card({
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button
-						size='icon-sm'
+						size='icon-xs'
 						variant='ghost'
-						className='relative z-10 mx-2 translate-y-2 text-inherit'
+						className='absolute top-3 left-3 z-10 text-inherit'
 					>
 						<DotsThreeIcon />
 					</Button>
@@ -262,17 +262,18 @@ function Card({
 			<Link
 				href={`clients/${client.id}`}
 				className={cn(
-					'-my-8 !pt-12',
-					'relative inset-0 flex h-full flex-col justify-end rounded-md border p-4 pr-10 outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px]',
+					'!pt-12',
+					'rounded-md border p-4 outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px]',
 					'bg-card',
 					variant === 'secondary' && 'bg-secondary',
 				)}
 			>
-				<h2 className='font-medium'>{client.data.name}</h2>
+				<h2 className='line-clamp-1 break-all font-medium'>{client.data.name}</h2>
 				<p
+					style={{ textBox: 'trim-end cap alphabetic' }}
 					className={cn(
-						'translate-y-0.5', // Optical alignment with star
 						'text-sm opacity-70',
+						'pr-6', // Optical alignment with star
 					)}
 				>
 					{client.invoiceCount || 'No'} {pluralize(client.invoiceCount, 'invoice', 'invoices')}
@@ -284,16 +285,19 @@ function Card({
 				pressed={client.isFavorite}
 				onClick={e => e.stopPropagation}
 				onPressedChange={setFavorite}
-				size='icon-sm'
+				size='icon-xs'
 				variant='ghost'
 				className={cn(
-					'-translate-y-2 relative z-10 mx-2 self-end',
+					'absolute right-3 bottom-3 translate-y-px',
 					client.isFavorite && '!bg-transparent',
 					'text-muted-foreground',
 				)}
 			>
 				<span className='sr-only'>Favourite</span>
-				<StarIcon weight={client.isFavorite ? 'fill' : undefined} className={cn()} />
+				<StarIcon
+					weight={client.isFavorite ? 'fill' : undefined}
+					className={cn('scale-95', client.isFavorite && 'text-primary')}
+				/>
 			</Toggle>
 		</motion.div>
 	);
