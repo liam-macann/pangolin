@@ -13,7 +13,7 @@ export default async function Page() {
 				Settings
 			</h1>
 
-			<nav className='-ml-3 flex flex-col items-start gap-1 max-md:hidden'>
+			<nav className='-ml-3 sticky top-8 flex flex-col items-start gap-1 self-start max-md:hidden'>
 				<Button size='sm' className='text-foreground text-sm' variant='ghost' asChild>
 					<a href='#top'>General</a>
 				</Button>
