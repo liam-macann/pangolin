@@ -41,7 +41,7 @@ export function RegionSelect(props: React.ComponentProps<typeof Combobox>) {
 					<ComboboxEmpty>No region found.</ComboboxEmpty>
 					<ComboboxList>
 						{(country: ICountryData) => (
-							<ComboboxItem className='gap-3 pr-5' key={country.iso2} value={country.iso2}>
+							<ComboboxItem key={country.iso2} value={country.iso2}>
 								<ComboboxItemIndicator />
 								<div className='col-start-2'>{country.name}</div>
 							</ComboboxItem>

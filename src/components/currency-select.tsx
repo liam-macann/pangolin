@@ -56,7 +56,7 @@ export function CurrencySelect({ disabled, ...props }: React.ComponentProps<type
 					<ComboboxEmpty>No currency found.</ComboboxEmpty>
 					<ComboboxList>
 						{(currency: Currency) => (
-							<ComboboxItem className='gap-3 pr-5' key={currency.iso} value={currency.iso}>
+							<ComboboxItem key={currency.iso} value={currency.iso}>
 								<ComboboxItemIndicator />
 								<div className='col-start-2 flex items-baseline justify-between'>
 									<span className=''>{currency.name}</span>

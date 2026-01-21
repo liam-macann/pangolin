@@ -61,7 +61,7 @@ export function TimezoneSelect({
 // Separate to allow memoization
 function Item({ tz }: { tz: TimeZone }) {
 	return (
-		<ComboboxItem className='gap-3 pr-5' key={tz.name} value={tz.name}>
+		<ComboboxItem key={tz.name} value={tz.name}>
 			<ComboboxItemIndicator />
 			<div className='col-start-2 flex w-full flex-col gap-0.5 overflow-hidden'>
 				<div className='flex items-baseline justify-between gap-3'>
