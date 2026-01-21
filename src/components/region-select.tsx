@@ -18,9 +18,9 @@ import {
 } from '@/components/ui/combobox';
 import { cn } from '@/lib/utils';
 
-export function RegionSelect(props: React.ComponentProps<typeof Combobox>) {
-	const regions = getCountryDataList().toSorted((a, b) => a.name.localeCompare(b.name));
+const regions = getCountryDataList().toSorted((a, b) => a.name.localeCompare(b.name));
 
+export function RegionSelect(props: React.ComponentProps<typeof Combobox>) {
 	return (
 		<Combobox items={regions} {...props}>
 			<ComboboxTrigger className={cn('min-w-60')}>
