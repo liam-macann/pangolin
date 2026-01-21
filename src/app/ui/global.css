@@ -12,7 +12,7 @@
 
 	--font-sans: var(--instrument-sans, "Instrument Sans"), var(--font-system);
 	--font-sans--font-variation-settings: "wdth" 94;
-	--font-sans--font-feature-settings: "liga", "ss04", "ss05";
+	--font-sans--font-feature-settings: "liga", "ss01", "ss03", "ss04", "ss05";
 
 	--font-display: var(--instrument-sans, "Instrument Sans"), var(--font-system);
 	--font-display--font-variation-settings: "wdth" 87;

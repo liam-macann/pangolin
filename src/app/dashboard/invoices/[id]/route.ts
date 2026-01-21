@@ -108,7 +108,10 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 			modDate: invoice.createdAt,
 		},
 		pageSize: 'A4',
-		defaultStyle: { font: 'InstrumentSans', fontFeatures: ['liga', 'ss04', 'ss05'] },
+		defaultStyle: {
+			font: 'InstrumentSans',
+			fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05'],
+		},
 		pageMargins,
 		footer: (_currentPage, _pageCount) => {
 			return {
@@ -250,13 +253,13 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 									{ text: item.note, color: colors.accent, bold: false },
 								],
 								alignment: 'left',
-								fontFeatures: ['pnum'],
+								fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05', 'pnum'],
 								margin: [0, spacing(2)],
 							},
 							{
 								text: `${formatNumber(item.quantity, invoice.config.locale)} ${item.unit ? pluralize(item.quantity, singularUnits[item.unit], item.unit) : ''}`.trim(),
 								bold: false,
-								fontFeatures: ['pnum'],
+								fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05', 'pnum'],
 							},
 							...(invoice.config.taxRegistration
 								? [
@@ -287,7 +290,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 				bold: true,
 				alignment: 'right',
 				fontSize: fontSize.base,
-				fontFeatures: ['tnum', 'lnum'],
+				fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05', 'tnum', 'lnum'],
 				layout: {
 					...CenteredLayout,
 					paddingTop: (i, node) => (i === 0 ? spacing(2) : CenteredLayout.paddingTop(i, node)),
@@ -369,7 +372,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 							],
 						},
 						fontSize: fontSize.base,
-						fontFeatures: ['tnum', 'lnum'],
+						fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05', 'tnum', 'lnum'],
 						layout: {
 							...BottomLayout,
 							paddingBottom: () => spacing(2),
