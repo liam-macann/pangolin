@@ -81,14 +81,17 @@ export function ToggleHeader<TData, TValue>({
 			onClick={column.getToggleSortingHandler()}
 			variant='ghost'
 			size='sm'
-			className='-mx-2.5 !bg-transparent h-8 px-2.5'
+			className='!bg-transparent !-mx-2 !px-2 h-7 gap-1'
 		>
 			<span>{title}</span>
-			{column.getIsSorted() === 'desc' ? (
-				<CaretDownIcon weight='bold' />
-			) : (
-				column.getIsSorted() === 'asc' && <CaretUpIcon weight='bold' />
-			)}
+			{(() => {
+				switch (column.getIsSorted()) {
+					case 'desc':
+						return <CaretDownIcon weight='bold' className='translate-y-[0.5px]' />;
+					case 'asc':
+						return <CaretUpIcon weight='bold' className='translate-y-[1px]' />;
+				}
+			})()}
 		</Button>
 	);
 }
