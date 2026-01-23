@@ -1,8 +1,7 @@
+import type { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
-
 import type { ICountryData } from 'countries-list';
 import { getCountryDataList } from 'countries-list';
-
 import {
 	Combobox,
 	ComboboxEmpty,
@@ -20,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 const regions = getCountryDataList().toSorted((a, b) => a.name.localeCompare(b.name));
 
-export function RegionSelect(props: React.ComponentProps<typeof Combobox>) {
+export function RegionSelect(props: ComboboxPrimitive.Root.Props<ICountryData>) {
 	return (
 		<Combobox items={regions} {...props}>
 			<ComboboxTrigger className={cn('min-w-60')}>

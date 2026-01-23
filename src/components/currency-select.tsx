@@ -1,7 +1,6 @@
+import type { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
-
 import type { Data as Currencies } from '@/api/currencies/route';
-
 import {
 	Combobox,
 	ComboboxEmpty,
@@ -20,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 type Currency = Currencies[number];
 
-export function CurrencySelect({ disabled, ...props }: React.ComponentProps<typeof Combobox>) {
+export function CurrencySelect({ disabled, ...props }: ComboboxPrimitive.Root.Props<Currency>) {
 	const { data: currencies, isLoading, isError } = useCurrencies();
 
 	if (isError) throw new Error('Failed to fetch currencies');

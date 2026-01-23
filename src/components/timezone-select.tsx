@@ -1,6 +1,6 @@
+import type { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
 import { getTimeZones, type TimeZone } from '@vvo/tzdb';
-
 import {
 	Combobox,
 	ComboboxCollection,
@@ -23,7 +23,7 @@ export function TimezoneSelect({
 	...props
 }: {
 	locale: string;
-} & React.ComponentProps<typeof Combobox>) {
+} & ComboboxPrimitive.Root.Props<TimeZone>) {
 	return (
 		<Combobox items={groups} {...props}>
 			<ComboboxTrigger className='min-w-60'>

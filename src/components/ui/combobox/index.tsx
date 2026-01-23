@@ -1,14 +1,16 @@
+export * from '@base-ui/react/combobox';
+
 import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { CheckIcon, XIcon } from '@phosphor-icons/react/ssr';
-import type { ComponentProps, RefObject } from 'react';
+import type { RefObject } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/src/components/ui/button';
 import { Input } from '@/src/components/ui/input';
 import { Separator } from '@/src/components/ui/separator';
 
-const Combobox = (props: ComponentProps<typeof ComboboxPrimitive.Root>) => (
-	<ComboboxPrimitive.Root autoHighlight {...props} />
-);
+const Combobox = <Value, Multiple extends boolean | undefined = false>(
+	props: ComboboxPrimitive.Root.Props<Value, Multiple>,
+) => <ComboboxPrimitive.Root autoHighlight {...props} />;
 
 function ComboboxInput(
 	props: ComboboxPrimitive.Input.Props & {
@@ -225,7 +227,7 @@ function ComboboxGroupLabel({ className, ...props }: ComboboxPrimitive.GroupLabe
 		<ComboboxPrimitive.GroupLabel
 			data-slot='combobox-group-label'
 			className={cn(
-				'-mt-2 -top-2 sticky z-1 mb-1 border-b bg-popover py-1 pt-3 pl-4 font-medium text-muted-foreground text-xs',
+				'-top-2 -mt-2 sticky z-1 mb-1 border-b bg-popover py-1 pt-3 pl-4 font-medium text-muted-foreground text-xs',
 				className,
 			)}
 			{...props}
