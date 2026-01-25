@@ -12,7 +12,6 @@ export default function TopNav({ className }: { className?: string }) {
 				return (
 					<Button
 						key={link.name}
-						asChild
 						variant='ghost'
 						size='sm'
 						className={clsx(
@@ -21,9 +20,8 @@ export default function TopNav({ className }: { className?: string }) {
 								? 'after:-bottom-2.5 after:pointer-events-none after:absolute after:left-0 after:block after:h-[2px] after:w-full after:translate-y-full after:bg-accent-foreground'
 								: 'text-muted-foreground',
 						)}
-					>
-						<Link href={link.href}>{link.name}</Link>
-					</Button>
+						render={<Link href={link.href}>{link.name}</Link>}
+					/>
 				);
 			})}
 		</nav>

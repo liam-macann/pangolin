@@ -30,12 +30,16 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
 	return (
 		<>
-			<Button variant='ghost' asChild className='-ml-3'>
-				<Link href='/dashboard/clients'>
-					<ArrowLeftIcon />
-					Back
-				</Link>
-			</Button>
+			<Button
+				variant='ghost'
+				className='-ml-3'
+				render={
+					<Link href='/dashboard/clients'>
+						<ArrowLeftIcon />
+						Back
+					</Link>
+				}
+			/>
 
 			<section className='flex flex-col gap-2'>
 				<div className='space-x-4'>

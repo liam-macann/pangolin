@@ -14,18 +14,30 @@ export default async function Page() {
 			</h1>
 
 			<nav className='-ml-3 sticky top-8 flex flex-col items-start gap-1 self-start max-md:hidden'>
-				<Button size='sm' className='text-foreground text-sm' variant='ghost' asChild>
-					<a href='#top'>General</a>
-				</Button>
-				<Button size='sm' className='text-foreground text-sm' variant='ghost' asChild>
-					<a href='#taxation'>Taxation</a>
-				</Button>
-				<Button size='sm' className='text-foreground text-sm' variant='ghost' asChild>
-					<a href='#details'>Your details</a>
-				</Button>
-				<Button size='sm' className='text-foreground text-sm' variant='ghost' asChild>
-					<a href='#localisation'>Localisation</a>
-				</Button>
+				<Button
+					size='sm'
+					className='text-foreground text-sm'
+					variant='ghost'
+					render={<a href='#top'>General</a>}
+				/>
+				<Button
+					size='sm'
+					className='text-foreground text-sm'
+					variant='ghost'
+					render={<a href='#taxation'>Taxation</a>}
+				/>
+				<Button
+					size='sm'
+					className='text-foreground text-sm'
+					variant='ghost'
+					render={<a href='#details'>Your details</a>}
+				/>
+				<Button
+					size='sm'
+					className='text-foreground text-sm'
+					variant='ghost'
+					render={<a href='#localisation'>Localisation</a>}
+				/>
 			</nav>
 			<section className='mb-12 flex w-full flex-col gap-12'>
 				<div>

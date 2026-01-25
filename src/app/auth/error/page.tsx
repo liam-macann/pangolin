@@ -94,9 +94,7 @@ export default async function AuthErrorPage({
 			<div>
 				<code className='rounded-sm bg-gray-3 p-1 text-xs'>{error}</code>
 			</div>
-			<Button className='mt-4 self-start' asChild>
-				<Link href='/auth/login'>Retry</Link>
-			</Button>
+			<Button className='mt-4 self-start' render={<Link href='/auth/login'>Retry</Link>} />
 		</div>
 	);
 }

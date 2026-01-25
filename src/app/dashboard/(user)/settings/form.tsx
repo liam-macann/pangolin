@@ -266,7 +266,7 @@ export default function ConfigForm({
 					<RegistrationNumberField
 						key={formVersion}
 						control={control}
-						className='-mb-4 -mt-1 min-h-32'
+						className='-mt-1 -mb-4 min-h-32'
 					/>
 				</FieldSet>
 
@@ -284,7 +284,7 @@ export default function ConfigForm({
 					<PaymentDetailsField
 						key={formVersion}
 						control={control}
-						className='-mb-4 -mt-1 min-h-32'
+						className='-mt-1 -mb-4 min-h-32'
 					/>
 				</FieldSet>
 			</FieldGroup>
@@ -400,16 +400,23 @@ function ColorPalette({
 			>
 				{Object.entries(schemes).map(([key, scheme]) => (
 					<div key={key} className='flex flex-col'>
-						<Button variant='primary' size='icon-sm' asChild>
-							<RadioGroupItem
-								className='peer !border-black/20 rounded-full text-white outline-gray-11 data-[state="checked"]:outline'
-								style={{ backgroundColor: scheme.accent }}
-								value={key}
-								onMouseEnter={() => setHover(key)}
-							>
-								<CheckIcon className='fade-in-0 zoom-in-90 animate-in duration-150' weight='bold' />
-							</RadioGroupItem>
-						</Button>
+						<Button
+							variant='primary'
+							size='icon-sm'
+							render={
+								<RadioGroupItem
+									className='peer !border-black/20 !rounded-full text-white outline-gray-11 data-[state="checked"]:outline'
+									style={{ backgroundColor: scheme.accent }}
+									value={key}
+									onMouseEnter={() => setHover(key)}
+								>
+									<CheckIcon
+										className='fade-in-0 zoom-in-90 animate-in duration-150'
+										weight='bold'
+									/>
+								</RadioGroupItem>
+							}
+						/>
 						{key === (hover || field.value) && (
 							<FieldDescription className='text-center text-xs capitalize'>
 								<span className='-translate-x-1/2 absolute mt-2'>{key}</span>

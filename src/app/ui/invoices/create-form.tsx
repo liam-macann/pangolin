@@ -204,11 +204,16 @@ export function CreateInvoiceDialog({
 							/>
 						</FieldGroup>
 						<details className='mt-6'>
-							<Button asChild size='sm' variant='ghost' className='!-ml-2.5 text-muted-foreground'>
-								<summary>
-									Advanced <CaretUpDownIcon />
-								</summary>
-							</Button>
+							<Button
+								size='sm'
+								variant='ghost'
+								className='!-ml-2.5 text-muted-foreground'
+								render={
+									<summary>
+										Advanced <CaretUpDownIcon />
+									</summary>
+								}
+							/>
 							<FieldGroup className='mt-4 gap-4'>
 								<Controller
 									name='description'

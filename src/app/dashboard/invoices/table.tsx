@@ -192,12 +192,12 @@ export const columns: ColumnDef<Invoice>[] = [
 							size='sm'
 							variant='ghost'
 							className='pointer-fine:opacity-0 transition-none group-hocus-within/row:opacity-100 max-md:hidden'
-							asChild
-						>
-							<a href={`/dashboard/invoices/${invoice.id}`}>
-								View<span>↗</span>
-							</a>
-						</Button>
+							render={
+								<a href={`/dashboard/invoices/${invoice.id}`}>
+									View<span>↗</span>
+								</a>
+							}
+						/>
 						<DropdownMenu modal={false}>
 							<DropdownMenuTrigger asChild>
 								<Button variant='ghost' size='icon' className='size-8 p-0'>
