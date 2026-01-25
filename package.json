@@ -58,6 +58,7 @@
 		"react-hook-form": "^7.68.0",
 		"react-wrap-balancer": "^1.1.1",
 		"scrollyfills": "^1.0.4",
+		"shadcn": "^3.7.0",
 		"sonner": "^2.0.7",
 		"swr": "^2.3.6",
 		"tailwind-merge": "^3.3.1",
