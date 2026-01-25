@@ -33,6 +33,7 @@ import {
 	FieldSet,
 } from '@/ui/field';
 import { Input } from '@/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 
 export const taxArraySchema = z.array(
 	createInsertSchema(taxes, {
@@ -119,15 +120,17 @@ export function TaxRateField<T extends FormValues>({
 							name={`taxes.${i}.rate`}
 							render={({ field, fieldState }) => (
 								<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-									<Input
-										suffix='%'
-										type='text'
-										inputMode='decimal'
-										placeholder='2.5'
-										step='any'
-										onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
-										{...field}
-									/>
+									<InputGroup>
+										<InputGroupInput
+											type='text'
+											inputMode='decimal'
+											placeholder='2.5'
+											step='any'
+											onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+											{...field}
+										/>
+										<InputGroupAddon align='inline-end'>%</InputGroupAddon>
+									</InputGroup>
 									{fieldState.invalid && (
 										<FieldError className='text-xs' errors={[fieldState.error]} />
 									)}

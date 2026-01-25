@@ -31,6 +31,7 @@ import {
 } from '@/ui/dropdown-menu';
 import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/ui/field';
 import { Input } from '@/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/ui/input-group';
 import {
 	Select,
 	SelectClear,
@@ -227,28 +228,32 @@ function InvoiceItemsInput({
 							name={`items.${i}.quantity`}
 							render={({ field, fieldState }) => (
 								<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-									<Input
-										type='number'
-										min={0}
-										inputMode='decimal'
-										placeholder='2'
-										onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
-										{...field}
-										suffix={
+									<InputGroup>
+										<InputGroupInput
+											type='number'
+											min={0}
+											inputMode='decimal'
+											placeholder='2'
+											onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
+											{...field}
+										/>
+
+										<InputGroupAddon align='inline-end'>
 											<Controller
 												control={control}
 												name={`items.${i}.units`}
 												render={({ field }) => (
 													<Select {...field} onValueChange={field.onChange} required={false}>
 														<SelectTrigger size='xs' asChild>
-															<Button
+															<InputGroupButton
 																size='xs'
 																variant='secondary'
-																className='-mr-1.5 data-placeholder:text-muted-foreground'
+																className='data-placeholder:text-muted-foreground'
 															>
 																<SelectValue placeholder='units' />
-															</Button>
+															</InputGroupButton>
 														</SelectTrigger>
+
 														<SelectContent>
 															<SelectGroup>
 																<SelectLabel>Units</SelectLabel>
@@ -263,8 +268,8 @@ function InvoiceItemsInput({
 													</Select>
 												)}
 											/>
-										}
-									/>
+										</InputGroupAddon>
+									</InputGroup>
 									{fieldState.invalid && (
 										<FieldError className='text-xs' errors={[fieldState.error]} />
 									)}
@@ -276,14 +281,18 @@ function InvoiceItemsInput({
 							name={`items.${i}.unitCost`}
 							render={({ field, fieldState }) => (
 								<Field className='gap-0.5' data-invalid={fieldState.invalid}>
-									<Input
-										type='number'
-										inputMode='decimal'
-										placeholder='40'
-										onKeyDown={e => ['e', 'E', '+'].includes(e.key) && e.preventDefault()}
-										prefix={getCurrencySymbol(config.currency, config.locale)}
-										{...field}
-									/>
+									<InputGroup>
+										<InputGroupInput
+											type='number'
+											inputMode='decimal'
+											placeholder='40'
+											onKeyDown={e => ['e', 'E', '+'].includes(e.key) && e.preventDefault()}
+											{...field}
+										/>
+										<InputGroupAddon className='font-normal' align='inline-start'>
+											{getCurrencySymbol(config.currency, config.locale)}
+										</InputGroupAddon>
+									</InputGroup>
 									{fieldState.invalid && (
 										<FieldError className='text-xs' errors={[fieldState.error]} />
 									)}

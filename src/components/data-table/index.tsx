@@ -23,7 +23,7 @@ import {
 } from 'react';
 import { Button } from '@/ui/button';
 import { ButtonGroup } from '@/ui/button-group';
-import { Input } from '@/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 
 /** Component factory, to create a typed data table */
@@ -207,22 +207,25 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		);
 	}
 
-	function Search({ onChange, ...props }: ComponentProps<typeof Input>) {
+	function Search({ onChange, ...props }: ComponentProps<typeof InputGroup>) {
 		const table = useContext(TableContext);
 		if (table === null) throw new Error('Search must be used within a DataTable.Root');
 
 		return (
-			<Input
-				aria-label='Search'
-				placeholder='Search…'
-				value={table.getState().globalFilter}
-				onChange={e => {
-					onChange?.(e);
-					table.setGlobalFilter(e.target.value);
-				}}
-				prefix={<MagnifyingGlassIcon />}
-				{...props}
-			/>
+			<InputGroup {...props}>
+				<InputGroupAddon>
+					<MagnifyingGlassIcon />
+				</InputGroupAddon>
+				<InputGroupInput
+					aria-label='Search'
+					placeholder='Search…'
+					value={table.getState().globalFilter}
+					onChange={e => {
+						onChange?.(e);
+						table.setGlobalFilter(e.target.value);
+					}}
+				/>
+			</InputGroup>
 		);
 	}
 

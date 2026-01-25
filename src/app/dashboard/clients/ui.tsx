@@ -22,11 +22,11 @@ import { type JSX, useEffect, useRef, useState } from 'react';
 import 'scrollyfills';
 import { toast } from 'sonner';
 import type { Data as ClientData } from '@/api/clients/route';
-import { ButtonGroup } from '@/components/ui/button-group';
 import { updateClientFavorite } from '@/lib/actions/client';
 import { useClients } from '@/lib/hooks';
 import { cn, type ElementType, pluralize } from '@/lib/utils';
 import { Button } from '@/ui/button';
+import { ButtonGroup } from '@/ui/button-group';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -35,6 +35,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
 import { Input } from '@/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 import { Toggle } from '@/ui/toggle';
 
 type Client = ElementType<ClientData>;
@@ -122,22 +123,25 @@ export function Table({ data }: { data: Client[] }) {
 
 	return (
 		<>
-			<Input
-				className='mb-6 h-10 grow rounded-full shadow-none'
-				aria-label='Search'
-				placeholder='Search clients…'
-				onChange={e => table.setGlobalFilter(e.target.value)}
-				onKeyDown={e => {
-					if (e.key === 'Enter' && e.currentTarget.value !== '') {
-						const id = table.getRowModel().rows[0]?.original?.id;
-						if (id) router.push(`/dashboard/clients/${id}`);
-					}
-				}}
-				onFocus={() => setIsFiltering(true)}
-				onBlur={() => setIsFiltering(false)}
-				value={filter}
-				prefix={<MagnifyingGlassIcon />}
-			/>
+			<InputGroup className='mb-6 grow rounded-full shadow-none'>
+				<InputGroupAddon>
+					<MagnifyingGlassIcon />
+				</InputGroupAddon>
+				<InputGroupInput
+					aria-label='Search'
+					placeholder='Search clients…'
+					onChange={e => table.setGlobalFilter(e.target.value)}
+					onKeyDown={e => {
+						if (e.key === 'Enter' && e.currentTarget.value !== '') {
+							const id = table.getRowModel().rows[0]?.original?.id;
+							if (id) router.push(`/dashboard/clients/${id}`);
+						}
+					}}
+					onFocus={() => setIsFiltering(true)}
+					onBlur={() => setIsFiltering(false)}
+					value={filter}
+				/>
+			</InputGroup>
 
 			{table.getRowModel().rows.length ? (
 				<section className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
