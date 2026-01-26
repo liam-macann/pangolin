@@ -1,22 +1,19 @@
 import type { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
-import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
 import { getTimeZones, type TimeZone } from '@vvo/tzdb';
+
 import {
 	Combobox,
 	ComboboxCollection,
+	ComboboxContent,
 	ComboboxEmpty,
 	ComboboxGroup,
-	ComboboxGroupLabel,
-	ComboboxIcon,
 	ComboboxInput,
 	ComboboxItem,
-	ComboboxItemIndicator,
+	ComboboxLabel,
 	ComboboxList,
-	ComboboxPopup,
-	ComboboxPositioner,
 	ComboboxTrigger,
 	ComboboxValue,
-} from '@/components/ui/combobox';
+} from '@/ui/combobox';
 
 export function TimezoneSelect({
 	locale,
@@ -32,40 +29,32 @@ export function TimezoneSelect({
 						timezones.find(tz => tz.name === selectedValue)?.alternativeName || selectedValue
 					}
 				</ComboboxValue>
-				<ComboboxIcon>
-					<CaretUpDownIcon />
-				</ComboboxIcon>
 			</ComboboxTrigger>
-			<ComboboxPositioner align='start' sideOffset={4}>
-				<ComboboxPopup className='w-80' aria-label='Select time zone'>
-					<div className='z-2 bg-popover p-1 pb-0 text-center'>
-						<ComboboxInput className='inset-shadow-xs shadow-none' />
-					</div>
-					<ComboboxEmpty>No time zone found.</ComboboxEmpty>
-					<ComboboxList>
-						{(group: GroupItem) => (
-							<ComboboxGroup key={group.value} items={group.items}>
-								<ComboboxGroupLabel>{group.value}</ComboboxGroupLabel>
-								<ComboboxCollection>
-									{(tz: TimeZone) => <Item key={tz.name} tz={tz} />}
-								</ComboboxCollection>
-							</ComboboxGroup>
-						)}
-					</ComboboxList>
-				</ComboboxPopup>
-			</ComboboxPositioner>
+			<ComboboxContent align='start' sideOffset={4}>
+				<ComboboxInput showTrigger={false} />
+				<ComboboxEmpty>No time zone found.</ComboboxEmpty>
+				<ComboboxList>
+					{(group: GroupItem) => (
+						<ComboboxGroup key={group.value} items={group.items}>
+							<ComboboxLabel>{group.value}</ComboboxLabel>
+							<ComboboxCollection>
+								{(tz: TimeZone) => <Item key={tz.name} tz={tz} />}
+							</ComboboxCollection>
+						</ComboboxGroup>
+					)}
+				</ComboboxList>
+			</ComboboxContent>
 		</Combobox>
 	);
 }
 
-// Separate to allow memoization
+// Separate component to allow memoization
 function Item({ tz }: { tz: TimeZone }) {
 	return (
-		<ComboboxItem key={tz.name} value={tz.name}>
-			<ComboboxItemIndicator />
-			<div className='col-start-2 flex w-full flex-col gap-0.5 overflow-hidden'>
-				<div className='flex items-baseline justify-between gap-3'>
-					<span className=''>{tz.alternativeName}</span>
+		<ComboboxItem key={tz.name} value={tz.name} className='items-baseline pr-2'>
+			<div className='flex w-full flex-col gap-0.5 overflow-hidden'>
+				<div className='flex items-baseline gap-1 pr-6 font-medium'>
+					<span>{tz.alternativeName}</span>
 					<span className='shrink-0 text-muted-foreground text-xs'>
 						{(() => {
 							const m = tz.currentTimeOffsetInMinutes;

@@ -1,21 +1,17 @@
 import type { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
-import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
 import type { Data as Currencies } from '@/api/currencies/route';
-import {
-	Combobox,
-	ComboboxEmpty,
-	ComboboxIcon,
-	ComboboxInput,
-	ComboboxItem,
-	ComboboxItemIndicator,
-	ComboboxList,
-	ComboboxPopup,
-	ComboboxPositioner,
-	ComboboxTrigger,
-	ComboboxValue,
-} from '@/components/ui/combobox';
 import { useCurrencies } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
+import {
+	Combobox,
+	ComboboxContent,
+	ComboboxEmpty,
+	ComboboxInput,
+	ComboboxItem,
+	ComboboxList,
+	ComboboxTrigger,
+	ComboboxValue,
+} from '@/ui/combobox';
 
 type Currency = Currencies[number];
 
@@ -43,29 +39,21 @@ export function CurrencySelect({ disabled, ...props }: ComboboxPrimitive.Root.Pr
 						<span className='sr-only'>Loading…</span>
 					</div>
 				)}
-				<ComboboxIcon>
-					<CaretUpDownIcon />
-				</ComboboxIcon>
 			</ComboboxTrigger>
-			<ComboboxPositioner align='start' sideOffset={4}>
-				<ComboboxPopup className='w-70' aria-label='Select currency'>
-					<div className='z-2 bg-popover p-1 pb-0 text-center'>
-						<ComboboxInput className='inset-shadow-xs shadow-none' />
-					</div>
-					<ComboboxEmpty>No currency found.</ComboboxEmpty>
-					<ComboboxList>
-						{(currency: Currency) => (
-							<ComboboxItem key={currency.iso} value={currency.iso}>
-								<ComboboxItemIndicator />
-								<div className='col-start-2 flex items-baseline justify-between'>
-									<span className=''>{currency.name}</span>
-									<span className='shrink-0 text-muted-foreground text-xs'>{currency.iso}</span>
-								</div>
-							</ComboboxItem>
-						)}
-					</ComboboxList>
-				</ComboboxPopup>
-			</ComboboxPositioner>
+			<ComboboxContent align='start' sideOffset={4}>
+				<ComboboxInput showTrigger={false} />
+				<ComboboxEmpty>No currency found.</ComboboxEmpty>
+				<ComboboxList>
+					{(currency: Currency) => (
+						<ComboboxItem key={currency.iso} value={currency.iso}>
+							<div className='flex w-full items-baseline justify-between'>
+								<span className=''>{currency.name}</span>
+								<span className='shrink-0 text-muted-foreground text-xs'>{currency.iso}</span>
+							</div>
+						</ComboboxItem>
+					)}
+				</ComboboxList>
+			</ComboboxContent>
 		</Combobox>
 	);
 }

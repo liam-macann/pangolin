@@ -19,7 +19,14 @@ import type { getUserConfig } from '@/lib/data';
 import { useClients, useInvoices } from '@/lib/hooks';
 import { cn, type Prettify } from '@/lib/utils';
 import { Button } from '@/ui/button';
-import Combobox from '@/ui/combobox/inline';
+import {
+	Combobox,
+	ComboboxContent,
+	ComboboxEmpty,
+	ComboboxInput,
+	ComboboxItem,
+	ComboboxList,
+} from '@/ui/combobox';
 import { DatePicker } from '@/ui/date-picker';
 import {
 	Dialog,
@@ -164,18 +171,31 @@ export function CreateInvoiceDialog({
 													})) || []
 												}
 												required
-												className={cn(
-													'max-w-80',
-													isClientsLoading &&
-														'*:has-disabled:cursor-wait *:has-disabled:opacity-100',
-												)}
-												empty='No clients found.'
-												placeholder='e.g. John Smith'
 												disabled={isClientsLoading || isClientsError || !clientsData}
 												{...field}
 												onValueChange={field.onChange}
 												id='clientId'
-											/>
+											>
+												<ComboboxInput
+													className={cn(
+														'w-full max-w-80',
+														isClientsLoading &&
+															'*:has-disabled:cursor-wait *:has-disabled:opacity-100',
+													)}
+													placeholder='e.g. John Smith'
+												/>
+												<ComboboxContent>
+													<ComboboxEmpty>No clients found.</ComboboxEmpty>
+													<ComboboxList>
+														{item => (
+															<ComboboxItem key={item.value} value={item}>
+																{item.label}
+															</ComboboxItem>
+														)}
+													</ComboboxList>
+												</ComboboxContent>
+											</Combobox>
+
 											{isClientsError && (
 												<FieldError errors={[{ message: 'Failed to fetch clients' }]} />
 											)}
