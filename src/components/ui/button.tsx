@@ -20,10 +20,14 @@ const buttonVariants = cva(
 				outline: [
 					'border not-disabled:hover:text-accent-foreground focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%] dark:border-input',
 					'bg-linear-to-b from-80% from-transparent to-black/2 not-disabled:hover:bg-accent/70 dark:bg-secondary dark:not-disabled:hover:bg-gray-4',
+					'aria-expanded:bg-accent/70 aria-expanded:dark:bg-gray-4',
 				],
-				secondary:
+				secondary: [
 					'inset-shadow-white/5 inset-shadow-xs border border-foreground/2 bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary/80 focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%]',
-				ghost: 'text-accent-foreground not-disabled:hover:bg-accent',
+					'aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
+				],
+				ghost:
+					'text-accent-foreground not-disabled:hover:bg-accent aria-expanded:bg-muted aria-expanded:text-foreground',
 				link: 'text-primary underline-offset-4 not-disabled:hover:underline',
 			},
 			size: {
