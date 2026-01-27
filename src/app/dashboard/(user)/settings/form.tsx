@@ -312,7 +312,7 @@ export default function ConfigForm({
 								</FieldDescription>
 								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 							</FieldContent>
-							<RegionSelect {...field} onValueChange={field.onChange} />
+							<RegionSelect {...field} onValueChange={v => field.onChange(v?.iso2)} />
 						</Field>
 					)}
 				/>
