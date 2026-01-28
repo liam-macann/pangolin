@@ -4,7 +4,13 @@ import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog
 import type * as React from 'react';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/ui/button';
-import { DialogBackdrop, DialogContent, DialogDescription, DialogTitle } from './dialog';
+import {
+	DialogBackdrop,
+	DialogContent,
+	DialogDescription,
+	DialogPopup,
+	DialogTitle,
+} from './dialog';
 
 function AlertDialog({ ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
 	return <AlertDialogPrimitive.Root data-slot='alert-dialog' {...props} />;
@@ -41,7 +47,7 @@ function AlertDialogContent({
 		<AlertDialogPortal>
 			<AlertDialogBackdrop />
 			<AlertDialogPrimitive.Popup
-				render={DialogContent}
+				render={DialogPopup}
 				data-slot='alert-dialog-content'
 				{...props}
 			/>
