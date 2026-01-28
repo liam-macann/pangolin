@@ -48,10 +48,10 @@ export const statusVariants = cva('!px-2 rounded-sm border py-1 capitalize', {
 	variants: {
 		variant: {
 			unpaid:
-				'!border-red-6 focus-visible:!border-red-7 !ring-red-6/50 !bg-red-3 dark:!bg-red-4 dark:!border-red-6 text-red-12',
-			paid: '!border-blue-6 focus-visible:!border-blue-7 !ring-blue-6/50 !bg-blue-3 dark:!bg-blue-4 dark:!border-blue-6 text-blue-12',
+				'!border-red-6 focus-visible:!border-red-7 dark:focus-visible:!border-red-7/70 !ring-red-6/50 !bg-red-3 dark:!bg-red-10/20 dark:!border-red-6/50 text-red-12',
+			paid: '!border-blue-6 focus-visible:!border-blue-7 dark:focus-visible:!border-blue-7/70 !ring-blue-6/50 !bg-blue-3 dark:!bg-blue-10/20 dark:!border-blue-6/50 text-blue-12',
 			refunded:
-				'!border-orange-6 focus-visible:!border-orange-7 !ring-orange-6/50 !bg-orange-3 dark:!bg-orange-4 dark:!border-orange-6 text-orange-12',
+				'!border-orange-6 focus-visible:!border-orange-7 dark:focus-visible:!border-orange-7/70 !ring-orange-6/50 !bg-orange-3 dark:!bg-orange-10/20 dark:!border-orange-6/70 text-orange-12',
 		},
 	},
 });
