@@ -59,6 +59,7 @@ function ComboboxInput({
 }) {
 	return (
 		<InputGroup
+			data-disabled={disabled}
 			className={cn(
 				'w-auto group-data-[slot="combobox-content"]/combobox-content:inset-shadow-xs',
 				className,

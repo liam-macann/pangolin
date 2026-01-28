@@ -3,18 +3,18 @@ import { Input as InputPrimitive } from "@base-ui/react/input"
 
 import { cn } from "@/lib/utils"
 
-function Input({ className, type, ...props }: React.ComponentProps<"input">) {
-  return (
-    <InputPrimitive
-      type={type}
-      data-slot="input"
-      className={cn(
-        "bg-background dark:bg-secondary border-input focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 h-9 rounded-md border px-2.5 py-1 text-base shadow-xs transition-colors file:h-7 file:text-sm file:font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] md:text-sm file:text-foreground placeholder:text-muted-foreground w-full min-w-0 outline-none file:inline-flex file:border-0 file:bg-background disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
-        className
-      )}
-      {...props}
-    />
-  )
+function Input({ className, type, ...props }: React.ComponentProps<'input'>) {
+	return (
+		<InputPrimitive
+			type={type}
+			data-slot='input'
+			className={cn(
+				'h-9 w-full min-w-0 rounded-md border border-input bg-background px-2.5 py-1 font-normal text-base shadow-xs outline-none transition-colors file:inline-flex file:h-7 file:border-0 file:bg-background file:font-medium file:text-foreground file:text-sm placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-[3px] aria-invalid:ring-destructive/20 md:text-sm dark:bg-secondary dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40',
+				className,
+			)}
+			{...props}
+		/>
+	);
 }
 
 export { Input }
