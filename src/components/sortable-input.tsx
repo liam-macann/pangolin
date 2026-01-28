@@ -145,7 +145,7 @@ export function SortableItem({
 			>
 				<motion.div
 					className={cn(
-						'relative flex origin-top gap-2 py-1 *:transition-all *:duration-200',
+						'relative flex origin-top gap-2 py-1 *:duration-200',
 						isDragging && '*:drop-shadow-black/7 *:not-[.drop-shadow-none]:drop-shadow-md',
 						className,
 					)}
