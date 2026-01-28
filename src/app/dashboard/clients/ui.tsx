@@ -93,6 +93,8 @@ export function Clients({ initial }: { initial: Client[] }) {
 }
 
 export function Table({ data }: { data: Client[] }) {
+	'use no memo';
+
 	const router = useRouter();
 	const [filter, setFilter] = useState('');
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
