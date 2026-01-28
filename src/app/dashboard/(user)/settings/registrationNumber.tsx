@@ -22,7 +22,7 @@ export const registrationArraySchema = z
 			value: z.string().min(1, 'Please enter a value'),
 		}),
 	)
-	.max(10, 'Too many registration numbers');
+	.max(10, 'Too many entries');
 
 type RegistrationNumberField = z.infer<typeof registrationArraySchema>;
 
@@ -45,7 +45,7 @@ export function RegistrationNumberField<T extends FormValues>({
 
 	return (
 		<Sortable
-			className={cn('flex flex-col gap-2', className)}
+			className={className}
 			items={fields}
 			onReorder={({ initialIndex, index }) => move(initialIndex, index)}
 		>

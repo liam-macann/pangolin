@@ -56,7 +56,7 @@ export function PaymentDetailsField<T extends FormValues>({
 
 	return (
 		<Sortable
-			className={cn('flex flex-col gap-2', className)}
+			className={className}
 			items={fields}
 			onReorder={({ initialIndex, index }) => move(initialIndex, index)}
 		>

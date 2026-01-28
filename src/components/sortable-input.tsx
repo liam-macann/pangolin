@@ -27,7 +27,10 @@ export function Sortable({
 	disabled?: boolean;
 }) {
 	return (
-		<div className={cn('group/sortable', className)} data-empty={items.length === 0 || undefined}>
+		<div
+			className={cn('group/sortable flex flex-col gap-2', className)}
+			data-empty={items.length === 0 || undefined}
+		>
 			<DragDropProvider
 				onDragEnd={event => {
 					const { operation, canceled } = event;
@@ -48,7 +51,7 @@ export function Sortable({
 export function SortableList({ className, children }: { className?: string; children: ReactNode }) {
 	return (
 		<LayoutGroup>
-			<ul className={cn('group-data-[empty]/sortable:hidden', className)}>
+			<ul className={cn('-my-1 group-data-[empty]/sortable:hidden', className)}>
 				<AnimatePresence initial={false}>{children}</AnimatePresence>
 			</ul>
 		</LayoutGroup>
