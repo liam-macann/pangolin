@@ -335,9 +335,8 @@ export default function ConfigForm({
 							</FieldContent>
 							<TimezoneSelect
 								id='timezone'
-								locale={config.locale}
 								{...field}
-								onValueChange={field.onChange}
+								onValueChange={v => field.onChange(v?.name)}
 							/>
 						</Field>
 					)}

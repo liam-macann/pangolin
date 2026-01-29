@@ -15,20 +15,25 @@ import {
 	ComboboxValue,
 } from '@/ui/combobox';
 
-export function TimezoneSelect({
-	locale,
-	...props
-}: {
-	locale: string;
-} & ComboboxPrimitive.Root.Props<TimeZone>) {
+// Database stores IANA string: lookup necessary to convert to internal object
+interface TimezoneSelectProps extends Omit<ComboboxPrimitive.Root.Props<TimeZone>, 'value'> {
+	value?: string | null;
+}
+
+export function TimezoneSelect({ value, ...props }: TimezoneSelectProps) {
+	const val = timezones.find(tz => tz.name === (value || ''));
+
 	return (
-		<Combobox items={groups} {...props}>
+		<Combobox
+			items={groups}
+			value={val}
+			isItemEqualToValue={(item, s) => item.name === s.name}
+			itemToStringLabel={i => i.alternativeName}
+			itemToStringValue={i => i.name}
+			{...props}
+		>
 			<ComboboxTrigger className='min-w-60'>
-				<ComboboxValue>
-					{(selectedValue: string) =>
-						timezones.find(tz => tz.name === selectedValue)?.alternativeName || selectedValue
-					}
-				</ComboboxValue>
+				<ComboboxValue />
 			</ComboboxTrigger>
 			<ComboboxContent align='start' sideOffset={4}>
 				<ComboboxInput showTrigger={false} />
@@ -51,7 +56,7 @@ export function TimezoneSelect({
 // Separate component to allow memoization
 function Item({ tz }: { tz: TimeZone }) {
 	return (
-		<ComboboxItem key={tz.name} value={tz.name} className='items-baseline pr-2'>
+		<ComboboxItem key={tz.name} value={tz} className='items-baseline pr-2'>
 			<div className='flex w-full flex-col gap-0.5 overflow-hidden'>
 				<div className='flex items-baseline gap-1 pr-6 font-medium'>
 					<span>{tz.alternativeName}</span>
@@ -102,8 +107,8 @@ const continents = timezones.reduce((acc, tz) => {
 }, new Map<string, TimeZone[]>());
 
 const groups = [...continents]
-	.sort((a, b) => a[0].localeCompare(b[0]))
+	.sort((a, b) => a[0].localeCompare(b[0], 'en'))
 	.map(([continent, timezones]) => ({
 		value: continent,
-		items: timezones.sort((a, b) => a.countryName.localeCompare(b.countryName)),
+		items: timezones.sort((a, b) => a.countryName.localeCompare(b.countryName, 'en')),
 	}));
