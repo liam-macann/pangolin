@@ -1,5 +1,4 @@
 import type { RelationsFilter } from 'drizzle-orm';
-import { headers } from 'next/headers';
 import { getSession } from '@/auth';
 import { db } from '@/db';
 import type { relations } from '@/db/relations';
@@ -11,7 +10,7 @@ export async function fetchInvoices(
 	filter?: RelationsFilter<typeof relations.invoicesWithSum, typeof relations>,
 	limit?: number,
 ) {
-	const session = await getSession({ headers: await headers() });
+	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');
 
 	try {
@@ -73,7 +72,7 @@ import { withFilter } from '@/lib/utils/drizzle';
 
 /** Join relational (incl. item) details with a single invoice record for authenticated user */
 export async function fetchInvoice(id: string) {
-	const session = await getSession({ headers: await headers() });
+	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');
 
 	// Get all active taxes, and calculate sum for display in the invoice subtotals

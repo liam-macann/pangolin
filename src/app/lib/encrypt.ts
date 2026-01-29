@@ -1,8 +1,9 @@
+import 'server-only';
+
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { hexToBytes, managedNonce, randomBytes } from '@noble/ciphers/utils.js';
 
 import { eq } from 'drizzle-orm';
-import { headers } from 'next/headers';
 import { getSession } from '@/auth';
 import { db } from '@/db';
 import { keychain } from '@/db/schema';
@@ -43,7 +44,7 @@ export async function crypto(uuid: string) {
 
 	const auth = async <T>(fn: () => T) => {
 		if (destroyed) throw new Error('DEK has been destroyed');
-		const session = await getSession({ headers: await headers() });
+		const session = await getSession();
 
 		// Explicit about which user DEK is requested
 		if (session?.user.id !== uuid) {
@@ -112,7 +113,7 @@ function generateWrappedDEK() {
 }
 
 async function retrieveDEK(uuid: string) {
-	const session = await getSession({ headers: await headers() });
+	const session = await getSession();
 
 	// Explicit about which user DEK is requested
 	if (session?.user.id !== uuid) throw new Error('Unauthorized');

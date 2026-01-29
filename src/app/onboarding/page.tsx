@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/auth';
 import { Button } from '@/ui/button';
@@ -9,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-	const session = await getSession({ headers: await headers() });
+	const session = await getSession();
 	if (!session) redirect('/auth/login');
 
 	return (

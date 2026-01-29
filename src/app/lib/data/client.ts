@@ -12,7 +12,6 @@ import {
 	type SQL,
 	sumDistinct,
 } from 'drizzle-orm';
-import { headers } from 'next/headers';
 import { getSession } from '@/auth';
 import { db } from '@/db';
 import { clientData, clients, invoices, invoicesWithSum } from '@/db/schema';
@@ -35,7 +34,7 @@ export async function fetchClients(id: string): Promise<ClientResult>;
 
 /** Fetch all clients for authenticated user, or a single client if `id` is provided */
 export async function fetchClients(id?: string) {
-	const session = await getSession({ headers: await headers() });
+	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');
 
 	try {
@@ -84,7 +83,7 @@ export async function fetchClients(id?: string) {
 }
 
 export async function fetchClientStats(id: string) {
-	const session = await getSession({ headers: await headers() });
+	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');
 
 	/** Access all invoices for a given client that have not been voided */

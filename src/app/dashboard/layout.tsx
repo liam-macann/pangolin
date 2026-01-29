@@ -1,5 +1,4 @@
 import { SignOutIcon, SlidersHorizontalIcon } from '@phosphor-icons/react/ssr';
-import { headers } from 'next/headers';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { getSession, signOut } from '@/auth';
@@ -34,7 +33,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 }
 
 async function AccountMenuContent() {
-	const session = await getSession({ headers: await headers() });
+	const session = await getSession();
 	if (!session) return <AvatarEmpty className='size-8' />;
 
 	return (

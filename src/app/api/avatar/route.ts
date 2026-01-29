@@ -1,8 +1,7 @@
-import { headers } from 'next/headers';
 import { getSession } from '@/auth';
 
 export async function GET() {
-	const session = await getSession({ headers: await headers() });
+	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');
 
 	if (!session.user.image) {

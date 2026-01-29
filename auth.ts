@@ -1,5 +1,7 @@
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { betterAuth } from 'better-auth/minimal';
+import { headers } from 'next/headers';
+import { cache } from 'react';
 import { db } from '@/db';
 import * as relations from '@/db/relations';
 import * as schema from '@/db/schema';
@@ -22,6 +24,20 @@ export const auth = betterAuth({
 	advanced: {
 		database: { generateId: false },
 	},
+	session: {
+		cookieCache: {
+			enabled: true,
+			maxAge: 5 * 60, // Cache duration in seconds
+		},
+	},
 });
 
-export const { signOut, getSession, signInSocial } = auth.api;
+export const { signOut, signInSocial } = auth.api;
+
+export const getSession = cache(
+	async (ctx?: Parameters<typeof auth.api.getSession>[0]) =>
+		await auth.api.getSession({
+			headers: await headers(),
+			...ctx,
+		}),
+);

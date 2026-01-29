@@ -1,12 +1,11 @@
 import Link from 'next/link';
-import { getCurrencies, getTimezones, getUserConfig } from '@/lib/data';
+import { getUserConfig } from '@/lib/data';
 import Avatar from '@/ui/avatar';
 import { Button } from '@/ui/button';
 import ConfigForm from './form';
 
 export default async function Page() {
-	const [config, currencies] = await Promise.all([getUserConfig(), getCurrencies()]);
-	const timezones = await getTimezones();
+	const config = await getUserConfig();
 
 	return (
 		<div className='grid-cols-[12rem_auto] gap-x-6 md:grid'>

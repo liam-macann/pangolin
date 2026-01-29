@@ -10,7 +10,6 @@ import {
 	type WithSubqueryWithoutSelection,
 } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import { headers } from 'next/headers';
 import { v4 as uuid } from 'uuid';
 import type z from 'zod';
 import { getSession } from '@/auth';
@@ -27,7 +26,7 @@ import { config as configInput } from '../validation/config';
 
 export async function updateUserConfig(config: z.infer<typeof configInput>) {
 	// Authenticate the user
-	const session = await getSession({ headers: await headers() });
+	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');
 
 	// Validate the input data

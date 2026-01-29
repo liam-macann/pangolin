@@ -1,29 +1,34 @@
 import { eq, getColumns } from 'drizzle-orm';
-import { headers } from 'next/headers';
-import { cache } from 'react';
+import { cacheLife } from 'next/cache';
+
 import { getSession } from '@/auth';
 import { db } from '@/db';
 import { supportedTimezones, timezones } from '@/db/schema';
 import { crypto } from '@/lib/encrypt';
 
-export const getCurrencies = cache(
-	async () =>
-		await db.query.currencies.findMany({
-			where: { isActive: { eq: true } },
-			columns: { isActive: false, minorUnit: false },
-			orderBy: { iso: 'asc', name: 'asc' },
-		}),
-);
+export async function getCurrencies() {
+	'use cache';
+	cacheLife('max');
 
-export const getTimezones = cache(async () => {
+	return await db.query.currencies.findMany({
+		where: { isActive: { eq: true } },
+		columns: { isActive: false, minorUnit: false },
+		orderBy: { iso: 'asc', name: 'asc' },
+	});
+}
+
+export async function getTimezones() {
+	'use cache';
+	cacheLife('max');
+
 	return await db
 		.select(getColumns(timezones))
 		.from(timezones)
 		.innerJoin(supportedTimezones, eq(timezones.name, supportedTimezones.name));
-});
+}
 
 export async function getUser() {
-	const session = await getSession({ headers: await headers() });
+	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');
 
 	const user = await db.query.users.findFirst({ where: { id: session.user.id } });
@@ -34,7 +39,7 @@ export async function getUser() {
 
 /** Gets the active configuration for the authenticated user */
 export async function getUserConfig() {
-	const session = await getSession({ headers: await headers() });
+	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');
 
 	try {
