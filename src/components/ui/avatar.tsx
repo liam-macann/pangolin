@@ -1,5 +1,5 @@
+import { Avatar as AvatarPrimitive } from '@base-ui/react/avatar';
 import { UserIcon } from '@phosphor-icons/react/ssr';
-import { Avatar as AvatarPrimitive } from 'radix-ui';
 import type * as React from 'react';
 import { cn } from '@/lib/utils';
 
