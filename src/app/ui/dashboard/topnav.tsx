@@ -20,6 +20,7 @@ export default function TopNav({ className }: { className?: string }) {
 								? 'after:-bottom-2.5 after:pointer-events-none after:absolute after:left-0 after:block after:h-[2px] after:w-full after:translate-y-full after:bg-accent-foreground'
 								: 'text-muted-foreground',
 						)}
+						nativeButton={false}
 						render={<Link href={link.href}>{link.name}</Link>}
 					/>
 				);

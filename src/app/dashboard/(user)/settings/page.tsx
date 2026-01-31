@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { getCurrencies, getTimezones, getUserConfig } from '@/lib/data';
 import Avatar from '@/ui/avatar';
 import { Button } from '@/ui/button';
@@ -18,25 +19,29 @@ export default async function Page() {
 					size='sm'
 					className='text-foreground text-sm'
 					variant='ghost'
-					render={<a href='#top'>General</a>}
+					nativeButton={false}
+					render={<Link href='#top'>General</Link>}
 				/>
 				<Button
 					size='sm'
 					className='text-foreground text-sm'
 					variant='ghost'
-					render={<a href='#taxation'>Taxation</a>}
+					nativeButton={false}
+					render={<Link href='#taxation'>Taxation</Link>}
 				/>
 				<Button
 					size='sm'
 					className='text-foreground text-sm'
 					variant='ghost'
-					render={<a href='#details'>Your details</a>}
+					nativeButton={false}
+					render={<Link href='#details'>Your details</Link>}
 				/>
 				<Button
 					size='sm'
 					className='text-foreground text-sm'
 					variant='ghost'
-					render={<a href='#localisation'>Localisation</a>}
+					nativeButton={false}
+					render={<Link href='#localisation'>Localisation</Link>}
 				/>
 			</nav>
 			<section className='mb-12 flex w-full flex-col gap-12'>

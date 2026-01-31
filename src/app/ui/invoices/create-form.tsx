@@ -228,6 +228,7 @@ export function CreateInvoiceDialog({
 								size='sm'
 								variant='ghost'
 								className='!-ml-2.5 text-muted-foreground'
+								nativeButton={false}
 								render={
 									<summary>
 										Advanced <CaretUpDownIcon />
