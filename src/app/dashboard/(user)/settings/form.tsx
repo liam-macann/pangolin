@@ -357,7 +357,7 @@ export default function ConfigForm({
 								</FieldDescription>
 								{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 							</FieldContent>
-							<CurrencySelect {...field} onValueChange={field.onChange} />
+							<CurrencySelect {...field} onValueChange={v => field.onChange(v?.iso)} />
 						</Field>
 					)}
 				/>

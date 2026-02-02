@@ -1,7 +1,9 @@
 {
 	"private": true,
 	"scripts": {
+		"prebuild": "tsx ./scripts/generateStaticFiles.ts",
 		"build": "next build",
+		"predev": "tsx ./scripts/generateStaticFiles.ts",
 		"dev": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" next dev --turbopack",
 		"start": "next start",
 		"lint": "biome lint",

@@ -47,17 +47,3 @@ export function useClients<C extends Config>(initial?: ClientData, config?: C) {
 		isError: swr.error !== undefined,
 	} as Response<ClientData, C>;
 }
-
-import type { Data as CurrencyData } from '@/api/currencies/route';
-
-export function useCurrencies<C extends Config>(initial?: CurrencyData, config?: C) {
-	const swr = useSWRImmutable('/api/currencies', fetcher<CurrencyData>, {
-		...config,
-		...(initial ? { fallbackData: initial } : {}),
-	});
-
-	return {
-		...swr,
-		isError: swr.error !== undefined,
-	} as Response<CurrencyData, C>;
-}

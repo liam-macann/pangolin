@@ -26,3 +26,6 @@ src/env.d.ts
 .vercel
 .env*.local
 next-env.d.ts
+
+# generated files
+src/app/lib/data/currencies.json

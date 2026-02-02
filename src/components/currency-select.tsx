@@ -1,6 +1,5 @@
 import type { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
-import type { Data as Currencies } from '@/api/currencies/route';
-import { useCurrencies } from '@/lib/hooks';
+import currencies from '@/lib/data/currencies.json';
 import { cn } from '@/lib/utils';
 import {
 	Combobox,
@@ -13,39 +12,34 @@ import {
 	ComboboxValue,
 } from '@/ui/combobox';
 
-type Currency = Currencies[number];
+// Database stores ISO string: lookup necessary to convert to internal object
+interface CurrencySelectProps extends Omit<ComboboxPrimitive.Root.Props<Currency>, 'value'> {
+	value?: string | null;
+}
 
-export function CurrencySelect({ disabled, ...props }: ComboboxPrimitive.Root.Props<Currency>) {
-	const { data: currencies, isLoading, isError } = useCurrencies();
+type Currency = (typeof currencies)[number];
 
-	if (isError) throw new Error('Failed to fetch currencies');
+export function CurrencySelect({ value, ...props }: CurrencySelectProps) {
+	const val = currencies.find(i => i.iso === (value || ''));
 
 	return (
-		<Combobox items={currencies} disabled={isLoading || !currencies || disabled} {...props}>
-			<ComboboxTrigger
-				className={cn(
-					'min-w-60',
-					isLoading && !disabled && 'disabled:cursor-progress disabled:opacity-100',
-				)}
-			>
-				{currencies ? (
-					<ComboboxValue>
-						{(selectedValue: string) =>
-							currencies.find(currency => currency.iso === selectedValue)?.name || selectedValue
-						}
-					</ComboboxValue>
-				) : (
-					<div className='h-[1em] w-28 animate-pulse rounded-sm bg-muted'>
-						<span className='sr-only'>Loading…</span>
-					</div>
-				)}
+		<Combobox
+			items={currencies}
+			value={val}
+			{...props}
+			isItemEqualToValue={(item, s) => item.iso === s.iso}
+			itemToStringLabel={v => v.name}
+			itemToStringValue={v => v.iso}
+		>
+			<ComboboxTrigger className={'min-w-60'}>
+				<ComboboxValue />
 			</ComboboxTrigger>
 			<ComboboxContent align='start' sideOffset={4}>
 				<ComboboxInput showTrigger={false} />
 				<ComboboxEmpty>No currency found.</ComboboxEmpty>
 				<ComboboxList>
 					{(currency: Currency) => (
-						<ComboboxItem key={currency.iso} value={currency.iso}>
+						<ComboboxItem key={currency.iso} value={currency}>
 							<div className='flex w-full items-baseline justify-between'>
 								<span className=''>{currency.name}</span>
 								<span className='shrink-0 text-muted-foreground text-xs'>{currency.iso}</span>
