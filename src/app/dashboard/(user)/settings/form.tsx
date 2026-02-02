@@ -404,13 +404,13 @@ function ColorPalette({
 							size='icon-sm'
 							render={
 								<RadioGroupItem
-									className='peer !border-black/20 !rounded-full text-white outline-gray-11 data-[state="checked"]:outline'
+									className='peer !border-black/20 dark:!border-black/10 !rounded-full data-[state="checked"]:outline'
 									style={{ backgroundColor: scheme.accent }}
 									value={key}
 									onMouseEnter={() => setHover(key)}
 								>
 									<CheckIcon
-										className='fade-in-0 zoom-in-90 animate-in duration-150'
+										className='fade-in-0 zoom-in-90 animate-in text-white duration-150'
 										weight='bold'
 									/>
 								</RadioGroupItem>
