@@ -21,7 +21,7 @@
 	); /** Used for destructive background (eg. buttons) */
 	--border: var(--color-gray-a-6);
 	--input: var(
-		--color-gray-6
+		--border
 	); /* Input borders (eg. text input, checkbox, radio — not button driven inputs like combobox) */
 	--ring: var(--color-gray-8); /* Focus ring */
 	--chart-1: oklch(0.646 0.222 41.116);
@@ -48,6 +48,12 @@
 		--chart-3: oklch(0.769 0.188 70.08);
 		--chart-4: oklch(0.627 0.265 303.9);
 		--chart-5: oklch(0.645 0.246 16.439);
+	}
+}
+
+@variant contrast-more {
+	:root {
+		--border: var(--color-gray-a-12);
 	}
 }
 
