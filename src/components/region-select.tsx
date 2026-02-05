@@ -28,7 +28,7 @@ export function RegionSelect({ popup = true, value, ...props }: RegionSelectProp
 	return (
 		<Combobox
 			items={regionArr}
-			value={val}
+			value={val || null}
 			{...props}
 			isItemEqualToValue={(item, s) => item.iso2 === s.iso2}
 			itemToStringLabel={v => v.name}

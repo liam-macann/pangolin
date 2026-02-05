@@ -26,7 +26,7 @@ export function TimezoneSelect({ value, ...props }: TimezoneSelectProps) {
 	return (
 		<Combobox
 			items={groups}
-			value={val}
+			value={val || null}
 			isItemEqualToValue={(item, s) => item.name === s.name}
 			itemToStringLabel={i => i.alternativeName}
 			itemToStringValue={i => i.name}

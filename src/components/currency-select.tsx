@@ -25,7 +25,7 @@ export function CurrencySelect({ value, ...props }: CurrencySelectProps) {
 	return (
 		<Combobox
 			items={currencies}
-			value={val}
+			value={val || null}
 			{...props}
 			isItemEqualToValue={(item, s) => item.iso === s.iso}
 			itemToStringLabel={v => v.name}
