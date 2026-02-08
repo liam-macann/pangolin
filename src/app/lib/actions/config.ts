@@ -1,6 +1,14 @@
 'use server';
 
-import { and, eq, isNull, sql, type WithSubqueryWithoutSelection } from 'drizzle-orm';
+import {
+	and,
+	eq,
+	isNotNull,
+	isNull,
+	notExists,
+	sql,
+	type WithSubqueryWithoutSelection,
+} from 'drizzle-orm';
 import { createInsertSchema } from 'drizzle-zod';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
@@ -8,7 +16,12 @@ import { v4 as uuid } from 'uuid';
 import z from 'zod';
 import { getSession } from '@/auth';
 import { db } from '@/db';
-import { config as configSchema, configTaxes, taxes as taxesSchema } from '@/db/schema';
+import {
+	config as configSchema,
+	configTaxes,
+	invoices as invoicesSchema,
+	taxes as taxesSchema,
+} from '@/db/schema';
 import { crypto } from '@/lib/encrypt';
 
 /** Complete insertion record for database configuration, excluding generated fields */
@@ -128,9 +141,25 @@ export async function updateUserConfig(
 		.with(...actions)
 		.select()
 		.from(configSchema)
-		.then(() => {
+		.then(async () => {
 			// Revalidate the cache for the invoices page, where the formatting may have changed.
 			revalidatePath('/dashboard/invoices');
 			revalidatePath('/dashboard/settings');
+
+			// Clean up unused configs
+			// Useful to ensure consecutive insertions (eg. saving as progressing through form) do not produce redundant rows
+			await db.delete(configSchema).where(
+				and(
+					eq(configSchema.userId, session.user.id),
+					isNotNull(configSchema.validTo),
+					notExists(
+						// No invoices reference config row
+						db
+							.select()
+							.from(invoicesSchema)
+							.where(eq(invoicesSchema.configId, configSchema.id)),
+					),
+				),
+			);
 		});
 }
