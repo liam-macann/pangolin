@@ -1,6 +1,6 @@
 import type { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { getTimeZones, type TimeZone } from '@vvo/tzdb';
-
+import { matchSorter } from 'match-sorter';
 import {
 	Combobox,
 	ComboboxCollection,
@@ -30,6 +30,7 @@ export function TimezoneSelect({ value, ...props }: TimezoneSelectProps) {
 			isItemEqualToValue={(item, s) => item.name === s.name}
 			itemToStringLabel={i => i.alternativeName}
 			itemToStringValue={i => i.name}
+			filter={fuzzyFilter}
 			{...props}
 		>
 			<ComboboxTrigger className='min-w-60'>
@@ -112,3 +113,22 @@ const groups = [...continents]
 		value: continent,
 		items: timezones.sort((a, b) => a.countryName.localeCompare(b.countryName, 'en')),
 	}));
+
+function fuzzyFilter(item: TimeZone, query: string): boolean {
+	if (!query) return true;
+
+	const results = matchSorter([item], query, {
+		keys: [
+			'mainCities',
+			'countryName',
+			'alternativeName',
+			'abbreviation',
+			{ key: 'mainCities', threshold: matchSorter.rankings.WORD_STARTS_WITH },
+			{ key: 'countryName', threshold: matchSorter.rankings.CONTAINS },
+			{ key: 'alternativeName', threshold: matchSorter.rankings.WORD_STARTS_WITH },
+			{ key: 'abbreviation', threshold: matchSorter.rankings.ACRONYM },
+		],
+	});
+
+	return results.length > 0;
+}
