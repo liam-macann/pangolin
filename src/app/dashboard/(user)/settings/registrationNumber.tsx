@@ -9,7 +9,6 @@ import {
 	SortableItem,
 	SortableList,
 } from '@/components/sortable-input';
-import { cn } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { DropdownMenuItem } from '@/ui/dropdown-menu';
 import { Field, FieldError, FieldLabel } from '@/ui/field';
@@ -18,8 +17,8 @@ import { Input } from '@/ui/input';
 export const registrationArraySchema = z
 	.array(
 		z.object({
-			label: z.string().min(1, 'Please enter a label'),
-			value: z.string().min(1, 'Please enter a value'),
+			label: z.string('Please enter a label'),
+			value: z.string('Please enter a value'),
 		}),
 	)
 	.max(10, 'Too many entries');
