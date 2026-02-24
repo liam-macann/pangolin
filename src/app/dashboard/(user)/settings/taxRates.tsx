@@ -1,6 +1,7 @@
 'use client';
 import { InfoIcon, TrashIcon } from '@phosphor-icons/react';
 import { createInsertSchema } from 'drizzle-zod';
+import { AnimatePresence, motion } from 'motion/react';
 import {
 	type Control,
 	Controller,
@@ -23,15 +24,7 @@ import { cn, type Prettify } from '@/lib/utils';
 import { intlNumber } from '@/lib/zod';
 import { Button } from '@/ui/button';
 import { DropdownMenuItem } from '@/ui/dropdown-menu';
-import {
-	Field,
-	FieldContent,
-	FieldDescription,
-	FieldError,
-	FieldLabel,
-	FieldLegend,
-	FieldSet,
-} from '@/ui/field';
+import { Field, FieldError, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 
@@ -75,7 +68,6 @@ export function TaxRateField<T extends FormValues>({
 }) {
 	// Necessary, as RHF can't extract typings from the generic
 	const control = _control as unknown as Control<FormValues>;
-	const state = control.getFieldState('taxes');
 
 	const { fields, append, remove, move } = useFieldArray({ control, name: 'taxes' });
 	const addTax = () => append({ name: '', rate: '' });
@@ -165,8 +157,10 @@ export function TaxRateField<T extends FormValues>({
 
 export function DuplicateWarning<T extends FormValues>({
 	control: _control,
+	className,
 }: {
 	control: Control<T>;
+	className?: string;
 }) {
 	const control = _control as unknown as Control<FormValues>;
 
@@ -175,14 +169,46 @@ export function DuplicateWarning<T extends FormValues>({
 
 	const areDuplicates = new Set(names).size !== names.length;
 
-	return areDuplicates ? (
-		<Alert className='mt-2'>
-			<InfoIcon />
-			<AlertTitle>Duplicate tax names</AlertTitle>
-			<AlertDescription>
-				When multiple taxes share the same name, a single subtotal item will be calculated. The
-				specific rate applicable remains visible on each line item.
-			</AlertDescription>
-		</Alert>
-	) : null;
+	const transition = {
+		type: 'spring',
+		mass: 0.2,
+		stiffness: 270,
+		damping: 15,
+	} as const;
+
+	const variants = {
+		visible: {
+			height: 'auto',
+			opacity: 1,
+			scale: 1,
+			filter: 'blur(0px)',
+			transition,
+		},
+		hidden: {
+			height: 0,
+			opacity: 0,
+			// scale: 0.97,
+			filter: 'blur(1px)',
+			transition,
+		},
+	};
+
+	return (
+		<AnimatePresence initial={false}>
+			{areDuplicates && (
+				<motion.div variants={variants} initial='hidden' animate='visible' exit='hidden' layout>
+					<div className={className}>
+						<Alert>
+							<InfoIcon />
+							<AlertTitle>Duplicate tax names</AlertTitle>
+							<AlertDescription>
+								When multiple taxes share the same name, a single subtotal item will be calculated.
+								The specific rate applicable remains visible on each line item.
+							</AlertDescription>
+						</Alert>
+					</div>
+				</motion.div>
+			)}
+		</AnimatePresence>
+	);
 }

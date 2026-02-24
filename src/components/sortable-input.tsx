@@ -8,7 +8,7 @@ import { SortableContext } from '@dnd-kit/sortable';
 import { DotsSixIcon, DotsThreeIcon } from '@phosphor-icons/react';
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
 import { Slot as SlotPrimitive } from 'radix-ui';
-import { createContext, type JSX, type ReactNode, useContext, useRef } from 'react';
+import { createContext, type ReactNode, useContext, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/ui/dropdown-menu';
@@ -103,7 +103,7 @@ export function SortableItem({
 	const transition = {
 		type: 'spring',
 		mass: 0.2,
-		stiffness: 250,
+		stiffness: 300,
 		damping: 15,
 	} as const;
 

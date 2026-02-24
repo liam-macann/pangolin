@@ -238,13 +238,20 @@ export default function ConfigForm({
 						<FieldDescription>
 							When registered for tax, each rate can be applied on a per-item basis.
 						</FieldDescription>
-						<DuplicateWarning control={control} />
 						{getFieldState('taxes').error?.root && (
 							<FieldError errors={[getFieldState('taxes').error?.root]} />
 						)}
 					</FieldContent>
 
-					<TaxRateField key={formVersion} control={control} className='-mt-1 min-h-32' />
+					{/* AnimatePresence doesn't work with gap; wrapper needed */}
+					<div className='isolate'>
+						<DuplicateWarning control={control} className='ml-8 pb-6' />
+						<TaxRateField
+							key={formVersion}
+							control={control}
+							className='-mt-1 relative z-10 min-h-32'
+						/>
+					</div>
 				</FieldSet>
 			</FieldGroup>
 
