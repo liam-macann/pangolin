@@ -182,7 +182,7 @@ function FieldSeparator({
 function FieldError({
 	className,
 	children,
-	errors,
+	errors: _errors,
 	...props
 }: React.ComponentProps<'div'> & {
 	errors?: Array<{ message?: string } | undefined>;
@@ -192,7 +192,9 @@ function FieldError({
 			return children;
 		}
 
-		if (!errors) {
+		const errors = _errors?.filter(v => v !== null && v !== undefined);
+
+		if (!errors || errors?.length === 0) {
 			return null;
 		}
 
@@ -205,7 +207,7 @@ function FieldError({
 				{errors.map(error => error?.message && <li>{error.message}</li>)}
 			</ul>
 		);
-	}, [children, errors]);
+	}, [children, _errors]);
 
 	if (!content) {
 		return null;
