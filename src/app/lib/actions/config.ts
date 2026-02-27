@@ -18,11 +18,12 @@ import { getSession } from '@/auth';
 import { db } from '@/db';
 import {
 	config as configSchema,
-	configTaxes,
+	configTaxes as configTaxesSchema,
 	invoices as invoicesSchema,
 	taxes as taxesSchema,
 } from '@/db/schema';
 import { crypto } from '@/lib/encrypt';
+import { taxArraySchema } from '../../dashboard/(user)/settings/taxRates';
 
 /** Complete insertion record for database configuration, excluding generated fields */
 const configInput = createInsertSchema(configSchema, {
@@ -51,41 +52,42 @@ const configInput = createInsertSchema(configSchema, {
 		validFrom: true,
 		validTo: true,
 	})
-	.strict();
+	.strict()
+	.extend({
+		/** Minimal insertion record for database configuration, excluding generated fields */
+		taxes: z
+			.array(
+				createInsertSchema(taxesSchema).pick({
+					id: true,
+					name: true,
+					rate: true,
+				}),
+			)
+			.pipe(taxArraySchema),
+	});
 
-/** Minimal insertion record for database configuration, excluding generated fields */
-const taxInput = z.array(
-	createInsertSchema(taxesSchema).pick({
-		id: true,
-		name: true,
-		rate: true,
-	}),
-);
-
-export async function updateUserConfig(
-	config: z.infer<typeof configInput>,
-	taxes?: z.infer<typeof taxInput>,
-) {
+export async function updateUserConfig(config: z.infer<typeof configInput>) {
 	// Authenticate the user
 	const session = await getSession({ headers: await headers() });
 	if (!session) throw new Error('Request not authenticated');
 
 	// Validate the input data
-	const safeConfig = configInput.parse(config);
-	const safeTaxes = taxInput.parse(taxes).map((tax, i) => ({
-		// ID must be known for both insertion and junction CTEs.
-		// Allow provided data to override, so that taxes are not duplicated on each config update.
-		id: uuid(),
-		...tax,
-		userId: session.user.id,
-		order: i,
+	const { taxes, ...safeConfig } = await configInput.parseAsync(config).then(v => ({
+		...v,
+		taxes: v.taxes.map((tax, i) => ({
+			...tax,
+			userId: session.user.id,
+			order: i,
+		})),
 	}));
 
 	const configId = uuid();
 	const vault = await crypto(session.user.id);
 
 	// Define as CTEs for transactional behaviour
-	const actions: WithSubqueryWithoutSelection<string>[] = [
+	const actions: WithSubqueryWithoutSelection<string>[] = [];
+
+	actions.push(
 		// Insert new config
 		db
 			.$with('create_config')
@@ -114,33 +116,54 @@ export async function updateUserConfig(
 					.set({ validTo: sql`now()` })
 					.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo))),
 			),
-
-		// If taxes are defined
-		...(safeTaxes?.length > 0
-			? [
-					// Insert new taxes
-					db
-						.$with('define_taxes')
-						.as(db.insert(taxesSchema).values(safeTaxes).onConflictDoNothing()),
-
-					// Insert new tax-config junctions
-					db
-						.$with('tax_config_junction')
-						.as(
-							db
-								.insert(configTaxes)
-								.values(safeTaxes.map(tax => ({ configId, taxId: tax.id, order: tax.order }))),
-						),
-				]
-			: []),
-	];
+	);
 
 	vault.destroy();
 
 	return db
-		.with(...actions)
-		.select()
-		.from(configSchema)
+		.transaction(async tx => {
+			// If taxes are defined
+			if (taxes?.length > 0) {
+				// Insert new taxes; skip if already exists. Tax identity must be unique.
+				const dbTaxes = await tx
+					.insert(taxesSchema)
+					.values(taxes)
+					// Necessary to perform empty update to return values
+					.onConflictDoUpdate({
+						target: [taxesSchema.userId, taxesSchema.name, taxesSchema.rate],
+						set: { userId: taxesSchema.userId },
+					})
+					.returning();
+
+				actions.push(
+					// Insert new tax-config junctions
+					tx
+						.$with('tax_config_junction')
+						.as(
+							tx.insert(configTaxesSchema).values(
+								taxes.map(tax => {
+									// Find the tax id in the database, using returned values from insert
+									// Necessary as order is not in tax db schema, and so can't be piped down with CTEs
+									const taxId = dbTaxes.find(i => i.name === tax.name && i.rate === tax.rate);
+									if (!taxId)
+										throw new Error(`Tax ${tax.name} with rate ${tax.rate} not found in database`);
+
+									return {
+										...tax,
+										configId,
+										taxId: taxId.id,
+									};
+								}),
+							),
+						),
+				);
+			}
+
+			return await tx
+				.with(...actions)
+				.select()
+				.from(configSchema);
+		})
 		.then(async () => {
 			// Revalidate the cache for the invoices page, where the formatting may have changed.
 			revalidatePath('/dashboard/invoices');

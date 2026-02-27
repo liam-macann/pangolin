@@ -28,14 +28,8 @@ export function intlNumber(schema: z.ZodNumber, error: string) {
 					}
 				} else return val;
 			})
-			.transform((val, ctx) => {
-				if (val === '') {
-					ctx.issues.push({ code: 'custom', message: error, input: val });
-					return z.NEVER;
-				}
-
-				return z.coerce.number(error).parse(val);
-			})
+			.refine(val => val !== '', error)
+			.transform(val => z.coerce.number(error).parse(val))
 			.pipe(schema)
 	);
 }

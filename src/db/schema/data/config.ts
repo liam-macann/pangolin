@@ -21,14 +21,18 @@ import { currencies, supportedTimezones } from '../i18n';
 import { scdDates } from './_helpers';
 
 // Records should be immutable if referenced
-export const taxes = pgTable('tax', {
-	id: uuid().defaultRandom().primaryKey(),
-	userId: uuid('user_id')
-		.notNull()
-		.references(() => users.id, { onDelete: 'cascade' }),
-	name: varchar({ length: 10 }).notNull(),
-	rate: numeric({ precision: 5, scale: 4, mode: 'number' }).notNull(),
-});
+export const taxes = pgTable(
+	'tax',
+	{
+		id: uuid().defaultRandom().primaryKey(),
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		name: varchar({ length: 10 }).notNull(),
+		rate: numeric({ precision: 5, scale: 4, mode: 'number' }).notNull(),
+	},
+	t => [unique('uq_tax_user_name_rate').on(t.userId, t.name, t.rate)],
+);
 
 /** Join table for invoice items and taxes */
 export const configTaxes = pgTable(

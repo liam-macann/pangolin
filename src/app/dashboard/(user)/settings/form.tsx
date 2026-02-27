@@ -227,32 +227,39 @@ export default function ConfigForm({
 					}}
 				/>
 
-				<FieldSet className='-mb-4 mt-4'>
-					<FieldContent className='ml-8'>
-						<FieldLegend className='flex items-center gap-2'>
-							Tax rates
-							<InfoTip side='right'>
-								Taxes defined here will always be printed on invoices, even if no tax is applicable
-							</InfoTip>
-						</FieldLegend>
-						<FieldDescription>
-							When registered for tax, each rate can be applied on a per-item basis.
-						</FieldDescription>
-						{getFieldState('taxes').error?.root && (
-							<FieldError errors={[getFieldState('taxes').error?.root]} />
-						)}
-					</FieldContent>
+				<Controller
+						name='taxes'
+						control={control}
+						render={({ fieldState }) => {
+							return (
+								<FieldSet className='-mb-4 mt-4'>
+									<FieldContent className='ml-8'>
+										<FieldLegend className='flex items-center gap-2'>
+											Tax rates
+											<InfoTip side='right'>
+												Taxes defined here will always be printed on invoices, even if no tax is
+												applicable
+											</InfoTip>
+										</FieldLegend>
+										<FieldDescription>
+											When registered for tax, each rate can be applied on a per-item basis.
+										</FieldDescription>
+										{fieldState.error?.root && <FieldError errors={[fieldState.error?.root]} />}
+									</FieldContent>
 
-					{/* AnimatePresence doesn't work with gap; wrapper needed */}
-					<div className='isolate'>
-						<DuplicateWarning control={control} className='ml-8 pb-6' />
-						<TaxRateField
-							key={formVersion}
-							control={control}
-							className='-mt-1 relative z-10 min-h-32'
-						/>
-					</div>
-				</FieldSet>
+									{/* AnimatePresence doesn't work with gap; wrapper needed */}
+									<div className='isolate'>
+										<DuplicateWarning control={control} className='ml-8 pb-6' />
+										<TaxRateField
+											key={formVersion}
+											control={control}
+											className='-mt-1 relative z-10 min-h-32'
+										/>
+									</div>
+								</FieldSet>
+							);
+						}}
+					/>
 			</FieldGroup>
 
 			<FieldGroup>

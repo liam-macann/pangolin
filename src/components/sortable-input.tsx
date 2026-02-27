@@ -6,7 +6,7 @@ import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable, useSortable } from '@dnd-kit/react/sortable';
 import { SortableContext } from '@dnd-kit/sortable';
 import { DotsSixIcon, DotsThreeIcon } from '@phosphor-icons/react';
-import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
+import { AnimatePresence, LayoutGroup, motion, useIsPresent } from 'motion/react';
 import { Slot as SlotPrimitive } from 'radix-ui';
 import { createContext, type ReactNode, useContext, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -89,6 +89,8 @@ export function SortableItem({
 }: SortableItemProps) {
 	const ref = useRef<HTMLLIElement>(null);
 
+	const isPresent = useIsPresent();
+
 	const { isDragging, handleRef } = useSortable({
 		id,
 		index,
@@ -145,6 +147,7 @@ export function SortableItem({
 				animate='visible'
 				exit='hidden'
 				layout
+				layoutDependency={isPresent}
 			>
 				<motion.div
 					className={cn(

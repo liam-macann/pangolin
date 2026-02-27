@@ -1,0 +1,1 @@
+ALTER TABLE "tax" ADD CONSTRAINT "uq_tax_user_name_rate" UNIQUE("user_id","name","rate");
