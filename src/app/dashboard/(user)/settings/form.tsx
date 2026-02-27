@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CheckIcon } from '@phosphor-icons/react';
-import { createInsertSchema } from 'drizzle-zod';
 import { useState } from 'react';
 import { Controller, type ControllerRenderProps, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -11,9 +10,9 @@ import { CurrencySelect } from '@/components/currency-select';
 import { InfoTip } from '@/components/info';
 import { RegionSelect } from '@/components/region-select';
 import { TimezoneSelect } from '@/components/timezone-select';
-import { config as configSchema } from '@/db/schema';
 import { updateUserConfig } from '@/lib/actions/config';
 import type { getUserConfig } from '@/lib/data';
+import { config as formSchema } from '@/lib/validation/config';
 import schemes from '@/src/app/ui/colorSchemes';
 import { Button } from '@/ui/button';
 import { Checkbox } from '@/ui/checkbox';
@@ -30,24 +29,9 @@ import {
 } from '@/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
 import { TextTooltip } from '@/ui/tooltip';
-import { PaymentDetailsField, paymentArraySchema } from './paymentDetails';
-import { RegistrationNumberField, registrationArraySchema } from './registrationNumber';
-import { DuplicateWarning, TaxRateField, taxArraySchema } from './taxRates';
-
-const formSchema = createInsertSchema(configSchema)
-	.pick({
-		taxRegistration: true,
-		timezone: true,
-		region: true,
-		currency: true,
-		numberingScheme: true,
-		colorScheme: true,
-	})
-	.extend({
-		taxes: taxArraySchema,
-		paymentDetails: paymentArraySchema,
-		registrationNumber: registrationArraySchema,
-	});
+import { PaymentDetailsField } from './paymentDetails';
+import { RegistrationNumberField } from './registrationNumber';
+import { DuplicateWarning, TaxRateField } from './taxRates';
 
 export default function ConfigForm({
 	config,
@@ -228,38 +212,38 @@ export default function ConfigForm({
 				/>
 
 				<Controller
-						name='taxes'
-						control={control}
-						render={({ fieldState }) => {
-							return (
-								<FieldSet className='-mb-4 mt-4'>
-									<FieldContent className='ml-8'>
-										<FieldLegend className='flex items-center gap-2'>
-											Tax rates
-											<InfoTip side='right'>
-												Taxes defined here will always be printed on invoices, even if no tax is
-												applicable
-											</InfoTip>
-										</FieldLegend>
-										<FieldDescription>
-											When registered for tax, each rate can be applied on a per-item basis.
-										</FieldDescription>
-										{fieldState.error?.root && <FieldError errors={[fieldState.error?.root]} />}
-									</FieldContent>
+					name='taxes'
+					control={control}
+					render={({ fieldState }) => {
+						return (
+							<FieldSet className='-mb-4 mt-4'>
+								<FieldContent className='ml-8'>
+									<FieldLegend className='flex items-center gap-2'>
+										Tax rates
+										<InfoTip side='right'>
+											Taxes defined here will always be printed on invoices, even if no tax is
+											applicable
+										</InfoTip>
+									</FieldLegend>
+									<FieldDescription>
+										When registered for tax, each rate can be applied on a per-item basis.
+									</FieldDescription>
+									{fieldState.error?.root && <FieldError errors={[fieldState.error?.root]} />}
+								</FieldContent>
 
-									{/* AnimatePresence doesn't work with gap; wrapper needed */}
-									<div className='isolate'>
-										<DuplicateWarning control={control} className='ml-8 pb-6' />
-										<TaxRateField
-											key={formVersion}
-											control={control}
-											className='not-data-empty:-my-2 relative z-10'
-										/>
-									</div>
-								</FieldSet>
-							);
-						}}
-					/>
+								{/* AnimatePresence doesn't work with gap; wrapper needed */}
+								<div className='isolate'>
+									<DuplicateWarning control={control} className='ml-8 pb-6' />
+									<TaxRateField
+										key={formVersion}
+										control={control}
+										className='not-data-empty:-my-2 relative z-10'
+									/>
+								</div>
+							</FieldSet>
+						);
+					}}
+				/>
 			</FieldGroup>
 
 			<FieldGroup>

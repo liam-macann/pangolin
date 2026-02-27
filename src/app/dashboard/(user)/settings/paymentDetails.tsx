@@ -3,7 +3,7 @@ import { TrashIcon } from '@phosphor-icons/react';
 import { matchSorter } from 'match-sorter';
 import { useState } from 'react';
 import { type Control, Controller, type FieldValues, useFieldArray } from 'react-hook-form';
-import { z } from 'zod';
+import type { z } from 'zod';
 import {
 	Sortable,
 	SortableActions,
@@ -11,7 +11,7 @@ import {
 	SortableItem,
 	SortableList,
 } from '@/components/sortable-input';
-import { cn } from '@/lib/utils';
+import type { config as configSchema } from '@/lib/validation/config';
 import {
 	Autocomplete,
 	AutocompleteEmpty,
@@ -26,19 +26,8 @@ import { DropdownMenuItem } from '@/ui/dropdown-menu';
 import { Field, FieldError, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 
-export const paymentArraySchema = z
-	.array(
-		z.object({
-			label: z.string().min(1, 'Please enter a label'),
-			value: z.string().min(1, 'Please enter a value'),
-		}),
-	)
-	.max(15, 'Too many payment details');
-
-type PaymentField = z.infer<typeof paymentArraySchema>;
-
 interface FormValues extends FieldValues {
-	paymentDetails: PaymentField;
+	paymentDetails: z.infer<typeof configSchema.shape.paymentDetails>;
 }
 
 export function PaymentDetailsField<T extends FormValues>({

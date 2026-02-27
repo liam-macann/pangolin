@@ -1,6 +1,5 @@
 'use client';
 import { InfoIcon, TrashIcon } from '@phosphor-icons/react';
-import { createInsertSchema } from 'drizzle-zod';
 import { AnimatePresence, motion } from 'motion/react';
 import type { ReactNode } from 'react';
 import {
@@ -14,7 +13,6 @@ import {
 	useFormState,
 	useWatch,
 } from 'react-hook-form';
-import { z } from 'zod';
 import { InfoTip } from '@/components/info';
 import {
 	Sortable,
@@ -24,57 +22,13 @@ import {
 	SortableList,
 } from '@/components/sortable-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { taxes } from '@/db/schema';
+import type { taxes } from '@/db/schema';
 import { cn, type Prettify } from '@/lib/utils';
-import { intlNumber } from '@/lib/zod';
 import { Button } from '@/ui/button';
 import { DropdownMenuItem } from '@/ui/dropdown-menu';
 import { Field, FieldError, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
-
-export const taxArraySchema = z
-	.array(
-		createInsertSchema(taxes, {
-			name: s =>
-				z
-					.string()
-					.min(1, 'Please enter a tax label')
-					.min(2, 'Label must be at least 2 characters')
-					.pipe(s),
-			rate: s =>
-				intlNumber(
-					z
-						.number('Tax rate must be a number')
-						.multipleOf(0.01, 'You may only define up to two decimal places')
-						.min(0, 'Negative taxes are not allowed')
-						.max(200, 'Tax may not exceed 200%'),
-					'Please enter a quantity',
-				).pipe(s),
-		}).pick({ name: true, rate: true }),
-	)
-	.superRefine((arr, ctx) => {
-		const seen = new Map<string, number>();
-
-		arr.forEach((item, index) => {
-			/** Composite key of name and rate */
-			const key = item.name + item.rate.toString();
-
-			if (seen.has(key)) {
-				// biome-ignore lint/style/noNonNullAssertion: Guarded in previous condition
-				const firstIndex = seen.get(key)!;
-
-				// Error on first and current duplicate item
-				[index, firstIndex].forEach(path => {
-					ctx.addIssue({
-						code: 'custom',
-						message: 'Taxes must not share identical label and rate',
-						path: [path],
-					});
-				});
-			} else seen.set(key, index);
-		});
-	});
 
 type TaxField = Prettify<
 	Pick<typeof taxes.$inferSelect, 'name'> & {

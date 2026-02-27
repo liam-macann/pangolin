@@ -9,11 +9,10 @@ import {
 	sql,
 	type WithSubqueryWithoutSelection,
 } from 'drizzle-orm';
-import { createInsertSchema } from 'drizzle-zod';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { v4 as uuid } from 'uuid';
-import z from 'zod';
+import type z from 'zod';
 import { getSession } from '@/auth';
 import { db } from '@/db';
 import {
@@ -23,48 +22,8 @@ import {
 	taxes as taxesSchema,
 } from '@/db/schema';
 import { crypto } from '@/lib/encrypt';
-import { taxArraySchema } from '../../dashboard/(user)/settings/taxRates';
 
-/** Complete insertion record for database configuration, excluding generated fields */
-const configInput = createInsertSchema(configSchema, {
-	paymentDetails: z
-		.array(
-			z.object({
-				label: z.string().min(1).max(255),
-				value: z.string().min(1).max(255),
-			}),
-		)
-		.max(15)
-		.optional(),
-	registrationNumber: z
-		.array(
-			z.object({
-				label: z.string().min(1).max(255),
-				value: z.string().min(1).max(255),
-			}),
-		)
-		.max(15)
-		.optional(),
-})
-	.omit({
-		id: true,
-		userId: true,
-		validFrom: true,
-		validTo: true,
-	})
-	.strict()
-	.extend({
-		/** Minimal insertion record for database configuration, excluding generated fields */
-		taxes: z
-			.array(
-				createInsertSchema(taxesSchema).pick({
-					id: true,
-					name: true,
-					rate: true,
-				}),
-			)
-			.pipe(taxArraySchema),
-	});
+import { config as configInput } from '../validation/config';
 
 export async function updateUserConfig(config: z.infer<typeof configInput>) {
 	// Authenticate the user

@@ -1,7 +1,7 @@
 'use client';
 import { TrashIcon } from '@phosphor-icons/react';
 import { type Control, Controller, type FieldValues, useFieldArray } from 'react-hook-form';
-import { z } from 'zod';
+import type { z } from 'zod';
 import {
 	Sortable,
 	SortableActions,
@@ -9,24 +9,14 @@ import {
 	SortableItem,
 	SortableList,
 } from '@/components/sortable-input';
+import type { config as configSchema } from '@/lib/validation/config';
 import { Button } from '@/ui/button';
 import { DropdownMenuItem } from '@/ui/dropdown-menu';
 import { Field, FieldError, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 
-export const registrationArraySchema = z
-	.array(
-		z.object({
-			label: z.string('Please enter a label'),
-			value: z.string('Please enter a value'),
-		}),
-	)
-	.max(10, 'Too many entries');
-
-type RegistrationNumberField = z.infer<typeof registrationArraySchema>;
-
 interface FormValues extends FieldValues {
-	registrationNumber: RegistrationNumberField;
+	registrationNumber: z.infer<typeof configSchema.shape.registrationNumber>;
 }
 
 export function RegistrationNumberField<T extends FormValues>({
