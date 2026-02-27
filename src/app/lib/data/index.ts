@@ -48,7 +48,7 @@ export async function getUserConfig() {
 				},
 				with: {
 					user: true,
-					taxes: { orderBy: { id: 'asc' } },
+					configTaxes: { with: { taxes: true }, orderBy: { order: 'asc' } },
 				},
 				orderBy: { validFrom: 'desc' },
 			})
@@ -71,6 +71,10 @@ export async function getUserConfig() {
 						return { label, value };
 					}),
 				};
+			})
+			.then(res => {
+				if (!res) return;
+				return { ...res, taxes: res.configTaxes.map(i => i.taxes) };
 			});
 
 		vault.destroy();

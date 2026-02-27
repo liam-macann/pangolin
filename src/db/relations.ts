@@ -118,10 +118,7 @@ export const relations = defineRelations(schema, r => ({
 			optional: false,
 		}),
 
-		taxes: r.many.taxes({
-			from: r.config.id.through(r.configTaxes.configId),
-			to: r.taxes.id.through(r.configTaxes.taxId),
-		}),
+		configTaxes: r.many.configTaxes(),
 
 		invoices: r.many.invoices({
 			from: r.config.id,
@@ -130,11 +127,27 @@ export const relations = defineRelations(schema, r => ({
 	},
 
 	taxes: {
-		configs: r.many.config(),
+		configs: r.many.config({
+			from: r.taxes.id.through(r.configTaxes.taxId),
+			to: r.config.id.through(r.configTaxes.configId),
+		}),
 
 		user: r.one.users({
 			from: r.taxes.userId,
 			to: r.users.id,
+		}),
+	},
+
+	configTaxes: {
+		configs: r.one.config({
+			from: r.configTaxes.configId,
+			to: r.config.id,
+			optional: false,
+		}),
+		taxes: r.one.taxes({
+			from: r.configTaxes.taxId,
+			to: r.taxes.id,
+			optional: false,
 		}),
 	},
 }));
