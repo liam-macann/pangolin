@@ -253,7 +253,7 @@ export default function ConfigForm({
 										<TaxRateField
 											key={formVersion}
 											control={control}
-											className='-mt-1 relative z-10 min-h-32'
+											className='not-data-empty:-my-2 relative z-10'
 										/>
 									</div>
 								</FieldSet>
@@ -263,7 +263,7 @@ export default function ConfigForm({
 			</FieldGroup>
 
 			<FieldGroup>
-				<h2 className='flex items-baseline gap-3 font-bold text-2xl' id='details'>
+				<h2 className='font-bold text-2xl' id='details'>
 					Your details
 				</h2>
 
@@ -280,7 +280,7 @@ export default function ConfigForm({
 					<RegistrationNumberField
 						key={formVersion}
 						control={control}
-						className='-mt-1 -mb-4 min-h-32'
+						className='not-data-empty:-my-2'
 					/>
 				</FieldSet>
 
@@ -298,7 +298,7 @@ export default function ConfigForm({
 					<PaymentDetailsField
 						key={formVersion}
 						control={control}
-						className='-mt-1 -mb-4 min-h-32'
+						className='not-data-empty:-my-2'
 					/>
 				</FieldSet>
 			</FieldGroup>

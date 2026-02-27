@@ -49,7 +49,7 @@ export function RegistrationNumberField<T extends FormValues>({
 			onReorder={({ initialIndex, index }) => move(initialIndex, index)}
 		>
 			<SortableEmpty className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
-				<p className='font-medium text-muted-foreground text-sm'>No identifier provided</p>
+				<p className='font-medium text-muted-foreground text-sm'>No trading number provided</p>
 				<Button onClick={addLine}>Add Number</Button>
 			</SortableEmpty>
 

@@ -30,6 +30,8 @@ export function Sortable({
 		<div
 			className={cn('group/sortable flex flex-col gap-2', className)}
 			data-empty={items.length === 0 || undefined}
+			// Prevent AnimatePresence from triggering when transitioning between empty state
+			key={items.length === 0 ? 'empty' : 'not-empty'}
 		>
 			<DragDropProvider
 				onDragEnd={event => {
