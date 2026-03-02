@@ -1,13 +1,12 @@
 'use client';
 import { InfoIcon, TrashIcon } from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'motion/react';
-import type { ReactNode } from 'react';
 import {
 	type Control,
+	Controller,
 	type FieldArrayWithId,
 	type FieldValues,
 	type UseFieldArrayReturn,
-	type UseFormReturn,
 	useFieldArray,
 	useFormContext,
 	useFormState,
@@ -40,15 +39,6 @@ type TaxField = Prettify<
 interface FormValues extends FieldValues {
 	taxes: TaxField[];
 }
-
-export const ConnectForm = ({
-	children,
-}: {
-	children: (props: UseFormReturn<FormValues>) => ReactNode;
-}) => {
-	const methods = useFormContext<FormValues>();
-	return children(methods);
-};
 
 export function TaxRateField<T extends FormValues>({
 	className,
@@ -109,34 +99,44 @@ function TaxRow({
 	index: number;
 	actions: Omit<UseFieldArrayReturn<FormValues, 'taxes'>, 'fields'>;
 }) {
+	const { trigger, control } = useFormContext<FormValues>();
+
 	const { errors } = useFormState<FormValues>({ name: `taxes.${index}` });
 	const itemErrors = errors.taxes?.[index];
 
 	return (
-		<ConnectForm>
-			{({ register, trigger }) => (
-				<SortableItem
-					id={tax.id}
-					index={index}
-					className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-y-0.5'
-				>
-					<Field className='gap-0.5' data-invalid={!!itemErrors?.name || !!itemErrors?.message}>
+		<SortableItem
+			id={tax.id}
+			index={index}
+			className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-y-0.5'
+		>
+			<Controller
+				control={control}
+				name={`taxes.${index}.name`}
+				render={({ field, fieldState }) => (
+					<Field className='gap-0.5' data-invalid={fieldState.invalid || !!itemErrors?.message}>
 						<Input
 							type='text'
 							placeholder='Label'
-							{...register(`taxes.${index}.name`)}
+							{...field}
 							onChange={e => {
-								register(`taxes.${index}.name`).onChange(e);
+								field.onChange(e);
 
 								// Condition allows error to be dismissed, but will not reappear until form revalidation is triggered.
 								// It is really annoying to see the error flash when typing.
 								if (itemErrors?.type === 'custom') trigger('taxes');
 							}}
 						/>
-						<FieldError className='text-xs' errors={[itemErrors?.name]} />
+						{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
 					</Field>
+				)}
+			/>
 
-					<Field className='gap-0.5' data-invalid={!!itemErrors?.rate || !!itemErrors?.message}>
+			<Controller
+				control={control}
+				name={`taxes.${index}.rate`}
+				render={({ field, fieldState }) => (
+					<Field className='gap-0.5' data-invalid={fieldState.invalid || !!itemErrors?.message}>
 						<InputGroup>
 							<InputGroupInput
 								type='text'
@@ -144,9 +144,9 @@ function TaxRow({
 								placeholder='eg. 12.5'
 								step='any'
 								onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
-								{...register(`taxes.${index}.rate`)}
+								{...field}
 								onChange={e => {
-									register(`taxes.${index}.rate`).onChange(e);
+									field.onChange(e);
 
 									// Condition allows error to be dismissed, but will not reappear until form revalidation is triggered.
 									// It is really annoying to see the error flash when typing.
@@ -155,23 +155,23 @@ function TaxRow({
 							/>
 							<InputGroupAddon align='inline-end'>%</InputGroupAddon>
 						</InputGroup>
-						<FieldError className='text-xs' errors={[itemErrors?.rate]} />
+						<FieldError className='text-xs' errors={[fieldState.error]} />
 					</Field>
+				)}
+			/>
 
-					<SortableActions>
-						<DropdownMenuItem variant='destructive' onClick={() => actions.remove(index)}>
-							<TrashIcon />
-							Delete
-						</DropdownMenuItem>
-					</SortableActions>
+			<SortableActions>
+				<DropdownMenuItem variant='destructive' onClick={() => actions.remove(index)}>
+					<TrashIcon />
+					Delete
+				</DropdownMenuItem>
+			</SortableActions>
 
-					<FieldError
-						className='col-span-3 col-start-2 text-xs'
-						errors={itemErrors?.message ? [{ message: itemErrors?.message }] : undefined}
-					/>
-				</SortableItem>
-			)}
-		</ConnectForm>
+			<FieldError
+				className='col-span-3 col-start-2 text-xs'
+				errors={itemErrors?.message ? [{ message: itemErrors?.message }] : undefined}
+			/>
+		</SortableItem>
 	);
 }
 

@@ -50,7 +50,7 @@ const configAdapter = (
 	numberingScheme: config.numberingScheme,
 	colorScheme: config.colorScheme,
 
-	taxes: config.taxes.map(t => ({ ...t, rate: t.rate * 100 })),
+	taxes: config.taxes.map(t => ({ name: t.name, rate: t.rate * 100 })),
 	paymentDetails: config.paymentDetails || [],
 	registrationNumber: config.registrationNumber || [],
 	// Necessary to enforce object shape

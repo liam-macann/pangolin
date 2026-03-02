@@ -54,7 +54,10 @@ export async function getUserConfig() {
 				with: {
 					user: true,
 					address: true,
-					configTaxes: { with: { taxes: true }, orderBy: { order: 'asc' } },
+					configTaxes: {
+						with: { taxes: { columns: { id: false, userId: false } } },
+						orderBy: { order: 'asc' },
+					},
 				},
 				orderBy: { validFrom: 'desc' },
 			})
