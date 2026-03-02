@@ -1,11 +1,13 @@
-import { z } from 'zod';
+import { type core, z } from 'zod';
 
 /** Coerce a string to a number, handling both comma and period delimited decimals, and rejecting empty strings */
-export function intlNumber(schema: z.ZodNumber, error: string) {
+export function intlNumber(schema: z.ZodNumber, error: string | core.$ZodCustomParams) {
 	return (
 		z
-			.any()
-			// 1. Sanitize the string based on the position of separators
+			.union([z.string(), z.number()])
+			// Ensure input is not blank (this will otherwise be coerced to `0`)
+			.refine(val => val !== '', error)
+			// Sanitize the string based on the position of separators
 			.transform(val => {
 				if (typeof val === 'string') {
 					// We want to support both comma and period delimited decimals.
@@ -17,19 +19,20 @@ export function intlNumber(schema: z.ZodNumber, error: string) {
 					//
 
 					// Use the last separator to infer the formatting.
-					const commaDecimal = val.includes(',') && val.lastIndexOf(',') > val.lastIndexOf('.');
+					const isCommaDecimal = val.includes(',') && val.lastIndexOf(',') > val.lastIndexOf('.');
 
-					if (commaDecimal) {
+					if (isCommaDecimal) {
 						// Remove all periods (thousand separators) and replace the decimal comma with a period
-						return val.replace(/\./g, '').replace(',', '.');
+						return val.replaceAll('.', '').replace(',', '.').trim();
 					} else {
 						// Otherwise, for period decimals, strip all commas (thousand separators)
-						return val.replace(/,/g, '');
+						return val.replaceAll(',', '').trim();
 					}
-				} else return val;
+				}
+
+				return val;
 			})
-			.refine(val => val !== '', error)
-			.transform(val => z.coerce.number(error).parse(val))
+			.pipe(z.coerce.number(error))
 			.pipe(schema)
 	);
 }
