@@ -5,35 +5,19 @@ import { Button } from '@/ui/button';
 
 export function Social({ callbackURL }: { callbackURL: string }) {
 	return (
-		<>
-			<Button
-				className='grow'
-				onClick={async () => {
-					await signIn.social({
-						provider: 'google',
-						callbackURL,
-						newUserCallbackURL: '/onboarding',
-						errorCallbackURL: '/auth/login',
-					});
-				}}
-				size='lg'
-			>
-				Sign in with Google
-			</Button>
-			<Button
-				className='grow'
-				onClick={async () => {
-					await signIn.social({
-						provider: 'github',
-						callbackURL,
-						newUserCallbackURL: '/onboarding',
-						errorCallbackURL: '/auth/login',
-					});
-				}}
-				size='lg'
-			>
-				Sign in with GitHub
-			</Button>
-		</>
+		<Button
+			className='grow'
+			onClick={async () => {
+				await signIn.social({
+					provider: 'google',
+					callbackURL,
+					newUserCallbackURL: '/onboarding',
+					errorCallbackURL: '/auth/login',
+				});
+			}}
+			size='lg'
+		>
+			Sign in with Google
+		</Button>
 	);
 }

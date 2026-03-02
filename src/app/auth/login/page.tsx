@@ -44,12 +44,6 @@ export default async function LoginPage({
 					<section className='flex flex-col gap-2'>
 						<Social callbackURL={callbackUrl} />
 					</section>
-					{/*{providerMap.find(provider => provider.id === 'credentials') && (
-						<>
-							<hr className='my-4' />
-							<LoginForm callbackUrl={callbackUrl} />
-						</>
-					)}*/}
 				</div>
 			</section>
 			<section className='mt-12'>
