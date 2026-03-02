@@ -42,7 +42,7 @@ export const taxes = z
 						path: [path],
 					});
 				});
-			} else seen.set(key, index);
+			} else if (item.name !== '' && item.rate !== undefined) seen.set(key, index);
 		});
 	});
 
