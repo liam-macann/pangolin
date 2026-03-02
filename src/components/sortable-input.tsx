@@ -8,10 +8,13 @@ import { SortableContext } from '@dnd-kit/sortable';
 import { DotsSixIcon, DotsThreeIcon } from '@phosphor-icons/react';
 import { AnimatePresence, LayoutGroup, motion, useIsPresent } from 'motion/react';
 import { Slot as SlotPrimitive } from 'radix-ui';
-import { createContext, type ReactNode, useContext, useRef } from 'react';
+import { createContext, type ReactNode, use, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/ui/dropdown-menu';
+
+type Item = { id: string };
+const ItemsContext = createContext<Item[]>([]);
 
 export function Sortable({
 	children,
@@ -22,7 +25,7 @@ export function Sortable({
 }: {
 	children: ReactNode;
 	className?: string;
-	items: Array<{ id: string }>;
+	items: Item[];
 	onReorder: (sortable: SortableType) => void;
 	disabled?: boolean;
 }) {
@@ -42,19 +45,30 @@ export function Sortable({
 					if (isSortable(source)) onReorder(source.sortable);
 				}}
 			>
-				<SortableContext items={items} disabled={items.length < 2 || disabled}>
-					{children}
-				</SortableContext>
+				<ItemsContext value={items}>
+					<SortableContext items={items} disabled={items.length < 2 || disabled}>
+						{children}
+					</SortableContext>
+				</ItemsContext>
 			</DragDropProvider>
 		</div>
 	);
 }
 
-export function SortableList({ className, children }: { className?: string; children: ReactNode }) {
+export function SortableList({
+	className,
+	children,
+}: {
+	className?: string;
+	children: (item: any, index: number) => ReactNode;
+}) {
+	const items = use(ItemsContext);
 	return (
 		<LayoutGroup>
 			<ul className={cn('-my-1 group-data-[empty]/sortable:hidden', className)}>
-				<AnimatePresence initial={false}>{children}</AnimatePresence>
+				<AnimatePresence initial={false}>
+					{items.map((item, i) => children(item, i))}
+				</AnimatePresence>
 			</ul>
 		</LayoutGroup>
 	);
@@ -189,7 +203,7 @@ export function SortableActions({
 	children: ReactNode;
 	heading?: ReactNode;
 }) {
-	const { isDragging } = useContext(SortableItemContext);
+	const { isDragging } = use(SortableItemContext);
 
 	return (
 		<DropdownMenu>

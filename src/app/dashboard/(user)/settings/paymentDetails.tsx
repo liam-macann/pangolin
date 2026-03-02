@@ -59,14 +59,14 @@ export function PaymentDetailsField<T extends FormValues>({
 				<FieldLabel>Value</FieldLabel>
 			</div>
 			<SortableList>
-				{fields.map((item, i) => (
+				{(item, i) => (
 					<Item key={item.id} id={item.id} index={i} control={control}>
 						<DropdownMenuItem variant='destructive' onClick={() => remove(i)}>
 							<TrashIcon />
 							Delete
 						</DropdownMenuItem>
 					</Item>
-				))}
+				)}
 			</SortableList>
 
 			<div className='mt-2 flex justify-between gap-2 self-end group-data-[empty]/sortable:hidden'>

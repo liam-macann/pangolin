@@ -138,14 +138,6 @@ function ItemSum({
 						{formatCurrency(subtotal, config.currency, config.locale)}
 					</td>
 				</tr>
-				{/*{Array.from(taxes).map(([id, tax]) => (
-  				<tr key={id} className='flex items-baseline justify-between gap-4 text-muted-foreground *:py-0.5 last-of-type:*:pb-1'>
-  					<td>{tax.name}</td>
-  					<td className='text-right tabular-nums'>
-  						{formatCurrency(taxesSum.get(id) || 0, config.currency, config.locale)}
-  					</td>
-  				</tr>
-  			))}*/}
 			</tbody>
 			<tfoot className='contents'>
 				<tr className='flex items-baseline justify-between gap-4 border-t font-semibold *:pt-1'>
@@ -197,7 +189,7 @@ function InvoiceItemsInput({
 				<FieldLabel>Each</FieldLabel>
 			</div>
 			<SortableList>
-				{fields.map((item, i) => (
+				{(item, i) => (
 					<SortableItem
 						index={i}
 						key={item.id}
@@ -309,7 +301,7 @@ function InvoiceItemsInput({
 							</DropdownMenuItem>
 						</SortableActions>
 					</SortableItem>
-				))}
+				)}
 			</SortableList>
 
 			<div className='mt-6 ml-7 flex justify-between gap-8 group-data-[empty]/sortable:hidden'>

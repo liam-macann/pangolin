@@ -81,9 +81,7 @@ export function TaxRateField<T extends FormValues>({
 			</div>
 
 			<SortableList>
-				{fields.map((tax, i) => (
-					<TaxRow key={tax.id} tax={tax} index={i} actions={actions} />
-				))}
+				{(tax, i) => <TaxRow key={tax.id} tax={tax} index={i} actions={actions} />}
 			</SortableList>
 
 			<SortableEmpty className='ml-8 flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>

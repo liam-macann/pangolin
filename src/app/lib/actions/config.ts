@@ -55,14 +55,16 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 					...safeConfig,
 					id: configId,
 					userId: session.user.id,
-					paymentDetails: safeConfig.paymentDetails
-						? await vault.encrypt(...safeConfig.paymentDetails.map(v => `${v.label}: ${v.value}`))
-						: null,
-					registrationNumber: safeConfig.registrationNumber
-						? await vault.encrypt(
-								...safeConfig.registrationNumber.map(v => `${v.label}: ${v.value}`),
-							)
-						: null,
+					paymentDetails:
+						safeConfig.paymentDetails.length > 0
+							? await vault.encrypt(...safeConfig.paymentDetails.map(v => `${v.label}: ${v.value}`))
+							: null,
+					registrationNumber:
+						safeConfig.registrationNumber.length > 0
+							? await vault.encrypt(
+									...safeConfig.registrationNumber.map(v => `${v.label}: ${v.value}`),
+								)
+							: null,
 				}),
 			),
 
