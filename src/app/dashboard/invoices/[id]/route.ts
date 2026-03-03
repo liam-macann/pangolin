@@ -7,6 +7,7 @@ import { getUser } from '@/lib/data';
 import { fetchInvoice } from '@/lib/data/invoice';
 import { BottomLayout, CenteredLayout } from '@/lib/pdf-verticalalign';
 import { formatCurrency, formatDateToLocal, formatNumber, pluralize } from '@/lib/utils';
+import { formatAddress } from '@/lib/utils/address';
 import type { Enum } from '@/lib/utils/drizzle';
 import schemes from '@/src/app/ui/colorSchemes';
 
@@ -179,6 +180,15 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 					},
 					{ stack: invoice.config.registrationNumber || [] },
 					{ text: user.email },
+
+					invoice.config.address
+						? [
+								{
+									text: await formatAddress(invoice.config.address),
+									marginTop: spacing(4),
+								},
+							]
+						: [],
 				],
 			},
 			{

@@ -2,6 +2,7 @@ import { createInsertSchema } from 'drizzle-zod';
 import z from 'zod/v4';
 import { config as configSchema, taxes as taxesSchema } from '@/db/schema/data';
 import { intlNumber } from '../zod';
+import address from './address';
 
 export const taxes = z
 	.array(
@@ -74,6 +75,7 @@ export const config = createInsertSchema(configSchema, {
 	})
 	.strict()
 	.extend({
+		address: address.nullable(),
 		/** Minimal insertion record for database configuration, excluding generated fields */
 		taxes: taxes,
 	});

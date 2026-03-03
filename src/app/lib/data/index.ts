@@ -53,6 +53,7 @@ export async function getUserConfig() {
 				},
 				with: {
 					user: true,
+					address: true,
 					configTaxes: { with: { taxes: true }, orderBy: { order: 'asc' } },
 				},
 				orderBy: { validFrom: 'desc' },
@@ -60,9 +61,10 @@ export async function getUserConfig() {
 			.then(async res => {
 				if (!res) return;
 
-				const [paymentDetails, registrationNumber] = await Promise.all([
+				const [paymentDetails, registrationNumber, streetAddress] = await Promise.all([
 					res.paymentDetails && vault.decrypt(...res.paymentDetails),
 					res.registrationNumber && vault.decrypt(...res.registrationNumber),
+					res.address?.streetAddress && vault.decrypt(...res.address.streetAddress),
 				]);
 
 				return {
@@ -75,6 +77,10 @@ export async function getUserConfig() {
 						const [label, value] = v.split(/: (.*)/s);
 						return { label, value };
 					}),
+					address: res.address && {
+						...res.address,
+						streetAddress,
+					},
 				};
 			})
 			.then(res => {

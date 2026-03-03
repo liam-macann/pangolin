@@ -15,13 +15,14 @@ import type z from 'zod';
 import { getSession } from '@/auth';
 import { db } from '@/db';
 import {
+	address as addressSchema,
 	config as configSchema,
 	configTaxes as configTaxesSchema,
 	invoices as invoicesSchema,
 	taxes as taxesSchema,
 } from '@/db/schema';
 import { crypto } from '@/lib/encrypt';
-
+import { isAddressEqual } from '../utils/address';
 import { config as configInput } from '../validation/config';
 
 export async function updateUserConfig(config: z.infer<typeof configInput>) {
@@ -39,49 +40,94 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 		})),
 	}));
 
-	const configId = uuid();
-	const vault = await crypto(session.user.id);
-
-	// Define as CTEs for transactional behaviour
-	const actions: WithSubqueryWithoutSelection<string>[] = [];
-
-	actions.push(
-		// Insert new config
-		db
-			.$with('create_config')
-			.as(
-				db.insert(configSchema).values({
-					...safeConfig,
-					id: configId,
-					userId: session.user.id,
-					paymentDetails:
-						safeConfig.paymentDetails.length > 0
-							? await vault.encrypt(...safeConfig.paymentDetails.map(v => `${v.label}: ${v.value}`))
-							: null,
-					registrationNumber:
-						safeConfig.registrationNumber.length > 0
-							? await vault.encrypt(
-									...safeConfig.registrationNumber.map(v => `${v.label}: ${v.value}`),
-								)
-							: null,
-				}),
-			),
-
-		// Void previously active config
-		db
-			.$with('void_config')
-			.as(
-				db
-					.update(configSchema)
-					.set({ validTo: sql`now()` })
-					.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo))),
-			),
-	);
-
-	vault.destroy();
-
 	return db
 		.transaction(async tx => {
+			const configId = uuid();
+			const vault = await crypto(session.user.id);
+
+			/** Checks the previous config to see if the address has changed.
+			 * Returns the address ID if unchanged, otherwise inserts a new record and returns the new ID */
+			async function getAddressId() {
+				if (!safeConfig.address) return null;
+				if (!session) throw new Error('Request not authenticated');
+
+				/** Returns the address recorded on the last config record and decrypts it */
+				const lastConfigAddress = await tx.query.config
+					.findFirst({
+						where: { validTo: { isNull: true }, userId: session.user.id },
+						with: { address: { columns: { userId: false } } },
+						columns: { addressId: true },
+					})
+					.then(
+						async res =>
+							res?.address && {
+								...res.address,
+								streetAddress:
+									res.address.streetAddress && (await vault.decrypt(...res.address.streetAddress)),
+							},
+					);
+
+				const isAddressUnchanged =
+					lastConfigAddress && isAddressEqual(lastConfigAddress, safeConfig.address);
+
+				// If the address is unchanged, reuse the existing address record to prevent duplicate rows
+				if (isAddressUnchanged) return lastConfigAddress.id;
+
+				// Insert new address record
+				const insertedAddress = await tx
+					.insert(addressSchema)
+					.values({
+						...safeConfig.address,
+						streetAddress:
+							safeConfig.address.streetAddress &&
+							(await vault.encrypt(...safeConfig.address.streetAddress)),
+						userId: session.user.id,
+					})
+					.returning({ id: addressSchema.id })
+					.then(([v]) => v);
+
+				return insertedAddress.id;
+			}
+
+			// Define as CTEs for transactional behaviour without network round-trips
+			const actions: WithSubqueryWithoutSelection<string>[] = [
+				// Insert new config
+				tx
+					.$with('create_config')
+					.as(
+						tx.insert(configSchema).values({
+							...safeConfig,
+							id: configId,
+							userId: session.user.id,
+							addressId: await getAddressId(),
+							paymentDetails:
+								safeConfig.paymentDetails.length > 0
+									? await vault.encrypt(
+											...safeConfig.paymentDetails.map(v => `${v.label}: ${v.value}`),
+										)
+									: null,
+							registrationNumber:
+								safeConfig.registrationNumber.length > 0
+									? await vault.encrypt(
+											...safeConfig.registrationNumber.map(v => `${v.label}: ${v.value}`),
+										)
+									: null,
+						}),
+					),
+
+				// Void previously active config
+				tx
+					.$with('void_config')
+					.as(
+						tx
+							.update(configSchema)
+							.set({ validTo: sql`now()` })
+							.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo))),
+					),
+			];
+
+			vault.destroy();
+
 			// If taxes are defined
 			if (taxes?.length > 0) {
 				// Insert new taxes; skip if already exists. Tax identity must be unique.
@@ -129,20 +175,42 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 			revalidatePath('/dashboard/invoices');
 			revalidatePath('/dashboard/settings');
 
-			// Clean up unused configs
+			// Clean up unused configs and addresses
 			// Useful to ensure consecutive insertions (eg. saving as progressing through form) do not produce redundant rows
-			await db.delete(configSchema).where(
-				and(
-					eq(configSchema.userId, session.user.id),
-					isNotNull(configSchema.validTo),
-					notExists(
-						// No invoices reference config row
-						db
-							.select()
-							.from(invoicesSchema)
-							.where(eq(invoicesSchema.configId, configSchema.id)),
-					),
-				),
-			);
+			await Promise.all([
+				db
+					.delete(configSchema)
+					.where(
+						and(
+							eq(configSchema.userId, session.user.id),
+							isNotNull(configSchema.validTo),
+							notExists(
+								// No invoices reference config row
+								db
+									.select()
+									.from(invoicesSchema)
+									.where(eq(invoicesSchema.configId, configSchema.id)),
+							),
+						),
+					)
+					// Error should not bubble up: non-essential cleanup
+					.catch(() => console.error('Unable to clean up unused configs')),
+
+				db
+					.delete(addressSchema)
+					.where(
+						and(
+							eq(addressSchema.userId, session.user.id),
+							notExists(
+								// No configs reference address row
+								db
+									.select()
+									.from(configSchema)
+									.where(eq(configSchema.addressId, addressSchema.id)),
+							),
+						),
+					)
+					.catch(() => console.error('Unable to clean up unused addresses')),
+			]);
 		});
 }

@@ -118,6 +118,11 @@ export const relations = defineRelations(schema, r => ({
 			optional: false,
 		}),
 
+		address: r.one.address({
+			from: r.config.addressId,
+			to: r.address.id,
+		}),
+
 		configTaxes: r.many.configTaxes(),
 
 		invoices: r.many.invoices({

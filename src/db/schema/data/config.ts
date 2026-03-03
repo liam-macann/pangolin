@@ -3,6 +3,7 @@ import {
 	boolean,
 	char,
 	check,
+	foreignKey,
 	integer,
 	numeric,
 	pgEnum,
@@ -14,11 +15,11 @@ import {
 	varchar,
 } from 'drizzle-orm/pg-core';
 import { encrypted } from '@/lib/utils/drizzle';
-
 // Schema imports
 import { users } from '../auth';
 import { currencies, supportedTimezones } from '../i18n';
 import { scdDates } from './_helpers';
+import { address } from './address';
 
 // Records should be immutable if referenced
 export const taxes = pgTable(
@@ -74,8 +75,8 @@ export const config = pgTable(
 			.references(() => supportedTimezones.name)
 			.notNull(),
 
-		language: text().default('en').notNull(),
-		region: text(),
+		language: text().default('en').notNull(), // eg. `en`
+		region: text(), // eg. `AU`
 		locale: text()
 			.generatedAlwaysAs(
 				(): SQL => sql`${config.language} || COALESCE('-' || ${config.region}, '')`,
@@ -85,6 +86,7 @@ export const config = pgTable(
 		currency: char({ length: 3 })
 			.references(() => currencies.iso)
 			.notNull(),
+		addressId: uuid('address_id').references(() => address.id),
 		taxRegistration: boolean('tax_registration').notNull(),
 		paymentDetails: encrypted('payment_details').array(),
 		registrationNumber: encrypted('registration_number').array(),
@@ -97,8 +99,16 @@ export const config = pgTable(
 		unique('uq_config_version')
 			.on(t.userId, t.validTo)
 			.nullsNotDistinct(),
+
 		check('chk_config_valid', sql`${t.validFrom} <= now()`),
 		check('chk_language_lowercase', sql`${t.language} = lower(${t.language})`),
 		check('chk_region_uppercase', sql`${t.region} = upper(${t.region})`),
+
+		// Ensure config and address are owned by the same user
+		foreignKey({
+			name: 'fk_config_address_ownership',
+			columns: [t.addressId, t.userId],
+			foreignColumns: [address.id, address.userId],
+		}),
 	],
 );

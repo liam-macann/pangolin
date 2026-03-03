@@ -1,0 +1,1 @@
+ALTER TABLE "config" RENAME COLUMN "addressId" TO "address_id";

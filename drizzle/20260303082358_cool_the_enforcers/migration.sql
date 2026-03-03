@@ -1,0 +1,2 @@
+ALTER TABLE "address" ADD CONSTRAINT "uq_address_user" UNIQUE("id","user_id");--> statement-breakpoint
+ALTER TABLE "config" ADD CONSTRAINT "fk_config_address_ownership" FOREIGN KEY ("address_id","user_id") REFERENCES "address"("id","user_id");
