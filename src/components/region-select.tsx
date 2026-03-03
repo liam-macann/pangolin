@@ -16,13 +16,40 @@ const regionArr = getCountryDataList().toSorted((a, b) => a.name.localeCompare(b
 export const regions: Map<string, ICountryData> = new Map(regionArr.map(r => [r.iso2, r]));
 
 // Database stores ISO string: lookup necessary to convert to internal object
-interface RegionSelectProps extends Omit<ComboboxPrimitive.Root.Props<ICountryData>, 'value'> {
+interface RegionSelectRootProps extends Omit<ComboboxPrimitive.Root.Props<ICountryData>, 'value'> {
 	value?: string | null | undefined;
-	popup?: boolean;
 }
 
-/** Button version of region combobox, with filter input inside popup  */
-export function RegionSelect({ popup = true, value, ...props }: RegionSelectProps) {
+/** Wrapped RegionSelect, in both inline and popup variants  */
+export function RegionSelect({
+	popup = true,
+	...props
+}: RegionSelectRootProps & {
+	popup?: boolean;
+	className?: string;
+}) {
+	return (
+		<RegionSelectRoot {...props}>
+			{popup ? (
+				<ComboboxTrigger className={cn('min-w-60')}>
+					<ComboboxValue />
+				</ComboboxTrigger>
+			) : (
+				<RegionSelectInput />
+			)}
+
+			<RegionSelectContent>
+				{popup && <RegionSelectInput autoComplete='country-name' showTrigger={false} />}
+			</RegionSelectContent>
+		</RegionSelectRoot>
+	);
+}
+
+export const RegionSelectInput = (props: React.ComponentProps<typeof ComboboxInput>) => (
+	<ComboboxInput autoComplete='country-name' {...props} />
+);
+
+export function RegionSelectRoot({ children, value, ...props }: RegionSelectRootProps) {
 	const val = regions.get(value || '');
 
 	return (
@@ -34,26 +61,27 @@ export function RegionSelect({ popup = true, value, ...props }: RegionSelectProp
 			itemToStringLabel={v => v.name}
 			itemToStringValue={v => v.iso2}
 		>
-			{popup ? (
-				<ComboboxTrigger className={cn('min-w-60')}>
-					<ComboboxValue />
-				</ComboboxTrigger>
-			) : (
-				<ComboboxInput />
-			)}
-
-			<ComboboxContent align='start' sideOffset={4}>
-				{popup && <ComboboxInput showTrigger={false} />}
-
-				<ComboboxEmpty>No region found.</ComboboxEmpty>
-				<ComboboxList>
-					{(country: ICountryData) => (
-						<ComboboxItem key={country.iso2} value={country}>
-							{country.name}
-						</ComboboxItem>
-					)}
-				</ComboboxList>
-			</ComboboxContent>
+			{children}
 		</Combobox>
+	);
+}
+
+export function RegionSelectContent({
+	children,
+	...props
+}: React.ComponentProps<typeof ComboboxContent>) {
+	return (
+		<ComboboxContent align='start' sideOffset={4} {...props}>
+			{children}
+
+			<ComboboxEmpty>No region found.</ComboboxEmpty>
+			<ComboboxList>
+				{(country: ICountryData) => (
+					<ComboboxItem key={country.iso2} value={country}>
+						{country.name}
+					</ComboboxItem>
+				)}
+			</ComboboxList>
+		</ComboboxContent>
 	);
 }
