@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchClients } from '@/lib/data/client';
-import type { ApiResponse, RouteResponse } from '../types';
+import type { ApiResponse, RouteResponse } from '..';
 
 // Helper that simulates calling the function without params (overloaded function)
 const _inferData = () => fetchClients();

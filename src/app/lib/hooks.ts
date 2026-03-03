@@ -2,19 +2,8 @@
 
 import useSWR, { type SWRConfiguration, type SWRResponse } from 'swr';
 import useSWRImmutable from 'swr/immutable';
-import { responseSchema } from '@/api/types';
 
-const fetcher = async <T>(url: string): Promise<T> => {
-	const res = await fetch(url);
-
-	// Ensure response matches API contract
-	const { success, data } = responseSchema.safeParse(await res.json());
-
-	if (!success) throw new Error('Invalid response');
-	if (!data.success) throw new Error('Unauthorised');
-
-	return data.data;
-};
+import { fetcher } from '@/api';
 
 type Config = Omit<SWRConfiguration, 'fallbackData'>;
 type Response<T, C> = SWRResponse<T, unknown, C> & { isError: boolean };

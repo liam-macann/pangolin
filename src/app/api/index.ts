@@ -12,3 +12,15 @@ export type ApiResponse<T> = { success: true; data: T } | { success: false; erro
 
 /** The response type for a route handler (GET, POST, etc.) */
 export type RouteResponse<T> = Promise<NextResponse<ApiResponse<T>>>;
+
+export const fetcher = async <T>(url: string): Promise<T> => {
+	const res = await fetch(url);
+
+	// Ensure response matches API contract
+	const { success, data } = responseSchema.safeParse(await res.json());
+
+	if (!success) throw new Error('Invalid response');
+	if (!data.success) throw new Error('Unauthorised');
+
+	return data.data;
+};
