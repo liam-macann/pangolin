@@ -36,3 +36,31 @@ export function useClients<C extends Config>(initial?: ClientData, config?: C) {
 		isError: swr.error !== undefined,
 	} as Response<ClientData, C>;
 }
+
+import { type CountryCode, registerCountry } from 'lib-address';
+import type { Data as AddressInputMetadata } from '@/api/address-metadata/[country]/route';
+export { useAddressMetadata, type AddressInputMetadata as AddressMetadata };
+
+/** Pulls data from lib wrapper around Google Address Metadata API */
+function useAddressMetadata<C extends Config>(
+	countryCode: CountryCode,
+	initial?: AddressInputMetadata,
+	config?: C,
+) {
+	const { data, ...swr } = useSWRImmutable<AddressInputMetadata>(
+		`/api/address-metadata/${countryCode}`,
+		fetcher,
+		{
+			...config,
+			...(initial ? { fallbackData: initial } : {}),
+		},
+	);
+
+	if (data) registerCountry(data);
+
+	return {
+		data,
+		...swr,
+		isError: swr.error !== undefined,
+	} as Response<AddressInputMetadata, C>;
+}
