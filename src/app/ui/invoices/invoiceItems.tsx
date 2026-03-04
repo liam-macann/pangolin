@@ -195,13 +195,13 @@ function InvoiceItemsInput({
 						key={item.id}
 						id={item.id}
 						className={cn(
-							'grid grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] bg-background py-3',
+							'grid grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] py-3',
 							'border-border border-y border-t-transparent border-dotted',
 							'group-not-first/sortable-item:group-[[style*="--dnd-translate"]]/sortable-item:group-not-[[style*="--dnd-translate:_0px_0px_0"]]/sortable-item:border-t-border',
 						)}
 					>
 						{/* Occlude tax badge on drag overlap */}
-						<div className='-inset-x-3 -z-10 pointer-events-none absolute inset-0 bg-background drop-shadow-none' />
+						<div className='-inset-x-3 -z-10 pointer-events-none absolute inset-0 bg-background drop-shadow-none dark:bg-popover' />
 
 						<Controller
 							control={control}
