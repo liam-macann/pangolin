@@ -19,6 +19,7 @@ function Avatar({ className, ...props }: React.ComponentProps<typeof AvatarPrimi
 function AvatarImage({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
 	return (
 		<AvatarPrimitive.Image
+			draggable='false'
 			data-slot='avatar-image'
 			className={cn('aspect-square size-full', className)}
 			{...props}
