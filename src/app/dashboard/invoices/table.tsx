@@ -39,6 +39,7 @@ import {
 import {
 	Select,
 	SelectContent,
+	SelectGroup,
 	SelectItem,
 	SelectSeparator,
 	SelectTrigger,
@@ -102,17 +103,18 @@ export const columns: ColumnDef<Invoice>[] = [
 				<div>
 					<Select
 						value={status}
-						onValueChange={(v: typeof status) => {
+						onValueChange={v => {
+							if (!v) return;
 							mutate(
-								async curr => {
+								async current => {
 									await updateInvoiceStatus(id, v).catch(err => {
 										toast.error('Failed to update invoice status');
 										throw err;
 									});
 
 									// Function does not return. On success, use optimistic data.
-									return curr
-										? curr.map(item => (item.id === id ? { ...item, status: v } : item))
+									return current
+										? current.map(item => (item.id === id ? { ...item, status: v } : item))
 										: [];
 								},
 								{
@@ -129,10 +131,12 @@ export const columns: ColumnDef<Invoice>[] = [
 							<SelectValue placeholder='Update status…'>{status}</SelectValue>
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value='unpaid'>Unpaid</SelectItem>
-							<SelectItem value='paid'>Paid</SelectItem>
-							<SelectSeparator />
-							<SelectItem value='refunded'>Refunded</SelectItem>
+							<SelectGroup>
+								<SelectItem value='unpaid'>Unpaid</SelectItem>
+								<SelectItem value='paid'>Paid</SelectItem>
+								<SelectSeparator />
+								<SelectItem value='refunded'>Refunded</SelectItem>
+							</SelectGroup>
 						</SelectContent>
 					</Select>
 				</div>

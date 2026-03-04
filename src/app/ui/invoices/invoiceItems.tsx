@@ -233,18 +233,21 @@ function InvoiceItemsInput({
 										<InputGroupAddon align='inline-end'>
 											<Controller
 												control={control}
-												name={`items.${i}.units`}
+												name={`items.${i}.unit`}
 												render={({ field }) => (
 													<Select {...field} onValueChange={field.onChange} required={false}>
-														<SelectTrigger size='xs' asChild>
-															<InputGroupButton
-																size='xs'
-																variant='secondary'
-																className='data-placeholder:text-muted-foreground'
-															>
-																<SelectValue placeholder='units' />
-															</InputGroupButton>
-														</SelectTrigger>
+														<SelectTrigger
+															size='xs'
+															render={
+																<InputGroupButton
+																	size='xs'
+																	variant='secondary'
+																	className='data-placeholder:text-muted-foreground'
+																>
+																	<SelectValue placeholder='units' />
+																</InputGroupButton>
+															}
+														/>
 
 														<SelectContent>
 															<SelectGroup>
