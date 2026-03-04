@@ -68,7 +68,7 @@ export function Taxation<T extends Fields>({ control: _control }: { control: Con
 								<FieldDescription>
 									When registered for tax, each rate can be applied on a per-item basis.
 								</FieldDescription>
-								{fieldState.error?.root && <FieldError errors={[fieldState.error?.root]} />}
+								{fieldState.error && <FieldError errors={[fieldState.error]} />}
 							</FieldContent>
 
 							{/* AnimatePresence doesn't work with gap; wrapper needed */}

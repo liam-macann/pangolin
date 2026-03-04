@@ -1,11 +1,11 @@
 'use client';
 
 import { cva, type VariantProps } from 'class-variance-authority';
-import { useMemo } from 'react';
-
+import { type ReactNode, useMemo } from 'react';
+import type { FieldError as ErrorRHF } from 'react-hook-form';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { Label } from '@/src/components/ui/label';
-import { Separator } from '@/src/components/ui/separator';
 
 function FieldSet({ className, ...props }: React.ComponentProps<'fieldset'>) {
 	return (
@@ -179,39 +179,36 @@ function FieldSeparator({
 	);
 }
 
+type Error = { message?: string } | ErrorRHF | undefined;
 function FieldError({
 	className,
 	children,
 	errors: _errors,
 	...props
-}: React.ComponentProps<'div'> & {
-	errors?: Array<{ message?: string } | undefined>;
-}) {
-	const content = useMemo(() => {
-		if (children) {
-			return children;
-		}
+}: React.ComponentProps<'div'> &
+	({ children?: React.ReactNode; errors?: never } | { errors?: Error[]; children?: never })) {
+	const content = useMemo((): ReactNode => {
+		if (children) return children;
 
-		const errors = _errors?.filter(v => v !== null && v !== undefined);
+		// RHF Zod resolver places top level errors at the root of the error object.
+		// eg. An array may have field validation errors (empty input) and a root error (too many items).
+		const getMessage = (error: Error) =>
+			(error && (error?.message || ('root' in error && error?.root?.message))) || null;
 
-		if (!errors || errors?.length === 0) {
-			return null;
-		}
+		// Ensure every error has a message
+		const errors = _errors?.filter(v => !!getMessage(v));
+		if (!errors || errors?.length === 0) return null;
 
-		if (errors?.length === 1 && errors[0]?.message) {
-			return errors[0].message;
-		}
+		if (errors?.length === 1) return getMessage(errors[0]);
 
 		return (
 			<ul className='ml-4 flex list-disc flex-col gap-1'>
-				{errors.map(error => error?.message && <li>{error.message}</li>)}
+				{errors.map(error => getMessage(error) && <li>{getMessage(error)}</li>)}
 			</ul>
 		);
 	}, [children, _errors]);
 
-	if (!content) {
-		return null;
-	}
+	if (!content) return null;
 
 	return (
 		<div

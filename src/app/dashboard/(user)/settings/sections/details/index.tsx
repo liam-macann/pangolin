@@ -38,7 +38,7 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 							<FieldDescription>
 								Business or charity identifiers, as required for tax and legal compliance.
 							</FieldDescription>
-							{fieldState.error?.root && <FieldError errors={[fieldState.error?.root]} />}
+							{fieldState.error && <FieldError errors={[fieldState.error]} />}
 						</FieldContent>
 						<RegistrationNumberField control={control} className='not-data-empty:-my-2' />
 					</FieldSet>
@@ -56,7 +56,7 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 								Bank account numbers will be printed on the invoice footer. Please ensure details
 								are accurate.
 							</FieldDescription>
-							{fieldState.error?.root && <FieldError errors={[fieldState.error?.root]} />}
+							{fieldState.error && <FieldError errors={[fieldState.error]} />}
 						</FieldContent>
 						<PaymentDetailsField control={control} className='not-data-empty:-my-2' />
 					</FieldSet>
@@ -71,7 +71,7 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 						<FieldContent>
 							<FieldLegend className='flex items-center gap-2'>Address</FieldLegend>
 							<FieldDescription>Billing address to be printed on invoices.</FieldDescription>
-							{fieldState.error?.root && <FieldError errors={[fieldState.error?.root]} />}
+							{fieldState.error && <FieldError errors={[fieldState.error]} />}
 						</FieldContent>
 						<AddressInput control={control} />
 					</FieldSet>
