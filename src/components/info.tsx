@@ -1,8 +1,7 @@
 'use client';
 
+import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
 import { InfoIcon } from '@phosphor-icons/react';
-import { Popover } from 'radix-ui';
-import { useRef, useState } from 'react';
 import Balancer from 'react-wrap-balancer';
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
@@ -16,75 +15,76 @@ export function InfoTip({
 	React.ComponentProps<typeof PopoverContent>,
 	'side' | 'align'
 >) {
-	const [open, setOpen] = useState(false);
-	const pointerDown = useRef(false);
-
 	return (
-		<Popover.Root onOpenChange={setOpen} open={open}>
-			<Popover.Trigger
-				onPointerDown={() => {
-					pointerDown.current = true;
-				}}
-				onPointerUp={() => {
-					pointerDown.current = false;
-				}}
+		<PopoverPrimitive.Root>
+			<PopoverPrimitive.Trigger
+				openOnHover
 				className='-m-1.5 group/info'
-				onFocus={() => {
-					if (!pointerDown.current) setOpen(true);
-				}}
-				asChild
-			>
-				<Button variant='ghost' size='icon-xs' className={cn('focus-visible:ring-0', className)}>
-					<InfoIcon className='-m-px group-hover/info:!ring-0 size-3.5 cursor-pointer rounded-full text-muted-foreground ring-ring/50 group-focus-visible/info:ring-2' />
-					<span className='sr-only'>Information</span>
-				</Button>
-			</Popover.Trigger>
+				render={
+					<Button variant='ghost' size='icon-xs' className={cn('focus-visible:ring-0', className)}>
+						<InfoIcon className='-m-px group-hover/info:!ring-0 size-3.5 cursor-pointer rounded-full text-muted-foreground ring-ring/50 group-focus-visible/info:ring-2' />
+						<span className='sr-only'>Information</span>
+					</Button>
+				}
+			/>
 
-			<PopoverContent
-				onOpenAutoFocus={e => e.preventDefault()}
-				onEscapeKeyDown={() => setOpen(false)}
-				side={side}
-				align={align}
-				arrowPadding={8}
-				collisionPadding={8}
-			>
+			<PopoverContent side={side} align={align}>
 				{children}
 			</PopoverContent>
-		</Popover.Root>
+		</PopoverPrimitive.Root>
 	);
 }
 
 function PopoverContent({
 	className,
-	sideOffset = 4,
+	align = 'center',
+	alignOffset = 0,
+	side = 'bottom',
+	sideOffset = 8,
 	children,
 	...props
-}: React.ComponentProps<typeof Popover.Content>) {
+}: React.ComponentProps<typeof PopoverPrimitive.Popup> &
+	Pick<PopoverPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset'>) {
 	return (
-		<Popover.Portal>
-			<Popover.Content
-				data-slot='popover-content'
+		<PopoverPrimitive.Portal>
+			<PopoverPrimitive.Positioner
+				align={align}
+				alignOffset={alignOffset}
+				side={side}
 				sideOffset={sideOffset}
-				className={cn(
-					'max-w-[50vw] outline-none',
-					'fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1 duration-200 ease-out-quart',
-					'origin-(--radix-popover-content-transform-origin) animate-in data-[state=closed]:animate-out',
-					'relative inset-0 z-50 w-fit text-balance rounded-sm bg-primary px-2 py-1 text-primary-foreground text-xs drop-shadow-xs',
-					className,
-				)}
-				{...props}
+				arrowPadding={8}
+				collisionPadding={8}
+				className='isolate z-50'
 			>
-				<Balancer preferNative={false}>{children}</Balancer>
-				<Popover.Arrow className='pointer-events-none fill-primary dark:fill-gray-900' asChild>
-					<Arrow />
-				</Popover.Arrow>
-			</Popover.Content>
-		</Popover.Portal>
+				<PopoverPrimitive.Popup
+					data-slot='tooltip-content'
+					className={cn(
+						'data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-200 ease-out-quart',
+						'data-[side=bottom]:slide-in-from-top-1 data-[side=inline-end]:slide-in-from-left-1 data-[side=inline-start]:slide-in-from-right-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1',
+						'origin-(--transform-origin) data-[state=delayed-open]:animate-in data-closed:animate-out data-open:animate-in',
+						'z-50 w-fit max-w-xs rounded-md bg-foreground px-3 py-1.5 text-background text-xs outline-none',
+						'relative inset-0 z-50 w-fit text-balance rounded-sm bg-primary px-2 py-1 text-primary-foreground text-xs drop-shadow-xs',
+						className,
+					)}
+					{...props}
+				>
+					<Balancer preferNative={false}>{children}</Balancer>
+					<PopoverPrimitive.Arrow
+						className={cn(
+							'fill-primary dark:fill-gray-900',
+							'data-[side=left]:-rotate-90 data-[side=bottom]:top-[0.3px] data-[side=left]:right-[0.3px] data-[side=top]:bottom-[0.3px] data-[side=right]:left-[0.3px] data-[side=bottom]:rotate-180 data-[side=right]:rotate-90',
+						)}
+					>
+						<Arrow className='translate-y-full' />
+					</PopoverPrimitive.Arrow>
+				</PopoverPrimitive.Popup>
+			</PopoverPrimitive.Positioner>
+		</PopoverPrimitive.Portal>
 	);
 }
 
 const Arrow = (props: React.JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>) => (
-	<svg {...props} width='15' height='5' aria-hidden='true' viewBox='0 0 15 5'>
+	<svg {...props} width='15' height='15' aria-hidden='true' viewBox='0 0 15 15'>
 		<mask id='stroke-mask'>
 			<rect x='0' y='0.5' width='15' height='15'></rect>
 		</mask>

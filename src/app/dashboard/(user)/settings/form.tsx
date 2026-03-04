@@ -126,11 +126,15 @@ export default function ConfigForm({
 					>
 						Cancel
 					</Button>
-					<TextTooltip asChild content='You have not made changes' disabled={isDirty}>
-						<Button type='submit' variant='primary' disabled={!isDirty || isSubmitting}>
-							Save changes
-						</Button>
-					</TextTooltip>
+					<TextTooltip
+						content='You have not made changes'
+						disabled={isDirty || isSubmitting}
+						render={
+							<Button type='submit' variant='primary' disabled={!isDirty || isSubmitting}>
+								Save changes
+							</Button>
+						}
+					/>
 				</div>
 			</form>
 		</FormProvider>

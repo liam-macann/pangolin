@@ -1,63 +1,71 @@
 'use client';
 
-import { Tooltip as TooltipPrimitive } from 'radix-ui';
-import * as React from 'react';
+import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip';
 
 import { cn } from '@/lib/utils';
 
-function TooltipProvider({
-	delayDuration = 0,
-	...props
-}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
-	return (
-		<TooltipPrimitive.Provider
-			data-slot='tooltip-provider'
-			delayDuration={delayDuration}
-			{...props}
-		/>
-	);
+function TooltipProvider({ delay = 0, ...props }: TooltipPrimitive.Provider.Props) {
+	return <TooltipPrimitive.Provider data-slot='tooltip-provider' delay={delay} {...props} />;
 }
 
-function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
+function Tooltip({ ...props }: TooltipPrimitive.Root.Props) {
 	return <TooltipPrimitive.Root data-slot='tooltip' {...props} />;
 }
 
-function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-	return <TooltipPrimitive.Trigger type='button' data-slot='tooltip-trigger' {...props} />;
+function TooltipTrigger({ ...props }: TooltipPrimitive.Trigger.Props) {
+	return <TooltipPrimitive.Trigger data-slot='tooltip-trigger' {...props} />;
 }
 
 function TooltipContent({
 	className,
-	sideOffset = 4,
+	side = 'top',
+	sideOffset = 8,
+	align = 'center',
+	alignOffset = 0,
 	children,
 	...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+}: TooltipPrimitive.Popup.Props &
+	Pick<TooltipPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset'>) {
 	return (
 		<TooltipPrimitive.Portal>
-			<TooltipPrimitive.Content
-				data-slot='tooltip-content'
+			<TooltipPrimitive.Positioner
+				align={align}
+				alignOffset={alignOffset}
+				side={side}
 				sideOffset={sideOffset}
-				arrowPadding={8}
+				arrowPadding={6}
 				collisionPadding={8}
-				className={cn(
-					'fade-in-0 zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1 duration-200 ease-out-quart',
-					'origin-(--radix-tooltip-content-transform-origin) animate-in data-[state=closed]:animate-out',
-					'relative inset-0 z-50 w-fit text-balance rounded-sm bg-primary px-2 py-1 text-primary-foreground text-xs drop-shadow-xs',
-					className,
-				)}
-				{...props}
+				className='isolate z-50'
 			>
-				{children}
-				<TooltipPrimitive.Arrow className='fill-primary dark:fill-gray-900' asChild>
-					<Arrow />
-				</TooltipPrimitive.Arrow>
-			</TooltipPrimitive.Content>
+				<TooltipPrimitive.Popup
+					data-slot='tooltip-content'
+					className={cn(
+						'data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-200 ease-out-quart',
+						'data-[side=bottom]:slide-in-from-top-1 data-[side=inline-end]:slide-in-from-left-1 data-[side=inline-start]:slide-in-from-right-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1',
+						'origin-(--transform-origin) data-[state=delayed-open]:animate-in data-closed:animate-out data-open:animate-in',
+						'z-50 w-fit max-w-xs rounded-md bg-foreground px-3 py-1.5 text-background text-xs outline-none',
+						'relative inset-0 z-50 w-fit text-balance rounded-sm bg-primary px-2 py-1 text-primary-foreground text-xs drop-shadow-xs',
+						className,
+					)}
+					{...props}
+				>
+					{children}
+					<TooltipPrimitive.Arrow
+						className={cn(
+							'fill-primary dark:fill-gray-900',
+							'data-[side=left]:-rotate-90 data-[side=bottom]:top-[0.3px] data-[side=left]:right-[0.3px] data-[side=top]:bottom-[0.3px] data-[side=right]:left-[0.3px] data-[side=bottom]:rotate-180 data-[side=right]:rotate-90',
+						)}
+					>
+						<Arrow className='translate-y-full' />
+					</TooltipPrimitive.Arrow>
+				</TooltipPrimitive.Popup>
+			</TooltipPrimitive.Positioner>
 		</TooltipPrimitive.Portal>
 	);
 }
 
 const Arrow = (props: React.JSX.IntrinsicAttributes & React.SVGProps<SVGSVGElement>) => (
-	<svg {...props} width='15' height='5' aria-hidden='true' viewBox='0 0 15 5'>
+	<svg {...props} width='15' height='15' aria-hidden='true' viewBox='0 0 15 15'>
 		<mask id='stroke-mask'>
 			<rect x='0' y='0.5' width='15' height='15'></rect>
 		</mask>
@@ -70,39 +78,30 @@ const Arrow = (props: React.JSX.IntrinsicAttributes & React.SVGProps<SVGSVGEleme
 	</svg>
 );
 
-export { Tooltip, TextTooltip, TooltipTrigger, TooltipContent, TooltipProvider };
-
 export default function TextTooltip({
-	children,
 	content,
-	disabled = false,
 	className,
 
 	side,
 	align,
 
-	asChild,
+	render,
 
 	...props
 }: {
-	children: React.ReactNode;
 	content: React.ReactNode;
 	className?: string;
-	disabled?: boolean;
 } & React.ComponentProps<typeof Tooltip> &
-	Pick<React.ComponentProps<typeof TooltipContent>, 'side' | 'align'> &
-	Pick<React.ComponentProps<typeof TooltipTrigger>, 'asChild'>) {
-	// Necessary to prevent switching between controlled and uncontrolled states
-	const [open, setOpen] = React.useState(false);
-
+	Pick<TooltipPrimitive.Positioner.Props, 'align' | 'side'> &
+	Pick<TooltipPrimitive.Trigger.Props, 'render'>) {
 	return (
-		<Tooltip open={disabled ? false : open} onOpenChange={setOpen} {...props}>
-			<TooltipTrigger asChild={asChild} className={className}>
-				{children}
-			</TooltipTrigger>
+		<Tooltip {...props}>
+			<TooltipTrigger render={render} className={className} />
 			<TooltipContent side={side} align={align}>
 				{content}
 			</TooltipContent>
 		</Tooltip>
 	);
 }
+
+export { Tooltip, TextTooltip, TooltipTrigger, TooltipContent, TooltipProvider };
