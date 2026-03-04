@@ -2,8 +2,8 @@ import path from 'node:path';
 import { TZDate } from '@date-fns/tz';
 import { type NextRequest, NextResponse } from 'next/server';
 import PdfPrinter from 'pdfmake';
+import { getSession } from '@/auth';
 import type { unitEnum } from '@/db/schema/data';
-import { getUser } from '@/lib/data';
 import { fetchInvoice } from '@/lib/data/invoice';
 import { BottomLayout, CenteredLayout } from '@/lib/pdf-verticalalign';
 import { formatCurrency, formatDateToLocal, formatNumber, pluralize } from '@/lib/utils';
@@ -66,13 +66,32 @@ const footerHeight = (lines: number) => {
 	);
 };
 
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-	const { id: invoiceId } = await params;
-	const [invoice, user] = await Promise.all([fetchInvoice(invoiceId), getUser()]);
+export async function GET(_request: NextRequest, ctx: RouteContext<'/dashboard/invoices/[id]'>) {
+	const { id: invoiceId } = await ctx.params;
 
-	if (!invoice) {
-		return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
-	}
+	const session = await getSession();
+	if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+	const buffer = await generatePdf(invoiceId, {
+		id: session.user.id,
+		email: session.user.email,
+		name: session.user.name,
+	});
+
+	if (!buffer) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+
+	return new NextResponse(new Uint8Array(buffer), {
+		status: 200,
+		headers: {
+			'Content-Type': 'application/pdf',
+			'Content-Disposition': 'inline; filename=invoice.pdf',
+		},
+	});
+}
+
+async function generatePdf(invoiceId: string, user: { id: string; email: string; name: string }) {
+	const invoice = await fetchInvoice(invoiceId);
+	if (!invoice) return;
 
 	const fonts = {
 		InstrumentSans: {
@@ -415,15 +434,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 	pdfDoc.on('data', chunk => chunks.push(chunk));
 	pdfDoc.end();
 
-	const buffer = await new Promise<Buffer>(resolve => {
+	return await new Promise<Buffer>(resolve => {
 		pdfDoc.on('end', () => resolve(Buffer.concat(chunks)));
-	});
-
-	return new NextResponse(new Uint8Array(buffer), {
-		status: 200,
-		headers: {
-			'Content-Type': 'application/pdf',
-			'Content-Disposition': 'inline; filename=invoice.pdf',
-		},
 	});
 }
