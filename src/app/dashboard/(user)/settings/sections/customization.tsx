@@ -55,7 +55,7 @@ export function Customization<T extends Fields>({ control: _control }: { control
 			<Controller
 				name='numberingScheme'
 				control={control}
-				render={({ field, fieldState }) => {
+				render={({ field: { onChange, ...field }, fieldState }) => {
 					return (
 						<FieldSet className='mt-4'>
 							<FieldContent>
@@ -69,11 +69,7 @@ export function Customization<T extends Fields>({ control: _control }: { control
 									Choose the method used to identify your invoices.
 								</FieldDescription>
 							</FieldContent>
-							<RadioGroup
-								{...field}
-								onValueChange={field.onChange}
-								className='mt-1 flex max-sm:flex-col'
-							>
+							<RadioGroup {...field} onValueChange={onChange} className='mt-1 flex max-sm:flex-col'>
 								<FieldLabel>
 									<Field orientation='vertical' className='h-full justify-between'>
 										<div className='flex justify-between'>
@@ -117,15 +113,14 @@ export function Customization<T extends Fields>({ control: _control }: { control
 	);
 }
 
-function ColorPalette({ ...field }: ControllerRenderProps<Fields, 'colorScheme'>) {
+function ColorPalette({ onChange, ...field }: ControllerRenderProps<Fields, 'colorScheme'>) {
 	const [hover, setHover] = useState<string | null>(null);
 	return (
 		<div className='flex flex-col @md/field-group:items-end gap-2'>
 			<RadioGroup
 				className='flex'
 				{...field}
-				value={field.value}
-				onValueChange={field.onChange}
+				onValueChange={onChange}
 				onPointerLeave={() => setHover(null)}
 			>
 				{Object.entries(schemes).map(([key, scheme]) => (
@@ -133,6 +128,7 @@ function ColorPalette({ ...field }: ControllerRenderProps<Fields, 'colorScheme'>
 						<Button
 							variant='primary'
 							size='icon-sm'
+							nativeButton={false}
 							render={
 								<RadioGroupItem
 									className='peer !border-black/20 dark:!border-black/10 !rounded-full data-[state="checked"]:outline'

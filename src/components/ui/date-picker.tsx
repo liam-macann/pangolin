@@ -61,17 +61,19 @@ function CalendarPopover({
 } & React.ComponentProps<typeof Button>) {
 	return (
 		<Popover open={open} onOpenChange={onOpenChange}>
-			<PopoverTrigger asChild>
-				<Button
-					variant='outline'
-					aria-expanded={open}
-					className={cn('!scale-100 min-w-[200px] justify-between', className)}
-					{...props}
-				>
-					<span className='truncate'>{label || 'Select date…'}</span>
-					<CaretUpDownIcon className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-				</Button>
-			</PopoverTrigger>
+			<PopoverTrigger
+				render={
+					<Button
+						variant='outline'
+						aria-expanded={open}
+						className={cn('!scale-100 min-w-[200px] justify-between', className)}
+					>
+						<span className='truncate'>{label || 'Select date…'}</span>
+						<CaretUpDownIcon className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+					</Button>
+				}
+				{...props}
+			/>
 			<PopoverContent className='w-auto p-0' align='start'>
 				{children}
 			</PopoverContent>

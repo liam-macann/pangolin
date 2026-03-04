@@ -7,7 +7,6 @@ import { isSortable, useSortable } from '@dnd-kit/react/sortable';
 import { SortableContext } from '@dnd-kit/sortable';
 import { DotsSixIcon, DotsThreeIcon } from '@phosphor-icons/react';
 import { AnimatePresence, LayoutGroup, motion, useIsPresent } from 'motion/react';
-import { Slot as SlotPrimitive } from 'radix-ui';
 import { createContext, type ReactNode, use, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/button';
@@ -74,16 +73,8 @@ export function SortableList({
 	);
 }
 
-export function SortableEmpty({
-	className,
-	asChild = false,
-	...props
-}: React.ComponentProps<'div'> & {
-	asChild?: boolean;
-}) {
-	const Comp = asChild ? SlotPrimitive.Slot : 'div';
-
-	return <Comp className={cn('group-not-data-[empty]/sortable:hidden', className)} {...props} />;
+export function SortableEmpty({ className, ...props }: React.ComponentProps<'div'>) {
+	return <div className={cn('group-not-data-[empty]/sortable:hidden', className)} {...props} />;
 }
 
 const SortableItemContext = createContext({ isDragging: false });
