@@ -45,7 +45,8 @@ export const taxes = z
 				});
 			} else if (item.name !== '' && item.rate !== undefined) seen.set(key, index);
 		});
-	});
+	})
+	.max(25, 'You may add up to 25 taxes');
 
 /** Complete insertion record for database configuration, excluding generated fields */
 export const config = createInsertSchema(configSchema, {
@@ -78,4 +79,8 @@ export const config = createInsertSchema(configSchema, {
 		address: address.nullable(),
 		/** Minimal insertion record for database configuration, excluding generated fields */
 		taxes: taxes,
+	})
+	.refine(config => !(config.taxRegistration && config.taxes.length === 0), {
+		message: 'Taxes must be provided when registered for tax',
+		path: ['taxes'],
 	});
