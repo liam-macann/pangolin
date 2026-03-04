@@ -1,38 +1,20 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
-import { Controller, type ControllerRenderProps, FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import type { z } from 'zod';
-import { AddressInput } from '@/components/address-input';
-import { CurrencySelect } from '@/components/currency-select';
-import { InfoTip } from '@/components/info';
-import { RegionSelect } from '@/components/region-select';
-import { TimezoneSelect } from '@/components/timezone-select';
 import { updateUserConfig } from '@/lib/actions/config';
 import type { getUserConfig } from '@/lib/data';
 import { config as formSchema } from '@/lib/validation/config';
-import schemes from '@/src/app/ui/colorSchemes';
 import { Button } from '@/ui/button';
-import { Checkbox } from '@/ui/checkbox';
-import {
-	Field,
-	FieldContent,
-	FieldDescription,
-	FieldError,
-	FieldGroup,
-	FieldLabel,
-	FieldLegend,
-	FieldSet,
-	FieldTitle,
-} from '@/ui/field';
-import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
 import { TextTooltip } from '@/ui/tooltip';
-import { PaymentDetailsField } from './paymentDetails';
-import { RegistrationNumberField } from './registrationNumber';
-import { DuplicateWarning, TaxRateField } from './taxRates';
+
+import { Customization } from './sections/customization';
+import { Details } from './sections/details';
+import { Localization } from './sections/localization';
+import { Taxation } from './sections/taxation';
 
 /** Mutable value that records the latest config record known to the client. Updates on successful form submission, and used to reset the form. */
 let latestConfig: z.input<typeof formSchema> | undefined;
@@ -82,8 +64,13 @@ export default function ConfigForm({
 		handleSubmit,
 		control,
 		reset,
-		getFieldState,
 	} = methods;
+
+	const revertToSavepoint = () => {
+		// Prevent form submission triggering AnimatePresence
+		setFormVersion(v => v + 1);
+		reset(latestConfig);
+	};
 
 	const [formVersion, setFormVersion] = useState(0); // Reset counter
 
@@ -92,7 +79,7 @@ export default function ConfigForm({
 			<form
 				className='grid gap-12'
 				onSubmit={handleSubmit(
-					async val => {
+					async config => {
 						// Prevent duplicate submissions
 						if (isSubmitting) return;
 						else if (!isDirty) {
@@ -100,22 +87,17 @@ export default function ConfigForm({
 							return;
 						}
 
-						const { taxes, ...config } = val;
-
 						const promise = updateUserConfig({
 							...config,
-							taxes: taxes.map(tax => ({
+							taxes: config.taxes.map(tax => ({
 								...tax,
 								// Convert the whole number percentage back to a decimal
 								rate: Number(tax.rate) / 100,
 							})),
 						}).then(() => {
 							// Update the reset savepoint with new values
-							latestConfig = val;
-
-							// Prevent form submission triggering AnimatePresence
-							setFormVersion(v => v + 1);
-							reset(val);
+							latestConfig = config;
+							revertToSavepoint();
 						});
 
 						toast.promise(promise, {
@@ -129,286 +111,17 @@ export default function ConfigForm({
 					() => toast.warning('Please ensure all fields are filled correctly'),
 				)}
 			>
-				<FieldGroup>
-					<Controller
-						name='colorScheme'
-						control={control}
-						render={({ field, fieldState }) => (
-							<Field
-								orientation='responsive'
-								className='!items-center'
-								data-invalid={fieldState.invalid}
-							>
-								<FieldContent>
-									<FieldLabel htmlFor='color-scheme'>Color scheme</FieldLabel>
-									<FieldDescription>
-										Select an accent color for your generated invoices
-									</FieldDescription>
-									{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-								</FieldContent>
+				<Customization control={control} />
+				{/* Keys prevent form submission from triggering AnimatePresence */}
+				<Taxation key={`taxation_${formVersion}`} control={control} />
+				<Details key={`details_${formVersion}`} control={control} />
+				<Localization control={control} />
 
-								<ColorPalette {...field} />
-							</Field>
-						)}
-					/>
-
-					<Controller
-						name='numberingScheme'
-						control={control}
-						render={({ field, fieldState }) => {
-							return (
-								<FieldSet className='mt-4'>
-									<FieldContent>
-										<FieldLegend className='flex items-center gap-2'>
-											Numbering scheme
-											<InfoTip side='right'>
-												Existing invoices will not be affected by changes to numbering scheme
-											</InfoTip>
-										</FieldLegend>
-										<FieldDescription>
-											Choose the method used to identify your invoices.
-										</FieldDescription>
-									</FieldContent>
-									<RadioGroup
-										{...field}
-										onValueChange={field.onChange}
-										className='mt-1 flex max-sm:flex-col'
-									>
-										<FieldLabel>
-											<Field orientation='vertical' className='h-full justify-between'>
-												<div className='flex justify-between'>
-													<FieldTitle>Sequential</FieldTitle>
-													<RadioGroupItem value='sequential' />
-												</div>
-												<div className='flex items-end justify-between gap-6'>
-													<FieldDescription className='text-balance'>
-														Track invoices sequentially, over the life of the business
-													</FieldDescription>
-													<FieldDescription className='text-nowrap font-mono text-xs tracking-wide'>
-														INV–001
-													</FieldDescription>
-												</div>
-											</Field>
-										</FieldLabel>
-										<FieldLabel>
-											<Field orientation='vertical' className='h-full justify-between'>
-												<div className='flex justify-between'>
-													<FieldTitle>Annual</FieldTitle>
-													<RadioGroupItem value='annual' />
-												</div>
-												<div className='flex items-end justify-between gap-6'>
-													<FieldDescription className='text-balance'>
-														Reset invoice count with each new calendar year
-													</FieldDescription>
-													<FieldDescription className='text-nowrap font-mono text-xs tracking-wide'>
-														{new Date().getFullYear()}–001
-													</FieldDescription>
-												</div>
-											</Field>
-										</FieldLabel>
-									</RadioGroup>
-
-									{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-								</FieldSet>
-							);
-						}}
-					/>
-				</FieldGroup>
-
-				<FieldGroup>
-					<h2 className='flex items-baseline gap-3 font-bold text-2xl' id='taxation'>
-						Taxation
-					</h2>
-
-					<Controller
-						name='taxRegistration'
-						control={control}
-						render={({ field, fieldState }) => {
-							const { value, ...attrs } = field;
-							return (
-								<Field orientation='horizontal' data-invalid={fieldState.invalid}>
-									<Checkbox {...attrs} checked={value} onCheckedChange={field.onChange} id='tax' />
-									<FieldContent>
-										<FieldLabel htmlFor='tax'>I am registered for tax</FieldLabel>
-										<FieldDescription className='text-muted-foreground text-sm'>
-											We have no knowledge of tax obligations in your region, nor your individual
-											tax situation. Please ensure you are compliant with local laws.
-										</FieldDescription>
-										{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-									</FieldContent>
-								</Field>
-							);
-						}}
-					/>
-
-					<Controller
-						name='taxes'
-						control={control}
-						render={({ fieldState }) => {
-							return (
-								<FieldSet className='-mb-4 mt-4'>
-									<FieldContent className='ml-8'>
-										<FieldLegend className='flex items-center gap-2'>
-											Tax rates
-											<InfoTip side='right'>
-												Taxes defined here will always be printed on invoices, even if no tax is
-												applicable
-											</InfoTip>
-										</FieldLegend>
-										<FieldDescription>
-											When registered for tax, each rate can be applied on a per-item basis.
-										</FieldDescription>
-										{fieldState.error?.root && <FieldError errors={[fieldState.error?.root]} />}
-									</FieldContent>
-
-									{/* AnimatePresence doesn't work with gap; wrapper needed */}
-									<div className='isolate'>
-										<DuplicateWarning control={control} className='ml-8 pb-6' />
-										<TaxRateField
-											key={formVersion}
-											control={control}
-											className='not-data-empty:-my-2 relative z-10'
-										/>
-									</div>
-								</FieldSet>
-							);
-						}}
-					/>
-				</FieldGroup>
-
-				<FieldGroup>
-					<h2 className='font-bold text-2xl' id='details'>
-						Your details
-					</h2>
-
-					<FieldSet>
-						<FieldContent>
-							<FieldLegend className='flex items-center gap-2'>Trading number</FieldLegend>
-							<FieldDescription>
-								Business or charity identifiers, as required for tax and legal compliance.
-							</FieldDescription>
-							{getFieldState('registrationNumber').error?.root && (
-								<FieldError errors={[getFieldState('registrationNumber').error?.root]} />
-							)}
-						</FieldContent>
-						<RegistrationNumberField
-							key={formVersion}
-							control={control}
-							className='not-data-empty:-my-2'
-						/>
-					</FieldSet>
-
-					<FieldSet>
-						<FieldContent>
-							<FieldLegend className='flex items-center gap-2'>Payment information</FieldLegend>
-							<FieldDescription>
-								Bank account numbers will be printed on the invoice footer. Please ensure details
-								are accurate.
-							</FieldDescription>
-							{getFieldState('paymentDetails').error?.root && (
-								<FieldError errors={[getFieldState('paymentDetails').error?.root]} />
-							)}
-						</FieldContent>
-						<PaymentDetailsField
-							key={formVersion}
-							control={control}
-							className='not-data-empty:-my-2'
-						/>
-					</FieldSet>
-
-					<FieldSet className='mb-4 min-w-0'>
-						<FieldContent>
-							<FieldLegend className='flex items-center gap-2'>Address</FieldLegend>
-							<FieldDescription>Billing address to be printed on invoices.</FieldDescription>
-							{getFieldState('address').error?.root && (
-								<FieldError errors={[getFieldState('address').error?.root]} />
-							)}
-						</FieldContent>
-						<AddressInput control={control} />
-					</FieldSet>
-				</FieldGroup>
-
-				<FieldGroup className='mb-14'>
-					<h2 className='flex items-baseline gap-3 font-bold text-2xl' id='localisation'>
-						Localisation
-						<InfoTip side='right'>
-							Existing invoices will not be affected by changes to localisation
-						</InfoTip>
-					</h2>
-					<Controller
-						name='region'
-						control={control}
-						render={({ field, fieldState }) => (
-							<Field
-								orientation='responsive'
-								className='!items-center'
-								data-invalid={fieldState.invalid}
-							>
-								<FieldContent>
-									<FieldLabel htmlFor='region'>Region</FieldLabel>
-									<FieldDescription>
-										Adjust formatting of dates, times, and numbers to reflect your locale.
-									</FieldDescription>
-									{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-								</FieldContent>
-								<RegionSelect {...field} onValueChange={v => field.onChange(v?.iso2)} />
-							</Field>
-						)}
-					/>
-					<Controller
-						name='timezone'
-						control={control}
-						render={({ field, fieldState }) => (
-							<Field
-								orientation='responsive'
-								className='!items-center'
-								data-invalid={fieldState.invalid}
-							>
-								<FieldContent>
-									<FieldLabel htmlFor='timezone'>Time zone</FieldLabel>
-									<FieldDescription>
-										Your time zone of record, which affects the time displayed in your invoices and
-										summary data.
-									</FieldDescription>
-									{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-								</FieldContent>
-								<TimezoneSelect
-									id='timezone'
-									{...field}
-									onValueChange={v => field.onChange(v?.name)}
-								/>
-							</Field>
-						)}
-					/>
-					<Controller
-						name='currency'
-						control={control}
-						render={({ field, fieldState }) => (
-							<Field
-								orientation='responsive'
-								className='!items-center'
-								data-invalid={fieldState.invalid}
-							>
-								<FieldContent>
-									<FieldLabel htmlFor='currency'>Currency</FieldLabel>
-									<FieldDescription>
-										The currency will be displayed on invoices if different from locale.
-									</FieldDescription>
-									{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-								</FieldContent>
-								<CurrencySelect {...field} onValueChange={v => field.onChange(v?.iso)} />
-							</Field>
-						)}
-					/>
-				</FieldGroup>
-				<div className='-mx-2 sticky bottom-0 flex grid-cols-2 gap-2 border-t bg-background px-2 py-4 pb-6 max-sm:grid max-md:fixed max-md:right-0 max-md:left-0 max-md:px-8 sm:justify-end'>
+				<div className='-mx-2 sticky bottom-0 mt-14 flex grid-cols-2 gap-2 border-t bg-background px-2 py-4 pb-6 max-sm:grid max-md:fixed max-md:right-0 max-md:left-0 max-md:px-8 sm:justify-end'>
 					<Button
 						type='button'
 						variant='ghost'
-						onClick={() => {
-							setFormVersion(v => v + 1);
-							reset(latestConfig);
-						}}
+						onClick={revertToSavepoint}
 						disabled={!isDirty || isSubmitting}
 					>
 						Cancel
@@ -421,49 +134,5 @@ export default function ConfigForm({
 				</div>
 			</form>
 		</FormProvider>
-	);
-}
-
-function ColorPalette({
-	...field
-}: ControllerRenderProps<z.infer<typeof formSchema>, 'colorScheme'>) {
-	const [hover, setHover] = useState<string | null>(null);
-	return (
-		<div className='flex flex-col @md/field-group:items-end gap-2'>
-			<RadioGroup
-				className='flex'
-				{...field}
-				value={field.value}
-				onValueChange={field.onChange}
-				onPointerLeave={() => setHover(null)}
-			>
-				{Object.entries(schemes).map(([key, scheme]) => (
-					<div key={key} className='flex flex-col'>
-						<Button
-							variant='primary'
-							size='icon-sm'
-							render={
-								<RadioGroupItem
-									className='peer !border-black/20 dark:!border-black/10 !rounded-full data-[state="checked"]:outline'
-									style={{ backgroundColor: scheme.accent }}
-									value={key}
-									onMouseEnter={() => setHover(key)}
-								>
-									<CheckIcon
-										className='fade-in-0 zoom-in-90 animate-in text-white duration-150'
-										weight='bold'
-									/>
-								</RadioGroupItem>
-							}
-						/>
-						{key === (hover || field.value) && (
-							<FieldDescription className='text-center text-xs capitalize'>
-								<span className='-translate-x-1/2 absolute mt-2'>{key}</span>
-							</FieldDescription>
-						)}
-					</div>
-				))}
-			</RadioGroup>
-		</div>
 	);
 }

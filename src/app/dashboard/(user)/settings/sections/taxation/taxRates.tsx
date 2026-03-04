@@ -1,17 +1,18 @@
 'use client';
+
 import { InfoIcon, TrashIcon } from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
 	type Control,
 	Controller,
 	type FieldArrayWithId,
-	type FieldValues,
 	type UseFieldArrayReturn,
 	useFieldArray,
 	useFormContext,
 	useFormState,
 	useWatch,
 } from 'react-hook-form';
+import type z from 'zod/v4';
 import { InfoTip } from '@/components/info';
 import {
 	Sortable,
@@ -21,26 +22,18 @@ import {
 	SortableList,
 } from '@/components/sortable-input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { taxes } from '@/db/schema';
-import { cn, type Prettify } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import type { config as formSchema } from '@/lib/validation/config';
 import { Button } from '@/ui/button';
 import { DropdownMenuItem } from '@/ui/dropdown-menu';
 import { Field, FieldError, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 
-type TaxField = Prettify<
-	Pick<typeof taxes.$inferSelect, 'name'> & {
-		/** Widened type to allow blank default value */
-		rate: number | '';
-	}
->;
+type FormValues = z.input<typeof formSchema>;
+type Fields = Pick<FormValues, 'taxRegistration' | 'taxes'>;
 
-interface FormValues extends FieldValues {
-	taxes: TaxField[];
-}
-
-export function TaxRateField<T extends FormValues>({
+export function TaxRateField<T extends Fields>({
 	className,
 	// Control is not necessary when using FormProvider, but provides type guard
 	control: _control,
@@ -49,7 +42,7 @@ export function TaxRateField<T extends FormValues>({
 	control: Control<T>;
 }) {
 	// Necessary, as RHF can't extract typings from the generic
-	const control = _control as unknown as Control<FormValues>;
+	const control = _control as unknown as Control<Fields>;
 
 	const { fields, ...actions } = useFieldArray({ control, name: 'taxes' });
 	const addTax = () => actions.append({ name: '', rate: '' });
@@ -95,13 +88,13 @@ function TaxRow({
 	index,
 	actions,
 }: {
-	tax: FieldArrayWithId<FormValues, 'taxes', 'id'>;
+	tax: FieldArrayWithId<Fields, 'taxes', 'id'>;
 	index: number;
-	actions: Omit<UseFieldArrayReturn<FormValues, 'taxes'>, 'fields'>;
+	actions: Omit<UseFieldArrayReturn<Fields, 'taxes'>, 'fields'>;
 }) {
-	const { trigger, control } = useFormContext<FormValues>();
+	const { trigger, control } = useFormContext<Fields>();
 
-	const { errors } = useFormState<FormValues>({ name: `taxes.${index}` });
+	const { errors } = useFormState<Fields>({ name: `taxes.${index}` });
 	const itemErrors = errors.taxes?.[index];
 
 	return (
@@ -175,14 +168,14 @@ function TaxRow({
 	);
 }
 
-export function DuplicateWarning<T extends FormValues>({
+export function DuplicateWarning<T extends Fields>({
 	control: _control,
 	className,
 }: {
 	control: Control<T>;
 	className?: string;
 }) {
-	const control = _control as unknown as Control<FormValues>;
+	const control = _control as unknown as Control<Fields>;
 
 	const taxes = useWatch({ control, name: 'taxes' });
 	const names = taxes.map(tax => tax.name).filter(name => name.trim() !== '');

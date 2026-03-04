@@ -1,9 +1,9 @@
 'use client';
 
 import { WarningCircleIcon, WarningIcon } from '@phosphor-icons/react/ssr';
-import type { CountryCode } from 'lib-address';
+import { type CountryCode, isValidCountryCode } from 'lib-address';
 import { ErrorBoundary } from 'react-error-boundary';
-import { type Control, type FieldValues, useWatch } from 'react-hook-form';
+import { type Control, useWatch } from 'react-hook-form';
 import type z from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAddressMetadata } from '@/lib/hooks';
@@ -12,10 +12,9 @@ import type schema from '@/lib/validation/address';
 import { FieldSet } from '@/ui/field';
 import { Country, FIELD_MAPPING, type FieldProps } from './fields';
 
-type AddressField = z.infer<typeof schema>;
-
-export interface FormValues extends FieldValues {
-	address: AddressField;
+type AddressField = z.input<typeof schema>;
+export interface FormValues {
+	address: AddressField | null;
 }
 
 /** Generic address format including standard international fields
@@ -48,6 +47,8 @@ export function AddressInput<T extends FormValues>({ control: _control }: { cont
 
 /** Takes an ISO2 string and renders localised address input */
 function LocaleForm({ region }: { region: CountryCode }) {
+	if (!isValidCountryCode(region)) throw new Error(`Invalid country code: ${region}`);
+
 	// Fetch region from cache or Google Address Metadata API
 	const { data, isLoading, isError } = useAddressMetadata(region, undefined, {
 		keepPreviousData: true,
