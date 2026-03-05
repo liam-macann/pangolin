@@ -25,7 +25,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import type { config as formSchema } from '@/lib/validation/config';
 import { Button } from '@/ui/button';
-import { DropdownMenuItem } from '@/ui/dropdown-menu';
+import { DropdownMenuGroup, DropdownMenuItem } from '@/ui/dropdown-menu';
 import { Field, FieldError, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
@@ -153,7 +153,7 @@ function TaxRow({
 				)}
 			/>
 
-			<SortableActions>
+			<SortableActions align='center'>
 				<DropdownMenuItem variant='destructive' onClick={() => actions.remove(index)}>
 					<TrashIcon />
 					Delete

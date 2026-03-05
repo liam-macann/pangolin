@@ -8,6 +8,7 @@ import { Button } from '@/ui/button';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
+	DropdownMenuGroup,
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
@@ -38,31 +39,33 @@ async function AccountMenuContent() {
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Trigger image={session.user.image} />
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align='end'>
-				<DropdownMenuLabel>
-					<h2>{session.user.name}</h2>
-					<span className='font-normal text-muted-foreground text-sm'>{session.user.email}</span>
-				</DropdownMenuLabel>
-				<DropdownMenuSeparator />
-				<DropdownMenuItem asChild>
-					<Link href='/dashboard/settings'>
-						<SlidersHorizontalIcon />
-						Settings
-					</Link>
-				</DropdownMenuItem>
-				<DropdownMenuSeparator />
-				<DropdownMenuItem
-					onClick={async () => {
-						'use server';
-						await signOut();
-					}}
-				>
-					<SignOutIcon />
-					Log out
-				</DropdownMenuItem>
+			<DropdownMenuTrigger render={<Trigger image={session.user.image} />} />
+			<DropdownMenuContent className='w-auto' align='end'>
+				<DropdownMenuGroup>
+					<DropdownMenuLabel>
+						<h2>{session.user.name}</h2>
+						<span className='font-normal text-muted-foreground text-sm'>{session.user.email}</span>
+					</DropdownMenuLabel>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem
+						render={
+							<Link href='/dashboard/settings'>
+								<SlidersHorizontalIcon />
+								Settings
+							</Link>
+						}
+					/>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem
+						onClick={async () => {
+							'use server';
+							await signOut();
+						}}
+					>
+						<SignOutIcon />
+						Log out
+					</DropdownMenuItem>
+				</DropdownMenuGroup>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);

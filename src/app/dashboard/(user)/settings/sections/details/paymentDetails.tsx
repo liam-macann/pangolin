@@ -152,7 +152,7 @@ function Item({
 					</Field>
 				)}
 			/>
-			<SortableActions>{children}</SortableActions>
+			<SortableActions align='center'>{children}</SortableActions>
 		</SortableItem>
 	);
 }

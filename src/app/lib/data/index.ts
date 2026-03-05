@@ -55,7 +55,7 @@ export async function getUserConfig() {
 					user: true,
 					address: true,
 					configTaxes: {
-						with: { taxes: { columns: { id: false, userId: false } } },
+						with: { taxes: { columns: { userId: false } } },
 						orderBy: { order: 'asc' },
 					},
 				},

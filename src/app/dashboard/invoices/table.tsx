@@ -30,6 +30,7 @@ import { Button } from '@/ui/button';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
+	DropdownMenuGroup,
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
@@ -200,30 +201,37 @@ export const columns: ColumnDef<Invoice>[] = [
 							}
 						/>
 						<DropdownMenu modal={false}>
-							<DropdownMenuTrigger asChild>
-								<Button variant='ghost' size='icon' className='size-8 p-0'>
-									<span className='sr-only'>Open menu</span>
-									<DotsThreeIcon className='size-4' />
-								</Button>
-							</DropdownMenuTrigger>
+							<DropdownMenuTrigger
+								render={
+									<Button variant='ghost' size='icon' className='size-8 p-0'>
+										<span className='sr-only'>Open menu</span>
+										<DotsThreeIcon className='size-4' />
+									</Button>
+								}
+							/>
 							<DropdownMenuContent side='right' align='start'>
-								<DropdownMenuLabel>Actions</DropdownMenuLabel>
+								<DropdownMenuGroup>
+									<DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-								<DropdownMenuItem asChild>
-									<a href={`/dashboard/invoices/${invoice.id}`}>Download</a>
-								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => navigator.clipboard.writeText(invoice.reference)}>
-									Copy reference
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
+									<DropdownMenuItem
+										render={<a href={`/dashboard/invoices/${invoice.id}`}>Download</a>}
+									/>
+									<DropdownMenuItem
+										onClick={() => navigator.clipboard.writeText(invoice.reference)}
+									>
+										Copy reference
+									</DropdownMenuItem>
+									<DropdownMenuSeparator />
 
-								<AlertDialogTrigger
-									render={
-										<DropdownMenuItem disabled={invoice.isVoid} variant='destructive'>
-											Void invoice
-										</DropdownMenuItem>
-									}
-								/>
+									<DropdownMenuItem
+										disabled={invoice.isVoid}
+										variant='destructive'
+										nativeButton
+										render={<AlertDialogTrigger />}
+									>
+										Void invoice
+									</DropdownMenuItem>
+								</DropdownMenuGroup>
 							</DropdownMenuContent>
 						</DropdownMenu>
 					</div>

@@ -30,11 +30,11 @@ import { ButtonGroup } from '@/ui/button-group';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
+	DropdownMenuGroup,
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
-import { Input } from '@/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 import { Toggle } from '@/ui/toggle';
 
@@ -249,20 +249,24 @@ function Card({
 		>
 			{/* Outside of Link for semantics: <button> may not be within <a> */}
 			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button
-						size='icon-xs'
-						variant='ghost'
-						className='absolute top-3 left-3 z-10 text-inherit'
-					>
-						<DotsThreeIcon />
-					</Button>
-				</DropdownMenuTrigger>
+				<DropdownMenuTrigger
+					render={
+						<Button
+							size='icon-xs'
+							variant='ghost'
+							className='absolute top-3 left-3 z-10 text-inherit'
+						>
+							<DotsThreeIcon />
+						</Button>
+					}
+				/>
 				<DropdownMenuContent side='left' align='start'>
-					<DropdownMenuLabel>Actions</DropdownMenuLabel>
-					<DropdownMenuItem onClick={() => setFavorite(!client.isFavorite)}>
-						{client.isFavorite ? 'Unpin client' : 'Pin client'}
-					</DropdownMenuItem>
+					<DropdownMenuGroup>
+						<DropdownMenuLabel>Actions</DropdownMenuLabel>
+						<DropdownMenuItem onClick={() => setFavorite(!client.isFavorite)}>
+							{client.isFavorite ? 'Unpin client' : 'Pin client'}
+						</DropdownMenuItem>
+					</DropdownMenuGroup>
 				</DropdownMenuContent>
 			</DropdownMenu>
 			<Link

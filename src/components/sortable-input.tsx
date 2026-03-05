@@ -198,26 +198,29 @@ export function SortableItem({
 
 export function SortableActions({
 	children,
-	heading = 'Actions',
+	title = 'Actions',
+	...props
 }: {
 	children: ReactNode;
-	heading?: ReactNode;
-}) {
+	title?: ReactNode;
+} & React.ComponentProps<typeof DropdownMenuContent>) {
 	const { isDragging } = use(SortableItemContext);
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button
-					size='icon'
-					className={cn(isDragging && 'border-ring/70', 'bg-background')}
-					variant='outline'
-				>
-					<DotsThreeIcon />
-					<span className='sr-only'>{heading}</span>
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent className='min-w-0' side='right'>
+			<DropdownMenuTrigger
+				render={
+					<Button
+						size='icon'
+						className={cn(isDragging && 'border-ring/70', 'bg-background')}
+						variant='outline'
+					>
+						<DotsThreeIcon />
+						<span className='sr-only'>{title}</span>
+					</Button>
+				}
+			/>
+			<DropdownMenuContent {...props} className='min-w-min' side='right'>
 				{children}
 			</DropdownMenuContent>
 		</DropdownMenu>
