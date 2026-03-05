@@ -140,10 +140,7 @@ function ColorPalette({ ...field }: ControllerRenderProps<Fields, 'colorScheme'>
 									value={key}
 									onMouseEnter={() => setHover(key)}
 								>
-									<CheckIcon
-										className='fade-in-0 zoom-in-90 animate-in text-white duration-150'
-										weight='bold'
-									/>
+									<CheckIcon className='text-white' weight='bold' />
 								</RadioGroupItem>
 							}
 						/>
