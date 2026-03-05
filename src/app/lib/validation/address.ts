@@ -117,7 +117,7 @@ export const schema = transform.superRefine(async (val, ctx) => {
 				if (e instanceof InvalidZipError) {
 					const optionalFields = getOptionalFields(input.country);
 					// If zip is optional and empty, ignore the error
-					if (!(optionalFields.includes('zip') && input.zip === '')) {
+					if (!(optionalFields.includes('zip') && input.zip === undefined)) {
 						if (e instanceof InvalidZipSubRegionError) {
 							// Different subregions (eg. state) may have different validation formats
 							ctx.addIssue({
