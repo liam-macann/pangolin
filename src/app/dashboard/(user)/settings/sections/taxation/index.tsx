@@ -66,9 +66,8 @@ export function Taxation<T extends Fields>({ control: _control }: { control: Con
 						<FieldContent className='ml-8'>
 							<FieldLegend className='flex items-center gap-2'>
 								Tax rates
-								<InfoTip side='right'>
-									Taxes defined here will always be printed on invoices, even if no tax is
-									applicable
+								<InfoTip side='right' align='end'>
+									Every tax will be shown on invoices, even if no amount is applicable
 								</InfoTip>
 							</FieldLegend>
 							<FieldDescription>

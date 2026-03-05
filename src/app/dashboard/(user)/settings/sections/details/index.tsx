@@ -69,8 +69,8 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 				render={({ fieldState }) => (
 					<FieldSet className='mb-4 min-w-0'>
 						<FieldContent>
-							<FieldLegend className='flex items-center gap-2'>Address</FieldLegend>
-							<FieldDescription>Billing address to be printed on invoices.</FieldDescription>
+							<FieldLegend className='flex items-center gap-2'>Billing address</FieldLegend>
+							<FieldDescription>Address to be printed on invoices.</FieldDescription>
 							{fieldState.error && <FieldError errors={[fieldState.error]} />}
 						</FieldContent>
 						<AddressInput control={control} />
