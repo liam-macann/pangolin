@@ -25,7 +25,7 @@ function Calendar({
 		<DayPicker
 			showOutsideDays={showOutsideDays}
 			className={cn(
-				'group/calendar bg-background p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
+				'group/calendar [--cell-size:--spacing(7)]',
 				String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
 				String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
 				className,
@@ -74,7 +74,7 @@ function Calendar({
 					defaultClassNames.caption_label,
 				),
 				table: 'w-full border-collapse',
-				weekdays: cn('mb-2 flex', defaultClassNames.weekdays),
+				weekdays: cn('mb-1 flex', defaultClassNames.weekdays),
 				weekday: cn(
 					'flex-1 select-none font-normal text-[0.8rem] text-muted-foreground',
 					defaultClassNames.weekday,
@@ -86,7 +86,7 @@ function Calendar({
 					defaultClassNames.week_number,
 				),
 				day: cn(
-					'group/day relative aspect-square h-full w-full select-none p-0 text-center',
+					'group/day relative aspect-square size-(--cell-size) select-none p-0 text-center',
 					defaultClassNames.day,
 				),
 				range_start: cn('rounded-l-full', defaultClassNames.range_start),
@@ -99,8 +99,8 @@ function Calendar({
 					'*:after:-bottom-0.5 *:after:absolute *:after:content-["•"]',
 					defaultClassNames.today,
 				),
-				outside: cn('not-aria-selected:*:text-muted-foreground', defaultClassNames.outside),
-				disabled: cn('text-muted-foreground opacity-50', defaultClassNames.disabled),
+				outside: cn('not-aria-selected:*:text-muted-foreground/50', defaultClassNames.outside),
+				disabled: cn('text-muted-foreground/50 opacity-50', defaultClassNames.disabled),
 				hidden: cn('invisible', defaultClassNames.hidden),
 				...classNames,
 			}}
@@ -165,8 +165,8 @@ function CalendarDayButton({
 			data-range-end={modifiers.range_end}
 			data-range-middle={modifiers.range_middle}
 			className={cn(
-				'!bg-transparent rounded-none font-normal transition-none', // Button reset
-				'flex aspect-square min-w-(--cell-size) flex-col gap-1 leading-none', // Sizing
+				'!bg-transparent rounded-none font-[430] text-[0.8125rem] transition-none', // Button reset
+				'flex aspect-square size-full flex-col gap-1 border-none leading-none', // Sizing
 				'before:-z-10 isolate before:absolute before:inset-0.5 before:rounded-full not-disabled:hover:before:bg-accent', // Hover and selection background
 				'!ring-0 !border-transparent group-data-[focused=true]/day:before:border-ring group-data-[focused=true]/day:before:ring-2', // Focus ring
 

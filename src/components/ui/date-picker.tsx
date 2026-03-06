@@ -74,7 +74,7 @@ function CalendarPopover({
 				}
 				{...props}
 			/>
-			<PopoverContent className='w-auto p-0' align='start'>
+			<PopoverContent className='w-auto p-2' align='start'>
 				{children}
 			</PopoverContent>
 		</Popover>
