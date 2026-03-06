@@ -151,7 +151,7 @@ export function Table({ data }: { data: Client[] }) {
 						{table.getRowModel().rows.map((client, i) => (
 							<Card
 								className={cn(
-									i === 0 && isFiltering && filter !== '' && '[&>a]:border-ring [&>a]:ring-[3px]',
+									i === 0 && isFiltering && filter !== '' && '[&>a]:border-ring [&>a]:ring-2',
 								)}
 								style={{ zIndex: table.getRowCount() - i }}
 								key={client.original.id}
@@ -273,7 +273,7 @@ function Card({
 				href={`clients/${client.id}`}
 				className={cn(
 					'!pt-12',
-					'rounded-md border p-4 outline-none ring-ring/50 focus-visible:border-ring focus-visible:ring-[3px]',
+					'rounded-md border p-4 outline-none focus-visible:border-ring focus-visible:ring-2',
 					'bg-card',
 					variant === 'secondary' && 'bg-secondary',
 				)}

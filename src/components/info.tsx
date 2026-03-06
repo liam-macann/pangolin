@@ -21,8 +21,12 @@ export function InfoTip({
 				openOnHover
 				className='-m-1.5 group/info'
 				render={
-					<Button variant='ghost' size='icon-xs' className={cn('focus-visible:ring-0', className)}>
-						<InfoIcon className='-m-px group-hover/info:!ring-0 size-3.5 cursor-pointer rounded-full text-muted-foreground ring-ring/50 group-focus-visible/info:ring-2' />
+					<Button
+						variant='ghost'
+						size='icon-xs'
+						className={cn('!border-transparent !ring-0 !bg-transparent', className)}
+					>
+						<InfoIcon className='-m-px size-3.5 cursor-pointer rounded-full text-muted-foreground ring-offset-1 group-focus-visible/info:ring-2' />
 						<span className='sr-only'>Information</span>
 					</Button>
 				}
@@ -40,7 +44,7 @@ function PopoverContent({
 	align = 'center',
 	alignOffset = 0,
 	side = 'bottom',
-	sideOffset = 8,
+	sideOffset = 4,
 	children,
 	...props
 }: React.ComponentProps<typeof PopoverPrimitive.Popup> &

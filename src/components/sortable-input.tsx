@@ -176,7 +176,7 @@ export function SortableItem({
 						<DotsSixIcon
 							className={cn(
 								'inline-block size-6 h-8 self-center',
-								'pointer-none rounded p-1 group-focus-visible:ring-2 group-focus-visible:ring-ring/50',
+								'pointer-none rounded p-1 group-focus-visible:ring-2',
 							)}
 						/>
 					</Button>

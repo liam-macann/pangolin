@@ -78,7 +78,7 @@ export function CreateInvoiceDialog({
 	children,
 	config,
 }: {
-	children: React.ReactNode;
+	children: ReactElement;
 	config: Prettify<
 		Pick<
 			Awaited<ReturnType<typeof getUserConfig>>,
@@ -133,7 +133,7 @@ export function CreateInvoiceDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger nativeButton={false} render={<span>{children}</span>} />
+			<DialogTrigger nativeButton={false} render={children} />
 
 			<DialogContent>
 				<DialogHeader>

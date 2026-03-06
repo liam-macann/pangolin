@@ -62,7 +62,7 @@ function Calendar({
 					defaultClassNames.dropdowns,
 				),
 				dropdown_root: cn(
-					'relative rounded-md border border-input shadow-xs has-focus:border-ring has-focus:ring-[3px] has-focus:ring-ring/50',
+					'relative rounded-md border border-input shadow-xs has-focus:border-ring has-focus:ring-2',
 					defaultClassNames.dropdown_root,
 				),
 				dropdown: cn('absolute inset-0 bg-popover opacity-0', defaultClassNames.dropdown),
@@ -168,7 +168,7 @@ function CalendarDayButton({
 				'!bg-transparent rounded-none font-normal transition-none', // Button reset
 				'flex aspect-square min-w-(--cell-size) flex-col gap-1 leading-none', // Sizing
 				'before:-z-10 isolate before:absolute before:inset-0.5 before:rounded-full not-disabled:hover:before:bg-accent', // Hover and selection background
-				'!ring-0 group-data-[focused=true]/day:before:border-ring group-data-[focused=true]/day:before:ring-2 group-data-[focused=true]/day:before:ring-ring/50', // Focus ring
+				'!ring-0 !border-transparent group-data-[focused=true]/day:before:border-ring group-data-[focused=true]/day:before:ring-2', // Focus ring
 
 				'data-[range-end=true]:before:!bg-primary data-[range-start=true]:before:!bg-primary data-[selected-single=true]:before:!bg-primary',
 				'data-[range-end=true]:before:ring-offset-1 data-[range-start=true]:before:ring-offset-1 data-[selected-single=true]:before:ring-offset-1',

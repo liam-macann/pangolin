@@ -77,7 +77,7 @@ const Trigger = ({
 }: { image?: string | null } & React.ComponentProps<typeof Button>) => (
 	<Button
 		variant='ghost'
-		className='relative m-0 size-8 cursor-pointer overflow-hidden rounded-full p-0'
+		className='relative m-0 size-8 cursor-pointer overflow-hidden rounded-full border-none p-0 ring-offset-2 focus-visible:ring-2'
 		{...props}
 	>
 		<UserAvatar className='absolute inset-0' image={image || null} />

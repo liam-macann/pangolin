@@ -54,7 +54,7 @@ export const AddressLabel = ({ className, ...props }: React.ComponentProps<typeo
 		className={cn(
 			'group-first/address-line:first:!rounded-tl-md group-first/address-line:last:!rounded-tr-md has-[>[data-slot=field]]:rounded-none',
 			'min-w-0',
-			'border-none ring-ring/50 focus-within:ring-[3px]',
+			'border-none focus-within:ring-2',
 			className,
 		)}
 		{...props}
@@ -143,7 +143,7 @@ const StreetAddress = ({ disabled }: FieldProps) => {
 
 								<Button
 									size='icon-xs'
-									className='absolute top-2 right-2 ring-ring/50 focus:border-ring focus:ring-[3px]'
+									className='absolute top-2 right-2'
 									disabled={numberOfLines >= maxLines}
 									onClick={() => {
 										const v = getValues('address.streetAddress');

@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 const buttonVariants = cva(
 	cn(
 		'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium text-sm outline-none',
-		'transition ease-out focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50',
+		'transition ease-out focus-visible:ring disabled:cursor-not-allowed disabled:opacity-50',
 		"[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
 		'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
 	),
@@ -14,7 +14,7 @@ const buttonVariants = cva(
 		variants: {
 			variant: {
 				primary:
-					'inset-shadow-white/10 inset-shadow-xs border border-black/10 bg-primary text-primary-foreground shadow-xs not-disabled:hover:bg-primary/90 not-disabled:active:motion-safe:scale-[98%]',
+					'inset-shadow-white/10 inset-shadow-xs border border-black/10 bg-primary text-primary-foreground shadow-xs ring-offset-1 not-disabled:hover:bg-primary/90 focus-visible:ring-2 not-disabled:active:motion-safe:scale-[98%]',
 				destructive:
 					'inset-shadow-white/10 inset-shadow-xs border border-black/10 bg-destructive-background text-white shadow-xs not-disabled:hover:bg-destructive-background/90 focus-visible:ring-destructive/20 not-disabled:active:motion-safe:scale-[98%] dark:focus-visible:ring-destructive/40',
 				outline: [
@@ -27,7 +27,7 @@ const buttonVariants = cva(
 					'aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
 				],
 				ghost:
-					'text-accent-foreground not-disabled:hover:bg-accent aria-expanded:bg-muted aria-expanded:text-foreground',
+					'border border-transparent text-accent-foreground not-disabled:hover:bg-accent focus-visible:border-ring aria-expanded:bg-muted aria-expanded:text-foreground',
 				link: 'text-primary underline-offset-4 not-disabled:hover:underline',
 			},
 			size: {

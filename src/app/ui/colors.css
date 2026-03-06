@@ -124,8 +124,10 @@
 }
 
 @layer base {
-	* {
-		@apply border-border outline-ring/50 ring-offset-background;
+	*,
+	*::before,
+	*::after {
+		@apply border-border outline-ring/50 ring-ring ring-offset-background;
 	}
 }
 
