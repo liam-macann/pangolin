@@ -17,6 +17,7 @@ function Calendar({
 	components,
 	...props
 }: React.ComponentProps<typeof DayPicker> & {
+	timeZone: Required<React.ComponentProps<typeof DayPicker>['timeZone']>;
 	buttonVariant?: React.ComponentProps<typeof Button>['variant'];
 }) {
 	const defaultClassNames = getDefaultClassNames();
