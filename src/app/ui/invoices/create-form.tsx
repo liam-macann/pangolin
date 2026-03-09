@@ -2,22 +2,33 @@
 
 import { TZDate } from '@date-fns/tz';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { WarningIcon } from '@phosphor-icons/react';
+import { DotsThreeIcon, WarningIcon } from '@phosphor-icons/react';
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
 import { addDays } from 'date-fns';
 import { createInsertSchema } from 'drizzle-zod';
 import { useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { Controller, useForm } from 'react-hook-form';
+import { type Control, Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { InfoTip } from '@/components/info';
 import { Alert, AlertTitle } from '@/components/ui/alert';
+import { Calendar } from '@/components/ui/calendar';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuPortal,
+	DropdownMenuSeparator,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { invoices as invoicesSchema } from '@/db/schema';
 import { createInvoice } from '@/lib/actions/invoice';
 import type { getUserConfig } from '@/lib/data';
 import { useClients, useInvoices } from '@/lib/hooks';
-import { cn, type Prettify } from '@/lib/utils';
+import { cn, formatDateToLocal, type Prettify } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import {
 	Combobox,
@@ -27,7 +38,6 @@ import {
 	ComboboxItem,
 	ComboboxList,
 } from '@/ui/combobox';
-import { DatePicker } from '@/ui/date-picker';
 import {
 	Dialog,
 	DialogClose,
@@ -133,7 +143,7 @@ export function CreateInvoiceDialog({
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger nativeButton={false} render={children} />
+			<DialogTrigger render={children} />
 
 			<DialogContent>
 				<DialogHeader>
@@ -223,19 +233,19 @@ export function CreateInvoiceDialog({
 								)}
 							/>
 						</FieldGroup>
-						<details className='mt-6'>
+						<details className='mt-4'>
 							<Button
 								size='sm'
 								variant='ghost'
-								className='!-ml-2.5 text-muted-foreground'
+								className='!-ml-3 text-muted-foreground'
 								nativeButton={false}
 								render={
 									<summary>
-										Advanced <CaretUpDownIcon />
+										More <CaretUpDownIcon />
 									</summary>
 								}
 							/>
-							<FieldGroup className='mt-4 gap-4'>
+							<FieldGroup className='gap-4'>
 								<Controller
 									name='description'
 									control={control}
@@ -259,73 +269,6 @@ export function CreateInvoiceDialog({
 										</Field>
 									)}
 								/>
-								<Controller
-									name='notes'
-									control={control}
-									render={({ field, fieldState }) => (
-										<Field orientation='responsive'>
-											<FieldLabel
-												htmlFor='notes'
-												className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
-											>
-												Notes
-												<InfoTip side='right'>Your own private notes</InfoTip>
-											</FieldLabel>
-											<div className='flex flex-col gap-1'>
-												<Textarea
-													placeholder='Optional'
-													{...field}
-													className='@md/field-group:w-80'
-												/>
-												{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-											</div>
-										</Field>
-									)}
-								/>
-
-								<div className='mt-2 grid grid-cols-2 gap-3'>
-									<Controller
-										name='issuedAt'
-										control={control}
-										disabled
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='issuedAt'>Date of issue</FieldLabel>
-												<DatePicker
-													className='min-w-0'
-													id='issuedAt'
-													startMonth={TZDate.tz(config.timezone)}
-													timeZone={config.timezone}
-													locale={config.locale}
-													{...field}
-												/>
-												{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-											</Field>
-										)}
-									/>
-									<Controller
-										name='dueAt'
-										control={control}
-										render={({ field, fieldState }) => (
-											<Field data-invalid={fieldState.invalid}>
-												<FieldLabel htmlFor='dueAt'>Due date</FieldLabel>
-												<DatePicker
-													className='min-w-0'
-													id='dueAt'
-													disabledDays={[
-														{ before: TZDate.tz(config.timezone) },
-														TZDate.tz(config.timezone),
-													]}
-													startMonth={TZDate.tz(config.timezone)}
-													timeZone={config.timezone}
-													locale={config.locale}
-													{...field}
-												/>
-												{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-											</Field>
-										)}
-									/>
-								</div>
 							</FieldGroup>
 						</details>
 						<FieldSeparator className='-mx-6 my-6'>Items</FieldSeparator>
@@ -337,25 +280,174 @@ export function CreateInvoiceDialog({
 							key={formVersion}
 							className='mb-6'
 						/>
-					</form>
 
-					<DialogFooter>
-						<Button variant='primary' type='submit' onClick={handleSubmit(onSubmit)}>
-							Submit
-						</Button>
-						<DialogClose
-							className='order-first'
-							onClick={() =>
-								setTimeout(() => {
-									setFormVersion(v => v + 1);
-									reset();
-								}, 200)
-							}
-							render={<Button variant='ghost'>Cancel</Button>}
-						/>
-					</DialogFooter>
+						<DialogFooter className='!flex-row-reverse'>
+							<Button variant='primary' type='submit' onClick={handleSubmit(onSubmit)}>
+								Submit
+							</Button>
+							<DialogClose
+								onClick={() =>
+									setTimeout(() => {
+										setFormVersion(v => v + 1);
+										reset();
+									}, 200)
+								}
+								render={<Button variant='ghost'>Cancel</Button>}
+							/>
+
+							<DropdownMenu>
+								<DropdownMenuTrigger
+									render={
+										<Button variant='ghost' size='icon' className='mr-auto'>
+											<DotsThreeIcon weight='bold' />
+										</Button>
+									}
+								/>
+
+								<DropdownMenuContent side='left' align='end' className='w-auto'>
+									<NotesSubmenu control={control} />
+									<DropdownMenuSeparator />
+									<IssueDateSubmenu
+										timezone={config.timezone}
+										locale={config.locale}
+										control={control}
+									/>
+									<DueDateSubmenu
+										timezone={config.timezone}
+										locale={config.locale}
+										control={control}
+									/>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</DialogFooter>
+					</form>
 				</ErrorBoundary>
 			</DialogContent>
 		</Dialog>
+	);
+}
+
+function NotesSubmenu({ control }: { control: Control<z.input<typeof schema>> }) {
+	return (
+		<Controller
+			name='notes'
+			control={control}
+			render={({ field, fieldState }) => (
+				<DropdownMenuSub>
+					<DropdownMenuSubTrigger>
+						<div className='grid'>
+							<span>Notes</span>
+							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
+						</div>
+					</DropdownMenuSubTrigger>
+					<DropdownMenuPortal>
+						<DropdownMenuSubContent>
+							<label htmlFor='notes' className='sr-only'>
+								Your private notes
+							</label>
+							<Textarea
+								onKeyDown={e => e.key !== 'Escape' && e.stopPropagation()}
+								placeholder='Your private notes'
+								{...field}
+								className='!ring-0 !border-border inset-shadow-xs w-48 shadow-none'
+								autoFocus
+							/>
+						</DropdownMenuSubContent>
+					</DropdownMenuPortal>
+				</DropdownMenuSub>
+			)}
+		/>
+	);
+}
+
+function IssueDateSubmenu({
+	control,
+	timezone,
+	locale,
+}: {
+	control: Control<z.input<typeof schema>>;
+	timezone: string;
+	locale: string;
+}) {
+	return (
+		<Controller
+			name='issuedAt'
+			control={control}
+			render={({ field, fieldState }) => (
+				<DropdownMenuSub disabled>
+					<DropdownMenuSubTrigger disabled>
+						<div className='grid'>
+							<span>Date of issue</span>
+							<span className='text-muted-foreground text-xs'>
+								{formatDateToLocal(new TZDate(field.value, timezone), false, locale)}
+							</span>
+							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
+						</div>
+					</DropdownMenuSubTrigger>
+					<DropdownMenuPortal>
+						<DropdownMenuSubContent>
+							<Calendar
+								id='issuedAt'
+								className='min-w-0 p-1'
+								mode='single'
+								selected={field.value}
+								defaultMonth={field.value}
+								timeZone={timezone}
+								{...field}
+								onSelect={v => field.onChange(v)}
+								disabled
+							/>
+						</DropdownMenuSubContent>
+					</DropdownMenuPortal>
+				</DropdownMenuSub>
+			)}
+		/>
+	);
+}
+
+function DueDateSubmenu({
+	control,
+	timezone,
+	locale,
+}: {
+	control: Control<z.input<typeof schema>>;
+	timezone: string;
+	locale: string;
+}) {
+	return (
+		<Controller
+			name='dueAt'
+			control={control}
+			render={({ field, fieldState }) => (
+				<DropdownMenuSub>
+					<DropdownMenuSubTrigger>
+						<div className='grid'>
+							<span>Due date</span>
+							<span className='text-muted-foreground text-xs'>
+								{formatDateToLocal(new TZDate(field.value, timezone), false, locale)}
+							</span>
+							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
+						</div>
+					</DropdownMenuSubTrigger>
+					<DropdownMenuPortal>
+						<DropdownMenuSubContent>
+							<Calendar
+								autoFocus
+								id='dueAt'
+								className='min-w-0 p-1'
+								mode='single'
+								selected={field.value}
+								defaultMonth={field.value}
+								disabled={[{ before: TZDate.tz(timezone) }, TZDate.tz(timezone)]}
+								startMonth={TZDate.tz(timezone)}
+								timeZone={timezone}
+								{...field}
+								onSelect={v => field.onChange(v)}
+							/>
+						</DropdownMenuSubContent>
+					</DropdownMenuPortal>
+				</DropdownMenuSub>
+			)}
+		/>
 	);
 }
