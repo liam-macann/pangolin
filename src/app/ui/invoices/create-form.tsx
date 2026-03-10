@@ -67,7 +67,6 @@ export function CreateInvoiceDialog({
 	const [open, setOpen] = useState(false);
 	const [formVersion, setFormVersion] = useState(0); // Reset counter
 	const { mutate } = useInvoices();
-	const { data: clientsData, isLoading: isClientsLoading, isError: isClientsError } = useClients();
 
 	const { control, reset, handleSubmit, getValues } = useForm({
 		resolver: zodResolver(schema),
@@ -118,58 +117,8 @@ export function CreateInvoiceDialog({
 						})}
 					>
 						<FieldGroup className='gap-4'>
-							<Controller
-								name='clientDataId'
-								control={control}
-								render={({ field, fieldState }) => (
-									<Field orientation='horizontal'>
-										<FieldLabel
-											htmlFor='clientId'
-											className='-translate-y-1/2 !grow-0 mt-4.5 self-start'
-										>
-											Bill To
-										</FieldLabel>
-										<div className='flex grow flex-col items-end gap-1'>
-											<Combobox
-												items={
-													clientsData?.map(client => ({
-														value: client.data.scdId,
-														label: client.data.name,
-													})) || []
-												}
-												disabled={isClientsLoading || isClientsError || !clientsData}
-												{...field}
-												onValueChange={field.onChange}
-												id='clientId'
-											>
-												<ComboboxInput
-													className={cn(
-														'w-full max-w-80',
-														isClientsLoading &&
-															'*:has-disabled:cursor-wait *:has-disabled:opacity-100',
-													)}
-													placeholder='e.g. John Smith'
-												/>
-												<ComboboxContent>
-													<ComboboxEmpty>No clients found.</ComboboxEmpty>
-													<ComboboxList>
-														{item => (
-															<ComboboxItem key={item.value} value={item}>
-																{item.label}
-															</ComboboxItem>
-														)}
-													</ComboboxList>
-												</ComboboxContent>
-											</Combobox>
+							<BillTo control={control} />
 
-											{isClientsError && (
-												<FieldError errors={[{ message: 'Failed to fetch clients' }]} />
-											)}
-											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-										</div>
-									</Field>
-								)}
-							/>
 							<Controller
 								name='title'
 								control={control}
@@ -280,6 +229,60 @@ export function CreateInvoiceDialog({
 				</ErrorBoundary>
 			</DialogContent>
 		</Dialog>
+	);
+}
+
+function BillTo({ control }: { control: Control<z.input<typeof schema>> }) {
+	const { data: clientsData, isLoading: isClientsLoading, isError: isClientsError } = useClients();
+
+	const items = (clientsData || []).map(client => ({
+		value: client.data.scdId,
+		label: client.data.name,
+	}));
+
+	return (
+		<Controller
+			name='clientDataId'
+			control={control}
+			render={({ field, fieldState }) => (
+				<Field orientation='horizontal'>
+					<FieldLabel htmlFor='clientId' className='-translate-y-1/2 !grow-0 mt-4.5 self-start'>
+						Bill To
+					</FieldLabel>
+					<div className='flex grow flex-col items-end gap-1'>
+						<Combobox
+							id='clientId'
+							items={items}
+							disabled={isClientsLoading || isClientsError || !clientsData}
+							{...field}
+							value={items.find(i => i.value === (field.value || '')) || null}
+							onValueChange={v => field.onChange(v?.value)}
+						>
+							<ComboboxInput
+								className={cn(
+									'w-full max-w-80',
+									isClientsLoading && '*:has-disabled:cursor-wait *:has-disabled:opacity-100',
+								)}
+								placeholder='e.g. John Smith'
+							/>
+							<ComboboxContent>
+								<ComboboxEmpty>No clients found.</ComboboxEmpty>
+								<ComboboxList>
+									{item => (
+										<ComboboxItem key={item.value} value={item}>
+											{item.label}
+										</ComboboxItem>
+									)}
+								</ComboboxList>
+							</ComboboxContent>
+						</Combobox>
+
+						{isClientsError && <FieldError errors={[{ message: 'Failed to fetch clients' }]} />}
+						{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+					</div>
+				</Field>
+			)}
+		/>
 	);
 }
 
