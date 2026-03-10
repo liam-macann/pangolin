@@ -102,7 +102,11 @@ export function DatePicker({
 
 	disabledDays,
 	...props
-}: OmitUnion<SinglePickerProps, 'locale'> & RHF<Date> & { locale: string }) {
+}: OmitUnion<SinglePickerProps, 'locale'> &
+	RHF<Date> & {
+		timeZone: string;
+		locale: string;
+	}) {
 	const [open, setOpen] = React.useState(false);
 	const [date, setDate] = React.useState<Date>();
 	props;
@@ -144,7 +148,7 @@ export function DatePickerMultiple({
 
 	disabledDays,
 	...props
-}: MultiPickerProps & RHF<Date[]>) {
+}: MultiPickerProps & RHF<Date[]> & { timeZone: string }) {
 	const [dates, setDates] = React.useState<Date[]>();
 
 	const value = controlledValue || dates;
@@ -187,7 +191,11 @@ export function DateRange({
 
 	disabledDays,
 	...props
-}: OmitUnion<RangePickerProps, 'locale'> & RHF<DateRangeType> & { locale: string }) {
+}: OmitUnion<RangePickerProps, 'locale'> &
+	RHF<DateRangeType> & {
+		timeZone: string;
+		locale: string;
+	}) {
 	const [date, setDate] = React.useState<DateRangeType>();
 
 	const value = controlledValue || date;
