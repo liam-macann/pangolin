@@ -1,7 +1,25 @@
-import { type core, z } from 'zod';
+import { z } from 'zod';
+
+type ErrorParam = string | z.core.$ZodCustomParams;
+type IntlNumber = ReturnType<typeof buildIntlNumber>;
+
+// Overloads to prevent need to pass object (closer to Zod idioms)
+export function intlNumber(schema: z.ZodNumber, error: ErrorParam): IntlNumber;
+export function intlNumber(schema: z.ZodNumber): IntlNumber;
+export function intlNumber(error: ErrorParam): IntlNumber;
+export function intlNumber(): IntlNumber;
 
 /** Coerce a string to a number, handling both comma and period delimited decimals, and rejecting empty strings */
-export function intlNumber(schema: z.ZodNumber, error: string | core.$ZodCustomParams) {
+export function intlNumber(arg1?: z.ZodNumber | ErrorParam, arg2?: ErrorParam) {
+	const hasSchema = arg1 instanceof z.ZodType;
+
+	return buildIntlNumber({
+		error: hasSchema ? arg2 : arg1,
+		schema: hasSchema ? arg1 : z.number(),
+	});
+}
+
+function buildIntlNumber({ schema, error }: { schema?: z.ZodNumber; error?: ErrorParam }) {
 	return (
 		z
 			.union([z.string(), z.number()])
@@ -33,6 +51,6 @@ export function intlNumber(schema: z.ZodNumber, error: string | core.$ZodCustomP
 				return val;
 			})
 			.pipe(z.coerce.number(error))
-			.pipe(schema)
+			.pipe(schema || z.number())
 	);
 }
