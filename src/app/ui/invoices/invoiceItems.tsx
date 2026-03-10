@@ -130,7 +130,7 @@ function ItemSum({
 	});
 
 	return (
-		<table className={cn('block max-w-full table-auto text-sm', className)}>
+		<table className={cn('block w-0 min-w-0 max-w-min shrink grow table-auto text-sm', className)}>
 			<tbody className='contents'>
 				<tr className='flex items-baseline justify-between gap-4 text-muted-foreground *:pb-1.5'>
 					<td>Subtotal</td>
