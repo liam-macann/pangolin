@@ -172,8 +172,15 @@ export const columns: ColumnDef<Invoice>[] = [
 		cell: ({ row }) => {
 			const locale = useContext(LocaleContext);
 			return (
-				<div className='text-right font-medium tabular-nums decoration-2 group-data-void/row:line-through'>
-					{formatCurrency(row.original.grossTotal, row.original.config.currency, locale)}
+				<div className='text-right font-medium tabular-nums decoration-2'>
+					<span className='relative'>
+						{formatCurrency(row.original.grossTotal, row.original.config.currency, locale)}
+						<div
+							aria-hidden='true'
+							className='-inset-2 mask-size-[4rem] mask-center mask-repeat-x pointer-events-none absolute hidden scale-y-[170%] bg-black transition-opacity group-even/row:rotate-180 group-hover/row:opacity-20 group-nth-[3n]/row:scale-y-200 group-data-void/row:block dark:bg-red-11'
+							style={{ maskImage: 'url("/scribble.svg")' }}
+						/>
+					</span>
 				</div>
 			);
 		},
