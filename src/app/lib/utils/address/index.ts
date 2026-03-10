@@ -1,11 +1,6 @@
-import {
-	type CountryCode,
-	getCountryData,
-	getRegisteredCountries,
-	formatAddress as libFormatAddress,
-	registerCountry,
-} from 'lib-address';
-import { _getAddressMetadata, type AddressData } from '../actions/address';
+import { type CountryCode, getRegisteredCountries, registerCountry } from 'lib-address';
+import { _getAddressMetadata, type AddressData } from '@/lib/actions/address';
+import { formatAddressLib } from './lib';
 
 export type { AddressData };
 
@@ -63,7 +58,7 @@ export async function formatAddress(address: AddressInput) {
 		await fetchAddressMetadata(country);
 	}
 
-	return libFormatAddress(
+	return formatAddressLib(
 		{
 			addressLine1: streetAddress?.join('\n'),
 			dependentLocality: dependentLocality ?? undefined,
