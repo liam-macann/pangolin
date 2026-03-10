@@ -207,7 +207,12 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		);
 	}
 
-	function Search({ onChange, ...props }: ComponentProps<typeof InputGroup>) {
+	function Search({
+		onChange,
+		placeholder,
+		...props
+	}: ComponentProps<typeof InputGroup> &
+		Pick<ComponentProps<typeof InputGroupInput>, 'placeholder'>) {
 		const table = useContext(TableContext);
 		if (table === null) throw new Error('Search must be used within a DataTable.Root');
 
@@ -218,7 +223,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 				</InputGroupAddon>
 				<InputGroupInput
 					aria-label='Search'
-					placeholder='Search…'
+					placeholder={placeholder ?? 'Search…'}
 					value={table.getState().globalFilter}
 					onChange={e => {
 						onChange?.(e);
