@@ -1,9 +1,13 @@
 'use client';
 
+import type { ComponentProps } from 'react';
 import { signIn } from '@/lib/auth';
 import { Button } from '@/ui/button';
 
-export function Social({ callbackURL }: { callbackURL: string }) {
+export function LoginButton({
+	callbackURL,
+	...props
+}: { callbackURL: string } & ComponentProps<typeof Button>) {
 	return (
 		<Button
 			className='grow'
@@ -16,8 +20,7 @@ export function Social({ callbackURL }: { callbackURL: string }) {
 				});
 			}}
 			size='lg'
-		>
-			Sign in with Google
-		</Button>
+			{...props}
+		/>
 	);
 }

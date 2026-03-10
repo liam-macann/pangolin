@@ -1,8 +1,8 @@
-import { CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
+import { ArrowUpRightIcon, CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
 import type { Metadata } from 'next';
 import { z } from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
-import { Social } from './ui';
+import { LoginButton } from './ui';
 
 export const metadata: Metadata = {
 	title: 'Login',
@@ -38,13 +38,10 @@ export default async function LoginPage({
 						<AlertDescription>{errorInfo.message}</AlertDescription>
 					</Alert>
 				)}
-				<div className='relative flex flex-col gap-y-4 rounded-md border bg-card p-4 py-8 shadow md:p-8'>
-					<h1 className={`-mt-2 mb-2 font-bold text-2xl`}>Login</h1>
 
-					<section className='flex flex-col gap-2'>
-						<Social callbackURL={callbackUrl} />
-					</section>
-				</div>
+				<LoginButton variant='primary' callbackURL={callbackUrl}>
+					Login <ArrowUpRightIcon />
+				</LoginButton>
 			</section>
 			<section className='mt-12'>
 				<h2 className='mb-2 font-semibold text-lg'>What this is</h2>
