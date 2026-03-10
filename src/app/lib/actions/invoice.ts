@@ -1,9 +1,7 @@
 'use server';
 
 import { type AnyColumn, and, desc, eq, isNull, sql } from 'drizzle-orm';
-import { createInsertSchema } from 'drizzle-zod';
 import { revalidatePath } from 'next/cache';
-
 import { v4 as uuid } from 'uuid';
 import type z from 'zod';
 import { getSession } from '@/auth';
@@ -16,71 +14,17 @@ import {
 	itemTaxes,
 	type statusEnum,
 } from '@/db/schema';
-
+import { invoice as schema } from '@/lib/validation/invoice';
 import type { Enum } from '../utils/drizzle';
 
 const increment = (column: AnyColumn, value = 1) => sql`${column} + ${value}`;
 
-type InvoiceData = Pick<
-	typeof invoicesSchema.$inferInsert,
-	'clientDataId' | 'title' | 'description' | 'notes'
-> & {
-	// These are naively accepted in timezone of record, truncated to only date. createdAt stores a tz timestamp.
-	issuedAt?: Date;
-	dueAt: Date;
-	status?: (typeof invoicesSchema.$inferInsert)['status'];
-};
-
-type InvoiceItemData = Pick<
-	typeof invoiceItems.$inferInsert,
-	'label' | 'note' | 'quantity' | 'unit' | 'unitCost' | 'order'
->;
-
-interface CreateInvoiceData {
-	invoice: InvoiceData;
-
-	items: (InvoiceItemData & {
-		/** Supply applicable taxes as array of tax IDs */
-		taxes: string[];
-	})[];
-}
-
-export async function createInvoice({ invoice, items }: CreateInvoiceData) {
+export async function createInvoice(input: z.infer<typeof schema>) {
 	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');
 
-	// Pre request validation. Validation has also been performed on the client side.
-	const inputSchema = createInsertSchema(invoicesSchema, {
-		issuedAt: s => s.nullable(), // Has default set in transaction logic (current date in timezone of record)
-	})
-		// Omit generated fields
-		.omit({
-			id: true,
-			index: true,
-			yearIndex: true,
-			configId: true,
-			createdAt: true,
-		});
-
-	// Explicit about accepted input to prevent injecting via spread operator
-	const defaults: z.infer<typeof inputSchema> = {
-		clientDataId: invoice.clientDataId,
-		title: invoice.title,
-		description: invoice.description,
-		status: invoice.status || 'unpaid',
-		notes: invoice.notes,
-		issuedAt: invoice.issuedAt?.toISOString() || null,
-		dueAt: invoice.dueAt.toISOString(),
-
-		// Ensure invoice is created for authenticated user, not supplied ID
-		userId: session.user.id,
-	};
-
 	// Validate form using Zod
-	const validated = inputSchema.safeParse(defaults);
-
-	// If form validation fails, return errors early. Otherwise, continue.
-	if (!validated.success) throw new Error('Failed to create invoice. Ensure all fields are valid.');
+	const { items, ...invoice } = schema.parse(input);
 
 	return db
 		.transaction(async tx => {
@@ -145,17 +89,14 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 				.insert(invoicesSchema)
 				.values([
 					{
-						userId: validated.data.userId,
-						clientDataId: validated.data.clientDataId,
+						...invoice,
 
-						title: validated.data.title,
-						description: validated.data.description,
-						status: validated.data.status,
-						notes: validated.data.notes,
+						userId: session.user.id,
 
 						issuedAt:
-							validated.data.issuedAt || sql`transaction_timestamp() AT TIME ZONE ${c.timezone}`,
-						dueAt: validated.data.dueAt,
+							invoice.issuedAt?.toISOString() ||
+							sql`transaction_timestamp() AT TIME ZONE ${c.timezone}`,
+						dueAt: invoice.dueAt.toISOString(),
 
 						index: count.count,
 						yearIndex: count.yearCount,
@@ -194,15 +135,15 @@ export async function createInvoice({ invoice, items }: CreateInvoiceData) {
 				.then(async () => {
 					// Link items with taxes, if registered
 					if (c.taxRegistration) {
-						await tx.insert(itemTaxes).values(
-							itemsWithId.flatMap(item =>
-								item.taxes.map(taxId => ({
-									itemId: item.id,
-									taxId,
-									configId: c.id,
-								})),
-							),
+						const values = itemsWithId.flatMap(item =>
+							[...item.taxes].map(taxId => ({
+								itemId: item.id,
+								taxId,
+								configId: c.id,
+							})),
 						);
+
+						await tx.insert(itemTaxes).values(values);
 					}
 				});
 		})

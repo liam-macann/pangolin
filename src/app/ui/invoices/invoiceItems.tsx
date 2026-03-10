@@ -1,6 +1,5 @@
 'use client';
 import { DotsThreeIcon } from '@phosphor-icons/react';
-import { createInsertSchema } from 'drizzle-zod';
 import { useState } from 'react';
 import {
 	type Control,
@@ -12,11 +11,12 @@ import {
 	useFormState,
 	useWatch,
 } from 'react-hook-form';
-import { z } from 'zod';
+import type { z } from 'zod';
 import { Sortable, SortableEmpty, SortableItem, SortableList } from '@/components/sortable-input';
-import { invoiceItems, unitEnum } from '@/db/schema';
+import { unitEnum } from '@/db/schema';
 import type { getUserConfig } from '@/lib/data';
 import { cn, formatCurrency, getCurrencySymbol, type Prettify } from '@/lib/utils';
+import type { invoice as schema } from '@/lib/validation/invoice';
 import { intlNumber } from '@/lib/zod';
 import { Button } from '@/ui/button';
 import {
@@ -43,38 +43,8 @@ import {
 	SelectValue,
 } from '@/ui/select';
 
-export const itemsArraySchema = z
-	.array(
-		createInsertSchema(invoiceItems, {
-			label: z => z.min(1, 'Please enter a description'),
-			quantity: s =>
-				intlNumber(
-					z.number().min(0, 'Enter a valid quantity').max(10000, 'Too large'),
-					'Enter quantity',
-				).pipe(s),
-			unitCost: s =>
-				intlNumber(
-					z.number('Enter a valid cost').min(-1000000, 'Too small').max(1000000, 'Too large'),
-					'Enter cost',
-				).pipe(s),
-		})
-			.pick({
-				label: true,
-				note: true,
-				quantity: true,
-				unit: true,
-				unitCost: true,
-			})
-			.extend({
-				taxes: z.map(z.uuid('Invalid tax: check configuration'), z.boolean()),
-			}),
-	)
-	.min(1, 'Invoice must contain items');
-
-type ItemField = z.infer<typeof itemsArraySchema>;
-
 interface FormValues extends FieldValues {
-	items: ItemField;
+	items: z.input<typeof schema.shape.items>;
 }
 
 type Config = Pick<
@@ -114,20 +84,32 @@ function ItemSum({
 	config: Config;
 	className?: string;
 }) {
-	const value = useWatch({ name: 'items', control });
+	const items = useWatch({ name: 'items', control });
 
-	const subtotal = value.reduce((acc, item) => acc + item.unitCost * item.quantity, 0);
-
+	/** Records all taxes valid in current configuration */
 	const taxes = new Map(config.taxes.map(tax => [tax.id, tax]));
+
+	/** Records the total tax amount for each tax id */
 	const taxesSum = new Map<string, number>();
 
-	value.forEach(item => {
-		item.taxes.forEach((state, id) => {
-			const t = taxes.get(id);
-			if (state && t)
-				taxesSum.set(id, (taxesSum.get(id) || 0) + t.rate * item.unitCost * item.quantity);
-		});
-	});
+	const subtotal = items.reduce((acc, item) => {
+		try {
+			// Use same coercion logic as form validation
+			const unitCost = intlNumber().parse(item.unitCost);
+			const quantity = intlNumber().parse(item.quantity);
+
+			// Side effect: increment taxesSum to prevent second loop pass
+			[...item.taxes].forEach(id => {
+				const tax = taxes.get(id);
+				if (tax) taxesSum.set(id, (taxesSum.get(id) || 0) + tax.rate * unitCost * quantity);
+			});
+
+			return acc + unitCost * quantity;
+		} catch {
+			// Ignore errors (eg. NaN) during live total
+			return acc;
+		}
+	}, 0);
 
 	return (
 		<table className={cn('block w-0 min-w-0 max-w-min shrink grow table-auto text-sm', className)}>
@@ -172,7 +154,7 @@ function InvoiceItemsInput({
 			quantity: '' as unknown as number, // Input condition satisfied, and we want to init empty values
 			unit: null,
 			unitCost: '' as unknown as number, // Input condition satisfied, and we want to init empty values
-			taxes: new Map(config.taxes.map(tax => [tax.id, config.taxRegistration])),
+			taxes: config.taxRegistration ? new Set(config.taxes.map(tax => tax.id)) : new Set(),
 		});
 
 	const {
@@ -351,11 +333,7 @@ function SortableActions({
 	SortableProps,
 	'index' | 'control' | 'config' | 'getValues' | 'children'
 >) {
-	const [activeTaxes, setActiveTaxes] = useState(
-		getValues(`items.${index}.taxes`)
-			.values()
-			.reduce((acc, value) => acc + Number(value), 0),
-	);
+	const [activeTaxes, setActiveTaxes] = useState(getValues(`items.${index}.taxes`).size);
 
 	const state = useFormState({ control, name: `items.${index}.taxes` });
 	const itemErrors = state.errors.items?.[index];
@@ -404,18 +382,17 @@ function SortableActions({
 													key={tax.id}
 													checkbox
 													disabled={!config.taxRegistration}
-													checked={field.value.get(tax.id)}
+													checked={field.value.has(tax.id)}
 													onSelect={e => e.preventDefault()}
 													onCheckedChange={val => {
-														const update = new Map(getValues(`items.${index}.taxes`));
-														update.set(tax.id, val);
+														const update = new Set(getValues(`items.${index}.taxes`));
+
+														if (val) update.add(tax.id);
+														else update.delete(tax.id);
+
 														field.onChange(update);
 
-														setActiveTaxes(
-															getValues(`items.${index}.taxes`)
-																.values()
-																.reduce((acc, value) => acc + Number(value), 0),
-														);
+														setActiveTaxes(update.size);
 													}}
 													className='justify-between'
 												>

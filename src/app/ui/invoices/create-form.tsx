@@ -5,12 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsThreeIcon, WarningIcon } from '@phosphor-icons/react';
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
 import { addDays } from 'date-fns';
-import { createInsertSchema } from 'drizzle-zod';
-import { useState } from 'react';
+import { type ReactElement, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { type Control, Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { z } from 'zod';
+import type { z } from 'zod';
 import { InfoTip } from '@/components/info';
 import { Alert, AlertTitle } from '@/components/ui/alert';
 import { Calendar } from '@/components/ui/calendar';
@@ -24,11 +23,11 @@ import {
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { invoices as invoicesSchema } from '@/db/schema';
 import { createInvoice } from '@/lib/actions/invoice';
 import type { getUserConfig } from '@/lib/data';
 import { useClients, useInvoices } from '@/lib/hooks';
 import { cn, formatDateToLocal, type Prettify } from '@/lib/utils';
+import { invoice as schema } from '@/lib/validation/invoice';
 import { Button } from '@/ui/button';
 import {
 	Combobox,
@@ -51,38 +50,7 @@ import {
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
-import { InvoiceItemsField, itemsArraySchema } from './invoiceItems';
-
-const schema = createInsertSchema(invoicesSchema, {
-	clientDataId: z.uuid({ error: 'Please select a client' }),
-	title: z
-		.string()
-		.optional()
-		.transform(v => v?.trim())
-		.transform(v => (v === '' ? undefined : v)),
-	description: z
-		.string()
-		.optional()
-		.transform(v => v?.trim())
-		.transform(v => (v === '' ? undefined : v)),
-	notes: z
-		.string()
-		.optional()
-		.transform(v => v?.trim())
-		.transform(v => (v === '' ? undefined : v)),
-	issuedAt: z.date({ error: 'Please enter an issue date' }),
-	dueAt: z.date({ error: 'Please enter a due date' }),
-})
-	.pick({
-		clientDataId: true,
-		title: true,
-		description: true,
-		notes: true,
-		issuedAt: true,
-		dueAt: true,
-		status: true,
-	})
-	.extend({ items: itemsArraySchema });
+import { InvoiceItemsField } from './invoiceItems';
 
 export function CreateInvoiceDialog({
 	children,
@@ -101,7 +69,7 @@ export function CreateInvoiceDialog({
 	const { mutate } = useInvoices();
 	const { data: clientsData, isLoading: isClientsLoading, isError: isClientsError } = useClients();
 
-	const { control, reset, handleSubmit, getValues } = useForm<z.input<typeof schema>>({
+	const { control, reset, handleSubmit, getValues } = useForm({
 		resolver: zodResolver(schema),
 		defaultValues: {
 			clientDataId: '',
@@ -113,33 +81,6 @@ export function CreateInvoiceDialog({
 			dueAt: addDays(TZDate.tz(config.timezone), 14),
 		},
 	});
-
-	async function onSubmit({ items, ...invoice }: z.input<typeof schema>) {
-		const data = {
-			invoice,
-			items: items.map(item => ({
-				...item,
-				taxes: item.taxes.entries().reduce((acc: string[], [id, status]) => {
-					if (status) acc.push(id);
-					return acc;
-				}, []),
-			})),
-		};
-
-		const result = createInvoice(data).then(() => {
-			// This should really pass the action returned invoice, but that needs an identical shape to the fetcher
-			mutate();
-			setOpen(false);
-			setFormVersion(v => v + 1);
-			reset();
-		});
-
-		toast.promise(result, {
-			loading: 'Creating invoice…',
-			success: 'Invoice created',
-			error: 'Failed to create invoice',
-		});
-	}
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
@@ -159,7 +100,23 @@ export function CreateInvoiceDialog({
 						</Alert>
 					}
 				>
-					<form onSubmit={handleSubmit(onSubmit)}>
+					<form
+						onSubmit={handleSubmit(data => {
+							const promise = createInvoice(data).then(() => {
+								// This should really pass the action returned invoice, but that needs an identical shape to the fetcher
+								mutate();
+								setOpen(false);
+								setFormVersion(v => v + 1);
+								reset();
+							});
+
+							toast.promise(promise, {
+								loading: 'Creating invoice…',
+								success: 'Invoice created',
+								error: 'Failed to create invoice',
+							});
+						})}
+					>
 						<FieldGroup className='gap-4'>
 							<Controller
 								name='clientDataId'
@@ -180,7 +137,6 @@ export function CreateInvoiceDialog({
 														label: client.data.name,
 													})) || []
 												}
-												required
 												disabled={isClientsLoading || isClientsError || !clientsData}
 												{...field}
 												onValueChange={field.onChange}
@@ -282,7 +238,7 @@ export function CreateInvoiceDialog({
 						/>
 
 						<DialogFooter className='!flex-row-reverse'>
-							<Button variant='primary' type='submit' onClick={handleSubmit(onSubmit)}>
+							<Button variant='primary' type='submit'>
 								Submit
 							</Button>
 							<DialogClose
@@ -378,9 +334,11 @@ function IssueDateSubmenu({
 					<DropdownMenuSubTrigger disabled>
 						<div className='grid'>
 							<span>Date of issue</span>
-							<span className='text-muted-foreground text-xs'>
-								{formatDateToLocal(new TZDate(field.value, timezone), false, locale)}
-							</span>
+							{field.value && (
+								<span className='text-muted-foreground text-xs'>
+									{formatDateToLocal(new TZDate(field.value, timezone), false, locale)}
+								</span>
+							)}
 							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
 						</div>
 					</DropdownMenuSubTrigger>
