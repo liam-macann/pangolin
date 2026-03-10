@@ -23,7 +23,8 @@ export default function Table({
 	return (
 		<InvoiceTable.Root data={data} locale={locale}>
 			<div className='my-4 mb-6 flex items-center justify-between gap-3 md:mt-8'>
-				{header}
+				{/** biome-ignore lint/complexity/noUselessFragments: Necessary for React to see one child to prevent need for keys */}
+				<>{header}</>
 				<InvoiceTable.Search className='h-10 grow shadow-none' />
 			</div>
 			<InvoiceTable.Content />
