@@ -1,5 +1,6 @@
 'use client';
 
+import { mergeProps, useRender } from '@base-ui/react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { type ReactNode, useMemo } from 'react';
 import type { FieldError as ErrorRHF } from 'react-hook-form';
@@ -52,7 +53,7 @@ function FieldGroup({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 const fieldVariants = cva(
-	'group/field flex w-full gap-2 gap-x-4 data-[invalid=true]:text-destructive',
+	'group/field flex w-full gap-2 gap-x-6 data-[invalid=true]:text-destructive',
 	{
 		variants: {
 			orientation: {
@@ -127,19 +128,24 @@ function FieldTitle({ className, ...props }: React.ComponentProps<'div'>) {
 	);
 }
 
-function FieldDescription({ className, ...props }: React.ComponentProps<'p'>) {
-	return (
-		<p
-			data-slot='field-description'
-			className={cn(
-				'[[data-variant=legend]+&]:-mt-1.5 text-left font-normal text-muted-foreground text-sm leading-normal group-has-data-horizontal/field:text-balance',
-				'nth-last-2:-mt-1 last:mt-0',
-				'[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4',
-				className,
-			)}
-			{...props}
-		/>
-	);
+function FieldDescription({ render, ...props }: useRender.ComponentProps<'p'>) {
+	const element = useRender({
+		defaultTagName: 'p',
+		render,
+		props: mergeProps<'p'>(
+			{
+				'data-slot': 'field-description',
+				className: cn(
+					'[[data-variant=legend]+&]:-mt-1.5 text-left font-normal text-muted-foreground text-sm leading-normal group-has-data-horizontal/field:text-balance',
+					'nth-last-2:-mt-1 last:mt-0',
+					'[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4',
+				),
+			},
+			props,
+		),
+	});
+
+	return element;
 }
 
 function FieldSeparator({

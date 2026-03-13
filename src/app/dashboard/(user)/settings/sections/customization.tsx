@@ -1,10 +1,11 @@
 'use client';
 
 import { CheckIcon } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { type ComponentProps, useId, useState } from 'react';
 import { type Control, Controller, type ControllerRenderProps } from 'react-hook-form';
 import type z from 'zod/v4';
 import { InfoTip } from '@/components/info';
+import { cn } from '@/lib/utils';
 import type { config as formSchema } from '@/lib/validation/config';
 import schemes from '@/src/app/ui/colorSchemes';
 import { Button } from '@/ui/button';
@@ -34,13 +35,9 @@ export function Customization<T extends Fields>({ control: _control }: { control
 				name='colorScheme'
 				control={control}
 				render={({ field, fieldState }) => (
-					<Field
-						orientation='responsive'
-						className='!items-center'
-						data-invalid={fieldState.invalid}
-					>
+					<Field orientation='responsive' data-invalid={fieldState.invalid}>
 						<FieldContent>
-							<FieldLabel htmlFor='color-scheme'>Color scheme</FieldLabel>
+							<FieldTitle id='colorSchemeLabel'>Color scheme</FieldTitle>
 							<FieldDescription>
 								Select an accent color for your generated invoices
 							</FieldDescription>
@@ -116,38 +113,63 @@ export function Customization<T extends Fields>({ control: _control }: { control
 function ColorPalette({ onChange, ...field }: ControllerRenderProps<Fields, 'colorScheme'>) {
 	const [hover, setHover] = useState<string | null>(null);
 	return (
-		<div className='flex flex-col @md/field-group:items-end gap-2'>
-			<RadioGroup
-				className='flex'
-				{...field}
-				onValueChange={onChange}
-				onPointerLeave={() => setHover(null)}
-			>
-				{Object.entries(schemes).map(([key, scheme]) => (
-					<div key={key} className='flex flex-col'>
-						<Button
-							variant='primary'
-							size='icon-sm'
-							nativeButton={false}
-							render={
-								<RadioGroupItem
-									className='peer !border-black/20 dark:!border-black/10 !rounded-full data-[state="checked"]:outline'
-									style={{ backgroundColor: scheme.accent }}
-									value={key}
-									onMouseEnter={() => setHover(key)}
-								>
-									<CheckIcon className='text-white' weight='bold' />
-								</RadioGroupItem>
-							}
-						/>
-						{key === (hover || field.value) && (
-							<FieldDescription className='text-center text-xs capitalize'>
-								<span className='-translate-x-1/2 absolute mt-2'>{key}</span>
-							</FieldDescription>
-						)}
-					</div>
-				))}
-			</RadioGroup>
+		<RadioGroup
+			className='group/color-palette flex gap-2'
+			{...field}
+			aria-labelledby='colorSchemeLabel'
+			onValueChange={onChange}
+			onPointerLeave={() => setHover(null)}
+		>
+			{Object.entries(schemes).map(([key, scheme]) => (
+				<ColorSwatch
+					key={key}
+					value={key}
+					style={{ backgroundColor: scheme.accent }}
+					selected={field.value === key}
+					onMouseEnter={() => setHover(key)}
+				/>
+			))}
+		</RadioGroup>
+	);
+}
+
+function ColorSwatch({
+	value,
+	selected,
+	...props
+}: { value: string; selected: boolean } & ComponentProps<typeof RadioGroupItem>) {
+	const id = useId();
+
+	return (
+		<div className='group flex flex-col'>
+			<Button
+				variant='primary'
+				size='icon-sm'
+				nativeButton={false}
+				render={
+					<RadioGroupItem
+						className='peer !border-black/20 dark:!border-black/10 !rounded-full after:-inset-x-1.5 data-[state="checked"]:outline'
+						value={value}
+						aria-label={value}
+						id={id}
+						{...props}
+					>
+						<CheckIcon className='text-white' weight='bold' />
+					</RadioGroupItem>
+				}
+			/>
+
+			<FieldDescription
+				className={cn(
+					'hidden flex-col items-center text-xs capitalize group-hover:flex',
+					selected && 'group-[:not(:hover)]/color-palette:flex',
+				)}
+				render={
+					<label htmlFor={id}>
+						<span className='absolute mt-1'>{value}</span>
+					</label>
+				}
+			/>
 		</div>
 	);
 }
