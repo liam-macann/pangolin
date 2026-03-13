@@ -1,6 +1,7 @@
 import type { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { getTimeZones, type TimeZone } from '@vvo/tzdb';
 import { matchSorter } from 'match-sorter';
+import { cn } from '@/lib/utils';
 import {
 	Combobox,
 	ComboboxCollection,
@@ -20,7 +21,7 @@ interface TimezoneSelectProps extends Omit<ComboboxPrimitive.Root.Props<TimeZone
 	value?: string | null;
 }
 
-export function TimezoneSelect({ value, ...props }: TimezoneSelectProps) {
+export function TimezoneSelectRoot({ value, ...props }: TimezoneSelectProps) {
 	const val = timezones.find(tz => tz.name === (value || ''));
 
 	return (
@@ -32,25 +33,45 @@ export function TimezoneSelect({ value, ...props }: TimezoneSelectProps) {
 			itemToStringValue={i => i.name}
 			filter={fuzzyFilter}
 			{...props}
-		>
-			<ComboboxTrigger className='min-w-60'>
+		/>
+	);
+}
+
+/** Input-in-popup variant of timezone combobox. Must be composed within TimezoneSelectRoot. */
+export function TimezoneSelectCombobox({ className, ...props }: ComboboxPrimitive.Trigger.Props) {
+	return (
+		<>
+			<ComboboxTrigger className={cn('min-w-60', className)} {...props}>
 				<ComboboxValue />
 			</ComboboxTrigger>
-			<ComboboxContent align='start' sideOffset={4}>
+
+			<TimezoneSelectContent>
 				<ComboboxInput showTrigger={false} />
-				<ComboboxEmpty>No time zone found.</ComboboxEmpty>
-				<ComboboxList>
-					{(group: GroupItem) => (
-						<ComboboxGroup key={group.value} items={group.items}>
-							<ComboboxLabel>{group.value}</ComboboxLabel>
-							<ComboboxCollection>
-								{(tz: TimeZone) => <Item key={tz.name} tz={tz} />}
-							</ComboboxCollection>
-						</ComboboxGroup>
-					)}
-				</ComboboxList>
-			</ComboboxContent>
-		</Combobox>
+			</TimezoneSelectContent>
+		</>
+	);
+}
+
+export function TimezoneSelectContent({
+	children,
+	...props
+}: React.ComponentProps<typeof ComboboxContent>) {
+	return (
+		<ComboboxContent align='start' sideOffset={4} {...props}>
+			{children}
+
+			<ComboboxEmpty>No time zone found.</ComboboxEmpty>
+			<ComboboxList>
+				{(group: GroupItem) => (
+					<ComboboxGroup key={group.value} items={group.items}>
+						<ComboboxLabel>{group.value}</ComboboxLabel>
+						<ComboboxCollection>
+							{(tz: TimeZone) => <Item key={tz.name} tz={tz} />}
+						</ComboboxCollection>
+					</ComboboxGroup>
+				)}
+			</ComboboxList>
+		</ComboboxContent>
 	);
 }
 

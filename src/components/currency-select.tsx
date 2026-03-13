@@ -13,41 +13,65 @@ import {
 } from '@/ui/combobox';
 
 // Database stores ISO string: lookup necessary to convert to internal object
-interface CurrencySelectProps extends Omit<ComboboxPrimitive.Root.Props<Currency>, 'value'> {
+interface CurrencySelectProps
+	extends Omit<
+		ComboboxPrimitive.Root.Props<Currency>,
+		'items' | 'value' | 'isItemEqualToValue' | 'itemToStringLabel' | 'itemToStringValue'
+	> {
 	value?: string | null;
 }
 
 type Currency = (typeof currencies)[number];
 
-export function CurrencySelect({ value, ...props }: CurrencySelectProps) {
+export function CurrencySelectRoot({ value, ...props }: CurrencySelectProps) {
 	const val = currencies.find(i => i.iso === (value || ''));
 
 	return (
 		<Combobox
 			items={currencies}
 			value={val || null}
-			{...props}
 			isItemEqualToValue={(item, s) => item.iso === s.iso}
 			itemToStringLabel={v => v.name}
 			itemToStringValue={v => v.iso}
-		>
-			<ComboboxTrigger className={'min-w-60'}>
+			{...props}
+		/>
+	);
+}
+
+/** Input-in-popup variant of currency combobox. Must be composed within CurrencySelectRoot. */
+export function CurrencySelectCombobox({ className, ...props }: ComboboxPrimitive.Trigger.Props) {
+	return (
+		<>
+			<ComboboxTrigger className={cn('min-w-60', className)} {...props}>
 				<ComboboxValue />
 			</ComboboxTrigger>
-			<ComboboxContent align='start' sideOffset={4}>
+
+			<CurrencySelectContent>
 				<ComboboxInput showTrigger={false} />
-				<ComboboxEmpty>No currency found.</ComboboxEmpty>
-				<ComboboxList>
-					{(currency: Currency) => (
-						<ComboboxItem key={currency.iso} value={currency}>
-							<div className='flex w-full items-baseline justify-between'>
-								<span className=''>{currency.name}</span>
-								<span className='shrink-0 text-muted-foreground text-xs'>{currency.iso}</span>
-							</div>
-						</ComboboxItem>
-					)}
-				</ComboboxList>
-			</ComboboxContent>
-		</Combobox>
+			</CurrencySelectContent>
+		</>
+	);
+}
+
+export function CurrencySelectContent({
+	children,
+	...props
+}: React.ComponentProps<typeof ComboboxContent>) {
+	return (
+		<ComboboxContent align='start' sideOffset={4} {...props}>
+			{children}
+
+			<ComboboxEmpty>No currency found.</ComboboxEmpty>
+			<ComboboxList>
+				{(currency: Currency) => (
+					<ComboboxItem key={currency.iso} value={currency}>
+						<div className='flex w-full items-baseline justify-between'>
+							<span className=''>{currency.name}</span>
+							<span className='shrink-0 text-muted-foreground text-xs'>{currency.iso}</span>
+						</div>
+					</ComboboxItem>
+				)}
+			</ComboboxList>
+		</ComboboxContent>
 	);
 }

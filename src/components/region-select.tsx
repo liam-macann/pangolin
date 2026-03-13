@@ -20,31 +20,6 @@ interface RegionSelectRootProps extends Omit<ComboboxPrimitive.Root.Props<ICount
 	value?: string | null | undefined;
 }
 
-/** Wrapped RegionSelect, in both inline and popup variants  */
-export function RegionSelect({
-	popup = true,
-	...props
-}: RegionSelectRootProps & {
-	popup?: boolean;
-	className?: string;
-}) {
-	return (
-		<RegionSelectRoot {...props}>
-			{popup ? (
-				<ComboboxTrigger className={cn('min-w-60')}>
-					<ComboboxValue />
-				</ComboboxTrigger>
-			) : (
-				<RegionSelectInput />
-			)}
-
-			<RegionSelectContent>
-				{popup && <RegionSelectInput autoComplete='country-name' showTrigger={false} />}
-			</RegionSelectContent>
-		</RegionSelectRoot>
-	);
-}
-
 export const RegionSelectInput = (props: React.ComponentProps<typeof ComboboxInput>) => (
 	<ComboboxInput autoComplete='country-name' {...props} />
 );
@@ -63,6 +38,21 @@ export function RegionSelectRoot({ children, value, ...props }: RegionSelectRoot
 		>
 			{children}
 		</Combobox>
+	);
+}
+
+/** Input-in-popup variant of region combobox. Must be composed within RegionSelectRoot. */
+export function RegionSelectCombobox({ className, ...props }: ComboboxPrimitive.Trigger.Props) {
+	return (
+		<>
+			<ComboboxTrigger className={cn('min-w-60', className)} {...props}>
+				<ComboboxValue />
+			</ComboboxTrigger>
+
+			<RegionSelectContent>
+				<RegionSelectInput autoComplete='country-name' showTrigger={false} />
+			</RegionSelectContent>
+		</>
 	);
 }
 
