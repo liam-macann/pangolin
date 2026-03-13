@@ -12,6 +12,7 @@
 		"prepare": "husky",
 		"db:seed": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" node --import tsx --env-file=.env.local ./scripts/seed.ts",
 		"db:view": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" pnpm exec drizzle-kit studio",
+		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate"
 	},
 	"lint-staged": {
@@ -81,9 +82,9 @@
 		"@types/react-dom": "19.2.3",
 		"@types/ws": "^8.18.1",
 		"@typescript/native-preview": "7.0.0-dev.20260310.1",
-		"drizzle-kit": "1.0.0-beta.16-ea816b6",
-		"drizzle-orm": "1.0.0-beta.16-ea816b6",
-		"drizzle-seed": "1.0.0-beta.16-ea816b6",
+		"drizzle-kit": "1.0.0-beta.17-67b1795",
+		"drizzle-orm": "1.0.0-beta.17-67b1795",
+		"drizzle-seed": "1.0.0-beta.17-67b1795",
 		"husky": "^9.1.7",
 		"lint-staged": "^16.1.6",
 		"postgres": "^3.4.6",

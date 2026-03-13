@@ -4,16 +4,15 @@ import { customType, type PgEnum } from 'drizzle-orm/pg-core';
 type AnySql = SQL | Column | SQL.Aliased;
 
 /** Helper type to extract the TypeScript type from a PgColumn or SQL */
-export type ColumnType<T> =
-	T extends Column<infer C>
-		? C['notNull'] extends true
-			? C['data']
-			: C['data'] | null
-		: T extends SQL<infer S>
-			? S
-			: T extends SQL.Aliased<infer A>
-				? A
-				: never;
+export type ColumnType<T> = T extends Column<infer C>
+	? C['notNull'] extends true
+		? C['data']
+		: C['data'] | null
+	: T extends SQL<infer S>
+		? S
+		: T extends SQL.Aliased<infer A>
+			? A
+			: never;
 
 /** Derive type from PgEnum definition
  *
@@ -59,12 +58,6 @@ export function jsonbBuildObject<T extends Record<string, AnySql>>(shape: T) {
  */
 export const withFilter = <T>(aggregate: SQL<T>, condition: SQL) =>
 	sql<T>`${aggregate} filter (where ${condition})`;
-
-// type ExtractSqlType<S> = S extends SQL<infer T>
-// 	? T
-// 	: S extends Column
-// 		? GetColumnData<S, 'query'>
-// 		: never;
 
 type Coalesce<Array extends SqlOrPrimitive[]> = Array extends [...infer Optionals, infer Last]
 	? Exclude<ColumnType<Optionals[number]>, null | undefined> | ColumnType<Last>
