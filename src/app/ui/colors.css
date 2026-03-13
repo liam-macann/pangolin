@@ -54,6 +54,7 @@
 @variant contrast-more {
 	:root {
 		--border: var(--color-gray-a-12);
+		--ring: var(--color-gray-10); /* Focus ring */
 	}
 }
 
