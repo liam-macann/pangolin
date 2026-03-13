@@ -1,3 +1,4 @@
+import { getCountryDataList } from 'countries-list';
 import {
 	type Address,
 	AddressValidationError,
@@ -10,6 +11,7 @@ import {
 	InvalidZipError,
 	InvalidZipSubRegionError,
 	isAddressError,
+	isValidCountryCode,
 	MissingFieldError,
 	validateAddress,
 } from 'lib-address';
@@ -51,6 +53,17 @@ export const transform = z.object({
 
 /** Zod validation schema for postal addresses. Use .parseAsync() to ensure address metadata is present. */
 export const schema = transform.superRefine(async (val, ctx) => {
+	if (!isValidCountryCode(val.country)) {
+		ctx.addIssue({
+			code: 'invalid_value',
+			values: getCountryDataList().map(c => c.iso2),
+			input: val.country,
+			path: ['country'],
+			message: 'Invalid country or territory',
+		});
+		return;
+	}
+
 	/** Lookup object to map input schema to validation input format */
 	const map = {
 		zip: 'postalCode',
