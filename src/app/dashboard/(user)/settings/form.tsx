@@ -34,6 +34,7 @@ const configAdapter = (
 
 	taxes: config.taxes.map(t => ({ name: t.name, rate: t.rate * 100 })),
 	paymentDetails: config.paymentDetails || [],
+	tradingName: config.tradingName,
 	registrationNumber: config.registrationNumber || [],
 	// Necessary to enforce object shape
 	// eg. isDirty comparison will fail if objects don't share the same keys

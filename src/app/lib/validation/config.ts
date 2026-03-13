@@ -50,6 +50,7 @@ export const taxes = z
 
 /** Complete insertion record for database configuration, excluding generated fields */
 export const config = createInsertSchema(configSchema, {
+	tradingName: s => z.string('Required').min(1, 'Required').max(255, 'Too long').pipe(s),
 	paymentDetails: z
 		.array(
 			z.object({

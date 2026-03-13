@@ -75,7 +75,6 @@ export async function GET(_request: NextRequest, ctx: RouteContext<'/dashboard/i
 	const buffer = await generatePdf(invoiceId, {
 		id: session.user.id,
 		email: session.user.email,
-		name: session.user.name,
 	});
 
 	if (!buffer) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
@@ -89,7 +88,7 @@ export async function GET(_request: NextRequest, ctx: RouteContext<'/dashboard/i
 	});
 }
 
-async function generatePdf(invoiceId: string, user: { id: string; email: string; name: string }) {
+async function generatePdf(invoiceId: string, user: { id: string; email: string }) {
 	const invoice = await fetchInvoice(invoiceId);
 	if (!invoice) return;
 
@@ -121,7 +120,7 @@ async function generatePdf(invoiceId: string, user: { id: string; email: string;
 		displayTitle: true,
 		info: {
 			title: reference,
-			author: user.name,
+			author: invoice.config.tradingName,
 			creator: 'Invoicer',
 			producer: 'Invoicer',
 			creationDate: invoice.createdAt,
@@ -192,7 +191,7 @@ async function generatePdf(invoiceId: string, user: { id: string; email: string;
 				marginTop: -spacing(4),
 				stack: [
 					{
-						text: user.name,
+						text: invoice.config.tradingName,
 						bold: true,
 						color: colors.heavy,
 						margin: [0, 0, 0, spacing(4)],

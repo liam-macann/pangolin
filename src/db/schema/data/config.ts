@@ -35,7 +35,7 @@ export const taxes = pgTable(
 	t => [unique('uq_tax_user_name_rate').on(t.userId, t.name, t.rate)],
 );
 
-/** Join table for invoice items and taxes */
+/** Join table for config and taxes */
 export const configTaxes = pgTable(
 	'config_tax',
 	{
@@ -70,6 +70,9 @@ export const config = pgTable(
 		userId: uuid('user_id')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
+
+		tradingName: text('trading_name').notNull(),
+
 		// The time zone of record, for invoice dates and yearly sequencing. This should eventually reference a table of time zones.
 		timezone: text()
 			.references(() => supportedTimezones.name)

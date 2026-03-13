@@ -3,12 +3,15 @@
 import { type Control, Controller } from 'react-hook-form';
 import type z from 'zod/v4';
 import { AddressInput } from '@/components/address-input';
+import { Input } from '@/components/ui/input';
 import type { config as formSchema } from '@/lib/validation/config';
 import {
+	Field,
 	FieldContent,
 	FieldDescription,
 	FieldError,
 	FieldGroup,
+	FieldLabel,
 	FieldLegend,
 	FieldSet,
 } from '@/ui/field';
@@ -16,7 +19,7 @@ import { PaymentDetailsField } from './paymentDetails';
 import { RegistrationNumberField } from './registrationNumber';
 
 type FormValues = z.input<typeof formSchema>;
-type Fields = Pick<FormValues, 'registrationNumber' | 'paymentDetails' | 'address'>;
+type Fields = Pick<FormValues, 'tradingName' | 'registrationNumber' | 'paymentDetails' | 'address'>;
 
 export function Details<T extends Fields>({ control: _control }: { control: Control<T> }) {
 	// Necessary, as RHF can't extract typings from the generic
@@ -27,6 +30,21 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 			<h2 className='font-bold text-2xl' id='details'>
 				Your details
 			</h2>
+
+			<Controller
+				name='tradingName'
+				control={control}
+				render={({ field, fieldState }) => (
+					<Field orientation='responsive' data-invalid={fieldState.invalid}>
+						<FieldContent>
+							<FieldLabel htmlFor='tradingName'>Trading name</FieldLabel>
+							<FieldDescription>The name by which your business is known.</FieldDescription>
+							{fieldState.error && <FieldError errors={[fieldState.error]} />}
+						</FieldContent>
+						<Input id='tradingName' {...field} className='min-w-64' />
+					</Field>
+				)}
+			/>
 
 			<Controller
 				name='registrationNumber'
