@@ -22,7 +22,13 @@ export interface FormValues {
  */
 const intlFmt = '%N%n%O%n%A%n%C, %S %Z';
 
-export function AddressInput<T extends FormValues>({ control: _control }: { control: Control<T> }) {
+export function AddressInput<T extends FormValues>({
+	control: _control,
+	disabled,
+}: {
+	control: Control<T>;
+	disabled?: boolean;
+}) {
 	// Necessary, as RHF can't extract typings from the generic
 	const control = _control as unknown as Control<FormValues>;
 	const region = useWatch({ name: 'address.country', control });
@@ -36,17 +42,25 @@ export function AddressInput<T extends FormValues>({ control: _control }: { cont
 				</Alert>
 			}
 		>
-			<FieldSet className='isolate min-w-0 gap-0 rounded-md border border-dotted bg-background dark:bg-secondary'>
-				{region ? <LocaleForm region={region} /> : <Fields metadata={{ fmt: intlFmt }} />}
+			<FieldSet
+				className={cn(
+					'isolate min-w-0 gap-0 rounded-md border border-dotted bg-background dark:bg-secondary',
+					'transition duration-200 ease-in-out-quart',
+					disabled && 'cursor-not-allowed bg-muted opacity-50 *:pointer-events-none',
+				)}
+			>
+				{(region && <LocaleForm disabled={disabled} region={region} />) || (
+					<Fields disabled={disabled} metadata={{ fmt: intlFmt }} />
+				)}
 
-				<Country />
+				<Country disabled={disabled} />
 			</FieldSet>
 		</ErrorBoundary>
 	);
 }
 
 /** Takes an ISO2 string and renders localised address input */
-function LocaleForm({ region }: { region: CountryCode }) {
+function LocaleForm({ region, disabled }: { region: CountryCode; disabled?: boolean }) {
 	if (!isValidCountryCode(region)) throw new Error(`Invalid country code: ${region}`);
 
 	// Fetch region from cache or Google Address Metadata API
@@ -65,7 +79,7 @@ function LocaleForm({ region }: { region: CountryCode }) {
 
 	return (
 		<Fields
-			disabled={isLoading}
+			disabled={isLoading || disabled}
 			metadata={data ?? { fmt: intlFmt }}
 			className={cn(
 				'transition-colors duration-300 ease-out-quad',
