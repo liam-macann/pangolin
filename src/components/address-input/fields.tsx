@@ -144,10 +144,11 @@ const StreetAddress = ({ disabled }: FieldProps) => {
 								<Button
 									size='icon-xs'
 									className='absolute top-2 right-2'
-									disabled={numberOfLines >= maxLines}
+									aria-label='Add address line'
+									disabled={disabled || numberOfLines >= maxLines}
 									onClick={() => {
 										const v = getValues('address.streetAddress');
-										setValue('address.streetAddress', [...(v || []), '']);
+										setValue('address.streetAddress', [...(v || []), ''], { shouldDirty: true });
 										setFocus('address.streetAddress');
 									}}
 								>
