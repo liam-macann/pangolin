@@ -10,6 +10,7 @@ import {
 	type WithSubqueryWithoutSelection,
 } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { v4 as uuid } from 'uuid';
 import type z from 'zod';
 import { getSession } from '@/auth';
@@ -175,42 +176,46 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 			revalidatePath('/dashboard/invoices');
 			revalidatePath('/dashboard/settings');
 
-			// Clean up unused configs and addresses
 			// Useful to ensure consecutive insertions (eg. saving as progressing through form) do not produce redundant rows
-			await Promise.all([
-				db
-					.delete(configSchema)
-					.where(
-						and(
-							eq(configSchema.userId, session.user.id),
-							isNotNull(configSchema.validTo),
-							notExists(
-								// No invoices reference config row
-								db
-									.select()
-									.from(invoicesSchema)
-									.where(eq(invoicesSchema.configId, configSchema.id)),
-							),
-						),
-					)
-					// Error should not bubble up: non-essential cleanup
-					.catch(() => console.error('Unable to clean up unused configs')),
-
-				db
-					.delete(addressSchema)
-					.where(
-						and(
-							eq(addressSchema.userId, session.user.id),
-							notExists(
-								// No configs reference address row
-								db
-									.select()
-									.from(configSchema)
-									.where(eq(configSchema.addressId, addressSchema.id)),
-							),
-						),
-					)
-					.catch(() => console.error('Unable to clean up unused addresses')),
-			]);
+			after(() => databaseCleanup(session.user.id));
 		});
+}
+
+/** Clean up unused configs and addresses for a given user */
+async function databaseCleanup(userId: string) {
+	await Promise.all([
+		db
+			.delete(configSchema)
+			.where(
+				and(
+					eq(configSchema.userId, userId),
+					isNotNull(configSchema.validTo),
+					notExists(
+						// No invoices reference config row
+						db
+							.select()
+							.from(invoicesSchema)
+							.where(eq(invoicesSchema.configId, configSchema.id)),
+					),
+				),
+			)
+			// Error should not bubble up: non-essential cleanup
+			.catch(() => console.error('Unable to clean up unused configs')),
+
+		db
+			.delete(addressSchema)
+			.where(
+				and(
+					eq(addressSchema.userId, userId),
+					notExists(
+						// No configs reference address row
+						db
+							.select()
+							.from(configSchema)
+							.where(eq(configSchema.addressId, addressSchema.id)),
+					),
+				),
+			)
+			.catch(() => console.error('Unable to clean up unused addresses')),
+	]);
 }
