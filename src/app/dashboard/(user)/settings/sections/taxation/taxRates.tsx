@@ -25,7 +25,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import type { config as formSchema } from '@/lib/validation/config';
 import { Button } from '@/ui/button';
-import { DropdownMenuGroup, DropdownMenuItem } from '@/ui/dropdown-menu';
+import { DropdownMenuItem } from '@/ui/dropdown-menu';
 import { Field, FieldError, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
@@ -178,7 +178,7 @@ export function DuplicateWarning<T extends Fields>({
 	const control = _control as unknown as Control<Fields>;
 
 	const taxes = useWatch({ control, name: 'taxes' });
-	const names = taxes.map(tax => tax.name).filter(name => name.trim() !== '');
+	const names = taxes?.map(tax => tax.name).filter(name => name.trim() !== '') || [];
 
 	const areDuplicates = new Set(names).size !== names.length;
 
