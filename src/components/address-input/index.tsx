@@ -83,7 +83,6 @@ function LocaleForm({ region, disabled }: { region: CountryCode; disabled?: bool
 			metadata={data ?? { fmt: intlFmt }}
 			className={cn(
 				'transition-colors duration-300 ease-out-quad',
-				'**:transition-opacity **:duration-300 **:ease-out-quad', // Field disabled animation
 				isLoading &&
 					'animate-pulse cursor-progress bg-muted delay-75 *:pointer-events-none **:delay-75',
 			)}

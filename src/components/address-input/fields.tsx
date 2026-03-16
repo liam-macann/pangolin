@@ -24,7 +24,7 @@ import { Field, FieldContent, FieldError, FieldLabel, FieldTitle } from '@/ui/fi
 import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
 import { RegionSelectContent, RegionSelectRoot } from '../region-select';
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '../ui/input-group';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '../ui/input-group';
 import type { FormValues } from '.';
 
 export interface FieldProps {
@@ -148,7 +148,9 @@ const StreetAddress = ({ disabled }: FieldProps) => {
 									disabled={disabled || numberOfLines >= maxLines}
 									onClick={() => {
 										const v = getValues('address.streetAddress');
-										setValue('address.streetAddress', [...(v || []), ''], { shouldDirty: true });
+										setValue('address.streetAddress', [...(v || []), ''], {
+											shouldDirty: true,
+										});
 										setFocus('address.streetAddress');
 									}}
 								>
@@ -336,10 +338,8 @@ const AdministrativeAreaCombobox = ({
 				/>
 
 				<InputGroupAddon className='p-0' align='inline-end'>
-					<InputGroupButton
-						size='icon-xs'
-						variant='ghost'
-						render={<ComboboxTrigger render={<Button variant='ghost' />} />}
+					<ComboboxTrigger
+						render={<Button size='icon-xs' variant='ghost' />}
 						data-slot='input-group-button'
 						className='-my-3 data-pressed:bg-transparent'
 						disabled={disabled}
@@ -488,10 +488,8 @@ export const Country = ({ disabled }: Omit<FieldProps, 'metadata'>) => {
 												/>
 
 												<InputGroupAddon className='p-0' align='inline-end'>
-													<InputGroupButton
-														size='icon-xs'
-														variant='ghost'
-														render={<ComboboxTrigger render={<Button variant='ghost' />} />}
+													<ComboboxTrigger
+														render={<Button size='icon-xs' variant='ghost' />}
 														data-slot='input-group-button'
 														className='-my-3 data-pressed:bg-transparent'
 													/>
