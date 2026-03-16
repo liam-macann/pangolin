@@ -131,9 +131,11 @@ export default function ConfigForm({
 						content='You have not made changes'
 						disabled={isDirty || isSubmitting}
 						render={
-							<Button type='submit' variant='primary' disabled={!isDirty || isSubmitting}>
-								Save changes
-							</Button>
+							<span>
+								<Button type='submit' variant='primary' disabled={!isDirty || isSubmitting}>
+									Save changes
+								</Button>
+							</span>
 						}
 					/>
 				</div>
