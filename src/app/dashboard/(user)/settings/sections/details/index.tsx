@@ -1,10 +1,14 @@
 'use client';
 
-import { type Control, Controller } from 'react-hook-form';
+import { type ReactNode } from 'react';
+import { type Control, Controller, type UseFormReturn, useFormContext } from 'react-hook-form';
 import type z from 'zod/v4';
+
+import { type config as formSchema } from '@/lib/validation/config';
+
 import { AddressInput } from '@/components/address-input';
 import { Input } from '@/components/ui/input';
-import type { config as formSchema } from '@/lib/validation/config';
+import { Switch } from '@/components/ui/switch';
 import {
 	Field,
 	FieldContent,
@@ -15,11 +19,15 @@ import {
 	FieldLegend,
 	FieldSet,
 } from '@/ui/field';
+
 import { PaymentDetailsField } from './paymentDetails';
 import { RegistrationNumberField } from './registrationNumber';
 
 type FormValues = z.input<typeof formSchema>;
-type Fields = Pick<FormValues, 'tradingName' | 'registrationNumber' | 'paymentDetails' | 'address'>;
+type Fields = Pick<
+	FormValues,
+	'tradingName' | 'registrationNumber' | 'paymentDetails' | 'address'
+> & { addressEnabled: boolean };
 
 export function Details<T extends Fields>({ control: _control }: { control: Control<T> }) {
 	// Necessary, as RHF can't extract typings from the generic
@@ -81,20 +89,59 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 				)}
 			/>
 
-			<Controller
-				name='address'
-				control={control}
-				render={({ fieldState }) => (
-					<FieldSet className='mb-4 min-w-0'>
-						<FieldContent>
-							<FieldLegend className='flex items-center gap-2'>Billing address</FieldLegend>
-							<FieldDescription>Address to be printed on invoices.</FieldDescription>
-							{fieldState.error && <FieldError errors={[fieldState.error]} />}
-						</FieldContent>
-						<AddressInput control={control} />
-					</FieldSet>
+			<ConnectForm>
+				{({ clearErrors }) => (
+					<Controller
+						name='addressEnabled'
+						control={control}
+						render={({
+							field: { value: enabledValue, onChange: enabledOnChange, ...enabledField },
+							fieldState: enabledFieldState,
+						}) => (
+							<FieldSet className='mb-4 min-w-0'>
+								<FieldContent>
+									<FieldContent>
+										<FieldLegend className='mb-0 flex items-center gap-2'>
+											<Switch
+												id='addressEnabled'
+												size='sm'
+												{...enabledField}
+												checked={enabledValue}
+												onCheckedChange={val => {
+													enabledOnChange(val);
+													if (!val) clearErrors('address');
+												}}
+											/>
+											<label htmlFor='addressEnabled'>Billing address</label>
+										</FieldLegend>
+										{enabledFieldState.error && <FieldError errors={[enabledFieldState.error]} />}
+									</FieldContent>
+
+									<FieldDescription>Address to be printed on invoices.</FieldDescription>
+
+									<Controller
+										name='address'
+										control={control}
+										render={({ fieldState }) => (
+											<>{fieldState.error && <FieldError errors={[fieldState.error]} />}</>
+										)}
+									/>
+								</FieldContent>
+								<AddressInput disabled={!enabledValue} control={control} />
+							</FieldSet>
+						)}
+					/>
 				)}
-			/>
+			</ConnectForm>
 		</FieldGroup>
 	);
 }
+
+export const ConnectForm = ({
+	children,
+}: {
+	children: (props: UseFormReturn<FormValues>) => ReactNode;
+}) => {
+	const methods = useFormContext<FormValues>();
+	return children(methods);
+};

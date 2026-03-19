@@ -1,28 +1,42 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { type CountryCode } from 'lib-address';
+import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import type { z } from 'zod';
+import { z } from 'zod';
+
 import { updateUserConfig } from '@/lib/actions/config';
-import type { getUserConfig } from '@/lib/data';
-import { config as formSchema } from '@/lib/validation/config';
+import { type getUserConfig } from '@/lib/data';
+import { transform as addressSchema } from '@/lib/validation/address';
+import { config as configSchema } from '@/lib/validation/config';
+
 import { Button } from '@/ui/button';
 import { TextTooltip } from '@/ui/tooltip';
 
+// Form sections
 import { Customization } from './sections/customization';
 import { Details } from './sections/details';
 import { Localization } from './sections/localization';
 import { Taxation } from './sections/taxation';
 
-/** Mutable value that records the latest config record known to the client. Updates on successful form submission, and used to reset the form. */
-let latestConfig: z.input<typeof formSchema> | undefined;
+/** Uses local addressEnabled flag to toggle address validation, and drops it after parsing */
+const formSchema = configSchema
+	.omit({ address: true })
+	.extend({ addressEnabled: z.boolean(), address: addressSchema.nullable() })
+	.transform(
+		(val): z.input<typeof configSchema> => ({
+			...val,
+			address: val.addressEnabled ? val.address : null,
+		}),
+	)
+	.pipe(configSchema.safeExtend({ addressEnabled: z.boolean() }));
+
+type FormInput = z.input<typeof formSchema>;
 
 /** Transforms the DB config response into schema input format */
-const configAdapter = (
-	config: Awaited<ReturnType<typeof getUserConfig>>,
-): z.input<typeof formSchema> => ({
+const configAdapter = (config: Awaited<ReturnType<typeof getUserConfig>>): FormInput => ({
 	// Schema validation is strict. Avoid destructuring to prevent additional keys.
 
 	timezone: config.timezone,
@@ -36,16 +50,21 @@ const configAdapter = (
 	paymentDetails: config.paymentDetails || [],
 	tradingName: config.tradingName,
 	registrationNumber: config.registrationNumber || [],
-	// Necessary to enforce object shape
-	// eg. isDirty comparison will fail if objects don't share the same keys
-	address: config.address && {
-		streetAddress: config.address.streetAddress || [''],
-		dependentLocality: config.address.dependentLocality || '',
-		city: config.address.city || '',
-		administrativeArea: config.address.administrativeArea || '',
-		postalCode: config.address.postalCode || '',
-		sortingCode: config.address.sortingCode || '',
-		country: config.address.country,
+
+	addressEnabled: !!config.address,
+	// Specifying keys necessary to enforce object shape
+	// Form `isDirty` comparison will fail if keys do not match
+	address: {
+		streetAddress: config.address?.streetAddress || [''],
+		dependentLocality: config.address?.dependentLocality || '',
+		city: config.address?.city || '',
+		administrativeArea: config.address?.administrativeArea || '',
+		postalCode: config.address?.postalCode || '',
+		sortingCode: config.address?.sortingCode || '',
+
+		// Country may be null in incomplete form state — address validation is dependent on addressEnabled state.
+		// Assertion is necessary as input is transformed through Zod schema.
+		country: (config.address?.country || null) as Exclude<CountryCode, 'ZZ'>,
 	},
 });
 
@@ -54,23 +73,30 @@ export default function ConfigForm({
 }: {
 	config: Awaited<ReturnType<typeof getUserConfig>>;
 }) {
-	if (!latestConfig) latestConfig = configAdapter(config);
+	/** Mutable value that records the latest config record known to the client.
+	 *  Updates on successful form submission, and used to reset the form. */
+	const savepoint = useRef<FormInput>(configAdapter(config));
 
 	const methods = useForm({
 		resolver: zodResolver(formSchema),
-		defaultValues: latestConfig,
+		defaultValues: savepoint.current,
 	});
 	const {
 		formState: { isDirty, isSubmitting },
 		handleSubmit,
 		control,
-		reset,
+		reset: _reset,
 	} = methods;
 
-	const revertToSavepoint = () => {
+	/** Resets the form to the latest savepoint, optionally first updating the savepoint with a new value. */
+	const revertToSavepoint = (update?: FormInput) => {
+		if (update) savepoint.current = update;
+
+		console.log('Reverted to savepoint', update);
+
 		// Prevent form submission triggering AnimatePresence
 		setFormVersion(v => v + 1);
-		reset(latestConfig);
+		_reset(savepoint.current);
 	};
 
 	const [formVersion, setFormVersion] = useState(0); // Reset counter
@@ -83,23 +109,22 @@ export default function ConfigForm({
 					async config => {
 						// Prevent duplicate submissions
 						if (isSubmitting) return;
+						// Prevent redundant submissions
 						else if (!isDirty) {
 							toast.info('You have not made any changes');
 							return;
 						}
 
+						// biome-ignore lint/correctness/noUnusedVariables: Discarding flag not needed for endpoint
+						const { addressEnabled, ...payload } = config;
 						const promise = updateUserConfig({
-							...config,
+							...payload,
 							taxes: config.taxes.map(tax => ({
 								...tax,
 								// Convert the whole number percentage back to a decimal
 								rate: Number(tax.rate) / 100,
 							})),
-						}).then(() => {
-							// Update the reset savepoint with new values
-							latestConfig = config;
-							revertToSavepoint();
-						});
+						}).then(() => revertToSavepoint(config));
 
 						toast.promise(promise, {
 							loading: 'Updating settings…',
@@ -122,7 +147,7 @@ export default function ConfigForm({
 					<Button
 						type='button'
 						variant='ghost'
-						onClick={revertToSavepoint}
+						onClick={() => revertToSavepoint()}
 						disabled={!isDirty || isSubmitting}
 					>
 						Cancel
