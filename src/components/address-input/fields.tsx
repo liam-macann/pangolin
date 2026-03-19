@@ -23,6 +23,7 @@ import {
 import { Field, FieldContent, FieldError, FieldLabel, FieldTitle } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
+import TextTooltip from '@/ui/tooltip';
 import { RegionSelectContent, RegionSelectRoot } from '../region-select';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '../ui/input-group';
 import type { FormValues } from '.';
@@ -141,21 +142,26 @@ const StreetAddress = ({ disabled }: FieldProps) => {
 									/>
 								</AddressField>
 
-								<Button
-									size='icon-xs'
-									className='absolute top-2 right-2'
-									aria-label='Add address line'
-									disabled={disabled || numberOfLines >= maxLines}
-									onClick={() => {
-										const v = getValues('address.streetAddress');
-										setValue('address.streetAddress', [...(v || []), ''], {
-											shouldDirty: true,
-										});
-										setFocus('address.streetAddress');
-									}}
-								>
-									<PlusIcon />
-								</Button>
+								<TextTooltip
+									content='Add address line'
+									render={
+										<Button
+											size='icon-xs'
+											className='absolute top-2 right-2'
+											aria-label='Add address line'
+											disabled={disabled || numberOfLines >= maxLines}
+											onClick={() => {
+												const v = getValues('address.streetAddress');
+												setValue('address.streetAddress', [...(v || []), ''], {
+													shouldDirty: true,
+												});
+												setFocus('address.streetAddress');
+											}}
+										>
+											<PlusIcon />
+										</Button>
+									}
+								/>
 							</AddressLabel>
 						);
 					}}

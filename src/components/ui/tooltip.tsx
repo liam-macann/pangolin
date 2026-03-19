@@ -86,6 +86,7 @@ export default function TextTooltip({
 	align,
 
 	render,
+	delay,
 
 	...props
 }: {
@@ -93,10 +94,10 @@ export default function TextTooltip({
 	className?: string;
 } & React.ComponentProps<typeof Tooltip> &
 	Pick<TooltipPrimitive.Positioner.Props, 'align' | 'side'> &
-	Pick<TooltipPrimitive.Trigger.Props, 'render'>) {
+	Pick<TooltipPrimitive.Trigger.Props, 'render' | 'delay'>) {
 	return (
 		<Tooltip {...props}>
-			<TooltipTrigger render={render} className={className} />
+			<TooltipTrigger render={render} delay={delay} className={className} />
 			<TooltipContent side={side} align={align}>
 				{content}
 			</TooltipContent>
