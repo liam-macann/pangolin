@@ -3,8 +3,10 @@
 import { mergeProps, useRender } from '@base-ui/react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { type ReactNode, useMemo } from 'react';
-import type { FieldError as ErrorRHF } from 'react-hook-form';
+import { type FieldError as ErrorRHF } from 'react-hook-form';
+
 import { cn } from '@/lib/utils';
+
 import { Label } from '@/ui/label';
 import { Separator } from '@/ui/separator';
 
@@ -120,7 +122,7 @@ function FieldTitle({ className, ...props }: React.ComponentProps<'div'>) {
 		<div
 			data-slot='field-label'
 			className={cn(
-				'flex w-fit items-center gap-2 font-medium text-sm leading-snug group-data-[disabled=true]/field:opacity-50',
+				'flex w-fit select-none items-center gap-2 font-medium text-sm leading-snug group-data-[disabled=true]/field:opacity-50',
 				className,
 			)}
 			{...props}
