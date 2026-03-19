@@ -1,7 +1,7 @@
 import { Combobox as ComboboxPrimitive } from '@base-ui/react';
 import { PlusIcon } from '@phosphor-icons/react';
 import { getZipExamples } from 'lib-address';
-import { type ChangeEvent, type ReactNode, useEffect, useId } from 'react';
+import { type ChangeEvent, type ReactNode, useEffect, useId, useRef } from 'react';
 import {
 	Controller,
 	type ControllerRenderProps,
@@ -10,7 +10,7 @@ import {
 	useWatch,
 } from 'react-hook-form';
 import type { AddressMetadata } from '@/lib/hooks';
-import { cn } from '@/lib/utils';
+import mergeRefs, { cn } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import {
 	Combobox,
@@ -92,9 +92,11 @@ export const AddressInput = ({ className, ...props }: React.ComponentProps<typeo
 const StreetAddress = ({ disabled }: FieldProps) => {
 	const id = useId();
 
+	const ref = useRef<HTMLTextAreaElement>(null);
+
 	return (
 		<ConnectForm>
-			{({ control, setFocus, setValue, getValues }) => (
+			{({ control, setValue, getValues }) => (
 				<Controller
 					control={control}
 					shouldUnregister
@@ -132,6 +134,7 @@ const StreetAddress = ({ disabled }: FieldProps) => {
 										disabled={disabled}
 										id={id}
 										{...field}
+										ref={mergeRefs(ref, field.ref)}
 										value={field.value?.join('\n') || ''}
 										// Ensure pasted values etc. do not exceed maxLines
 										onChange={e => field.onChange(e.target.value.split('\n', maxLines))}
@@ -155,7 +158,10 @@ const StreetAddress = ({ disabled }: FieldProps) => {
 												setValue('address.streetAddress', [...(v || []), ''], {
 													shouldDirty: true,
 												});
-												setFocus('address.streetAddress');
+
+												ref.current?.focus();
+												const length = ref.current?.value.length ?? 0;
+												ref.current?.setSelectionRange(length, length);
 											}}
 										>
 											<PlusIcon />
