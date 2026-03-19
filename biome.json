@@ -26,6 +26,28 @@
 		"enabled": true,
 		"rules": {
 			"recommended": true,
+			"style": {
+				"noRestrictedImports": {
+					"level": "on",
+					"options": {
+						"patterns": [
+							{
+								"group": ["../**"],
+								"message": "Do not use relative parent imports. Use defined TS aliases (e.g., @/components/*) instead."
+							},
+
+							{
+								"group": ["@/components/ui/**"],
+								"message": "Prefer using @/ui alias directly."
+							}
+						]
+					}
+				},
+				"useImportType": {
+					"level": "on",
+					"options": { "style": "inlineType" }
+				}
+			},
 			"nursery": {
 				"useSortedClasses": {
 					"level": "error",
@@ -75,7 +97,26 @@
 		"enabled": true,
 		"actions": {
 			"source": {
-				"organizeImports": "on"
+				"organizeImports": {
+					"level": "on",
+					"options": {
+						"groups": [
+							":URL:",
+							":NODE:",
+							":PACKAGE_WITH_PROTOCOL:",
+							":PACKAGE:",
+							":BLANK_LINE:",
+							"@/api/**",
+							"@/lib/**",
+							"@/db/**",
+							":BLANK_LINE:",
+							["@/components/**", "@/ui/**"],
+							":BLANK_LINE:",
+							":ALIAS:",
+							":BLANK_LINE:"
+						]
+					}
+				}
 			}
 		}
 	}
