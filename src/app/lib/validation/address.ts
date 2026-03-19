@@ -11,13 +11,18 @@ import {
 	InvalidZipError,
 	InvalidZipSubRegionError,
 	isAddressError,
-	isValidCountryCode,
 	MissingFieldError,
 	validateAddress,
 } from 'lib-address';
 import z from 'zod';
 import { fetchAddressMetadata } from '@/lib/utils/address';
 
+type SchemaOutput = z.output<typeof transform>;
+
+// Ensure that allowed countries matches the expected type of lib-address (both independently reference ISO2 codes)
+const validCountryCodes: Exclude<CountryCode, 'ZZ'>[] = getCountryDataList().map(c => c.iso2);
+
+/** Performs locale-unaware structural validation */
 export const transform = z.object({
 	streetAddress: z
 		.array(z.string())
@@ -52,22 +57,11 @@ export const transform = z.object({
 		.string()
 		.nullish()
 		.transform(v => (v === null || v === '' ? undefined : v)),
-	country: z.string<Exclude<CountryCode, 'ZZ'>>('Please select a country or territory'),
+	country: z.enum(validCountryCodes, 'Invalid country or territory'),
 });
 
 /** Zod validation schema for postal addresses. Use .parseAsync() to ensure address metadata is present. */
 export const schema = transform.superRefine(async (val, ctx) => {
-	if (!isValidCountryCode(val.country)) {
-		ctx.addIssue({
-			code: 'invalid_value',
-			values: getCountryDataList().map(c => c.iso2),
-			input: val.country,
-			path: ['country'],
-			message: 'Invalid country or territory',
-		});
-		return;
-	}
-
 	/** Lookup object to map input schema to validation input format */
 	const map = {
 		zip: 'postalCode',
@@ -75,24 +69,24 @@ export const schema = transform.superRefine(async (val, ctx) => {
 		addressLine1: 'streetAddress',
 		addressLine2: 'streetAddress',
 		addressLine3: 'streetAddress',
-	} satisfies Partial<Record<keyof Address, keyof typeof val>>;
+	} satisfies Partial<Record<keyof Address, keyof SchemaOutput>>;
 
 	/** For a given key, returns the mapped value type (schema adapter) */
 	type MapLookup<K extends keyof Address> = K extends keyof typeof map
-		? (typeof val)[(typeof map)[K]]
-		: K extends keyof typeof val
-			? (typeof val)[K]
+		? SchemaOutput[(typeof map)[K]]
+		: K extends keyof SchemaOutput
+			? SchemaOutput[K]
 			: never;
 
 	/** Accepts a key of lib-address input, and returns the corresponding value in the input schema */
 	function getProp<K extends keyof Address>(key: K): MapLookup<K> {
-		const resolvedKey = (map as Record<string, keyof typeof val>)[key] ?? key;
+		const resolvedKey = (map as Record<string, keyof SchemaOutput>)[key] ?? key;
 		return val[resolvedKey] as MapLookup<K>;
 	}
 
 	/** Mapped object that meets validation schema */
 	const input = {
-		country: getProp('country') as CountryCode,
+		country: getProp('country'),
 		name: getProp('name'),
 		organization: getProp('organization'),
 		addressLine1: getProp('addressLine1')?.[0],
@@ -127,7 +121,7 @@ export const schema = transform.superRefine(async (val, ctx) => {
 						expected: 'string',
 						received: 'undefined',
 						message: 'Required',
-						path: [(map as Record<string, keyof typeof val>)[e.field] ?? e.field],
+						path: [(map as Record<string, keyof SchemaOutput>)[e.field] ?? e.field],
 					});
 				}
 
