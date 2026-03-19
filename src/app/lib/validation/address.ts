@@ -26,6 +26,10 @@ export const transform = z.object({
 			while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
 			return lines;
 		})
+		.refine(
+			lines => !lines.reduce((acc, line) => acc || line.length === 0, false),
+			'Lines may not be empty',
+		)
 		.nullish()
 		.transform(v => v ?? undefined),
 	dependentLocality: z
