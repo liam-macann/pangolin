@@ -3,18 +3,20 @@
 
 import { TZDate } from '@date-fns/tz';
 import { DotsThreeIcon } from '@phosphor-icons/react';
-import type { ColumnDef } from '@tanstack/react-table';
+import { type ColumnDef } from '@tanstack/react-table';
 import { cva } from 'class-variance-authority';
 import { type ComponentProps, createContext, useContext } from 'react';
 import { toast } from 'sonner';
-import type { Data as InvoiceData } from '@/api/invoices/route';
-import { createDataTable } from '@/components/data-table';
-import { ToggleHeader } from '@/components/data-table/column-header';
-import type { statusEnum } from '@/db/schema';
+
+import { type Data as InvoiceData } from '@/api/invoices/route';
 import { updateInvoiceStatus, voidInvoice } from '@/lib/actions/invoice';
 import { useInvoices } from '@/lib/hooks';
 import { cn, type ElementType, formatCurrency, formatDateToLocal } from '@/lib/utils';
-import type { Enum } from '@/lib/utils/drizzle';
+import { type Enum } from '@/lib/utils/drizzle';
+import { type statusEnum } from '@/db/schema';
+
+import { createDataTable } from '@/components/data-table';
+import { ToggleHeader } from '@/components/data-table/column-header';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -177,7 +179,7 @@ export const columns: ColumnDef<Invoice>[] = [
 						{formatCurrency(row.original.grossTotal, row.original.config.currency, locale)}
 						<div
 							aria-hidden='true'
-							className='-inset-2 mask-size-[4rem] mask-center mask-repeat-x pointer-events-none absolute hidden scale-y-[170%] bg-black transition-opacity group-even/row:rotate-180 group-hover/row:opacity-20 group-nth-[3n]/row:scale-y-200 group-data-void/row:block dark:bg-red-11'
+							className='-inset-1 mask-size-[6rem] mask-center mask-repeat-x pointer-events-none absolute hidden scale-y-120 bg-red-12 transition-opacity group-even/row:rotate-180 group-nth-[3n]/row:scale-y-150 group-data-void/row:block'
 							style={{ maskImage: 'url("/scribble.svg")' }}
 						/>
 					</span>
