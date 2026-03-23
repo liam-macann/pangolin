@@ -2,6 +2,7 @@
 
 import { Switch as SwitchPrimitive } from '@base-ui/react/switch';
 import { cva } from 'class-variance-authority';
+
 import { cn } from '@/lib/utils';
 
 const switchVariants = cva(
@@ -29,8 +30,7 @@ const switchVariants = cva(
 
 const thumbVariants = cva(
 	cn(
-		'pointer-events-none block bg-background dark:data-checked:bg-primary-foreground dark:data-unchecked:bg-foreground',
-
+		'scheme-light pointer-events-none block bg-background dark:bg-foreground',
 		'transition-transform duration-200 ease-in-out-quart',
 		'scale-85 data-checked:translate-x-full data-unchecked:translate-x-0',
 		'rounded-[5px] shadow-xs ring-1 ring-foreground/10',
