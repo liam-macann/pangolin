@@ -1,5 +1,7 @@
 import { type CountryCode, getRegisteredCountries, registerCountry } from 'lib-address';
+
 import { _getAddressMetadata, type AddressData } from '@/lib/actions/address';
+
 import { formatAddressLib } from './lib';
 
 export type { AddressData };
@@ -18,28 +20,29 @@ export async function fetchAddressMetadata(country: CountryCode) {
 }
 
 import { isDeepStrictEqual } from 'node:util';
-import type { z } from 'zod';
-import { schema, transform } from '@/lib/validation/address';
+import { type z } from 'zod';
 
-type AddressInput = z.input<typeof schema>;
+import { transform as structuralSchema } from '@/lib/validation/address';
+
+type Address = z.input<typeof structuralSchema>;
 
 /** Accepts two unencrypted addresses and returns true if they are equal.
  *
  * @remarks Nullish values are not treated as equal. User ownership is not considered. */
-export function isAddressEqual(a?: AddressInput | null, b?: AddressInput | null) {
+export function isAddressEqual(a?: Address | null, b?: Address | null) {
 	if (!a || !b) return false;
 
 	// Transform addresses to normalized form before comparing
-	const { error: errorA, data: transformedA } = transform.safeParse(a);
-	const { error: errorB, data: transformedB } = transform.safeParse(b);
+	const { error: errorA, data: transformedA } = structuralSchema.safeParse(a);
+	const { error: errorB, data: transformedB } = structuralSchema.safeParse(b);
 
 	if (errorA || errorB) return false;
 
-	const key = schema.keyof().options;
+	const key = structuralSchema.keyof().options;
 	return key.every(key => isDeepStrictEqual(transformedA[key], transformedB[key]));
 }
 
-export async function formatAddress(address: AddressInput) {
+export async function formatAddress(address: Address) {
 	const {
 		streetAddress,
 		dependentLocality,
