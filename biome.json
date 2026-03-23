@@ -101,6 +101,7 @@
 					"level": "on",
 					"options": {
 						"groups": [
+							":BLANK_LINE:",
 							":URL:",
 							":NODE:",
 							":PACKAGE_WITH_PROTOCOL:",
