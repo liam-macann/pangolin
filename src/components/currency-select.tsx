@@ -1,6 +1,9 @@
-import type { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
+import { type Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
+import { matchSorter } from 'match-sorter';
+
 import currencies from '@/lib/data/currencies.json';
 import { cn } from '@/lib/utils';
+
 import {
 	Combobox,
 	ComboboxContent,
@@ -33,6 +36,7 @@ export function CurrencySelectRoot({ value, ...props }: CurrencySelectProps) {
 			isItemEqualToValue={(item, s) => item.iso === s.iso}
 			itemToStringLabel={v => v.name}
 			itemToStringValue={v => v.iso}
+			filter={fuzzyFilter}
 			{...props}
 		/>
 	);
@@ -74,4 +78,17 @@ export function CurrencySelectContent({
 			</ComboboxList>
 		</ComboboxContent>
 	);
+}
+
+function fuzzyFilter(item: Currency, query: string): boolean {
+	if (!query) return true;
+
+	const results = matchSorter([item], query, {
+		keys: [
+			{ key: 'iso', threshold: matchSorter.rankings.STARTS_WITH },
+			{ key: 'name', threshold: matchSorter.rankings.CONTAINS },
+		],
+	});
+
+	return results.length > 0;
 }
