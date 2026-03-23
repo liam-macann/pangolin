@@ -1,7 +1,9 @@
-import type { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
+import { type Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { getTimeZones, type TimeZone } from '@vvo/tzdb';
 import { matchSorter } from 'match-sorter';
+
 import { cn } from '@/lib/utils';
+
 import {
 	Combobox,
 	ComboboxCollection,
@@ -78,11 +80,30 @@ export function TimezoneSelectContent({
 // Separate component to allow memoization
 function Item({ tz }: { tz: TimeZone }) {
 	return (
-		<ComboboxItem key={tz.name} value={tz} className='items-baseline pr-2'>
+		<ComboboxItem key={tz.name} value={tz} className='items-baseline overflow-hidden pr-2'>
 			<div className='flex w-full flex-col gap-0.5 overflow-hidden'>
-				<div className='flex items-baseline gap-1 pr-6 font-medium'>
-					<span>{tz.alternativeName}</span>
-					<span className='shrink-0 text-muted-foreground text-xs'>
+				<span className='line-clamp-1 w-full items-baseline truncate whitespace-pre pr-6 font-medium'>
+					{tz.countryName}
+					<span className='ml-1.5 text-muted-foreground text-xs'>
+						{tz.mainCities
+							.filter(inp => inp.localeCompare(tz.countryName))
+							.slice(0, 3)
+							.map((city, i, arr) => (
+								<span key={city}>
+									{i === 0 && <span className='sr-only'>: </span>}
+									{city}
+									{i < arr.length - 1 && (
+										<>
+											, <wbr />
+										</>
+									)}
+								</span>
+							))}
+					</span>
+				</span>
+				<div className='line-clamp-1 flex w-full truncate whitespace-pre text-muted-foreground text-xs'>
+					<span>{tz.alternativeName} – </span>
+					<span className='shrink-0 text-muted-foreground'>
 						{(() => {
 							const m = tz.currentTimeOffsetInMinutes;
 							const sign = m > 0 ? '+' : m < 0 ? '−' : '';
@@ -96,19 +117,6 @@ function Item({ tz }: { tz: TimeZone }) {
 						})()}
 					</span>
 				</div>
-				<span className='line-clamp-1 w-full truncate whitespace-pre text-muted-foreground text-xs'>
-					{tz.countryName} –{' '}
-					{tz.mainCities.slice(0, 4).map((city, i, arr) => (
-						<span key={city}>
-							{city}
-							{i < arr.length - 1 && (
-								<>
-									, <wbr />
-								</>
-							)}
-						</span>
-					))}
-				</span>
 			</div>
 		</ComboboxItem>
 	);
@@ -140,14 +148,10 @@ function fuzzyFilter(item: TimeZone, query: string): boolean {
 
 	const results = matchSorter([item], query, {
 		keys: [
-			'mainCities',
-			'countryName',
-			'alternativeName',
-			'abbreviation',
 			{ key: 'mainCities', threshold: matchSorter.rankings.WORD_STARTS_WITH },
-			{ key: 'countryName', threshold: matchSorter.rankings.CONTAINS },
+			{ key: 'countryName', threshold: matchSorter.rankings.WORD_STARTS_WITH },
 			{ key: 'alternativeName', threshold: matchSorter.rankings.WORD_STARTS_WITH },
-			{ key: 'abbreviation', threshold: matchSorter.rankings.ACRONYM },
+			{ key: 'abbreviation', threshold: matchSorter.rankings.STARTS_WITH },
 		],
 	});
 
