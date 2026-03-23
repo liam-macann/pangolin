@@ -3,6 +3,7 @@ import {
 	AddressValidationError,
 	type CountryCode,
 	CountryMissingError,
+	getCountryFields,
 	getCountrySubdivisions,
 	getOptionalFields,
 	getRegisteredCountries,
@@ -18,7 +19,7 @@ import z from 'zod';
 
 import { fetchAddressMetadata } from '@/lib/utils/address';
 
-// Ensure that allowed countries matches the expected type of lib-address (both independently reference ISO2 codes)
+// Typing ensures that allowed countries match the expected type of lib-address (both independently reference ISO2 codes)
 const validCountryCodes: Exclude<CountryCode, 'ZZ'>[] = getCountryDataList().map(c => c.iso2);
 
 /** Performs locale-unaware structural validation */
@@ -40,12 +41,28 @@ export const transform = z.object({
 			lines => !lines.reduce((acc, line) => acc || line.length === 0, false),
 			'Lines may not be empty',
 		)
-		.optional(),
-	dependentLocality: z.string().optional(),
-	city: z.string().optional(),
-	administrativeArea: z.string().optional(),
-	postalCode: z.string().optional(),
-	sortingCode: z.string().optional(),
+		.nullish()
+		.transform(v => v || undefined),
+	dependentLocality: z
+		.string()
+		.nullish()
+		.transform(v => v || undefined),
+	city: z
+		.string()
+		.nullish()
+		.transform(v => v || undefined),
+	administrativeArea: z
+		.string()
+		.nullish()
+		.transform(v => v || undefined),
+	postalCode: z
+		.string()
+		.nullish()
+		.transform(v => v || undefined),
+	sortingCode: z
+		.string()
+		.nullish()
+		.transform(v => v || undefined),
 	country: z.enum(validCountryCodes, 'Invalid country or territory'),
 });
 
@@ -58,7 +75,7 @@ export const transform = z.object({
 type SchemaOutput = z.output<typeof transform>;
 
 /** Lookup object to map input schema to validation input format */
-const map = {
+const libFieldMap = {
 	zip: 'postalCode',
 	state: 'administrativeArea',
 	addressLine1: 'streetAddress',
@@ -67,8 +84,8 @@ const map = {
 } satisfies Partial<Record<keyof LibAddress, keyof SchemaOutput>>;
 
 /** For a given key, returns the mapped value type (schema adapter) */
-type MapLookup<K extends keyof LibAddress> = K extends keyof typeof map
-	? SchemaOutput[(typeof map)[K]]
+type MapLookup<K extends keyof LibAddress> = K extends keyof typeof libFieldMap
+	? SchemaOutput[(typeof libFieldMap)[K]]
 	: K extends keyof SchemaOutput
 		? SchemaOutput[K]
 		: never;
@@ -82,10 +99,35 @@ export const schema = transform
 		if (!registered.includes(val.country)) await fetchAddressMetadata(val.country);
 		return val;
 	})
+	// Ensure only relevant fields are present for the country
+	.transform(val => {
+		// Get required and optional fields for the country
+		const fields = new Set(
+			Object.entries(getCountryFields(val.country))
+				.filter(([_, required]) => !!required)
+				.map(([key]) => key)
+				.map(key => (libFieldMap as Record<string, string>)[key] ?? key),
+		);
+
+		// Strip fields not allowable for country
+		const minimal: SchemaOutput = {
+			// Spread ensures that type inference works
+			...val,
+			// Set invalid fields to undefined
+			...Object.fromEntries(
+				Object.keys(val)
+					.filter(key => !fields.has(key))
+					.map(key => [key, undefined]),
+			),
+			country: val.country,
+		};
+
+		return minimal;
+	})
 	.superRefine(async (val, ctx) => {
 		/** Accepts a key of lib-address input, and returns the corresponding value in the input schema */
 		function getProp<K extends keyof LibAddress>(key: K): MapLookup<K> {
-			const resolvedKey = (map as Record<string, keyof SchemaOutput>)[key] ?? key;
+			const resolvedKey = (libFieldMap as Record<string, keyof SchemaOutput>)[key] ?? key;
 			return val[resolvedKey] as MapLookup<K>;
 		}
 
@@ -116,7 +158,7 @@ export const schema = transform
 							expected: 'string',
 							received: 'undefined',
 							message: 'Required',
-							path: [(map as Record<string, keyof SchemaOutput>)[e.field] ?? e.field],
+							path: [(libFieldMap as Record<string, keyof SchemaOutput>)[e.field] ?? e.field],
 						});
 					}
 
@@ -130,14 +172,14 @@ export const schema = transform
 									code: 'invalid_format',
 									format: e.subRegionFormat,
 									message: "Code doesn't match region",
-									path: [map.zip || 'zip'],
+									path: [libFieldMap.zip ?? 'zip'],
 								});
 							} else {
 								ctx.addIssue({
 									code: 'invalid_format',
 									format: e.format,
 									message: 'Invalid',
-									path: [map.zip || 'zip'],
+									path: [libFieldMap.zip ?? 'zip'],
 								});
 							}
 						}
@@ -152,7 +194,7 @@ export const schema = transform
 								code: 'invalid_value',
 								values: states.map(v => v.value),
 								input: input.state,
-								path: [map.state || 'state'],
+								path: [libFieldMap.state ?? 'state'],
 								message: 'Invalid',
 							});
 						}

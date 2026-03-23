@@ -9,8 +9,10 @@ import {
 	useFormContext,
 	useWatch,
 } from 'react-hook-form';
-import type { AddressMetadata } from '@/lib/hooks';
+
+import { type AddressMetadata } from '@/lib/hooks';
 import mergeRefs, { cn } from '@/lib/utils';
+
 import { Button } from '@/ui/button';
 import {
 	Combobox,
@@ -22,11 +24,12 @@ import {
 } from '@/ui/combobox';
 import { Field, FieldContent, FieldError, FieldLabel, FieldTitle } from '@/ui/field';
 import { Input } from '@/ui/input';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 import { Textarea } from '@/ui/textarea';
 import TextTooltip from '@/ui/tooltip';
-import { RegionSelectContent, RegionSelectRoot } from '../region-select';
-import { InputGroup, InputGroupAddon, InputGroupInput } from '../ui/input-group';
-import type { FormValues } from '.';
+
+import { RegionSelectContent, RegionSelectRoot } from './../region-select';
+import { type FormValues } from '.';
 
 export interface FieldProps {
 	metadata: Partial<AddressMetadata>;
@@ -99,7 +102,6 @@ const StreetAddress = ({ disabled }: FieldProps) => {
 			{({ control, setValue, getValues }) => (
 				<Controller
 					control={control}
-					shouldUnregister
 					name='address.streetAddress'
 					render={({ field, fieldState }) => {
 						const numberOfLines = field.value?.length || 0;
@@ -185,7 +187,6 @@ const DependentLocality = ({ metadata, disabled }: FieldProps) => {
 			{({ control }) => (
 				<Controller
 					control={control}
-					shouldUnregister
 					name='address.dependentLocality'
 					render={({ field, fieldState }) => (
 						<AddressLabel htmlFor={id}>
@@ -219,7 +220,6 @@ const City = ({ metadata, disabled }: FieldProps) => {
 			{({ control }) => (
 				<Controller
 					control={control}
-					shouldUnregister
 					name='address.city'
 					render={({ field, fieldState }) => (
 						<AddressLabel htmlFor={id}>
@@ -253,7 +253,6 @@ const AdministrativeArea = ({ metadata, disabled }: FieldProps) => {
 			{({ control, trigger, formState, getFieldState }) => (
 				<Controller
 					control={control}
-					shouldUnregister
 					name='address.administrativeArea'
 					render={({ field, fieldState }) => {
 						function onChange(e: ChangeEvent<HTMLInputElement>) {
@@ -385,7 +384,6 @@ const PostalCode = ({ metadata, disabled }: FieldProps) => {
 			{({ control }) => (
 				<Controller
 					control={control}
-					shouldUnregister
 					name='address.postalCode'
 					render={({ field, fieldState }) => {
 						const example = metadata.key && getZipExamples(metadata.key, administrativeArea);
@@ -438,7 +436,6 @@ const SortingCode = ({ disabled }: FieldProps) => {
 			{({ control }) => (
 				<Controller
 					control={control}
-					shouldUnregister
 					name='address.sortingCode'
 					render={({ field, fieldState }) => (
 						<AddressLabel htmlFor={id}>

@@ -92,8 +92,6 @@ export default function ConfigForm({
 	const revertToSavepoint = (update?: FormInput) => {
 		if (update) savepoint.current = update;
 
-		console.log('Reverted to savepoint', update);
-
 		// Prevent form submission triggering AnimatePresence
 		setFormVersion(v => v + 1);
 		_reset(savepoint.current);

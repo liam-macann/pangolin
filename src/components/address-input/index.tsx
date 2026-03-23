@@ -5,11 +5,14 @@ import { type CountryCode, isValidCountryCode } from 'lib-address';
 import { ErrorBoundary } from 'react-error-boundary';
 import { type Control, useWatch } from 'react-hook-form';
 import type z from 'zod';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
 import { useAddressMetadata } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type schema from '@/lib/validation/address';
+
+import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 import { FieldSet } from '@/ui/field';
+
 import { Country, FIELD_MAPPING, type FieldProps } from './fields';
 
 type AddressField = z.input<typeof schema>;
@@ -127,6 +130,7 @@ function Fields({ className, ...props }: FieldProps & { className?: string }) {
 					)}
 				>
 					{arr.map(v => {
+						// Discard literals
 						if (v[0] !== '%') return null;
 
 						const Component = FIELD_MAPPING[v.substring(1)];
