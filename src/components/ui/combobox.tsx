@@ -3,7 +3,9 @@
 import { Combobox as ComboboxPrimitive } from '@base-ui/react';
 import { CaretDownIcon, CaretUpDownIcon, CheckIcon, XIcon } from '@phosphor-icons/react';
 import * as React from 'react';
+
 import { cn } from '@/lib/utils';
+
 import { Button } from '@/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/ui/input-group';
 
@@ -132,7 +134,7 @@ function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
 		<ComboboxPrimitive.List
 			data-slot='combobox-list'
 			className={cn(
-				'no-scrollbar max-h-[min(calc(--spacing(72)---spacing(9)),calc(var(--available-height)---spacing(9)))] scroll-py-1 overflow-auto overscroll-contain p-1 has-data-[slot="combobox-label"]:pt-0 data-empty:p-0',
+				'max-h-[min(calc(--spacing(72)---spacing(9)),calc(var(--available-height)---spacing(9)))] scroll-py-1 overflow-auto overscroll-contain p-1 has-data-[slot="combobox-label"]:pt-0 data-empty:p-0',
 				className,
 			)}
 			{...props}
