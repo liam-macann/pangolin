@@ -1,13 +1,14 @@
 'use client';
 
 import { CheckIcon } from '@phosphor-icons/react';
-import { type ComponentProps, useId, useState } from 'react';
+import { type ComponentProps, useId } from 'react';
 import { type Control, Controller, type ControllerRenderProps } from 'react-hook-form';
 import type z from 'zod/v4';
-import { InfoTip } from '@/components/info';
+
 import { cn } from '@/lib/utils';
-import type { config as formSchema } from '@/lib/validation/config';
-import schemes from '@/src/app/ui/colorSchemes';
+import { type config as formSchema } from '@/lib/validation/config';
+
+import { InfoTip } from '@/components/info';
 import { Button } from '@/ui/button';
 import {
 	Field,
@@ -21,6 +22,8 @@ import {
 	FieldTitle,
 } from '@/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
+
+import schemes from '@/src/app/ui/colorSchemes';
 
 type FormValues = z.input<typeof formSchema>;
 type Fields = Pick<FormValues, 'colorScheme' | 'numberingScheme'>;
@@ -111,14 +114,12 @@ export function Customization<T extends Fields>({ control: _control }: { control
 }
 
 function ColorPalette({ onChange, ...field }: ControllerRenderProps<Fields, 'colorScheme'>) {
-	const [hover, setHover] = useState<string | null>(null);
 	return (
 		<RadioGroup
 			className='group/color-palette flex gap-2'
 			{...field}
 			aria-labelledby='colorSchemeLabel'
 			onValueChange={onChange}
-			onPointerLeave={() => setHover(null)}
 		>
 			{Object.entries(schemes).map(([key, scheme]) => (
 				<ColorSwatch
@@ -126,7 +127,6 @@ function ColorPalette({ onChange, ...field }: ControllerRenderProps<Fields, 'col
 					value={key}
 					style={{ backgroundColor: scheme.accent }}
 					selected={field.value === key}
-					onMouseEnter={() => setHover(key)}
 				/>
 			))}
 		</RadioGroup>

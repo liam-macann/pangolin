@@ -1,9 +1,10 @@
 // tailwind.config.js
 
 import radix from '@radix-ui/colors';
-import type { Config } from 'tailwindcss';
+import { type Config } from 'tailwindcss';
 import plugin from 'tailwindcss/plugin';
-import type { AllSameKeys } from '@/lib/utils';
+
+import { type AllSameKeys } from '@/lib/utils';
 
 const defineColors = <T extends Record<string, [object, object, object]>>(
 	col: { [K in keyof T]: AllSameKeys<T[K]> },

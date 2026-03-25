@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 const switchVariants = cva(
 	cn(
 		'peer group/switch relative box-content inline-flex shrink-0 items-center outline-none',
-		'after:-inset-x-3 after:-inset-y-2 after:absolute',
+		'after:absolute after:-inset-x-3 after:-inset-y-2',
 
 		'data-disabled:cursor-not-allowed data-checked:bg-primary data-unchecked:bg-input data-disabled:opacity-50 dark:data-unchecked:bg-input/80',
 		'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40',

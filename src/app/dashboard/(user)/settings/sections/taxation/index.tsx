@@ -6,7 +6,7 @@ import type z from 'zod/v4';
 import { type config as formSchema } from '@/lib/validation/config';
 
 import { InfoTip } from '@/components/info';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Checkbox } from '@/ui/checkbox';
 import {
 	Field,
 	FieldContent,
@@ -82,7 +82,7 @@ export function Taxation<T extends Fields>({ control: _control }: { control: Con
 						{/* AnimatePresence doesn't work with gap; wrapper needed */}
 						<div className='isolate'>
 							<DuplicateWarning control={control} className='ml-8 pb-6' />
-							<TaxRateField control={control} className='not-data-empty:-my-2 relative z-10' />
+							<TaxRateField control={control} className='relative z-10 not-data-empty:-my-2' />
 						</div>
 					</FieldSet>
 				)}

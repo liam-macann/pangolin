@@ -1,7 +1,9 @@
-import type { Metadata } from 'next';
+import { type Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { getSession } from '@/auth';
+
 import { Button } from '@/ui/button';
+
+import { getSession } from '@/auth';
 
 export const metadata: Metadata = {
 	title: 'Welcome',

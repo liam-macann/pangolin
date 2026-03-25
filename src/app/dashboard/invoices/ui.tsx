@@ -1,9 +1,10 @@
 'use client';
 
-import type { JSX } from 'react';
-import type { Data as InvoiceData } from '@/api/invoices/route';
+import { type JSX } from 'react';
+
+import { type Data as InvoiceData } from '@/api/invoices/route';
 import { useInvoices } from '@/lib/hooks';
-import type { ElementType } from '@/lib/utils';
+import { type ElementType } from '@/lib/utils';
 
 import InvoiceTable from './table';
 

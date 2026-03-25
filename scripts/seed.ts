@@ -12,8 +12,9 @@ import { reset, seed } from 'drizzle-seed';
 // Temporary. This breaks determinism, but the Drizzle uuid func does not adhere to spec:
 // https://github.com/drizzle-team/drizzle-orm/issues/3690
 import { v4 as uuidv4 } from 'uuid';
-import { db } from '../src/db';
-import * as schema from '../src/db/schema';
+
+import { db } from './../src/db';
+import * as schema from './../src/db/schema';
 
 const { timezones, currencies, keychain, ...tables } = schema;
 

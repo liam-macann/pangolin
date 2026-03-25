@@ -9,26 +9,18 @@ import { type ReactElement, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { type Control, Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import type { z } from 'zod';
-import { InfoTip } from '@/components/info';
-import { Alert, AlertTitle } from '@/components/ui/alert';
-import { Calendar } from '@/components/ui/calendar';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuPortal,
-	DropdownMenuSeparator,
-	DropdownMenuSub,
-	DropdownMenuSubContent,
-	DropdownMenuSubTrigger,
-	DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { type z } from 'zod';
+
 import { createInvoice } from '@/lib/actions/invoice';
-import type { getUserConfig } from '@/lib/data';
+import { type getUserConfig } from '@/lib/data';
 import { useClients, useInvoices } from '@/lib/hooks';
 import { cn, formatDateToLocal, type Prettify } from '@/lib/utils';
 import { invoice as schema } from '@/lib/validation/invoice';
+
+import { InfoTip } from '@/components/info';
+import { Alert, AlertTitle } from '@/ui/alert';
 import { Button } from '@/ui/button';
+import { Calendar } from '@/ui/calendar';
 import {
 	Combobox,
 	ComboboxContent,
@@ -47,9 +39,20 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@/ui/dialog';
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuPortal,
+	DropdownMenuSeparator,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubTrigger,
+	DropdownMenuTrigger,
+} from '@/ui/dropdown-menu';
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
+
 import { InvoiceItemsField } from './invoiceItems';
 
 export function CreateInvoiceDialog({
@@ -126,7 +129,7 @@ export function CreateInvoiceDialog({
 									<Field orientation='horizontal'>
 										<FieldLabel
 											htmlFor='title'
-											className='-translate-y-1/2 !grow-0 mt-4.5 self-start'
+											className='!grow-0 mt-4.5 -translate-y-1/2 self-start'
 										>
 											Title
 										</FieldLabel>
@@ -158,7 +161,7 @@ export function CreateInvoiceDialog({
 										<Field orientation='responsive'>
 											<FieldLabel
 												htmlFor='description'
-												className='@md/field-group:-translate-y-1/2 @md/field-group:mt-4.5 self-start'
+												className='@md/field-group:mt-4.5 @md/field-group:-translate-y-1/2 self-start'
 											>
 												Description
 												<InfoTip side='right'>Printed below the invoice reference</InfoTip>
@@ -246,7 +249,7 @@ function BillTo({ control }: { control: Control<z.input<typeof schema>> }) {
 			control={control}
 			render={({ field, fieldState }) => (
 				<Field orientation='horizontal'>
-					<FieldLabel htmlFor='clientId' className='-translate-y-1/2 !grow-0 mt-4.5 self-start'>
+					<FieldLabel htmlFor='clientId' className='!grow-0 mt-4.5 -translate-y-1/2 self-start'>
 						Bill To
 					</FieldLabel>
 					<div className='flex grow flex-col items-end gap-1'>

@@ -1,10 +1,11 @@
 import { eq, getColumns } from 'drizzle-orm';
 import { cacheLife } from 'next/cache';
 
-import { getSession } from '@/auth';
+import { crypto } from '@/lib/encrypt';
 import { db } from '@/db';
 import { supportedTimezones, timezones } from '@/db/schema';
-import { crypto } from '@/lib/encrypt';
+
+import { getSession } from '@/auth';
 
 export async function getCurrencies() {
 	'use cache';

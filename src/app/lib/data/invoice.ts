@@ -1,8 +1,10 @@
-import type { RelationsFilter } from 'drizzle-orm';
-import { getSession } from '@/auth';
-import { db } from '@/db';
-import type { relations } from '@/db/relations';
+import { type RelationsFilter } from 'drizzle-orm';
+
 import { invoiceReference } from '@/lib/utils';
+import { db } from '@/db';
+import { type relations } from '@/db/relations';
+
+import { getSession } from '@/auth';
 
 /** Fetch all invoices for authenticated user, including basic relational data */
 
@@ -59,6 +61,8 @@ export const fetchInvoicesForClient = (clientId: string, limit?: number) =>
 
 import { asc, eq, min, sql, sumDistinct } from 'drizzle-orm';
 
+import { crypto } from '@/lib/encrypt';
+import { withFilter } from '@/lib/utils/drizzle';
 import {
 	config as configSchema,
 	configTaxes,
@@ -67,8 +71,6 @@ import {
 	itemTaxes,
 	taxes as taxesSchema,
 } from '@/db/schema';
-import { crypto } from '@/lib/encrypt';
-import { withFilter } from '@/lib/utils/drizzle';
 
 /** Join relational (incl. item) details with a single invoice record for authenticated user */
 export async function fetchInvoice(id: string) {

@@ -2,7 +2,8 @@
 // This is a slightly modified fork of the lib-address util, without validation
 
 import { type AnyAddress, type BaseAddress, type formatAddress, getCountryData } from 'lib-address';
-import type { Prettify } from '..';
+
+import { type Prettify } from '..';
 
 export function formatAddressLib(
 	address: Parameters<typeof formatAddress>[0],

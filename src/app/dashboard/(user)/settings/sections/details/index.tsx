@@ -7,8 +7,6 @@ import type z from 'zod/v4';
 import { type config as formSchema } from '@/lib/validation/config';
 
 import { AddressInput } from '@/components/address-input';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import {
 	Field,
 	FieldContent,
@@ -19,6 +17,8 @@ import {
 	FieldLegend,
 	FieldSet,
 } from '@/ui/field';
+import { Input } from '@/ui/input';
+import { Switch } from '@/ui/switch';
 
 import { PaymentDetailsField } from './paymentDetails';
 import { RegistrationNumberField } from './registrationNumber';

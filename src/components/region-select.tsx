@@ -1,6 +1,8 @@
-import type { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
+import { type Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { getCountryDataList, type ICountryData } from 'countries-list';
+
 import { cn } from '@/lib/utils';
+
 import {
 	Combobox,
 	ComboboxContent,

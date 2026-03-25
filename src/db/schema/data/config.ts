@@ -14,10 +14,12 @@ import {
 	uuid,
 	varchar,
 } from 'drizzle-orm/pg-core';
+
 import { encrypted } from '@/lib/utils/drizzle';
 // Schema imports
-import { users } from '../auth';
-import { currencies, supportedTimezones } from '../i18n';
+import { users } from '@/db/schema/auth';
+import { currencies, supportedTimezones } from '@/db/schema/i18n';
+
 import { scdDates } from './_helpers';
 import { address } from './address';
 
@@ -99,9 +101,7 @@ export const config = pgTable(
 	},
 	t => [
 		// Ensure that a user has only one valid configuration (multiple null values will conflict)
-		unique('uq_config_version')
-			.on(t.userId, t.validTo)
-			.nullsNotDistinct(),
+		unique('uq_config_version').on(t.userId, t.validTo).nullsNotDistinct(),
 
 		check('chk_config_valid', sql`${t.validFrom} <= now()`),
 		check('chk_language_lowercase', sql`${t.language} = lower(${t.language})`),

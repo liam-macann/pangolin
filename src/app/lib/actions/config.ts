@@ -13,7 +13,10 @@ import { revalidatePath } from 'next/cache';
 import { after } from 'next/server';
 import { v4 as uuid } from 'uuid';
 import type z from 'zod';
-import { getSession } from '@/auth';
+
+import { crypto } from '@/lib/encrypt';
+import { isAddressEqual } from '@/lib/utils/address';
+import { config as configInput } from '@/lib/validation/config';
 import { db } from '@/db';
 import {
 	address as addressSchema,
@@ -22,9 +25,8 @@ import {
 	invoices as invoicesSchema,
 	taxes as taxesSchema,
 } from '@/db/schema';
-import { crypto } from '@/lib/encrypt';
-import { isAddressEqual } from '../utils/address';
-import { config as configInput } from '../validation/config';
+
+import { getSession } from '@/auth';
 
 export async function updateUserConfig(config: z.infer<typeof configInput>) {
 	// Authenticate the user
@@ -93,38 +95,34 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 			// Define as CTEs for transactional behaviour without network round-trips
 			const actions: WithSubqueryWithoutSelection<string>[] = [
 				// Insert new config
-				tx
-					.$with('create_config')
-					.as(
-						tx.insert(configSchema).values({
-							...safeConfig,
-							id: configId,
-							userId: session.user.id,
-							addressId: await getAddressId(),
-							paymentDetails:
-								safeConfig.paymentDetails.length > 0
-									? await vault.encrypt(
-											...safeConfig.paymentDetails.map(v => `${v.label}: ${v.value}`),
-										)
-									: null,
-							registrationNumber:
-								safeConfig.registrationNumber.length > 0
-									? await vault.encrypt(
-											...safeConfig.registrationNumber.map(v => `${v.label}: ${v.value}`),
-										)
-									: null,
-						}),
-					),
+				tx.$with('create_config').as(
+					tx.insert(configSchema).values({
+						...safeConfig,
+						id: configId,
+						userId: session.user.id,
+						addressId: await getAddressId(),
+						paymentDetails:
+							safeConfig.paymentDetails.length > 0
+								? await vault.encrypt(
+										...safeConfig.paymentDetails.map(v => `${v.label}: ${v.value}`),
+									)
+								: null,
+						registrationNumber:
+							safeConfig.registrationNumber.length > 0
+								? await vault.encrypt(
+										...safeConfig.registrationNumber.map(v => `${v.label}: ${v.value}`),
+									)
+								: null,
+					}),
+				),
 
 				// Void previously active config
-				tx
-					.$with('void_config')
-					.as(
-						tx
-							.update(configSchema)
-							.set({ validTo: sql`now()` })
-							.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo))),
-					),
+				tx.$with('void_config').as(
+					tx
+						.update(configSchema)
+						.set({ validTo: sql`now()` })
+						.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo))),
+				),
 			];
 
 			vault.destroy();
@@ -144,25 +142,23 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 
 				actions.push(
 					// Insert new tax-config junctions
-					tx
-						.$with('tax_config_junction')
-						.as(
-							tx.insert(configTaxesSchema).values(
-								taxes.map(tax => {
-									// Find the tax id in the database, using returned values from insert
-									// Necessary as order is not in tax db schema, and so can't be piped down with CTEs
-									const taxId = dbTaxes.find(i => i.name === tax.name && i.rate === tax.rate);
-									if (!taxId)
-										throw new Error(`Tax ${tax.name} with rate ${tax.rate} not found in database`);
+					tx.$with('tax_config_junction').as(
+						tx.insert(configTaxesSchema).values(
+							taxes.map(tax => {
+								// Find the tax id in the database, using returned values from insert
+								// Necessary as order is not in tax db schema, and so can't be piped down with CTEs
+								const taxId = dbTaxes.find(i => i.name === tax.name && i.rate === tax.rate);
+								if (!taxId)
+									throw new Error(`Tax ${tax.name} with rate ${tax.rate} not found in database`);
 
-									return {
-										...tax,
-										configId,
-										taxId: taxId.id,
-									};
-								}),
-							),
+								return {
+									...tax,
+									configId,
+									taxId: taxId.id,
+								};
+							}),
 						),
+					),
 				);
 			}
 
@@ -192,10 +188,7 @@ async function databaseCleanup(userId: string) {
 					isNotNull(configSchema.validTo),
 					notExists(
 						// No invoices reference config row
-						db
-							.select()
-							.from(invoicesSchema)
-							.where(eq(invoicesSchema.configId, configSchema.id)),
+						db.select().from(invoicesSchema).where(eq(invoicesSchema.configId, configSchema.id)),
 					),
 				),
 			)
@@ -209,10 +202,7 @@ async function databaseCleanup(userId: string) {
 					eq(addressSchema.userId, userId),
 					notExists(
 						// No configs reference address row
-						db
-							.select()
-							.from(configSchema)
-							.where(eq(configSchema.addressId, addressSchema.id)),
+						db.select().from(configSchema).where(eq(configSchema.addressId, addressSchema.id)),
 					),
 				),
 			)

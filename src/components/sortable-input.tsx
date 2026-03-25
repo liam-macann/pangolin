@@ -62,6 +62,7 @@ export function SortableList({
 	children,
 }: {
 	className?: string;
+	// biome-ignore lint/suspicious/noExplicitAny: Not possible to infer the type of the item from the context
 	children: (item: any, index: number) => ReactNode;
 }) {
 	const items = use(ItemsContext);

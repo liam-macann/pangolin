@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -28,7 +28,7 @@
 			"recommended": true,
 			"style": {
 				"noRestrictedImports": {
-					"level": "on",
+					"level": "error",
 					"options": {
 						"patterns": [
 							{
@@ -107,8 +107,10 @@
 							":PACKAGE_WITH_PROTOCOL:",
 							":PACKAGE:",
 							":BLANK_LINE:",
+							"@/api",
 							"@/api/**",
 							"@/lib/**",
+							"@/db",
 							"@/db/**",
 							":BLANK_LINE:",
 							["@/components/**", "@/ui/**"],

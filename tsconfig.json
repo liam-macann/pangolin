@@ -33,6 +33,7 @@
 		"src/**/*.ts",
 		"src/**/*.tsx",
 		"drizzle.config.ts",
+		"tailwind.config.mts",
 		".next/types/**/*.ts",
 		".next/dev/types/**/*.ts"
 	]

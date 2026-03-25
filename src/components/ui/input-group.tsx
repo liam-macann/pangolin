@@ -4,12 +4,14 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import type * as React from 'react';
 
 import { cn } from '@/lib/utils';
+
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
 
 function InputGroup({ className, ...props }: React.ComponentProps<'div'>) {
 	return (
+		// biome-ignore lint/a11y/useSemanticElements: Not known to group form controls
 		<div
 			data-slot='input-group'
 			role='group'
@@ -47,6 +49,8 @@ function InputGroupAddon({
 	...props
 }: React.ComponentProps<'div'> & VariantProps<typeof inputGroupAddonVariants>) {
 	return (
+		// biome-ignore lint/a11y/useKeyWithClickEvents: Click handler focuses existing input. Adding keyboard event (eg. 'Enter') would not match behaviour when input _is_ focused
+		// biome-ignore lint/a11y/useSemanticElements: Not known to group form controls
 		<div
 			role='group'
 			data-slot='input-group-addon'
@@ -140,7 +144,7 @@ export {
 	InputGroup,
 	InputGroupAddon,
 	InputGroupButton,
-	InputGroupText,
 	InputGroupInput,
+	InputGroupText,
 	InputGroupTextarea,
 };

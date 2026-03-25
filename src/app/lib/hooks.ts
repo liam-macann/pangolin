@@ -8,7 +8,7 @@ import { fetcher } from '@/api';
 type Config = Omit<SWRConfiguration, 'fallbackData'>;
 type Response<T, C> = SWRResponse<T, unknown, C> & { isError: boolean };
 
-import type { Data as InvoiceData } from '@/api/invoices/route';
+import { type Data as InvoiceData } from '@/api/invoices/route';
 
 export function useInvoices<C extends Config>(initial?: InvoiceData, config?: C) {
 	const swr = useSWR('/api/invoices', fetcher<InvoiceData>, {
@@ -23,7 +23,7 @@ export function useInvoices<C extends Config>(initial?: InvoiceData, config?: C)
 	} as Response<InvoiceData, C>;
 }
 
-import type { Data as ClientData } from '@/api/clients/route';
+import { type Data as ClientData } from '@/api/clients/route';
 
 export function useClients<C extends Config>(initial?: ClientData, config?: C) {
 	const swr = useSWR('/api/clients', fetcher<ClientData>, {
@@ -38,8 +38,10 @@ export function useClients<C extends Config>(initial?: ClientData, config?: C) {
 }
 
 import { type CountryCode, registerCountry } from 'lib-address';
-import type { Data as AddressInputMetadata } from '@/api/address-metadata/[country]/route';
-export { useAddressMetadata, type AddressInputMetadata as AddressMetadata };
+
+import { type Data as AddressInputMetadata } from '@/api/address-metadata/[country]/route';
+
+export { type AddressInputMetadata as AddressMetadata, useAddressMetadata };
 
 /** Pulls data from lib wrapper around Google Address Metadata API */
 function useAddressMetadata<C extends Config>(

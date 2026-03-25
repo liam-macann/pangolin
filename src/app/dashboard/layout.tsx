@@ -1,8 +1,7 @@
 import { SignOutIcon, SlidersHorizontalIcon } from '@phosphor-icons/react/ssr';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { getSession, signOut } from '@/auth';
-import SideNav from '@/src/app/ui/dashboard/topnav';
+
 import UserAvatar, { AvatarEmpty } from '@/ui/avatar';
 import { Button } from '@/ui/button';
 import {
@@ -14,6 +13,9 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
+
+import { getSession, signOut } from '@/auth';
+import SideNav from '@/src/app/ui/dashboard/topnav';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
 	return (

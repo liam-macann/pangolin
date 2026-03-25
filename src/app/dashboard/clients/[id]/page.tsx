@@ -1,15 +1,18 @@
 import { ArchiveIcon, ArrowLeftIcon } from '@phosphor-icons/react/ssr';
-import type { Metadata } from 'next';
+import { type Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { Suspense } from 'react';
-import { InfoTip } from '@/components/info';
+
 import { getUserConfig } from '@/lib/data';
 import { fetchClientStats, fetchClients } from '@/lib/data/client';
 import { fetchInvoicesForClient } from '@/lib/data/invoice';
 import { cn, formatCurrency, pluralize } from '@/lib/utils';
+
+import { InfoTip } from '@/components/info';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
+
 import { Table } from './ui';
 
 export const metadata: Metadata = {

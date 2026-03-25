@@ -141,7 +141,7 @@ export default function ConfigForm({
 				<Details key={`details_${formVersion}`} control={control} />
 				<Localization control={control} />
 
-				<div className='-mx-2 sticky bottom-0 mt-14 flex grid-cols-2 gap-2 border-t bg-background px-2 py-4 pb-6 max-sm:grid max-md:fixed max-md:right-0 max-md:left-0 max-md:px-8 sm:justify-end'>
+				<div className='sticky bottom-0 -mx-2 mt-14 flex grid-cols-2 gap-2 border-t bg-background px-2 py-4 pb-6 max-sm:grid max-md:fixed max-md:right-0 max-md:left-0 max-md:px-8 sm:justify-end'>
 					<Button
 						type='button'
 						variant='ghost'

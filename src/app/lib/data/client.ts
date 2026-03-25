@@ -12,10 +12,12 @@ import {
 	type SQL,
 	sumDistinct,
 } from 'drizzle-orm';
-import { getSession } from '@/auth';
+
+import { jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
 import { db } from '@/db';
 import { clientData, clients, invoices, invoicesWithSum } from '@/db/schema';
-import { jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
+
+import { getSession } from '@/auth';
 
 export interface ClientResult {
 	id: string;

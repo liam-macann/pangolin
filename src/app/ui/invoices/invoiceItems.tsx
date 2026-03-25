@@ -194,7 +194,7 @@ function InvoiceItemsInput({
 						<SortableHandle className='-translate-x-1' />
 
 						{/* Occlude tax badge on drag overlap */}
-						<div className='-inset-x-3 -z-10 pointer-events-none absolute inset-0 bg-background drop-shadow-none dark:bg-popover' />
+						<div className='pointer-events-none absolute inset-0 -inset-x-3 -z-10 bg-background drop-shadow-none dark:bg-popover' />
 
 						<Controller
 							control={control}
@@ -367,7 +367,7 @@ function SortableActions({
 						{config.taxRegistration && (
 							<div
 								className={cn(
-									'-translate-y-1/2 absolute top-0 right-0 flex h-4.5 min-w-4.5 translate-x-1/2 items-center justify-center rounded-full border bg-background px-1 text-muted-foreground text-xs',
+									'absolute top-0 right-0 flex h-4.5 min-w-4.5 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border bg-background px-1 text-muted-foreground text-xs',
 									itemErrors?.taxes && 'border-black/20 bg-destructive-background text-white',
 								)}
 							>

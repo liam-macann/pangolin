@@ -1,9 +1,11 @@
 'use server';
 
 import { and, eq } from 'drizzle-orm';
-import { getSession } from '@/auth';
+
 import { db } from '@/db';
 import { clients } from '@/db/schema';
+
+import { getSession } from '@/auth';
 
 export async function updateClientFavorite(clientId: string, status: boolean) {
 	const session = await getSession();

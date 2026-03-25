@@ -1,14 +1,16 @@
 import { ArrowUpRightIcon, CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
-import type { Metadata } from 'next';
+import { type Metadata } from 'next';
 import { z } from 'zod';
+
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
+
 import { LoginButton } from './ui';
 
 export const metadata: Metadata = {
 	title: 'Login',
 };
 
-import { errorDetails } from '../error/page';
+import { errorDetails } from './../error/page';
 
 const paramsSchema = z.object({
 	callbackUrl: z.url().catch('/dashboard'),

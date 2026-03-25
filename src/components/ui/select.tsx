@@ -3,7 +3,9 @@
 import { Select as SelectPrimitive } from '@base-ui/react/select';
 import { CaretDownIcon, CaretUpIcon, CheckIcon } from '@phosphor-icons/react';
 import type * as React from 'react';
+
 import { cn } from '@/lib/utils';
+
 import { Button } from './button';
 import { DropdownMenuSeparator } from './dropdown-menu';
 
@@ -51,7 +53,7 @@ function SelectTrigger({
 			{children}
 			<SelectPrimitive.Icon
 				render={
-					<CaretDownIcon className='-mr-0.5 pointer-events-none size-4 text-inherit opacity-50' />
+					<CaretDownIcon className='pointer-events-none -mr-0.5 size-4 text-inherit opacity-50' />
 				}
 			/>
 		</SelectPrimitive.Trigger>
@@ -194,10 +196,10 @@ function SelectScrollDownButton({
 
 export {
 	Select,
+	SelectClear,
 	SelectContent,
 	SelectGroup,
 	SelectItem,
-	SelectClear,
 	SelectLabel,
 	SelectScrollDownButton,
 	SelectScrollUpButton,

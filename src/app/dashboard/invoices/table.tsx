@@ -179,7 +179,7 @@ export const columns: ColumnDef<Invoice>[] = [
 						{formatCurrency(row.original.grossTotal, row.original.config.currency, locale)}
 						<div
 							aria-hidden='true'
-							className='-inset-1 mask-size-[6rem] mask-center mask-repeat-x pointer-events-none absolute hidden scale-y-120 bg-red-12 transition-opacity group-even/row:rotate-180 group-nth-[3n]/row:scale-y-150 group-data-void/row:block'
+							className='mask-size-[6rem] mask-center mask-repeat-x pointer-events-none absolute -inset-1 hidden scale-y-120 bg-red-12 transition-opacity group-even/row:rotate-180 group-nth-[3n]/row:scale-y-150 group-data-void/row:block'
 							style={{ maskImage: 'url("/scribble.svg")' }}
 						/>
 					</span>

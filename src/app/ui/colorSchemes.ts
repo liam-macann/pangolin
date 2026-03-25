@@ -1,5 +1,5 @@
-import type { colorEnum } from '@/db/schema';
-import type { Enum } from '@/lib/utils/drizzle';
+import { type Enum } from '@/lib/utils/drizzle';
+import { type colorEnum } from '@/db/schema';
 
 interface Scheme {
 	/** Body text */

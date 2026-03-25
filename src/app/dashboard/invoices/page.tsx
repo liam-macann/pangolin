@@ -1,11 +1,15 @@
 import { PlusCircleIcon } from '@phosphor-icons/react/ssr';
-import type { Metadata } from 'next';
+import { type Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
+
 import { getUserConfig } from '@/lib/data';
 import { fetchInvoices } from '@/lib/data/invoice';
-import { CreateInvoiceDialog } from '@/src/app/ui/invoices/create-form';
+
 import { Button } from '@/ui/button';
+
+import { CreateInvoiceDialog } from '@/src/app/ui/invoices/create-form';
+
 import Data from './ui';
 
 export const metadata: Metadata = {

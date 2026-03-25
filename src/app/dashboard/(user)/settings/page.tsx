@@ -1,7 +1,10 @@
 import Link from 'next/link';
+
 import { getUserConfig } from '@/lib/data';
+
 import Avatar from '@/ui/avatar';
 import { Button } from '@/ui/button';
+
 import ConfigForm from './form';
 
 export default async function Page() {
@@ -13,7 +16,7 @@ export default async function Page() {
 				Settings
 			</h1>
 
-			<nav className='-ml-3 sticky top-8 flex flex-col items-start gap-1 self-start max-md:hidden'>
+			<nav className='sticky top-8 -ml-3 flex flex-col items-start gap-1 self-start max-md:hidden'>
 				<Button
 					size='sm'
 					className='text-foreground text-sm'

@@ -5,6 +5,7 @@ import * as React from 'react';
 import { type DayButton, DayPicker, getDefaultClassNames } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
+
 import { Button, buttonVariants } from '@/ui/button';
 
 function Calendar({
@@ -98,7 +99,7 @@ function Calendar({
 				),
 				range_end: cn('rounded-r-full', defaultClassNames.range_end),
 				today: cn(
-					'*:after:-bottom-0.5 *:after:absolute *:after:content-["•"]',
+					'*:after:absolute *:after:-bottom-0.5 *:after:content-["•"]',
 					defaultClassNames.today,
 				),
 				outside: cn('not-aria-selected:*:text-muted-foreground/50', defaultClassNames.outside),
@@ -169,7 +170,7 @@ function CalendarDayButton({
 			className={cn(
 				'!bg-transparent rounded-none font-[430] text-[0.8125rem] transition-none', // Button reset
 				'flex aspect-square size-full flex-col gap-1 border-none leading-none', // Sizing
-				'before:-z-10 isolate before:absolute before:inset-0.5 before:rounded-full not-disabled:hover:before:bg-accent', // Hover and selection background
+				'isolate before:absolute before:inset-0.5 before:-z-10 before:rounded-full not-disabled:hover:before:bg-accent', // Hover and selection background
 				'!ring-0 !border-transparent group-data-[focused=true]/day:before:border-ring group-data-[focused=true]/day:before:ring-2', // Focus ring
 
 				'data-[range-end=true]:before:!bg-primary data-[range-start=true]:before:!bg-primary data-[selected-single=true]:before:!bg-primary',

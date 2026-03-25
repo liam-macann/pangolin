@@ -3,6 +3,7 @@ import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 import { cn } from '@/lib/utils';
+
 import { Separator } from '@/ui/separator';
 
 const buttonGroupVariants = cva(
@@ -28,6 +29,7 @@ function ButtonGroup({
 	...props
 }: React.ComponentProps<'div'> & VariantProps<typeof buttonGroupVariants>) {
 	return (
+		// biome-ignore lint/a11y/useSemanticElements: Not grouping form controls
 		<div
 			role='group'
 			data-slot='button-group'

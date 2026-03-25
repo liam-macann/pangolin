@@ -1,7 +1,8 @@
 import { pgTable, text, unique, uuid } from 'drizzle-orm/pg-core';
-import type { CountryCode } from 'lib-address';
+import { type CountryCode } from 'lib-address';
+
 import { encrypted } from '@/lib/utils/drizzle';
-import { users } from '../auth';
+import { users } from '@/db/schema/auth';
 
 // Schema taken from Google open-source address metadata
 // https://github.com/google/libaddressinput/wiki/AddressValidationMetadata

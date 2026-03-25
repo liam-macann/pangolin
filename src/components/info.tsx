@@ -3,7 +3,9 @@
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
 import { InfoIcon } from '@phosphor-icons/react';
 import Balancer from 'react-wrap-balancer';
+
 import { cn } from '@/lib/utils';
+
 import { Button } from './ui/button';
 
 export function InfoTip({
@@ -19,7 +21,7 @@ export function InfoTip({
 		<PopoverPrimitive.Root>
 			<PopoverPrimitive.Trigger
 				openOnHover
-				className='-m-1.5 group/info'
+				className='group/info -m-1.5'
 				render={
 					<Button
 						variant='ghost'
@@ -76,7 +78,7 @@ function PopoverContent({
 					<PopoverPrimitive.Arrow
 						className={cn(
 							'fill-primary dark:fill-gray-900',
-							'data-[side=left]:-rotate-90 data-[side=bottom]:top-[0.3px] data-[side=left]:right-[0.3px] data-[side=top]:bottom-[0.3px] data-[side=right]:left-[0.3px] data-[side=bottom]:rotate-180 data-[side=right]:rotate-90',
+							'data-[side=bottom]:top-[0.3px] data-[side=left]:right-[0.3px] data-[side=top]:bottom-[0.3px] data-[side=right]:left-[0.3px] data-[side=bottom]:rotate-180 data-[side=left]:-rotate-90 data-[side=right]:rotate-90',
 						)}
 					>
 						<Arrow className='translate-y-full' />

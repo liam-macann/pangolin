@@ -3,6 +3,7 @@
 import { Avatar as AvatarPrimitive } from '@base-ui/react/avatar';
 import { UserIcon } from '@phosphor-icons/react';
 import type * as React from 'react';
+
 import { cn } from '@/lib/utils/index';
 
 function Avatar({
@@ -69,7 +70,7 @@ function AvatarGroup({ className, ...props }: React.ComponentProps<'div'>) {
 		<div
 			data-slot='avatar-group'
 			className={cn(
-				'group/avatar-group -space-x-2 flex *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background',
+				'group/avatar-group flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background',
 				className,
 			)}
 			{...props}
@@ -90,7 +91,7 @@ function AvatarGroupCount({ className, ...props }: React.ComponentProps<'div'>) 
 	);
 }
 
-export { Avatar, AvatarImage, AvatarFallback, AvatarGroup, AvatarGroupCount, AvatarBadge };
+export { Avatar, AvatarBadge, AvatarFallback, AvatarGroup, AvatarGroupCount, AvatarImage };
 
 export default function UserAvatar({
 	image,

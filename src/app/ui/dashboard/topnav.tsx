@@ -17,7 +17,7 @@ export default function TopNav({ className }: { className?: string }) {
 						className={clsx(
 							'relative focus:z-10',
 							pathname === link.href
-								? 'after:-bottom-2.5 after:pointer-events-none after:absolute after:left-0 after:block after:h-[2px] after:w-full after:translate-y-full after:bg-accent-foreground'
+								? 'after:pointer-events-none after:absolute after:-bottom-2.5 after:left-0 after:block after:h-[2px] after:w-full after:translate-y-full after:bg-accent-foreground'
 								: 'text-muted-foreground',
 						)}
 						nativeButton={false}
@@ -30,6 +30,7 @@ export default function TopNav({ className }: { className?: string }) {
 }
 
 import { usePathname } from 'next/navigation';
+
 import { Button } from '@/src/components/ui/button';
 
 // Map of links to display in the navigation.

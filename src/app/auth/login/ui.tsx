@@ -1,7 +1,9 @@
 'use client';
 
-import type { ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
+
 import { signIn } from '@/lib/auth';
+
 import { Button } from '@/ui/button';
 
 export function LoginButton({

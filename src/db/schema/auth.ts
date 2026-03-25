@@ -1,4 +1,5 @@
 import { boolean, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+
 import { encrypted } from '@/lib/utils/drizzle';
 
 export const users = pgTable('user', {

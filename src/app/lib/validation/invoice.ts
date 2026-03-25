@@ -1,7 +1,8 @@
 import { createInsertSchema } from 'drizzle-zod';
 import z from 'zod/v4';
+
+import { intlNumber } from '@/lib/zod';
 import { invoiceItems, invoices as invoicesSchema } from '@/db/schema/data';
-import { intlNumber } from '../zod';
 
 const item = createInsertSchema(invoiceItems, {
 	label: z => z.min(1, 'Please enter a description'),

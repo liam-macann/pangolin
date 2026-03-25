@@ -1,7 +1,8 @@
 'use client';
 
-import type { Data } from '@/api/invoices/route';
-import { columns, createInvoiceTable, statusVariants } from '../../invoices/table';
+import { type Data } from '@/api/invoices/route';
+
+import { columns, createInvoiceTable, statusVariants } from './../../invoices/table';
 
 const DataTable = createInvoiceTable(
 	columns

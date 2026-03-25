@@ -1,12 +1,14 @@
 import '@/src/app/ui/global.css';
 
 import { MotionConfig } from 'motion/react';
-import type { Metadata } from 'next';
+import { type Metadata } from 'next';
 import { Provider } from 'react-wrap-balancer';
 import { SWRConfig } from 'swr';
-import { InstrumentSans } from '@/src/app/ui/fonts';
+
 import { Toaster } from '@/ui/sonner';
 import { TooltipProvider } from '@/ui/tooltip';
+
+import { InstrumentSans } from '@/src/app/ui/fonts';
 
 export const metadata: Metadata = {
 	title: {

@@ -1,8 +1,9 @@
 import { countries } from 'countries-list';
-import type { CountryCode } from 'lib-address';
+import { type CountryCode } from 'lib-address';
 import { type NextRequest, NextResponse } from 'next/server';
+
+import { type ApiResponse, type RouteResponse } from '@/api';
 import { type AddressData, fetchAddressMetadata } from '@/lib/utils/address';
-import type { ApiResponse, RouteResponse } from '../..';
 
 export type Data = AddressData;
 

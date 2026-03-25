@@ -53,7 +53,7 @@ function TooltipContent({
 					<TooltipPrimitive.Arrow
 						className={cn(
 							'fill-primary dark:fill-gray-900',
-							'data-[side=left]:-rotate-90 data-[side=bottom]:top-[0.3px] data-[side=left]:right-[0.3px] data-[side=top]:bottom-[0.3px] data-[side=right]:left-[0.3px] data-[side=bottom]:rotate-180 data-[side=right]:rotate-90',
+							'data-[side=bottom]:top-[0.3px] data-[side=left]:right-[0.3px] data-[side=top]:bottom-[0.3px] data-[side=right]:left-[0.3px] data-[side=bottom]:rotate-180 data-[side=left]:-rotate-90 data-[side=right]:rotate-90',
 						)}
 					>
 						<Arrow className='translate-y-full' />
@@ -105,4 +105,4 @@ export default function TextTooltip({
 	);
 }
 
-export { Tooltip, TextTooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export { TextTooltip, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };

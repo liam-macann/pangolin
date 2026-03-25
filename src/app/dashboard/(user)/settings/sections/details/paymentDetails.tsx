@@ -27,7 +27,7 @@ import {
 } from '@/ui/autocomplete';
 import { Button } from '@/ui/button';
 import { DropdownMenuItem } from '@/ui/dropdown-menu';
-import { Field, FieldError, FieldLabel, FieldTitle } from '@/ui/field';
+import { Field, FieldError, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 
 interface FormValues extends FieldValues {

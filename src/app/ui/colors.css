@@ -134,7 +134,7 @@
 	}
 }
 
-/* CSS custom property based polyfill for light-dark(). See tailwind.config.ts */
+/* CSS custom property based polyfill for light-dark(). See tailwind.config.mts */
 @layer components {
 	:root {
 		@variant dark {

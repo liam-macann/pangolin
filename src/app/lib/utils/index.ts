@@ -1,6 +1,7 @@
-import type { TZDate } from '@date-fns/tz';
+import { type TZDate } from '@date-fns/tz';
 import { intlFormat } from 'date-fns';
-import type { invoices, numberingScheme } from '@/db/schema';
+
+import { type invoices, type numberingScheme } from '@/db/schema';
 
 export const formatCurrency = (amount: number, currency: string, locale: string) => {
 	return new Intl.NumberFormat(locale, {

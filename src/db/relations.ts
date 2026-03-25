@@ -1,4 +1,5 @@
 import { defineRelations, type ExtractTablesFromSchema, type RelationsBuilder } from 'drizzle-orm';
+
 import * as schema from './schema';
 
 type Tables = ExtractTablesFromSchema<typeof schema>;

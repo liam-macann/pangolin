@@ -175,7 +175,7 @@ function ComboboxLabel({ className, ...props }: ComboboxPrimitive.GroupLabel.Pro
 		<ComboboxPrimitive.GroupLabel
 			data-slot='combobox-label'
 			className={cn(
-				'-mx-1 sticky top-0 z-10 mb-1 border-b bg-popover px-3 py-1.5 pb-1 text-muted-foreground text-xs',
+				'sticky top-0 z-10 -mx-1 mb-1 border-b bg-popover px-3 py-1.5 pb-1 text-muted-foreground text-xs',
 				className,
 			)}
 			{...props}
@@ -273,18 +273,18 @@ function useComboboxAnchor() {
 
 export {
 	Combobox,
-	ComboboxInput,
-	ComboboxContent,
-	ComboboxList,
-	ComboboxItem,
-	ComboboxGroup,
-	ComboboxLabel,
-	ComboboxCollection,
-	ComboboxEmpty,
-	ComboboxSeparator,
-	ComboboxChips,
 	ComboboxChip,
+	ComboboxChips,
 	ComboboxChipsInput,
+	ComboboxCollection,
+	ComboboxContent,
+	ComboboxEmpty,
+	ComboboxGroup,
+	ComboboxInput,
+	ComboboxItem,
+	ComboboxLabel,
+	ComboboxList,
+	ComboboxSeparator,
 	ComboboxTrigger,
 	ComboboxValue,
 	useComboboxAnchor,

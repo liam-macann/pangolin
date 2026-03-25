@@ -136,9 +136,9 @@ function FieldDescription({ render, ...props }: useRender.ComponentProps<'p'>) {
 		render,
 		props: mergeProps<'p'>(
 			{
-				'data-slot': 'field-description',
+				...({ 'data-slot': 'field-description' } as React.HTMLAttributes<HTMLParagraphElement>),
 				className: cn(
-					'[[data-variant=legend]+&]:-mt-1.5 text-left font-normal text-muted-foreground text-sm leading-normal group-has-data-horizontal/field:text-balance',
+					'text-left font-normal text-muted-foreground text-sm leading-normal group-has-data-horizontal/field:text-balance [[data-variant=legend]+&]:-mt-1.5',
 					'nth-last-2:-mt-1 last:mt-0',
 					'[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4',
 				),
@@ -162,7 +162,7 @@ function FieldSeparator({
 			data-slot='field-separator'
 			data-content={!!children}
 			className={cn(
-				'-my-2 group-data-[variant=outline]/field-group:-mb-2 relative h-5 text-sm',
+				'relative -my-2 h-5 text-sm group-data-[variant=outline]/field-group:-mb-2',
 				className,
 			)}
 			{...props}
@@ -225,13 +225,13 @@ function FieldError({
 
 export {
 	Field,
-	FieldLabel,
+	FieldContent,
 	FieldDescription,
 	FieldError,
 	FieldGroup,
+	FieldLabel,
 	FieldLegend,
 	FieldSeparator,
 	FieldSet,
-	FieldContent,
 	FieldTitle,
 };

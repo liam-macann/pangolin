@@ -2,13 +2,15 @@ import path from 'node:path';
 import { TZDate } from '@date-fns/tz';
 import { type NextRequest, NextResponse } from 'next/server';
 import PdfPrinter from 'pdfmake';
-import { getSession } from '@/auth';
-import type { unitEnum } from '@/db/schema/data';
+
 import { fetchInvoice } from '@/lib/data/invoice';
 import { BottomLayout, CenteredLayout } from '@/lib/pdf-verticalalign';
 import { formatCurrency, formatDateToLocal, formatNumber, pluralize } from '@/lib/utils';
 import { formatAddress } from '@/lib/utils/address';
-import type { Enum } from '@/lib/utils/drizzle';
+import { type Enum } from '@/lib/utils/drizzle';
+import { type unitEnum } from '@/db/schema/data';
+
+import { getSession } from '@/auth';
 import schemes from '@/src/app/ui/colorSchemes';
 
 const fontSize = {

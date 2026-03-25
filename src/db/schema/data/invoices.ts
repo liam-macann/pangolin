@@ -17,7 +17,8 @@ import {
 	varchar,
 } from 'drizzle-orm/pg-core';
 
-import { users } from '../auth';
+import { users } from '@/db/schema/auth';
+
 import { clientData } from './clients';
 import { config, configTaxes, taxes } from './config';
 

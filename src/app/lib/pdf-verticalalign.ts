@@ -4,7 +4,7 @@
 // https://github.com/bpampuch/pdfmake/issues/74#issuecomment-2145524428
 //
 
-import type { CustomTableLayout } from 'pdfmake/interfaces';
+import { type CustomTableLayout } from 'pdfmake/interfaces';
 
 type CustomSize = {
 	_calcWidth: number;

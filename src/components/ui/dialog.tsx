@@ -5,6 +5,7 @@ import { XIcon } from '@phosphor-icons/react';
 import type * as React from 'react';
 
 import { cn } from '@/lib/utils';
+
 import { Button } from './button';
 
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
@@ -131,14 +132,14 @@ function DialogDescription({
 
 export {
 	Dialog,
+	DialogBackdrop,
 	DialogClose,
 	DialogContent,
 	DialogDescription,
 	DialogFooter,
 	DialogHeader,
-	DialogBackdrop,
+	DialogPopup,
 	DialogPortal,
 	DialogTitle,
 	DialogTrigger,
-	DialogPopup,
 };

@@ -1,7 +1,8 @@
 import { sql } from 'drizzle-orm';
 import { boolean, check, foreignKey, pgTable, unique, uuid, varchar } from 'drizzle-orm/pg-core';
 
-import { users } from '../auth';
+import { users } from '@/db/schema/auth';
+
 import { scdDates } from './_helpers';
 
 // Logical client. Data is stored in SCD table.
@@ -44,9 +45,7 @@ export const clientData = pgTable(
 		// Necessary for ownership constraint on clientData
 		unique('uq_client_data_user').on(t.id, t.userId),
 		// Ensure that a client has only one valid configuration (multiple null values will conflict)
-		unique('uq_client_version')
-			.on(t.clientId, t.validTo)
-			.nullsNotDistinct(),
+		unique('uq_client_version').on(t.clientId, t.validTo).nullsNotDistinct(),
 		foreignKey({
 			name: 'fk_client_data_ownership',
 			columns: [t.clientId, t.userId],

@@ -2,6 +2,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { betterAuth } from 'better-auth/minimal';
 import { headers } from 'next/headers';
 import { cache } from 'react';
+
 import { db } from '@/db';
 import * as relations from '@/db/relations';
 import * as schema from '@/db/schema';

@@ -1,4 +1,4 @@
-import type { NextResponse } from 'next/server';
+import { type NextResponse } from 'next/server';
 import { z } from 'zod';
 
 /** Zod schema to validate {@link ApiResponse} */

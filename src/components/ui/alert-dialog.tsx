@@ -2,15 +2,12 @@
 
 import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog';
 import type * as React from 'react';
+
 import { cn } from '@/lib/utils';
+
 import { buttonVariants } from '@/ui/button';
-import {
-	DialogBackdrop,
-	DialogContent,
-	DialogDescription,
-	DialogPopup,
-	DialogTitle,
-} from './dialog';
+
+import { DialogBackdrop, DialogDescription, DialogPopup, DialogTitle } from './dialog';
 
 function AlertDialog({ ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
 	return <AlertDialogPrimitive.Root data-slot='alert-dialog' {...props} />;
@@ -97,7 +94,7 @@ function AlertDialogDescription({
 	);
 }
 
-import type { VariantProps } from 'class-variance-authority';
+import { type VariantProps } from 'class-variance-authority';
 
 function AlertDialogAction({
 	className,
@@ -125,14 +122,14 @@ function AlertDialogCancel({
 
 export {
 	AlertDialog,
-	AlertDialogPortal,
-	AlertDialogBackdrop,
-	AlertDialogTrigger,
-	AlertDialogContent,
-	AlertDialogHeader,
-	AlertDialogFooter,
-	AlertDialogTitle,
-	AlertDialogDescription,
 	AlertDialogAction,
+	AlertDialogBackdrop,
 	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogPortal,
+	AlertDialogTitle,
+	AlertDialogTrigger,
 };

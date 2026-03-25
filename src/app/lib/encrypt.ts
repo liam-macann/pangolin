@@ -2,11 +2,12 @@ import 'server-only';
 
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { hexToBytes, managedNonce, randomBytes } from '@noble/ciphers/utils.js';
-
 import { eq } from 'drizzle-orm';
-import { getSession } from '@/auth';
+
 import { db } from '@/db';
 import { keychain } from '@/db/schema';
+
+import { getSession } from '@/auth';
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();

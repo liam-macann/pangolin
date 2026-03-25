@@ -1,8 +1,9 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
-import '../envConfig.ts';
-import { db } from '../src/db';
+import './../envConfig.ts';
+
+import { db } from './../src/db';
 
 const output = path.join(__dirname, '../src/app/lib/data/currencies.json');
 

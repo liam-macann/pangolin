@@ -3,22 +3,19 @@
 import { Combobox } from '@base-ui/react';
 import { type Control, Controller } from 'react-hook-form';
 import type z from 'zod/v4';
-import {
-	CurrencySelect,
-	CurrencySelectCombobox,
-	CurrencySelectRoot,
-} from '@/components/currency-select';
+
+import { type config as formSchema } from '@/lib/validation/config';
+
+import { CurrencySelectCombobox, CurrencySelectRoot } from '@/components/currency-select';
 import { InfoTip } from '@/components/info';
-import { RegionSelect, RegionSelectCombobox, RegionSelectRoot } from '@/components/region-select';
+import { RegionSelectCombobox, RegionSelectRoot } from '@/components/region-select';
 import { TimezoneSelectCombobox, TimezoneSelectRoot } from '@/components/timezone-select';
-import type { config as formSchema } from '@/lib/validation/config';
 import {
 	Field,
 	FieldContent,
 	FieldDescription,
 	FieldError,
 	FieldGroup,
-	FieldLabel,
 	FieldTitle,
 } from '@/ui/field';
 

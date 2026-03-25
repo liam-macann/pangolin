@@ -20,11 +20,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type JSX, useEffect, useRef, useState } from 'react';
 import 'scrollyfills';
+
 import { toast } from 'sonner';
-import type { Data as ClientData } from '@/api/clients/route';
+
+import { type Data as ClientData } from '@/api/clients/route';
 import { updateClientFavorite } from '@/lib/actions/client';
 import { useClients } from '@/lib/hooks';
 import { cn, type ElementType, pluralize } from '@/lib/utils';
+
 import { Button } from '@/ui/button';
 import { ButtonGroup } from '@/ui/button-group';
 import {
@@ -68,7 +71,7 @@ export function Clients({ initial }: { initial: Client[] }) {
 		<>
 			{favorites.length > 0 && (
 				<>
-					<section className='max-lg:-mx-6 max-lg:-mb-4 flex gap-4 max-lg:overflow-scroll max-lg:px-6 max-lg:pb-4 lg:grid lg:grid-cols-4'>
+					<section className='flex gap-4 max-lg:-mx-6 max-lg:-mb-4 max-lg:overflow-scroll max-lg:px-6 max-lg:pb-4 lg:grid lg:grid-cols-4'>
 						<AnimatePresence mode='popLayout' initial={false}>
 							{favorites.map(client => (
 								<Card
