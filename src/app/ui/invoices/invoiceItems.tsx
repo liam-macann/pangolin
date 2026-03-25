@@ -1,4 +1,5 @@
 'use client';
+
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import { useState } from 'react';
 import {
@@ -11,13 +12,21 @@ import {
 	useFormState,
 	useWatch,
 } from 'react-hook-form';
-import type { z } from 'zod';
-import { Sortable, SortableEmpty, SortableItem, SortableList } from '@/components/sortable-input';
-import { unitEnum } from '@/db/schema';
-import type { getUserConfig } from '@/lib/data';
+import { type z } from 'zod';
+
+import { type getUserConfig } from '@/lib/data';
 import { cn, formatCurrency, getCurrencySymbol, type Prettify } from '@/lib/utils';
-import type { invoice as schema } from '@/lib/validation/invoice';
+import { type invoice as schema } from '@/lib/validation/invoice';
 import { intlNumber } from '@/lib/zod';
+import { unitEnum } from '@/db/schema';
+
+import {
+	Sortable,
+	SortableEmpty,
+	SortableHandle,
+	SortableItem,
+	SortableList,
+} from '@/components/sortable-input';
 import { Button } from '@/ui/button';
 import {
 	DropdownMenu,
@@ -163,7 +172,7 @@ function InvoiceItemsInput({
 
 	return (
 		<Sortable items={fields} onReorder={({ initialIndex, index }) => move(initialIndex, index)}>
-			<div className='grid grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
+			<div className='grid grid-cols-[1rem_2fr_1.1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
 				<div className='col-start-2'>
 					<FieldLabel>Description</FieldLabel>
 				</div>
@@ -177,11 +186,13 @@ function InvoiceItemsInput({
 						key={item.id}
 						id={item.id}
 						className={cn(
-							'grid grid-cols-[1.25rem_2fr_1.1fr_1fr_2.25rem] py-3',
+							'grid grid-cols-[1rem_2fr_1.1fr_1fr_2.25rem] py-3',
 							'border-border border-y border-t-transparent border-dotted',
 							'group-not-first/sortable-item:group-[[style*="--dnd-translate"]]/sortable-item:group-not-[[style*="--dnd-translate:_0px_0px_0"]]/sortable-item:border-t-border',
 						)}
 					>
+						<SortableHandle className='-translate-x-1' />
+
 						{/* Occlude tax badge on drag overlap */}
 						<div className='-inset-x-3 -z-10 pointer-events-none absolute inset-0 bg-background drop-shadow-none dark:bg-popover' />
 
@@ -289,8 +300,8 @@ function InvoiceItemsInput({
 				)}
 			</SortableList>
 
-			<div className='mt-6 ml-7 flex justify-between gap-8 group-data-[empty]/sortable:hidden'>
-				<Button onClick={addItem} size='sm'>
+			<div className='relative mt-6 ml-(--sortable-handle-width) flex justify-between gap-8 group-data-[empty]/sortable:hidden'>
+				<Button onClick={addItem} className='ml-6' size='sm'>
 					Add Item
 				</Button>
 				<ItemSum control={control} config={config} className='min-w-48 self-end' />

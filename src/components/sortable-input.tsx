@@ -1,14 +1,17 @@
 'use client';
+
 import { RestrictToVerticalAxis } from '@dnd-kit/abstract/modifiers';
 import { RestrictToElement } from '@dnd-kit/dom/modifiers';
-import type { Sortable as SortableType } from '@dnd-kit/dom/sortable';
+import { type Sortable as SortableType } from '@dnd-kit/dom/sortable';
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable, useSortable } from '@dnd-kit/react/sortable';
 import { SortableContext } from '@dnd-kit/sortable';
 import { DotsSixIcon, DotsThreeIcon } from '@phosphor-icons/react';
 import { AnimatePresence, LayoutGroup, motion, useIsPresent } from 'motion/react';
 import { createContext, type ReactNode, use, useRef } from 'react';
+
 import { cn } from '@/lib/utils';
+
 import { Button } from '@/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/ui/dropdown-menu';
 
@@ -73,11 +76,18 @@ export function SortableList({
 	);
 }
 
+/** Visible when there are no items in the sortable list */
 export function SortableEmpty({ className, ...props }: React.ComponentProps<'div'>) {
 	return <div className={cn('group-not-data-[empty]/sortable:hidden', className)} {...props} />;
 }
 
-const SortableItemContext = createContext({ isDragging: false });
+interface SortableItemContext {
+	disabled: boolean;
+
+	/** Returned methods from the useSortable hook */
+	sortable: Pick<ReturnType<typeof useSortable>, 'isDragging' | 'handleRef'>;
+}
+const SortableItemContext = createContext<SortableItemContext | null>(null);
 
 interface SortableItemProps {
 	id: string;
@@ -145,7 +155,7 @@ export function SortableItem({
 	};
 
 	return (
-		<SortableItemContext value={{ isDragging }}>
+		<SortableItemContext value={{ disabled, sortable: { isDragging, handleRef } }}>
 			<motion.li
 				className='group/sortable-item'
 				ref={ref}
@@ -157,33 +167,44 @@ export function SortableItem({
 				layoutDependency={isPresent}
 			>
 				<motion.div
+					variants={inner}
 					className={cn(
 						'relative flex origin-top gap-2 py-1 *:duration-200',
 						isDragging && '*:drop-shadow-black/7 *:not-[.drop-shadow-none]:drop-shadow-md',
 						className,
 					)}
-					variants={inner}
 				>
-					<Button
-						variant='link'
-						className={cn(
-							'focus:!ring-0 group w-6 grow-0 touch-manipulation',
-							disabled && 'cursor-not-allowed opacity-50',
-						)}
-						size='icon'
-						ref={handleRef}
-					>
-						<DotsSixIcon
-							className={cn(
-								'inline-block size-6 h-8 self-center',
-								'pointer-none rounded p-1 group-focus-visible:ring-2',
-							)}
-						/>
-					</Button>
 					{children}
 				</motion.div>
 			</motion.li>
 		</SortableItemContext>
+	);
+}
+
+export function SortableHandle({ className, ...props }: React.ComponentProps<typeof Button>) {
+	const itemContext = use(SortableItemContext);
+	if (!itemContext) throw new Error('SortableHandle must be used within a SortableItem');
+
+	const {
+		disabled,
+		sortable: { handleRef },
+	} = itemContext;
+
+	return (
+		<Button
+			variant='link'
+			size='icon'
+			ref={handleRef}
+			className={cn(
+				'-mx-2 grow-0 touch-manipulation border border-transparent focus-visible:border-ring focus-visible:ring',
+				disabled && 'cursor-not-allowed opacity-50',
+				className,
+			)}
+			{...props}
+		>
+			<DotsSixIcon className='pointer-none inline-block self-center' />
+			<span className='sr-only'>Reorder item</span>
+		</Button>
 	);
 }
 
@@ -195,7 +216,12 @@ export function SortableActions({
 	children: ReactNode;
 	title?: ReactNode;
 } & React.ComponentProps<typeof DropdownMenuContent>) {
-	const { isDragging } = use(SortableItemContext);
+	const itemContext = use(SortableItemContext);
+	if (!itemContext) throw new Error('SortableActions must be used within a SortableItem');
+
+	const {
+		sortable: { isDragging },
+	} = itemContext;
 
 	return (
 		<DropdownMenu>

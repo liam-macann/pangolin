@@ -13,17 +13,20 @@ import {
 	useWatch,
 } from 'react-hook-form';
 import type z from 'zod/v4';
+
+import { cn } from '@/lib/utils';
+import { type config as formSchema } from '@/lib/validation/config';
+
 import { InfoTip } from '@/components/info';
 import {
 	Sortable,
 	SortableActions,
 	SortableEmpty,
+	SortableHandle,
 	SortableItem,
 	SortableList,
 } from '@/components/sortable-input';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
-import type { config as formSchema } from '@/lib/validation/config';
+import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 import { Button } from '@/ui/button';
 import { DropdownMenuItem } from '@/ui/dropdown-menu';
 import { Field, FieldError, FieldLabel } from '@/ui/field';
@@ -53,7 +56,7 @@ export function TaxRateField<T extends Fields>({
 			items={fields}
 			onReorder={({ initialIndex, index }) => actions.move(initialIndex, index)}
 		>
-			<div className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
+			<div className='grid grid-cols-[1rem_1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
 				<FieldLabel className='col-start-2'>Label</FieldLabel>
 				<FieldLabel>
 					Rate
@@ -101,8 +104,10 @@ function TaxRow({
 		<SortableItem
 			id={tax.id}
 			index={index}
-			className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-y-0.5'
+			className='grid grid-cols-[1rem_1fr_1fr_2.25rem] gap-y-0.5'
 		>
+			<SortableHandle />
+
 			<Controller
 				control={control}
 				name={`taxes.${index}.name`}

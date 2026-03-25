@@ -2,9 +2,11 @@
 
 import { type Control, Controller, useFormContext } from 'react-hook-form';
 import type z from 'zod/v4';
+
+import { type config as formSchema } from '@/lib/validation/config';
+
 import { InfoTip } from '@/components/info';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { config as formSchema } from '@/lib/validation/config';
 import {
 	Field,
 	FieldContent,
@@ -15,6 +17,7 @@ import {
 	FieldLegend,
 	FieldSet,
 } from '@/ui/field';
+
 import { DuplicateWarning, TaxRateField } from './taxRates';
 
 type FormValues = z.input<typeof formSchema>;
@@ -62,8 +65,8 @@ export function Taxation<T extends Fields>({ control: _control }: { control: Con
 				name='taxes'
 				control={control}
 				render={({ fieldState }) => (
-					<FieldSet className='-mb-4 mt-4'>
-						<FieldContent className='ml-8'>
+					<FieldSet className='-mb-4'>
+						<FieldContent>
 							<FieldLegend className='flex items-center gap-2'>
 								Tax rates
 								<InfoTip side='right' align='end'>
