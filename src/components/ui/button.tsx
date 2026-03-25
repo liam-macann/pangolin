@@ -18,12 +18,14 @@ const buttonVariants = cva(
 				destructive:
 					'inset-shadow-white/10 inset-shadow-xs border border-black/10 bg-destructive-background text-white shadow-xs not-disabled:hover:bg-destructive-background/90 focus-visible:ring-destructive/20 not-disabled:active:motion-safe:scale-[98%] dark:focus-visible:ring-destructive/40',
 				outline: [
-					'border not-disabled:hover:text-accent-foreground focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%] dark:border-input',
-					'bg-linear-to-b from-80% from-transparent to-black/2 not-disabled:hover:bg-accent/70 dark:bg-secondary dark:not-disabled:hover:bg-gray-4',
+					'border not-disabled:hover:text-accent-foreground focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%]',
+					'bg-linear-to-b from-80% from-transparent to-black/2 dark:bg-linear-to-t dark:bg-secondary dark:from-20% dark:to-white/2',
+					'not-disabled:hover:bg-accent/70 dark:not-disabled:hover:bg-gray-4',
 					'aria-expanded:bg-accent/70 aria-expanded:dark:bg-gray-4',
 				],
 				secondary: [
-					'inset-shadow-white/5 inset-shadow-xs border border-foreground/2 bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary/80 focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%]',
+					'inset-shadow-white/15 not-dark:inset-shadow-xs',
+					'border border-secondary-foreground/2 bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary-2 focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%]',
 					'aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
 				],
 				ghost:

@@ -10,6 +10,7 @@
 	--primary: var(--color-gray-11);
 	--primary-foreground: var(--color-gray-1); /* eg. Ghost button hover text */
 	--secondary: var(--color-gray-3); /* Secondary button treatment */
+	--secondary-2: var(--color-gray-4); /* Secondary button treatment: hover state */
 	--secondary-foreground: var(--foreground);
 	--muted: var(--color-gray-3); /* Interaction state (eg. hover table row, ghost buttons) */
 	--muted-foreground: var(--color-gray-11);
@@ -75,6 +76,7 @@
 	--color-primary: var(--primary);
 	--color-primary-foreground: var(--primary-foreground);
 	--color-secondary: var(--secondary);
+	--color-secondary-2: var(--secondary-2);
 	--color-secondary-foreground: var(--secondary-foreground);
 	--color-muted: var(--muted);
 	--color-muted-foreground: var(--muted-foreground);
