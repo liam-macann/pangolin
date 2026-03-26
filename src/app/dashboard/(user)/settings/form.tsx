@@ -49,6 +49,8 @@ const configAdapter = (config: Awaited<ReturnType<typeof getUserConfig>>): FormI
 	taxes: config.taxes.map(t => ({ name: t.name, rate: t.rate * 100 })),
 	paymentDetails: config.paymentDetails || [],
 	tradingName: config.tradingName,
+	email: config.email || '',
+	phone: config.phone || '',
 	registrationNumber: config.registrationNumber || [],
 
 	addressEnabled: !!config.address,

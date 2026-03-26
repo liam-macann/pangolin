@@ -26,7 +26,7 @@ import { RegistrationNumberField } from './registrationNumber';
 type FormValues = z.input<typeof formSchema>;
 type Fields = Pick<
 	FormValues,
-	'tradingName' | 'registrationNumber' | 'paymentDetails' | 'address'
+	'tradingName' | 'email' | 'phone' | 'registrationNumber' | 'paymentDetails' | 'address'
 > & { addressEnabled: boolean };
 
 export function Details<T extends Fields>({ control: _control }: { control: Control<T> }) {
@@ -49,45 +49,48 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 							<FieldDescription>The name by which your business is known.</FieldDescription>
 							{fieldState.error && <FieldError errors={[fieldState.error]} />}
 						</FieldContent>
-						<Input id='tradingName' {...field} className='min-w-64' />
+						<Input id='tradingName' {...field} className='min-w-96' />
 					</Field>
 				)}
 			/>
 
 			<Controller
-				name='registrationNumber'
+				name='email'
 				control={control}
-				render={({ fieldState }) => (
-					<FieldSet>
-						<FieldContent>
-							<FieldLegend className='flex items-center gap-2'>Trading number</FieldLegend>
-							<FieldDescription>
-								Business or charity identifiers, as required for tax and legal compliance.
-							</FieldDescription>
-							{fieldState.error && <FieldError errors={[fieldState.error]} />}
-						</FieldContent>
-						<RegistrationNumberField control={control} className='not-data-empty:-my-2' />
-					</FieldSet>
+				render={({ field, fieldState }) => (
+					<Field orientation='responsive' data-invalid={fieldState.invalid}>
+						{!fieldState.error ? (
+							<FieldLabel htmlFor='email'>Email address</FieldLabel>
+						) : (
+							<FieldContent>
+								<FieldLabel htmlFor='email'>Email address</FieldLabel>
+								<FieldError errors={[fieldState.error]} />
+							</FieldContent>
+						)}
+						<Input id='email' {...field} className='min-w-96' placeholder='Optional' />
+					</Field>
 				)}
 			/>
 
 			<Controller
-				name='paymentDetails'
+				name='phone'
 				control={control}
-				render={({ fieldState }) => (
-					<FieldSet>
-						<FieldContent>
-							<FieldLegend className='flex items-center gap-2'>Payment information</FieldLegend>
-							<FieldDescription>
-								Bank account numbers will be printed on the invoice footer. Please ensure details
-								are accurate.
-							</FieldDescription>
-							{fieldState.error && <FieldError errors={[fieldState.error]} />}
-						</FieldContent>
-						<PaymentDetailsField control={control} className='not-data-empty:-my-2' />
-					</FieldSet>
+				render={({ field, fieldState }) => (
+					<Field orientation='responsive' data-invalid={fieldState.invalid}>
+						{!fieldState.error ? (
+							<FieldLabel htmlFor='phone'>Phone number</FieldLabel>
+						) : (
+							<FieldContent>
+								<FieldLabel htmlFor='phone'>Phone number</FieldLabel>
+								<FieldError errors={[fieldState.error]} />
+							</FieldContent>
+						)}
+						<Input id='phone' {...field} className='min-w-96' placeholder='Optional' />
+					</Field>
 				)}
 			/>
+
+			<hr className='my-3' />
 
 			<ConnectForm>
 				{({ clearErrors }) => (
@@ -133,6 +136,41 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 					/>
 				)}
 			</ConnectForm>
+
+			<Controller
+				name='registrationNumber'
+				control={control}
+				render={({ fieldState }) => (
+					<FieldSet>
+						<FieldContent>
+							<FieldLegend className='flex items-center gap-2'>Trading number</FieldLegend>
+							<FieldDescription>
+								Business or charity identifiers, as required for tax and legal compliance.
+							</FieldDescription>
+							{fieldState.error && <FieldError errors={[fieldState.error]} />}
+						</FieldContent>
+						<RegistrationNumberField control={control} className='not-data-empty:-my-2' />
+					</FieldSet>
+				)}
+			/>
+
+			<Controller
+				name='paymentDetails'
+				control={control}
+				render={({ fieldState }) => (
+					<FieldSet>
+						<FieldContent>
+							<FieldLegend className='flex items-center gap-2'>Payment information</FieldLegend>
+							<FieldDescription>
+								Bank account numbers will be printed on the invoice footer. Please ensure details
+								are accurate.
+							</FieldDescription>
+							{fieldState.error && <FieldError errors={[fieldState.error]} />}
+						</FieldContent>
+						<PaymentDetailsField control={control} className='not-data-empty:-my-2' />
+					</FieldSet>
+				)}
+			/>
 		</FieldGroup>
 	);
 }

@@ -33,9 +33,25 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');
 
+	const vault = await crypto(session.user.id);
+
 	// Validate the input data
-	const { taxes, ...safeConfig } = await configInput.parseAsync(config).then(v => ({
+	const { taxes, ...safeConfig } = await configInput.parseAsync(config).then(async v => ({
 		...v,
+
+		email: v.email ? await vault.encrypt(v.email).then(([r]) => r) : null,
+		phone: v.phone ? await vault.encrypt(v.phone).then(([r]) => r) : null,
+
+		paymentDetails:
+			v.paymentDetails.length > 0
+				? await vault.encrypt(...v.paymentDetails.map(v => `${v.label}: ${v.value}`))
+				: null,
+
+		registrationNumber:
+			v.registrationNumber.length > 0
+				? await vault.encrypt(...v.registrationNumber.map(v => `${v.label}: ${v.value}`))
+				: null,
+
 		taxes: v.taxes.map((tax, i) => ({
 			...tax,
 			userId: session.user.id,
@@ -46,7 +62,6 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 	return db
 		.transaction(async tx => {
 			const configId = uuid();
-			const vault = await crypto(session.user.id);
 
 			/** Checks the previous config to see if the address has changed.
 			 * Returns the address ID if unchanged, otherwise inserts a new record and returns the new ID */
@@ -101,18 +116,6 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 						id: configId,
 						userId: session.user.id,
 						addressId: await getAddressId(),
-						paymentDetails:
-							safeConfig.paymentDetails.length > 0
-								? await vault.encrypt(
-										...safeConfig.paymentDetails.map(v => `${v.label}: ${v.value}`),
-									)
-								: null,
-						registrationNumber:
-							safeConfig.registrationNumber.length > 0
-								? await vault.encrypt(
-										...safeConfig.registrationNumber.map(v => `${v.label}: ${v.value}`),
-									)
-								: null,
 					}),
 				),
 
@@ -124,8 +127,6 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 						.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo))),
 				),
 			];
-
-			vault.destroy();
 
 			// If taxes are defined
 			if (taxes?.length > 0) {
@@ -167,6 +168,7 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 				.select()
 				.from(configSchema);
 		})
+		.finally(() => vault.destroy())
 		.then(async () => {
 			// Revalidate the cache for the invoices page, where the formatting may have changed.
 			revalidatePath('/dashboard/invoices');

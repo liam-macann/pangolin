@@ -146,10 +146,12 @@ export async function fetchInvoice(id: string) {
 
 		const vault = await crypto(session.user.id);
 
-		const [paymentDetails, registrationNumber, streetAddress] = await Promise.all([
+		const [paymentDetails, registrationNumber, streetAddress, email, phone] = await Promise.all([
 			res.config.paymentDetails && vault.decrypt(...res.config.paymentDetails),
 			res.config.registrationNumber && vault.decrypt(...res.config.registrationNumber),
 			res.config.address?.streetAddress && vault.decrypt(...res.config.address.streetAddress),
+			res.config.email && vault.decrypt(res.config.email).then(([v]) => v),
+			res.config.phone && vault.decrypt(res.config.phone).then(([v]) => v),
 		]);
 
 		const inv = {
@@ -157,6 +159,8 @@ export async function fetchInvoice(id: string) {
 			reference: invoiceReference(res, res.config.numberingScheme),
 			config: {
 				...res.config,
+				email,
+				phone,
 				paymentDetails,
 				registrationNumber,
 				address: res.config.address && {

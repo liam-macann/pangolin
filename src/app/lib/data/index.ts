@@ -65,14 +65,21 @@ export async function getUserConfig() {
 			.then(async res => {
 				if (!res) return;
 
-				const [paymentDetails, registrationNumber, streetAddress] = await Promise.all([
-					res.paymentDetails && vault.decrypt(...res.paymentDetails),
-					res.registrationNumber && vault.decrypt(...res.registrationNumber),
-					res.address?.streetAddress && vault.decrypt(...res.address.streetAddress),
-				]);
+				const [paymentDetails, registrationNumber, streetAddress, email, phone] = await Promise.all(
+					[
+						res.paymentDetails && vault.decrypt(...res.paymentDetails),
+						res.registrationNumber && vault.decrypt(...res.registrationNumber),
+						res.address?.streetAddress && vault.decrypt(...res.address.streetAddress),
+
+						res.email && vault.decrypt(res.email).then(([v]) => v),
+						res.phone && vault.decrypt(res.phone).then(([v]) => v),
+					],
+				);
 
 				return {
 					...res,
+					email,
+					phone,
 					paymentDetails: paymentDetails?.map(v => {
 						const [label, value] = v.split(/: (.*)/s);
 						return { label, value };

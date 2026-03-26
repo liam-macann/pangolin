@@ -1,0 +1,4 @@
+DROP VIEW "invoice_with_sum";--> statement-breakpoint
+ALTER TABLE "config" ADD COLUMN "email" text;--> statement-breakpoint
+ALTER TABLE "config" ADD COLUMN "phone" text;--> statement-breakpoint
+CREATE VIEW "invoice_with_sum" AS (select "invoice"."id", "invoice"."user_id", "invoice"."client_data_id", "invoice"."title", "invoice"."description", "invoice"."status", "invoice"."notes", "invoice"."is_void", "invoice"."created_at", "invoice"."issued_at", "invoice"."issue_year", "invoice"."due_at", "invoice"."index", "invoice"."year_index", "invoice"."config_id", "config"."tax_registration", "config"."currency", sum("items_with_tax"."net_amount") as "net_total", sum("items_with_tax"."gross_amount") as "gross_total" from "invoice" inner join "config" on "invoice"."config_id" = "config"."id" left join "items_with_tax" on "items_with_tax"."invoice_id" = "invoice"."id" group by "invoice"."id", "config"."id");

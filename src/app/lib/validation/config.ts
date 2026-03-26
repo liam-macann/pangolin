@@ -69,6 +69,8 @@ export const config = createInsertSchema(configSchema, {
 			}),
 		)
 		.max(15, 'No more than 15 items allowed'),
+	email: z.email('Invalid email').optional(),
+	phone: z.string().optional(),
 })
 	.omit({
 		id: true,
