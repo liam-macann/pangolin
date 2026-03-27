@@ -171,7 +171,7 @@ export function SortableItem({
 					variants={inner}
 					className={cn(
 						'relative flex origin-top gap-2 py-1 *:duration-200',
-						isDragging && '*:drop-shadow-black/7 *:not-[.drop-shadow-none]:drop-shadow-md',
+						isDragging && '*:not-[.drop-shadow-none]:drop-shadow-md',
 						className,
 					)}
 				>
@@ -203,7 +203,7 @@ export function SortableHandle({ className, ...props }: React.ComponentProps<typ
 			)}
 			{...props}
 		>
-			<DotsSixIcon className='pointer-none inline-block self-center' />
+			<DotsSixIcon className='pointer-none size-6 rounded p-1 group-focus-visible:ring-2' />
 			<span className='sr-only'>Reorder item</span>
 		</Button>
 	);
@@ -220,19 +220,11 @@ export function SortableActions({
 	const itemContext = use(SortableItemContext);
 	if (!itemContext) throw new Error('SortableActions must be used within a SortableItem');
 
-	const {
-		sortable: { isDragging },
-	} = itemContext;
-
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger
 				render={
-					<Button
-						size='icon'
-						className={cn(isDragging && 'border-ring/70', 'bg-background')}
-						variant='outline'
-					>
+					<Button size='icon' className='bg-background' variant='outline'>
 						<DotsThreeIcon />
 						<span className='sr-only'>{title}</span>
 					</Button>
