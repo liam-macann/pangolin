@@ -203,7 +203,7 @@ export function SortableHandle({ className, ...props }: React.ComponentProps<typ
 			)}
 			{...props}
 		>
-			<DotsSixIcon className='pointer-none size-6 rounded p-1 group-focus-visible:ring-2' />
+			<DotsSixIcon className='pointer-none inline-block self-center' />
 			<span className='sr-only'>Reorder item</span>
 		</Button>
 	);
