@@ -1,6 +1,8 @@
 import { type Column, type SQL, sql } from 'drizzle-orm';
 import { customType, type PgEnum } from 'drizzle-orm/pg-core';
 
+import { isEncrypted } from '@/lib/utils/encrypt';
+
 type AnySql = SQL | Column | SQL.Aliased;
 
 /** Helper type to extract the TypeScript type from a PgColumn or SQL */
@@ -79,6 +81,8 @@ export const encrypted = customType<{ data: Uint8Array; driverData: Uint8Array |
 	{
 		dataType: () => 'bytea',
 		toDriver(value: Uint8Array | Buffer): string {
+			if (!isEncrypted(value)) throw new Error('Value is not encrypted');
+
 			// Uint8Array toHex not implemented in Node.js
 			const buffer = Buffer.isBuffer(value) ? value : Buffer.from(value);
 

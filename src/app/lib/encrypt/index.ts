@@ -1,17 +1,28 @@
 import 'server-only';
 
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
-import { hexToBytes, managedNonce, randomBytes } from '@noble/ciphers/utils.js';
+import { concatBytes, hexToBytes, managedNonce, randomBytes } from '@noble/ciphers/utils.js';
 import { eq } from 'drizzle-orm';
 
+import { isEncrypted } from '@/lib/utils/encrypt';
 import { db } from '@/db';
 import { keychain } from '@/db/schema';
 
 import { getSession } from '@/auth';
 
+import { header, version } from './constants';
+
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const chacha = managedNonce(xchacha20poly1305);
+
+/* Idempotent header concatenation */
+const concatHeader = (ciphertext: Uint8Array) =>
+	isEncrypted(ciphertext) ? ciphertext : concatBytes(header, version, ciphertext);
+
+/* Idempotent header removal */
+const stripHeader = (ciphertext: Uint8Array) =>
+	isEncrypted(ciphertext) ? ciphertext.slice(header.length + version.length) : ciphertext;
 
 /** Encrypts a string using the provided Data Encryption Key (DEK)
  * @internal
@@ -20,7 +31,7 @@ function encrypt(value: string, DEK: Uint8Array): Uint8Array {
 	const data = encoder.encode(value);
 	const ciphertext = chacha(DEK).encrypt(data);
 
-	return ciphertext;
+	return concatHeader(ciphertext);
 }
 
 /** Decrypts a Uint8Array using the provided Data Encryption Key (DEK)
@@ -28,7 +39,10 @@ function encrypt(value: string, DEK: Uint8Array): Uint8Array {
  */
 function decrypt(value: Uint8Array, DEK: Uint8Array): string {
 	try {
-		const bytestream = chacha(DEK).decrypt(value);
+		if (!isEncrypted(value)) throw new Error('Invalid header, input may not be encrypted');
+
+		const ciphertext = stripHeader(value);
+		const bytestream = chacha(DEK).decrypt(ciphertext);
 		const plaintext = decoder.decode(bytestream);
 
 		return plaintext;
@@ -96,8 +110,10 @@ function withKEK<T>(callback: (KEK: Uint8Array) => T) {
 	return val;
 }
 
-const wrap = (DEK: Uint8Array): Uint8Array => withKEK(KEK => chacha(KEK).encrypt(DEK));
-const unwrap = (DEK: Uint8Array): Uint8Array => withKEK(KEK => chacha(KEK).decrypt(DEK));
+const wrap = (DEK: Uint8Array): Uint8Array =>
+	withKEK(KEK => concatHeader(chacha(KEK).encrypt(DEK)));
+const unwrap = (DEK: Uint8Array): Uint8Array =>
+	withKEK(KEK => chacha(KEK).decrypt(stripHeader(DEK)));
 
 //
 //
