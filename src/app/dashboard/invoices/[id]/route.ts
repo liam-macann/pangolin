@@ -1,14 +1,20 @@
 import path from 'node:path';
 import { TZDate } from '@date-fns/tz';
 import { type NextRequest, NextResponse } from 'next/server';
-import PdfPrinter from 'pdfmake';
+import pdfmake, { type Content, type TableCell } from 'pdfmake';
 
 import { fetchInvoice } from '@/lib/data/invoice';
-import { BottomLayout, CenteredLayout } from '@/lib/pdf-verticalalign';
 import { formatCurrency, formatDateToLocal, formatNumber, pluralize } from '@/lib/utils';
 import { formatAddress } from '@/lib/utils/address';
 import { type Enum } from '@/lib/utils/drizzle';
 import { type unitEnum } from '@/db/schema/data';
+
+// DefinitelyTyped package does not have 0.3.4 definitions
+declare module 'pdfmake/interfaces' {
+	interface TableCellProperties {
+		verticalAlignment?: 'top' | 'middle' | 'bottom';
+	}
+}
 
 import { getSession } from '@/auth';
 import schemes from '@/src/app/ui/colorSchemes';
@@ -91,14 +97,14 @@ async function generatePdf(invoiceId: string) {
 	const invoice = await fetchInvoice(invoiceId);
 	if (!invoice) return;
 
-	const fonts = {
+	pdfmake.addFonts({
 		InstrumentSans: {
 			normal: path.resolve('./src/fonts/InstrumentSans+Noto-Regular.ttf'),
 			bold: path.resolve('./src/fonts/InstrumentSans+Noto-Semibold.ttf'),
 		},
-	};
+	});
+
 	const colors = schemes[invoice.config.colorScheme];
-	const printer = new PdfPrinter(fonts);
 
 	/** Necessary before execution to estimate bottom margin height */
 	const footerLeftContent: string[] = invoice.config.paymentDetails || [];
@@ -112,7 +118,7 @@ async function generatePdf(invoiceId: string) {
 
 	const reference = `${invoice.config.taxRegistration ? 'Tax ' : ''}Invoice ${invoice.reference}`;
 
-	const pdfDoc = printer.createPdfKitDocument({
+	const pdfDoc = pdfmake.createPdf({
 		version: '1.5',
 		subset: 'PDF/A-3a',
 		tagged: true,
@@ -137,7 +143,6 @@ async function generatePdf(invoiceId: string) {
 				margin: [pageMargins[0], 0, pageMargins[2], 0],
 				unbreakable: true,
 				layout: {
-					...BottomLayout,
 					hLineWidth: () => footerStyles.border,
 					vLineWidth: () => footerStyles.border,
 					paddingBottom: () => footerMargins.marginBottom,
@@ -150,7 +155,7 @@ async function generatePdf(invoiceId: string) {
 					dontBreakRows: true,
 					body: [
 						[
-							{ stack: footerLeftContent },
+							{ stack: footerLeftContent, verticalAlignment: 'bottom' },
 							{
 								stack: [' '],
 								opacity: 0,
@@ -161,10 +166,12 @@ async function generatePdf(invoiceId: string) {
 									0,
 									0,
 								],
+								verticalAlignment: 'bottom',
 							},
 							{
 								text: `Issued ${formatDateToLocal(new TZDate(invoice.issuedAt, invoice.config.timezone), false, invoice.config.locale)}`,
 								alignment: 'right',
+								verticalAlignment: 'bottom',
 							},
 						],
 					],
@@ -196,8 +203,9 @@ async function generatePdf(invoiceId: string) {
 						margin: [0, 0, 0, spacing(4)],
 					},
 					{ stack: invoice.config.registrationNumber || [] },
-					{ text: invoice.config.email },
-					{ text: invoice.config.phone },
+
+					invoice.config.email ? { text: invoice.config.email } : [],
+					invoice.config.phone ? { text: invoice.config.phone } : [],
 
 					invoice.config.address
 						? [
@@ -233,9 +241,8 @@ async function generatePdf(invoiceId: string) {
 					widths: ['70%', '30%'],
 					body: [
 						[
-							{ text: invoice.title, bold: true },
+							{ text: invoice.title || '', bold: true },
 							{
-								width: '30%',
 								text: `Due ${formatDateToLocal(new TZDate(invoice.dueAt, invoice.config.timezone), false, invoice.config.locale)}`,
 								alignment: 'right',
 								bold: true,
@@ -256,163 +263,9 @@ async function generatePdf(invoiceId: string) {
 					vLineWidth: () => 0,
 				},
 			},
-			//
-			//
-			//
-			// Line items
-			//
-			{
-				table: {
-					headerRows: 1,
-					dontBreakRows: true,
-					widths: ['*', 70, ...(invoice.config.taxRegistration ? [70] : []), 60, 70],
-					body: [
-						[
-							{ text: 'Description', alignment: 'left' },
-							'Quantity',
-							...(invoice.config.taxRegistration ? ['Tax'] : []),
-							'Each',
-							'Amount',
-						],
-						...(invoice.items?.map(item => [
-							{
-								stack: [
-									{ text: item.label, marginBottom: spacing(0.5) },
-									{ text: item.note, color: colors.accent, bold: false },
-								],
-								alignment: 'left',
-								fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05', 'pnum'],
-								margin: [0, spacing(2)],
-							},
-							{
-								text: `${formatNumber(item.quantity, invoice.config.locale)} ${item.unit ? pluralize(item.quantity, singularUnits[item.unit], item.unit) : ''}`.trim(),
-								bold: false,
-								fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05', 'pnum'],
-							},
-							...(invoice.config.taxRegistration
-								? [
-										{
-											text:
-												item.taxes.length > 0
-													? item.taxes.map(tax => `${tax.name}(${tax.rate * 100}%)`).join(' ')
-													: '–',
-											bold: false,
-										},
-									]
-								: []),
-							{
-								text: formatCurrency(item.unitCost, invoice.config.currency, invoice.config.locale),
-								bold: false,
-							},
-							{
-								text: formatCurrency(
-									item.netAmount,
-									invoice.config.currency,
-									invoice.config.locale,
-								),
-								margin: [0, spacing(6)],
-							},
-						]) || []),
-					],
-				},
-				bold: true,
-				alignment: 'right',
-				fontSize: fontSize.base,
-				fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05', 'tnum', 'lnum'],
-				layout: {
-					...CenteredLayout,
-					paddingTop: (i, node) => (i === 0 ? spacing(2) : CenteredLayout.paddingTop(i, node)),
-					paddingBottom: i => (i === 0 ? spacing(2) : 0),
-					paddingLeft: () => spacing(2),
-					paddingRight: () => spacing(2),
-					vLineWidth: () => 0,
-					hLineWidth: (i: number) => (i <= 1 ? 1 : 0.75),
-					hLineColor: (i: number) => (i <= 1 ? colors.black : colors.accent),
-					hLineStyle: i => (i <= 1 ? null : { dash: { length: 0.75, space: 1.5 } }),
-				},
-			},
-			//
-			//
-			//
-			// Subtotal and taxes
-			//
-			{
-				marginTop: spacing(6),
-				columnGap: spacing(2),
-				columns: [
-					{
-						stack: invoice.config.taxRegistration
-							? ['']
-							: [...(invoice.tax.map(t => `${t.name} not applicable`) || 'Tax not applicable')],
-						color: colors.accent,
-						fontSize: fontSize.base,
-						marginLeft: spacing(2),
-					},
-					{
-						width: 'auto',
-						unbreakable: true,
-						table: {
-							dontBreakRows: true,
-							widths: [80, 100],
-							body: [
-								[
-									'Subtotal',
-									{
-										text: formatCurrency(
-											invoice.netTotal,
-											invoice.config.currency,
-											invoice.config.locale,
-										),
-										alignment: 'right',
-									},
-								],
-								...invoice.tax.map((tax, i) => [
-									{
-										text: `${tax.name} incl.`,
-										color: colors.accent,
-										marginBottom: i === invoice.tax.length - 1 ? spacing(1) : 0,
-									},
-									{
-										text: formatCurrency(
-											tax.contribution,
-											invoice.config.currency,
-											invoice.config.locale,
-										),
-										alignment: 'right',
-										color: colors.accent,
-										marginBottom: i === invoice.tax.length - 1 ? spacing(1) : 0,
-									},
-								]),
-								[
-									{ text: 'Total', bold: true },
-									{
-										text: formatCurrency(
-											invoice.grossTotal,
-											invoice.config.currency,
-											invoice.config.locale,
-										),
-										alignment: 'right',
-										bold: true,
-										fontSize: fontSize.lg,
-										marginTop: spacing(4),
-									},
-								],
-							],
-						},
-						fontSize: fontSize.base,
-						fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05', 'tnum', 'lnum'],
-						layout: {
-							...BottomLayout,
-							paddingBottom: () => spacing(2),
-							paddingLeft: () => spacing(2),
-							paddingRight: () => spacing(2),
-							vLineWidth: () => 0,
-							hLineWidth: (i, node) => (i + 1 === node.table.body.length ? 1 : 0),
-							hLineColor: () => colors.accent,
-						},
-					},
-				],
-			},
+
+			lineItemsTable(invoice),
+			subtotalTable(invoice),
 		],
 		styles: {
 			heading: {
@@ -428,12 +281,163 @@ async function generatePdf(invoiceId: string) {
 		},
 	});
 
-	const chunks: Buffer[] = [];
+	return pdfDoc.getBuffer();
+}
 
-	pdfDoc.on('data', chunk => chunks.push(chunk));
-	pdfDoc.end();
+function lineItemsTable({ config, ...invoice }: Awaited<ReturnType<typeof fetchInvoice>>): Content {
+	const colors = schemes[config.colorScheme];
 
-	return await new Promise<Buffer>(resolve => {
-		pdfDoc.on('end', () => resolve(Buffer.concat(chunks)));
-	});
+	return {
+		table: {
+			headerRows: 1,
+			dontBreakRows: true,
+			widths: ['*', 70, ...(config.taxRegistration ? [70] : []), 60, 70],
+			body: [
+				[
+					{ text: 'Description', alignment: 'left' },
+					'Quantity',
+					...(config.taxRegistration ? ['Tax'] : []),
+					'Each',
+					'Amount',
+				],
+				...(invoice.items?.map((item): TableCell[] => [
+					{
+						stack: [
+							{ text: item.label },
+							...(item.note
+								? [{ text: item.note, color: colors.accent, bold: false, marginTop: spacing(0.5) }]
+								: []),
+						],
+
+						alignment: 'left',
+						fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05', 'pnum'],
+						verticalAlignment: 'middle',
+					},
+					{
+						text: `${formatNumber(item.quantity, config.locale)} ${item.unit ? pluralize(item.quantity, singularUnits[item.unit], item.unit) : ''}`.trim(),
+						bold: false,
+						fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05', 'pnum'],
+						verticalAlignment: 'middle',
+					},
+					...(config.taxRegistration
+						? ([
+								{
+									text:
+										item.taxes.length > 0
+											? item.taxes.map(tax => `${tax.name}(${tax.rate * 100}%)`).join(' ')
+											: '–',
+									bold: false,
+									verticalAlignment: 'middle',
+								},
+							] as const)
+						: []),
+					{
+						text: formatCurrency(item.unitCost, config.currency, config.locale),
+						bold: false,
+						verticalAlignment: 'middle',
+					},
+					{
+						text: formatCurrency(item.netAmount, config.currency, config.locale),
+						verticalAlignment: 'middle',
+
+						// Margin acts similar to minHeight, as smaller padding is allowed with multiline description
+						margin: [0, spacing(4)],
+					},
+				]) || []),
+			],
+		},
+		bold: true,
+		alignment: 'right',
+		fontSize: fontSize.base,
+		fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05', 'tnum', 'lnum'],
+		layout: {
+			paddingTop: () => spacing(2),
+			paddingBottom: () => spacing(2),
+			paddingLeft: () => spacing(2),
+			paddingRight: () => spacing(2),
+
+			vLineWidth: () => 0,
+			hLineWidth: (i: number) => (i <= 1 ? 1 : 0.75),
+			hLineColor: (i: number) => (i <= 1 ? colors.black : colors.accent),
+			hLineStyle: i => (i <= 1 ? null : { dash: { length: 0.75, space: 1.5 } }),
+		},
+	};
+}
+
+function subtotalTable({ config, ...invoice }: Awaited<ReturnType<typeof fetchInvoice>>): Content {
+	const colors = schemes[config.colorScheme];
+
+	return {
+		marginTop: spacing(6),
+		columnGap: spacing(2),
+		columns: [
+			{
+				stack: config.taxRegistration
+					? ['']
+					: [...(invoice.tax.map(t => `${t.name} not applicable`) || 'Tax not applicable')],
+				color: colors.accent,
+				fontSize: fontSize.base,
+				marginLeft: spacing(2),
+			},
+			{
+				width: 'auto',
+				unbreakable: true,
+				table: {
+					dontBreakRows: true,
+					widths: [80, 100],
+					body: [
+						[
+							{ text: 'Subtotal', verticalAlignment: 'bottom' },
+							{
+								text: formatCurrency(invoice.netTotal, config.currency, config.locale),
+								alignment: 'right',
+								verticalAlignment: 'bottom',
+							},
+						],
+						...invoice.tax.map((tax, i): [TableCell, TableCell] => [
+							{
+								text: `${tax.name} incl.`,
+								color: colors.accent,
+								verticalAlignment: 'bottom',
+
+								// Margin before 'Total' line
+								marginBottom: i === invoice.tax.length - 1 ? spacing(1) : 0,
+							},
+							{
+								text: formatCurrency(tax.contribution, config.currency, config.locale),
+								alignment: 'right',
+								color: colors.accent,
+								verticalAlignment: 'bottom',
+
+								// Margin before 'Total' line
+								marginBottom: i === invoice.tax.length - 1 ? spacing(1) : 0,
+							},
+						]),
+						[
+							{ text: 'Total', bold: true, verticalAlignment: 'bottom' },
+							{
+								text: formatCurrency(invoice.grossTotal, config.currency, config.locale),
+								alignment: 'right',
+								bold: true,
+								fontSize: fontSize.lg,
+								marginTop: spacing(3),
+								verticalAlignment: 'bottom',
+							},
+						],
+					],
+				},
+				fontSize: fontSize.base,
+				fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05', 'tnum', 'lnum'],
+				layout: {
+					paddingTop: () => spacing(0),
+					paddingBottom: () => spacing(2),
+					paddingLeft: () => spacing(2),
+					paddingRight: () => spacing(2),
+					vLineWidth: () => 0,
+					hLineWidth: (i, node) => (i + 1 === node.table.body.length ? 1 : 0),
+					hLineColor: () => colors.accent,
+				},
+			},
+		],
+	};
 }
