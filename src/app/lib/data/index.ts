@@ -67,13 +67,13 @@ export async function getUserConfig() {
 
 				const [paymentDetails, registrationNumber, streetAddress, email, phone, header] =
 					await Promise.all([
-						res.paymentDetails && vault.decrypt(...res.paymentDetails),
-						res.registrationNumber && vault.decrypt(...res.registrationNumber),
-						res.address?.streetAddress && vault.decrypt(...res.address.streetAddress),
+						res.paymentDetails && vault.decrypt(res.paymentDetails),
+						res.registrationNumber && vault.decrypt(res.registrationNumber),
+						res.address?.streetAddress && vault.decrypt(res.address.streetAddress),
 
-						res.email && vault.decrypt(res.email).then(([v]) => v),
-						res.phone && vault.decrypt(res.phone).then(([v]) => v),
-						res.header && vault.decrypt(res.header).then(([v]) => v),
+						res.email && vault.decrypt(res.email),
+						res.phone && vault.decrypt(res.phone),
+						res.header && vault.decrypt(res.header),
 					]);
 
 				return {

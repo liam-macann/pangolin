@@ -39,18 +39,18 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 	const { taxes, ...safeConfig } = await configInput.parseAsync(config).then(async v => ({
 		...v,
 
-		email: v.email ? await vault.encrypt(v.email).then(([r]) => r) : null,
-		phone: v.phone ? await vault.encrypt(v.phone).then(([r]) => r) : null,
-		header: v.header ? await vault.encrypt(v.header).then(([r]) => r) : null,
+		email: v.email ? await vault.encrypt(v.email) : null,
+		phone: v.phone ? await vault.encrypt(v.phone) : null,
+		header: v.header ? await vault.encrypt(v.header) : null,
 
 		paymentDetails:
 			v.paymentDetails.length > 0
-				? await vault.encrypt(...v.paymentDetails.map(v => `${v.label}: ${v.value}`))
+				? await vault.encrypt(v.paymentDetails.map(v => `${v.label}: ${v.value}`))
 				: null,
 
 		registrationNumber:
 			v.registrationNumber.length > 0
-				? await vault.encrypt(...v.registrationNumber.map(v => `${v.label}: ${v.value}`))
+				? await vault.encrypt(v.registrationNumber.map(v => `${v.label}: ${v.value}`))
 				: null,
 
 		taxes: v.taxes.map((tax, i) => ({
@@ -82,7 +82,7 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 							res?.address && {
 								...res.address,
 								streetAddress:
-									res.address.streetAddress && (await vault.decrypt(...res.address.streetAddress)),
+									res.address.streetAddress && (await vault.decrypt(res.address.streetAddress)),
 							},
 					);
 
@@ -99,7 +99,7 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 						...safeConfig.address,
 						streetAddress:
 							safeConfig.address.streetAddress &&
-							(await vault.encrypt(...safeConfig.address.streetAddress)),
+							(await vault.encrypt(safeConfig.address.streetAddress)),
 						userId: session.user.id,
 					})
 					.returning({ id: addressSchema.id })

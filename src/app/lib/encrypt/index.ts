@@ -70,8 +70,21 @@ export async function crypto(uuid: string) {
 		return fn();
 	};
 
-	const _encrypt = async (...args: string[]) => auth(() => args.map(arg => encrypt(arg, DEK)));
-	const _decrypt = async (...args: Encrypted[]) => auth(() => args.map(arg => decrypt(arg, DEK)));
+	function _encrypt(args: string): Promise<Encrypted>;
+	function _encrypt(args: string[]): Promise<Encrypted[]>;
+	async function _encrypt(args: string | string[]) {
+		return auth(() =>
+			Array.isArray(args) ? args.map(arg => encrypt(arg, DEK)) : encrypt(args, DEK),
+		);
+	}
+
+	function _decrypt(args: Encrypted): Promise<string>;
+	function _decrypt(args: Encrypted[]): Promise<string[]>;
+	async function _decrypt(args: Encrypted | Encrypted[]) {
+		return auth(() =>
+			Array.isArray(args) ? args.map(arg => decrypt(arg, DEK)) : decrypt(args, DEK),
+		);
+	}
 
 	const destroy = () => {
 		DEK.fill(0);

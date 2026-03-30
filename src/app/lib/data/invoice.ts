@@ -148,12 +148,12 @@ export async function fetchInvoice(id: string) {
 
 		const [paymentDetails, registrationNumber, streetAddress, email, phone, header] =
 			await Promise.all([
-				res.config.paymentDetails && vault.decrypt(...res.config.paymentDetails),
-				res.config.registrationNumber && vault.decrypt(...res.config.registrationNumber),
-				res.config.address?.streetAddress && vault.decrypt(...res.config.address.streetAddress),
-				res.config.email && vault.decrypt(res.config.email).then(([v]) => v),
-				res.config.phone && vault.decrypt(res.config.phone).then(([v]) => v),
-				res.config.header && vault.decrypt(res.config.header).then(([v]) => v),
+				res.config.paymentDetails && vault.decrypt(res.config.paymentDetails),
+				res.config.registrationNumber && vault.decrypt(res.config.registrationNumber),
+				res.config.address?.streetAddress && vault.decrypt(res.config.address.streetAddress),
+				res.config.email && vault.decrypt(res.config.email),
+				res.config.phone && vault.decrypt(res.config.phone),
+				res.config.header && vault.decrypt(res.config.header),
 			]);
 
 		const inv = {
