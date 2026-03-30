@@ -1,7 +1,7 @@
 import { type Column, type SQL, sql } from 'drizzle-orm';
 import { customType, type PgEnum } from 'drizzle-orm/pg-core';
 
-import { isEncrypted } from '@/lib/utils/encrypt';
+import { type Encrypted, isEncrypted } from '@/lib/utils/encrypt';
 
 type AnySql = SQL | Column | SQL.Aliased;
 
@@ -77,21 +77,20 @@ export function coalesce<Args extends [SqlOrPrimitive, SqlOrPrimitive, ...SqlOrP
 	)})`;
 }
 
-export const encrypted = customType<{ data: Uint8Array; driverData: Uint8Array | Buffer | string }>(
-	{
-		dataType: () => 'bytea',
-		toDriver(value: Uint8Array | Buffer): string {
-			if (!isEncrypted(value)) throw new Error('Value is not encrypted');
+export const encrypted = customType<{ data: Encrypted; driverData: Uint8Array | Buffer | string }>({
+	dataType: () => 'bytea',
+	toDriver(value: Encrypted): string {
+		if (!isEncrypted(value)) throw new Error('Value is not encrypted');
 
-			// Uint8Array toHex not implemented in Node.js
-			const buffer = Buffer.isBuffer(value) ? value : Buffer.from(value);
+		// Uint8Array toHex not implemented in Node.js
+		const buffer = Buffer.isBuffer(value) ? value : Buffer.from(value);
 
-			// Convert to Postgres hex format — safe to transport inside SQL param
-			return `\\x${buffer.toString('hex')}`;
-		},
-		fromDriver(value): Uint8Array {
-			// Conservatively handle DB driver behaviour with union type
-
+		// Convert to Postgres hex format — safe to transport inside SQL param
+		return `\\x${buffer.toString('hex')}`;
+	},
+	fromDriver(value): Encrypted {
+		// Conservatively handle DB driver behaviour with union type
+		const arr = ((): Uint8Array => {
 			if (value instanceof Uint8Array) return value;
 
 			// If returned as Buffer
@@ -100,6 +99,10 @@ export const encrypted = customType<{ data: Uint8Array; driverData: Uint8Array |
 			// If hex encoded string
 			if (!value.startsWith('\\x')) throw new Error('String is not hex encoded');
 			return new Uint8Array(Buffer.from(value.slice(2), 'hex'));
-		},
+		})();
+
+		if (!isEncrypted(arr)) throw new Error('Value is missing encryption header');
+
+		return arr;
 	},
-);
+});

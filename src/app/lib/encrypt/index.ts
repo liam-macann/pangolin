@@ -4,7 +4,7 @@ import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { concatBytes, hexToBytes, managedNonce, randomBytes } from '@noble/ciphers/utils.js';
 import { eq } from 'drizzle-orm';
 
-import { isEncrypted } from '@/lib/utils/encrypt';
+import { type Encrypted, isEncrypted } from '@/lib/utils/encrypt';
 import { db } from '@/db';
 import { keychain } from '@/db/schema';
 
@@ -17,17 +17,17 @@ const decoder = new TextDecoder();
 const chacha = managedNonce(xchacha20poly1305);
 
 /* Idempotent header concatenation */
-const concatHeader = (ciphertext: Uint8Array) =>
-	isEncrypted(ciphertext) ? ciphertext : concatBytes(header, version, ciphertext);
+const concatHeader = (ciphertext: Uint8Array): Encrypted =>
+	isEncrypted(ciphertext) ? ciphertext : (concatBytes(header, version, ciphertext) as Encrypted);
 
 /* Idempotent header removal */
-const stripHeader = (ciphertext: Uint8Array) =>
+const stripHeader = (ciphertext: Uint8Array): Uint8Array =>
 	isEncrypted(ciphertext) ? ciphertext.slice(header.length + version.length) : ciphertext;
 
 /** Encrypts a string using the provided Data Encryption Key (DEK)
  * @internal
  */
-function encrypt(value: string, DEK: Uint8Array): Uint8Array {
+function encrypt(value: string, DEK: Uint8Array): Encrypted {
 	const data = encoder.encode(value);
 	const ciphertext = chacha(DEK).encrypt(data);
 
@@ -37,7 +37,7 @@ function encrypt(value: string, DEK: Uint8Array): Uint8Array {
 /** Decrypts a Uint8Array using the provided Data Encryption Key (DEK)
  * @internal
  */
-function decrypt(value: Uint8Array, DEK: Uint8Array): string {
+function decrypt(value: Encrypted, DEK: Uint8Array): string {
 	try {
 		if (!isEncrypted(value)) throw new Error('Invalid header, input may not be encrypted');
 
@@ -71,7 +71,7 @@ export async function crypto(uuid: string) {
 	};
 
 	const _encrypt = async (...args: string[]) => auth(() => args.map(arg => encrypt(arg, DEK)));
-	const _decrypt = async (...args: Uint8Array[]) => auth(() => args.map(arg => decrypt(arg, DEK)));
+	const _decrypt = async (...args: Encrypted[]) => auth(() => args.map(arg => decrypt(arg, DEK)));
 
 	const destroy = () => {
 		DEK.fill(0);
@@ -110,9 +110,8 @@ function withKEK<T>(callback: (KEK: Uint8Array) => T) {
 	return val;
 }
 
-const wrap = (DEK: Uint8Array): Uint8Array =>
-	withKEK(KEK => concatHeader(chacha(KEK).encrypt(DEK)));
-const unwrap = (DEK: Uint8Array): Uint8Array =>
+const wrap = (DEK: Uint8Array): Encrypted => withKEK(KEK => concatHeader(chacha(KEK).encrypt(DEK)));
+const unwrap = (DEK: Encrypted): Uint8Array =>
 	withKEK(KEK => chacha(KEK).decrypt(stripHeader(DEK)));
 
 //

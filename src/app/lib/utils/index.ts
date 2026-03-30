@@ -147,3 +147,7 @@ export type AllSameKeys<T extends [object, ...object[]]> = T extends [
 
 /** Omit properties without breaking discriminated unions */
 export type OmitUnion<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
+
+declare const __brand: unique symbol;
+/** Simulate nominal typing by specifying a key */
+export type Brand<T, B> = T & { [__brand]: B };
