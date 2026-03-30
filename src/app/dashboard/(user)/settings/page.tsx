@@ -29,14 +29,14 @@ export default async function Page() {
 					className='text-foreground text-sm'
 					variant='ghost'
 					nativeButton={false}
-					render={<Link href='#taxation'>Taxation</Link>}
+					render={<Link href='#details'>Your details</Link>}
 				/>
 				<Button
 					size='sm'
 					className='text-foreground text-sm'
 					variant='ghost'
 					nativeButton={false}
-					render={<Link href='#details'>Your details</Link>}
+					render={<Link href='#taxation'>Taxation</Link>}
 				/>
 				<Button
 					size='sm'
