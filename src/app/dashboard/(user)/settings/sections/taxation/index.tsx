@@ -81,7 +81,7 @@ export function Taxation<T extends Fields>({ control: _control }: { control: Con
 
 						{/* AnimatePresence doesn't work with gap; wrapper needed */}
 						<div className='isolate'>
-							<DuplicateWarning control={control} className='ml-8 pb-6' />
+							<DuplicateWarning control={control} className='ml-6 pb-6' />
 							<TaxRateField control={control} className='relative z-10 not-data-empty:-my-2' />
 						</div>
 					</FieldSet>
