@@ -41,9 +41,7 @@ export function Customization<T extends Fields>({ control: _control }: { control
 					<Field orientation='responsive' data-invalid={fieldState.invalid}>
 						<FieldContent>
 							<FieldTitle id='colorSchemeLabel'>Color scheme</FieldTitle>
-							<FieldDescription>
-								Select an accent color for your generated invoices
-							</FieldDescription>
+							<FieldDescription>Select an accent color for your documents.</FieldDescription>
 							{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 						</FieldContent>
 
@@ -58,27 +56,29 @@ export function Customization<T extends Fields>({ control: _control }: { control
 				render={({ field: { onChange, ...field }, fieldState }) => {
 					return (
 						<FieldSet className='mt-4'>
-							<FieldContent>
-								<FieldLegend className='flex items-center gap-2'>
-									Numbering scheme
-									<InfoTip side='right'>
-										Existing invoices will not be affected by changes to numbering scheme
-									</InfoTip>
-								</FieldLegend>
-								<FieldDescription>
-									Choose the method used to identify your invoices.
-								</FieldDescription>
-							</FieldContent>
-							<RadioGroup {...field} onValueChange={onChange} className='mt-1 flex max-sm:flex-col'>
+							<FieldLegend variant='label' className='flex items-center gap-2'>
+								Numbering scheme
+								<InfoTip side='right'>
+									Existing invoices will not be affected by changes to numbering scheme
+								</InfoTip>
+							</FieldLegend>
+							<FieldDescription>Choose the method used to identify your invoices.</FieldDescription>
+
+							<RadioGroup
+								{...field}
+								data-invalid={fieldState.invalid}
+								onValueChange={onChange}
+								className='mt-1 flex max-sm:flex-col'
+							>
 								<FieldLabel>
 									<Field orientation='vertical' className='h-full justify-between'>
 										<div className='flex justify-between'>
 											<FieldTitle>Sequential</FieldTitle>
-											<RadioGroupItem value='sequential' />
+											<RadioGroupItem aria-invalid={fieldState.invalid} value='sequential' />
 										</div>
-										<div className='flex items-end justify-between gap-6'>
+										<div className='flex items-end justify-between gap-3'>
 											<FieldDescription className='text-balance'>
-												Track invoices sequentially, over the life of the business
+												Track invoices over the entire business
 											</FieldDescription>
 											<FieldDescription className='text-nowrap font-mono text-xs tracking-wide'>
 												INV–001
@@ -90,11 +90,11 @@ export function Customization<T extends Fields>({ control: _control }: { control
 									<Field orientation='vertical' className='h-full justify-between'>
 										<div className='flex justify-between'>
 											<FieldTitle>Annual</FieldTitle>
-											<RadioGroupItem value='annual' />
+											<RadioGroupItem aria-invalid={fieldState.invalid} value='annual' />
 										</div>
-										<div className='flex items-end justify-between gap-6'>
+										<div className='flex items-end justify-between gap-3'>
 											<FieldDescription className='text-balance'>
-												Reset invoice count with each new calendar year
+												Reset count with each calendar year
 											</FieldDescription>
 											<FieldDescription className='text-nowrap font-mono text-xs tracking-wide'>
 												{new Date().getFullYear()}–001
