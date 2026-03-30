@@ -193,29 +193,55 @@ async function generatePdf(invoiceId: string) {
 		content: [
 			{
 				style: 'footer',
-				alignment: 'right',
 				marginTop: -spacing(4),
-				stack: [
-					{
-						text: invoice.config.tradingName,
-						bold: true,
-						color: colors.heavy,
-						margin: [0, 0, 0, spacing(4)],
-					},
-					{ stack: invoice.config.registrationNumber || [] },
+				table: {
+					widths: ['60%', '40%'],
+					body: [
+						[
+							'',
+							{
+								alignment: 'right',
+								text: invoice.config.tradingName,
+								bold: true,
+								color: colors.heavy,
+								margin: [0, 0, 0, spacing(4)],
+							},
+						],
+						[
+							{
+								text: invoice.config.header ?? '',
+								marginLeft: spacing(5),
+								marginRight: spacing(5),
+							},
+							{
+								alignment: 'right',
+								stack: [
+									{ stack: invoice.config.registrationNumber || [] },
 
-					invoice.config.email ? { text: invoice.config.email } : [],
-					invoice.config.phone ? { text: invoice.config.phone } : [],
+									invoice.config.email ? { text: invoice.config.email } : [],
+									invoice.config.phone ? { text: invoice.config.phone } : [],
 
-					invoice.config.address
-						? [
-								{
-									text: await formatAddress(invoice.config.address),
-									marginTop: spacing(4),
-								},
-							]
-						: [],
-				],
+									invoice.config.address
+										? [
+												{
+													text: await formatAddress(invoice.config.address),
+													marginTop: spacing(4),
+												},
+											]
+										: [],
+								],
+							},
+						],
+					],
+				},
+				layout: {
+					paddingTop: () => 0,
+					paddingBottom: () => 0,
+					paddingLeft: () => 0,
+					paddingRight: () => 0,
+					hLineWidth: () => 0,
+					vLineWidth: () => 0,
+				},
 			},
 			{
 				text: (() => {

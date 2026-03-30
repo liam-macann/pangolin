@@ -1,0 +1,1 @@
+ALTER TABLE "config" ADD COLUMN "header" bytea;

@@ -19,6 +19,7 @@ import {
 } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { Switch } from '@/ui/switch';
+import { Textarea } from '@/ui/textarea';
 
 import { PaymentDetailsField } from './paymentDetails';
 import { RegistrationNumberField } from './registrationNumber';
@@ -26,7 +27,7 @@ import { RegistrationNumberField } from './registrationNumber';
 type FormValues = z.input<typeof formSchema>;
 type Fields = Pick<
 	FormValues,
-	'tradingName' | 'email' | 'phone' | 'registrationNumber' | 'paymentDetails' | 'address'
+	'tradingName' | 'email' | 'phone' | 'header' | 'registrationNumber' | 'paymentDetails' | 'address'
 > & { addressEnabled: boolean };
 
 export function Details<T extends Fields>({ control: _control }: { control: Control<T> }) {
@@ -49,7 +50,11 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 							<FieldDescription>The name by which your business is known.</FieldDescription>
 							{fieldState.error && <FieldError errors={[fieldState.error]} />}
 						</FieldContent>
-						<Input id='tradingName' {...field} className='min-w-96' />
+						<Input
+							id='tradingName'
+							{...field}
+							className='@xl/field-group:!w-96 @md/field-group:!w-72 max-w-full'
+						/>
 					</Field>
 				)}
 			/>
@@ -67,7 +72,12 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 								<FieldError errors={[fieldState.error]} />
 							</FieldContent>
 						)}
-						<Input id='email' {...field} className='min-w-96' placeholder='Optional' />
+						<Input
+							id='email'
+							{...field}
+							className='@xl/field-group:!w-96 @md/field-group:!w-72 max-w-full'
+							placeholder='Optional'
+						/>
 					</Field>
 				)}
 			/>
@@ -85,7 +95,35 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 								<FieldError errors={[fieldState.error]} />
 							</FieldContent>
 						)}
-						<Input id='phone' {...field} className='min-w-96' placeholder='Optional' />
+						<Input
+							id='phone'
+							{...field}
+							className='@xl/field-group:!w-96 @md/field-group:!w-72 max-w-full'
+							placeholder='Optional'
+						/>
+					</Field>
+				)}
+			/>
+
+			<Controller
+				name='header'
+				control={control}
+				render={({ field, fieldState }) => (
+					<Field orientation='responsive' data-invalid={fieldState.invalid}>
+						<FieldContent>
+							<FieldLabel htmlFor='header'>Additional text</FieldLabel>
+							<FieldDescription className='text-balance'>
+								Further information for the first page of each invoice.
+							</FieldDescription>
+							{fieldState.error && <FieldError errors={[fieldState.error]} />}
+						</FieldContent>
+
+						<Textarea
+							id='header'
+							{...field}
+							className='@xl/field-group:!w-96 @md/field-group:!w-72 max-w-full'
+							placeholder='Optional'
+						/>
 					</Field>
 				)}
 			/>

@@ -41,6 +41,7 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 
 		email: v.email ? await vault.encrypt(v.email).then(([r]) => r) : null,
 		phone: v.phone ? await vault.encrypt(v.phone).then(([r]) => r) : null,
+		header: v.header ? await vault.encrypt(v.header).then(([r]) => r) : null,
 
 		paymentDetails:
 			v.paymentDetails.length > 0

@@ -51,6 +51,7 @@ const configAdapter = (config: Awaited<ReturnType<typeof getUserConfig>>): FormI
 	tradingName: config.tradingName,
 	email: config.email || '',
 	phone: config.phone || '',
+	header: config.header || '',
 	registrationNumber: config.registrationNumber || [],
 
 	addressEnabled: !!config.address,

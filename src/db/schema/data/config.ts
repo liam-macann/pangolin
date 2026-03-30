@@ -76,6 +76,7 @@ export const config = pgTable(
 		tradingName: text('trading_name').notNull(),
 		email: encrypted('email'),
 		phone: encrypted('phone'),
+		header: encrypted('header'),
 
 		// The time zone of record, for invoice dates and yearly sequencing. This should eventually reference a table of time zones.
 		timezone: text()
