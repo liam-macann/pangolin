@@ -86,6 +86,65 @@ export async function crypto(uuid: string) {
 		);
 	}
 
+	// biome-ignore format: Nested conditions easier to read when flat
+	type Decrypted<T> =
+		T extends Encrypted ? string :
+		T extends Array<infer U> ? Decrypted<U>[] :
+		T extends Set<infer U> ? Set<Decrypted<U>> :
+		T extends Map<infer K, infer U> ? Map<Decrypted<K>, Decrypted<U>> :
+		T extends object ? { [K in keyof T]: Decrypted<T[K]> } :
+		T;
+
+	const _decryptObject = async <T extends Record<string, unknown> | Map<unknown, unknown>>(
+		input: T,
+	): Promise<Decrypted<T>> =>
+		auth(() => {
+			// Prevent circular references
+			const seen = new WeakSet();
+
+			async function walker(input: unknown): Promise<unknown> {
+				if (input === null || input === undefined) return input;
+
+				// Input is a Uint8Array; decrypt if encrypted
+				if (input instanceof Uint8Array) return isEncrypted(input) ? _decrypt(input) : input;
+
+				if (typeof input === 'object') {
+					if (seen.has(input)) return input;
+					seen.add(input);
+
+					// Input is an array
+					if (Array.isArray(input)) return await Promise.all(input.map(walker));
+
+					// Input is a Set
+					if (input instanceof Set)
+						return new Set(await Promise.all(Array.from(input).map(walker)));
+
+					// Input is a Map
+					if (input instanceof Map) {
+						const entries = Array.from(input.entries()).map(
+							async ([key, value]) => [await walker(key), await walker(value)] as const,
+						);
+
+						return new Map(await Promise.all(entries));
+					}
+
+					// Input is an object
+					return Object.fromEntries(
+						await Promise.all(
+							Object.entries(input).map(
+								async ([key, value]) => [key, await walker(value)] as const,
+							),
+						),
+					);
+				}
+
+				// Other values are returned as-is
+				return input;
+			}
+
+			return walker(input) as Promise<Decrypted<T>>;
+		});
+
 	const destroy = () => {
 		DEK.fill(0);
 		destroyed = true;
@@ -96,6 +155,8 @@ export async function crypto(uuid: string) {
 		encrypt: _encrypt,
 		/** Decrypts ciphertext, returning an array of strings */
 		decrypt: _decrypt,
+		/** Walks through an object, decrypting any encrypted values */
+		decryptObject: _decryptObject,
 		/** Clear the internal DEK from memory */
 		destroy,
 	};
