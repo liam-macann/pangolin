@@ -36,6 +36,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 			<Button
 				variant='ghost'
 				className='-ml-3'
+				nativeButton={false}
 				render={
 					<Link href='/dashboard/clients'>
 						<ArrowLeftIcon />
