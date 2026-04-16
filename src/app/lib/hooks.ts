@@ -40,6 +40,10 @@ import { type Data as ClientsData } from '@/api/clients/route';
 export const useClients = <C extends Config>(initial?: ClientsData, config?: C) =>
 	useSWR('/api/clients', initial, config);
 
+import { type Data as ClientData } from '@/api/clients/[id]/route';
+export const useClient = <C extends Config>(id: string, initial?: ClientData, config?: C) =>
+	useSWR(`/api/clients/${id}`, initial, config);
+
 import { type CountryCode, registerCountry } from 'lib-address';
 
 import { type Data as AddressInputMetadata } from '@/api/address-metadata/[country]/route';

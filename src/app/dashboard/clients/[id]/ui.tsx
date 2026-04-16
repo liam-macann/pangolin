@@ -1,8 +1,17 @@
 'use client';
 
-import { type Data } from '@/api/invoices/route';
+import { ArchiveIcon, PencilIcon } from '@phosphor-icons/react/dist/ssr';
+
+import { type Data as ClientData } from '@/api/clients/[id]/route';
+import { type Data as InvoiceData } from '@/api/invoices/route';
+import { useClient } from '@/lib/hooks';
+import { pluralize } from '@/lib/utils';
+
+import { Badge } from '@/ui/badge';
+import { Button } from '@/ui/button';
 
 import { columns, createInvoiceTable, statusVariants } from './../../invoices/table';
+import { UpdateClientDialog } from './../dialogs';
 
 const DataTable = createInvoiceTable(
 	columns
@@ -23,10 +32,56 @@ const DataTable = createInvoiceTable(
 		}),
 );
 
-export function Table(props: { data: Data; locale: string }) {
+export function Table({
+	initialClient,
+	...props
+}: {
+	initialClient: ClientData;
+	data: InvoiceData;
+	locale: string;
+}) {
+	const { data: client } = useClient(initialClient.id, initialClient, { suspense: true });
+
 	return (
-		<DataTable.Root pagination={false} {...props}>
-			<DataTable.Content />
-		</DataTable.Root>
+		<>
+			<DataTable.Root pagination={false} {...props}>
+				<DataTable.Content />
+			</DataTable.Root>
+
+			{client.invoiceCount > props.data.length && (
+				<div className='mt-3 ml-4 rounded-md font-medium text-muted-foreground text-sm'>
+					+ {client.invoiceCount - props.data.length} more{' '}
+					{pluralize(client.invoiceCount - props.data.length, 'invoice', 'invoices')}
+				</div>
+			)}
+		</>
+	);
+}
+
+export function Header({ initialClient }: { initialClient: ClientData }) {
+	const { data: client } = useClient(initialClient.id, initialClient, { suspense: true });
+
+	return (
+		<>
+			<div className='flex items-baseline justify-between'>
+				<div className='space-x-4'>
+					<h1 className='mt-4 inline-block font-display text-3xl'>{client.data.name}</h1>
+					{client.isDeleted && (
+						<Badge variant='outline' className='-translate-0.5'>
+							<ArchiveIcon /> Archived
+						</Badge>
+					)}
+				</div>
+
+				<UpdateClientDialog defaultValues={{ ...client.data, clientId: client.id }}>
+					<Button variant='outline'>
+						<PencilIcon />
+						<span className='hidden sm:block'>Edit details</span>
+					</Button>
+				</UpdateClientDialog>
+			</div>
+
+			<p className='flex items-center gap-2 text-muted-foreground'>{client.data.email}</p>
+		</>
 	);
 }
