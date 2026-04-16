@@ -13,9 +13,10 @@ import {
 	sumDistinct,
 } from 'drizzle-orm';
 
+import { crypto, type Decrypted } from '@/lib/encrypt';
 import { jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
 import { db } from '@/db';
-import { clientData, clients, invoices, invoicesWithSum } from '@/db/schema';
+import { type address, clientData, clients, invoices, invoicesWithSum } from '@/db/schema';
 
 import { getSession } from '@/auth';
 
@@ -28,6 +29,8 @@ export interface ClientResult {
 		scdId: string;
 		name: string;
 		email: string;
+		notes: string | null;
+		address: Omit<Decrypted<typeof address.$inferSelect>, 'userId' | 'id'> | null;
 	};
 }
 
@@ -40,44 +43,53 @@ export async function fetchClients(id?: string) {
 	if (!session) throw new Error('Request not authenticated');
 
 	try {
-		const invoiceCounts = db.$with('invoice_counts').as(
-			db
-				.select({
-					clientId: clients.id,
+		const res = await db.query.clients
+			.findMany({
+				columns: {
+					id: true,
+					isFavorite: true,
+					isDeleted: true,
+				},
+				with: {
+					data: {
+						columns: { id: false },
+						with: { address: { columns: { id: false, userId: false } } },
+						extras: { scdId: data => data.id.getSQL() as SQL<string> },
+						where: { validTo: { isNull: true } },
+						limit: 1,
+					},
+				},
+				extras: {
 					/** Includes voided invoices */
-					count: count(invoices.id).as('count'),
-				})
-				.from(clients)
-				.leftJoin(clientData, eq(clientData.clientId, clients.id))
-				.leftJoin(invoices, eq(invoices.clientDataId, clientData.id))
-				.groupBy(clients.id),
-		);
+					invoiceCount: (c, { sql }) =>
+						sql<number>`(${db
+							.select({ count: count(invoices.id) })
+							.from(clientData)
+							.where(eq(clientData.clientId, c.id))
+							.leftJoin(invoices, eq(invoices.clientDataId, clientData.id))}
+						)`,
+				},
+				where: {
+					userId: { eq: session.user.id },
+					// Exclude deleted clients, unless requesting a specific id
+					...(id ? { id: { eq: id } } : { isDeleted: { eq: false } }),
+				},
 
-		return await db
-			.with(invoiceCounts)
-			.select({
-				id: clients.id,
-				isFavorite: clients.isFavorite,
-				isDeleted: clients.isDeleted,
-				invoiceCount: invoiceCounts.count,
-				data: jsonbBuildObject({
-					scdId: clientData.id,
-					name: clientData.name,
-					email: clientData.email,
-				}),
+				orderBy: (c, { sql }) =>
+					sql<string>`(${db
+						.select({ name: clientData.name })
+						.from(clientData)
+						.where(and(eq(clientData.clientId, c.id), isNull(clientData.validTo)))
+						.limit(1)}
+					)`,
 			})
-			.from(clients)
-			.innerJoin(clientData, and(eq(clients.id, clientData.clientId), isNull(clientData.validTo)))
-			.leftJoin(invoiceCounts, eq(clients.id, invoiceCounts.clientId))
-			.where(
-				and(
-					eq(clients.userId, session.user.id),
-					id ? eq(clients.id, id) : eq(clients.isDeleted, false),
-				),
-			)
-			.groupBy(clients.id, clientData.id, invoiceCounts.count)
-			.orderBy(clientData.name)
-			.then(res => (id ? res[0] : res));
+			.then(res => res.map(client => ({ ...client, data: client.data?.[0] })));
+
+		const vault = await crypto(session.user.id);
+		const decrypted: ClientResult[] = await Promise.all(res.map(el => vault.decryptObject(el)));
+		vault.destroy();
+
+		return id ? decrypted[0] : decrypted;
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch clients.');

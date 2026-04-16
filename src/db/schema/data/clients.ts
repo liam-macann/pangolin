@@ -1,9 +1,19 @@
 import { sql } from 'drizzle-orm';
-import { boolean, check, foreignKey, pgTable, unique, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+	boolean,
+	check,
+	foreignKey,
+	pgTable,
+	text,
+	unique,
+	uuid,
+	varchar,
+} from 'drizzle-orm/pg-core';
 
 import { users } from '@/db/schema/auth';
 
 import { scdDates } from './_helpers';
+import { address } from './address';
 
 // Logical client. Data is stored in SCD table.
 export const clients = pgTable(
@@ -41,6 +51,9 @@ export const clientData = pgTable(
 			.notNull(),
 		name: varchar({ length: 255 }).notNull(),
 		email: varchar({ length: 255 }).notNull(),
+		notes: text('notes'),
+
+		addressId: uuid('address_id').references(() => address.id),
 		...scdDates,
 	},
 	t => [

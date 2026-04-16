@@ -71,7 +71,7 @@ export const relations = defineRelations(schema, r => ({
 			from: r.clients.userId,
 			to: r.users.id,
 		}),
-		clientData: r.many.clientData(),
+		data: r.many.clientData(),
 	},
 
 	clientData: {
@@ -82,6 +82,10 @@ export const relations = defineRelations(schema, r => ({
 		user: r.one.users({
 			from: r.clientData.userId,
 			to: r.users.id,
+		}),
+		address: r.one.address({
+			from: r.clientData.addressId,
+			to: r.address.id,
 		}),
 		invoices: r.many.invoices({
 			from: r.clientData.id,

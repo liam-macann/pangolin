@@ -20,6 +20,7 @@ import { config as configInput } from '@/lib/validation/config';
 import { db } from '@/db';
 import {
 	address as addressSchema,
+	clientData as clientDataSchema,
 	config as configSchema,
 	configTaxes as configTaxesSchema,
 	invoices as invoicesSchema,
@@ -206,6 +207,13 @@ async function databaseCleanup(userId: string) {
 					notExists(
 						// No configs reference address row
 						db.select().from(configSchema).where(eq(configSchema.addressId, addressSchema.id)),
+					),
+					notExists(
+						// No clients reference address row
+						db
+							.select()
+							.from(clientDataSchema)
+							.where(eq(clientDataSchema.addressId, addressSchema.id)),
 					),
 				),
 			)

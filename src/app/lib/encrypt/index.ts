@@ -16,6 +16,15 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const chacha = managedNonce(xchacha20poly1305);
 
+// biome-ignore format: Nested conditions easier to read when flat
+export type Decrypted<T> =
+	T extends Encrypted ? string :
+	T extends Array<infer U> ? Decrypted<U>[] :
+	T extends Set<infer U> ? Set<Decrypted<U>> :
+	T extends Map<infer K, infer U> ? Map<Decrypted<K>, Decrypted<U>> :
+	T extends object ? { [K in keyof T]: Decrypted<T[K]> } :
+	T;
+
 /* Idempotent header concatenation */
 const concatHeader = (ciphertext: Uint8Array): Encrypted =>
 	isEncrypted(ciphertext) ? ciphertext : (concatBytes(header, version, ciphertext) as Encrypted);
@@ -85,15 +94,6 @@ export async function crypto(uuid: string) {
 			Array.isArray(args) ? args.map(arg => decrypt(arg, DEK)) : decrypt(args, DEK),
 		);
 	}
-
-	// biome-ignore format: Nested conditions easier to read when flat
-	type Decrypted<T> =
-		T extends Encrypted ? string :
-		T extends Array<infer U> ? Decrypted<U>[] :
-		T extends Set<infer U> ? Set<Decrypted<U>> :
-		T extends Map<infer K, infer U> ? Map<Decrypted<K>, Decrypted<U>> :
-		T extends object ? { [K in keyof T]: Decrypted<T[K]> } :
-		T;
 
 	const _decryptObject = async <T extends Record<string, unknown> | Map<unknown, unknown>>(
 		input: T,
