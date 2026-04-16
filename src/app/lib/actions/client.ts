@@ -1,6 +1,6 @@
 'use server';
 
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import type z from 'zod/v4';
 
 import { clientData as clientDataSchema } from '@/lib/validation/client';
@@ -19,7 +19,7 @@ export async function updateClientFavorite(clientId: string, status: boolean) {
 		.where(and(eq(clients.id, clientId), eq(clients.userId, session.user.id)));
 }
 
-export async function createClient(input: z.infer<typeof clientDataSchema>) {
+export async function createClient(input: Omit<z.infer<typeof clientDataSchema>, 'clientId'>) {
 	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');
 
@@ -34,4 +34,28 @@ export async function createClient(input: z.infer<typeof clientDataSchema>) {
 		.with(newClient)
 		.insert(clientData)
 		.values({ ...data, clientId: sql`(select id from ${newClient})`, userId: session.user.id });
+}
+
+export async function updateClient(input: z.infer<typeof clientDataSchema>) {
+	const session = await getSession();
+	if (!session) throw new Error('Request not authenticated');
+
+	// Validate form using Zod
+	const data = clientDataSchema.parse(input);
+
+	// Must be a transaction to allow insert to see updated DB snapshot
+	await db.transaction(async tx => {
+		await tx
+			.update(clientData)
+			.set({ validTo: sql`now()` })
+			.where(
+				and(
+					isNull(clientData.validTo),
+					eq(clientData.clientId, data.clientId),
+					eq(clientData.userId, session.user.id),
+				),
+			);
+
+		await tx.insert(clientData).values({ ...data, userId: session.user.id });
+	});
 }

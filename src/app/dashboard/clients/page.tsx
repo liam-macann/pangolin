@@ -6,7 +6,7 @@ import { fetchClients } from '@/lib/data/client';
 
 import { Button } from '@/ui/button';
 
-import { CreateClientDialog } from './create';
+import { CreateClientDialog } from './dialogs';
 import { Clients } from './ui';
 
 export const metadata: Metadata = {

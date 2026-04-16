@@ -1,0 +1,1 @@
+ALTER TABLE "client_data" ALTER COLUMN "client_id" SET NOT NULL;

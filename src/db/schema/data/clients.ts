@@ -36,7 +36,9 @@ export const clientData = pgTable(
 		userId: uuid('user_id')
 			.references(() => users.id, { onDelete: 'cascade' })
 			.notNull(),
-		clientId: uuid('client_id').references(() => clients.id, { onDelete: 'cascade' }),
+		clientId: uuid('client_id')
+			.references(() => clients.id, { onDelete: 'cascade' })
+			.notNull(),
 		name: varchar({ length: 255 }).notNull(),
 		email: varchar({ length: 255 }).notNull(),
 		...scdDates,

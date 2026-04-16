@@ -2,14 +2,23 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WarningIcon } from '@phosphor-icons/react';
-import { type ReactElement, useState } from 'react';
+import { type ReactElement, type ReactNode, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { Controller, FormProvider, useForm } from 'react-hook-form';
+import {
+	type Control,
+	Controller,
+	type FieldValues,
+	FormProvider,
+	type UseFormReturn,
+	useForm,
+	useFormState,
+} from 'react-hook-form';
 import { toast } from 'sonner';
+import type z from 'zod/v4';
 
-import { createClient } from '@/lib/actions/client';
-import { useClients } from '@/lib/hooks';
-import { clientData as schema } from '@/lib/validation/client';
+import { createClient, updateClient } from '@/lib/actions/client';
+import { useClient, useClients } from '@/lib/hooks';
+import { clientData as formSchema } from '@/lib/validation/client';
 
 import { Alert, AlertTitle } from '@/ui/alert';
 import { Button } from '@/ui/button';
@@ -26,32 +35,105 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 
 export function CreateClientDialog({ children }: { children: ReactElement }) {
-	const [open, setOpen] = useState(false);
 	const { mutate } = useClients();
 
-	const methods = useForm({
-		resolver: zodResolver(schema.omit({ clientId: true })),
+	const form = useForm({
+		resolver: zodResolver(formSchema.omit({ clientId: true })),
 		defaultValues: {
 			name: '',
 			email: '',
 		},
 	});
 
-	const {
-		control,
-		reset,
-		handleSubmit,
-		formState: { isSubmitting },
-	} = methods;
+	return (
+		<ClientDialog
+			title={'Create client'}
+			form={form}
+			onSubmit={async data => {
+				const promise = createClient(data).then(() => void mutate());
+
+				toast.promise(promise, {
+					loading: 'Creating new client…',
+					success: 'Client created',
+					error: 'Failed to add new client',
+				});
+
+				return promise;
+			}}
+		>
+			{children}
+		</ClientDialog>
+	);
+}
+
+export function UpdateClientDialog({
+	children,
+	defaultValues,
+}: {
+	children: ReactElement;
+	defaultValues: z.infer<typeof formSchema>;
+}) {
+	const { mutate: mutateClients } = useClients();
+	const { mutate: mutateClient } = useClient(defaultValues.clientId);
+
+	const form = useForm({
+		resolver: zodResolver(formSchema),
+		defaultValues,
+	});
 
 	return (
-		<FormProvider {...methods}>
+		<ClientDialog
+			title={'Update client'}
+			form={form}
+			onSubmit={async data => {
+				const promise = updateClient(data).then(() => {
+					mutateClient();
+					mutateClients();
+				});
+
+				toast.promise(promise, {
+					loading: 'Updating client details…',
+					success: 'Client updated',
+					error: 'Failed to update client',
+				});
+
+				return promise;
+			}}
+		>
+			{children}
+		</ClientDialog>
+	);
+}
+
+/** Fields set by the user, excluding ids etc. */
+type FormFields = Omit<z.infer<typeof formSchema>, 'clientId'>;
+type ClientDialog<T extends FieldValues> = {
+	title: ReactNode;
+	children: ReactElement;
+
+	form: UseFormReturn<T>;
+	onSubmit: (data: T, form: UseFormReturn<T>) => Promise<void>;
+};
+
+function ClientDialog<T extends FormFields>({ title, form, onSubmit, children }: ClientDialog<T>) {
+	const [open, setOpen] = useState(false);
+
+	const { control: _control, reset, handleSubmit } = form;
+
+	// Necessary, as RHF can't extract typings from the generic
+	const control = _control as unknown as Control<FormFields>;
+
+	// NOTE: Hook is necessary, as destructuring from `form` will not subscribe to state updates
+	const { isSubmitting } = useFormState({ control });
+
+	return (
+		<FormProvider {...form}>
 			<Dialog open={open} onOpenChange={setOpen}>
 				<DialogTrigger render={children} />
 
 				<DialogContent>
 					<DialogHeader>
-						<DialogTitle>Create client</DialogTitle>
+						<DialogTitle>{title}</DialogTitle>
 					</DialogHeader>
 
 					<ErrorBoundary
@@ -63,20 +145,12 @@ export function CreateClientDialog({ children }: { children: ReactElement }) {
 						}
 					>
 						<form
-							onSubmit={handleSubmit(data => {
-								const promise = createClient(data).then(() => {
-									// This should really pass the action returned client, but that needs an identical shape to the fetcher
-									mutate();
+							onSubmit={handleSubmit(data =>
+								onSubmit(data, form).then(() => {
 									setOpen(false);
-									reset();
-								});
-
-								toast.promise(promise, {
-									loading: 'Creating new client…',
-									success: 'Client created',
-									error: 'Failed to add new client',
-								});
-							})}
+									setTimeout(() => reset(data), 200);
+								}),
+							)}
 						>
 							<FieldGroup className='gap-4'>
 								<Controller
@@ -125,6 +199,7 @@ export function CreateClientDialog({ children }: { children: ReactElement }) {
 								<DialogClose
 									onClick={() => setTimeout(() => reset(), 200)}
 									render={<Button variant='ghost'>Cancel</Button>}
+									disabled={isSubmitting}
 								/>
 							</DialogFooter>
 						</form>

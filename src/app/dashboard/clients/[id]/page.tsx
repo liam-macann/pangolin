@@ -1,11 +1,11 @@
-import { ArchiveIcon, ArrowLeftIcon } from '@phosphor-icons/react/ssr';
+import { ArchiveIcon, CaretLeftIcon, PencilIcon } from '@phosphor-icons/react/ssr';
 import { type Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
 import { getUserConfig } from '@/lib/data';
-import { fetchClientStats, fetchClients } from '@/lib/data/client';
+import { type ClientResult, fetchClientStats, fetchClients } from '@/lib/data/client';
 import { fetchInvoicesForClient } from '@/lib/data/invoice';
 import { cn, formatCurrency, pluralize } from '@/lib/utils';
 
@@ -13,6 +13,7 @@ import { InfoTip } from '@/components/info';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 
+import { UpdateClientDialog } from './../dialogs';
 import { Table } from './ui';
 
 export const metadata: Metadata = {
@@ -35,27 +36,33 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 		<>
 			<Button
 				variant='ghost'
-				className='-ml-3'
+				size='sm'
+				className='-ml-2.5'
 				nativeButton={false}
 				render={
 					<Link href='/dashboard/clients'>
-						<ArrowLeftIcon />
+						<CaretLeftIcon className='-ml-1' />
 						Back
 					</Link>
 				}
 			/>
 
 			<section className='flex flex-col gap-2'>
-				<div className='space-x-4'>
-					<h1 className='mt-4 inline-block font-display text-3xl'>{client.data.name}</h1>
-					{client.isDeleted && (
-						<Badge variant='outline' className='-translate-0.5'>
-							<ArchiveIcon /> Archived
-						</Badge>
-					)}
+				<div className='flex items-baseline justify-between'>
+					<div className='space-x-4'>
+						<h1 className='mt-4 inline-block font-display text-3xl'>{client.data.name}</h1>
+						{client.isDeleted && (
+							<Badge variant='outline' className='-translate-0.5'>
+								<ArchiveIcon /> Archived
+							</Badge>
+						)}
+					</div>
+					<Suspense fallback={<DialogTrigger />}>
+						<Dialog client={client} />
+					</Suspense>
 				</div>
 
-				{/*<p className='text-muted-foreground'>{client.data.email}</p>*/}
+				<p className='flex items-center gap-2 text-muted-foreground'>{client.data.email} </p>
 
 				<div className='grid grid-cols-3 gap-2'>
 					<Suspense
@@ -95,6 +102,25 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 				)}
 			</section>
 		</>
+	);
+}
+
+function Dialog({ client }: { client: ClientResult }) {
+	const { scdId, ...data } = client.data;
+
+	return (
+		<UpdateClientDialog defaultValues={{ ...data, clientId: client.id }}>
+			<DialogTrigger />
+		</UpdateClientDialog>
+	);
+}
+
+function DialogTrigger() {
+	return (
+		<Button variant='outline'>
+			<PencilIcon />
+			<span className='hidden sm:block'>Edit details</span>
+		</Button>
 	);
 }
 
