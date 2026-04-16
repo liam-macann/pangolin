@@ -1,41 +1,44 @@
 'use client';
 
-import useSWR, { type SWRConfiguration, type SWRResponse } from 'swr';
-import useSWRImmutable from 'swr/immutable';
+import _useSWR, { type SWRConfiguration, type SWRResponse } from 'swr';
+import _useSWRImmutable from 'swr/immutable';
 
 import { fetcher } from '@/api';
+
+//
+//
+// SWR helpers
 
 type Config = Omit<SWRConfiguration, 'fallbackData'>;
 type Response<T, C> = SWRResponse<T, unknown, C> & { isError: boolean };
 
+/** Wraps a SWR hook to handle custom application behaviour */
+function makeWrapper(hook: typeof _useSWR) {
+	return <T, C extends Config>(key: string, initial?: T, config?: C) => {
+		const swr = hook(key, fetcher<T>, {
+			...config,
+			...(initial !== undefined ? { fallbackData: initial } : {}),
+		});
+
+		// Assertion is used to restore discriminated types after forming new object
+		return { ...swr, isError: swr.error !== undefined } as Response<T, C>;
+	};
+}
+
+const useSWR = makeWrapper(_useSWR);
+const useSWRImmutable = makeWrapper(_useSWRImmutable);
+
+//
+//
+// Data fetching hooks
+
 import { type Data as InvoiceData } from '@/api/invoices/route';
+export const useInvoices = <C extends Config>(initial?: InvoiceData, config?: C) =>
+	useSWR('/api/invoices', initial, config);
 
-export function useInvoices<C extends Config>(initial?: InvoiceData, config?: C) {
-	const swr = useSWR('/api/invoices', fetcher<InvoiceData>, {
-		...config,
-		...(initial ? { fallbackData: initial } : {}),
-	});
-
-	// Cast necessary to maintain discriminated types
-	return {
-		...swr,
-		isError: swr.error !== undefined,
-	} as Response<InvoiceData, C>;
-}
-
-import { type Data as ClientData } from '@/api/clients/route';
-
-export function useClients<C extends Config>(initial?: ClientData, config?: C) {
-	const swr = useSWR('/api/clients', fetcher<ClientData>, {
-		...config,
-		...(initial ? { fallbackData: initial } : {}),
-	});
-
-	return {
-		...swr,
-		isError: swr.error !== undefined,
-	} as Response<ClientData, C>;
-}
+import { type Data as ClientsData } from '@/api/clients/route';
+export const useClients = <C extends Config>(initial?: ClientsData, config?: C) =>
+	useSWR('/api/clients', initial, config);
 
 import { type CountryCode, registerCountry } from 'lib-address';
 
@@ -49,20 +52,11 @@ function useAddressMetadata<C extends Config>(
 	initial?: AddressInputMetadata,
 	config?: C,
 ) {
-	const { data, ...swr } = useSWRImmutable<AddressInputMetadata>(
-		`/api/address-metadata/${countryCode}`,
-		fetcher,
-		{
-			...config,
-			...(initial ? { fallbackData: initial } : {}),
-		},
-	);
+	const swr = useSWRImmutable(`/api/address-metadata/${countryCode}`, initial, config);
 
-	if (data) registerCountry(data);
+	// This idempotent side-effect must take place inside hook lifecycle
+	// to allow the calling component to rely on registration during render
+	if (swr.data) registerCountry(swr.data);
 
-	return {
-		data,
-		...swr,
-		isError: swr.error !== undefined,
-	} as Response<AddressInputMetadata, C>;
+	return swr;
 }
