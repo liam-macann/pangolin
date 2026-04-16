@@ -37,28 +37,30 @@ export function AddressInput<T extends FormValues>({
 	const region = useWatch({ name: 'address.country', control });
 
 	return (
-		<ErrorBoundary
-			fallback={
-				<Alert variant='destructive' className='my-6'>
-					<WarningIcon />
-					<AlertTitle>Something went wrong! Please try again later.</AlertTitle>
-				</Alert>
-			}
+		<FieldSet
+			className={cn(
+				'isolate min-w-0 gap-0 rounded-md border border-dotted bg-background dark:bg-secondary',
+				'transition duration-200 ease-in-out-quart',
+				disabled && 'cursor-not-allowed bg-muted opacity-50 *:pointer-events-none',
+			)}
 		>
-			<FieldSet
-				className={cn(
-					'isolate min-w-0 gap-0 rounded-md border border-dotted bg-background dark:bg-secondary',
-					'transition duration-200 ease-in-out-quart',
-					disabled && 'cursor-not-allowed bg-muted opacity-50 *:pointer-events-none',
-				)}
+			<ErrorBoundary
+				fallback={
+					<Alert variant='destructive' className='!w-auto m-2'>
+						<WarningIcon />
+						<AlertTitle>
+							Something went wrong! Check your network connection and try again later.
+						</AlertTitle>
+					</Alert>
+				}
 			>
 				{(region && <LocaleForm disabled={disabled} region={region} />) || (
 					<Fields disabled={disabled} metadata={{ fmt: intlFmt }} />
 				)}
+			</ErrorBoundary>
 
-				<Country disabled={disabled} />
-			</FieldSet>
-		</ErrorBoundary>
+			<Country disabled={disabled} />
+		</FieldSet>
 	);
 }
 
