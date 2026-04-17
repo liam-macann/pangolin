@@ -5,7 +5,7 @@ import pdfmake, { type Content, type TableCell } from 'pdfmake';
 
 import { fetchInvoice } from '@/lib/data/invoice';
 import { formatCurrency, formatDateToLocal, formatNumber, pluralize } from '@/lib/utils';
-import { formatAddress } from '@/lib/utils/address';
+import { fetchAddressMetadata, formatAddress } from '@/lib/utils/address';
 import { type Enum } from '@/lib/utils/drizzle';
 import { type unitEnum } from '@/db/schema/data';
 
@@ -15,6 +15,8 @@ declare module 'pdfmake/interfaces' {
 		verticalAlignment?: 'top' | 'middle' | 'bottom';
 	}
 }
+
+import { getRegisteredCountries } from 'lib-address';
 
 import { getSession } from '@/auth';
 import schemes from '@/src/app/ui/colorSchemes';
@@ -96,6 +98,13 @@ export async function GET(_request: NextRequest, ctx: RouteContext<'/dashboard/i
 async function generatePdf(invoiceId: string) {
 	const invoice = await fetchInvoice(invoiceId);
 	if (!invoice) return;
+
+	const registered = getRegisteredCountries().map(c => c.value);
+
+	// At build, all countries should be registered. During dev, fetch metadata for any non-registered country.
+	if (invoice.config.address?.country && !registered.includes(invoice.config.address.country)) {
+		await fetchAddressMetadata(invoice.config.address.country);
+	}
 
 	pdfmake.addFonts({
 		InstrumentSans: {
@@ -224,7 +233,7 @@ async function generatePdf(invoiceId: string) {
 									invoice.config.address
 										? [
 												{
-													text: await formatAddress(invoice.config.address),
+													text: formatAddress(invoice.config.address),
 													marginTop: spacing(4),
 												},
 											]

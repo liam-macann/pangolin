@@ -1,4 +1,4 @@
-import { type CountryCode, getRegisteredCountries, registerCountry } from 'lib-address';
+import { type CountryCode, registerCountry } from 'lib-address';
 
 import { _getAddressMetadata, type AddressData } from '@/lib/actions/address';
 
@@ -42,7 +42,11 @@ export function isAddressEqual(a?: Address | null, b?: Address | null) {
 	return key.every(key => isDeepStrictEqual(transformedA[key], transformedB[key]));
 }
 
-export async function formatAddress(address: Address) {
+/** Accepts a decrypted address and formats for display according to country locale.
+ *
+ * Ensure region is registered before use. The function will throw if the country is not registered.
+ */
+export function formatAddress(address: Address) {
 	const {
 		streetAddress,
 		dependentLocality,
@@ -52,14 +56,6 @@ export async function formatAddress(address: Address) {
 		sortingCode,
 		country,
 	} = address;
-
-	const registered = getRegisteredCountries().map(c => c.value);
-
-	if (!registered.includes(country)) {
-		// SWR hook includes validation registration, so data should already be registered when parsing front-end form.
-		// Server registers each country at build time, in API route.
-		await fetchAddressMetadata(country);
-	}
 
 	return formatAddressLib(
 		{
