@@ -1,9 +1,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
+
+import { relations } from './../src/db/relations.ts';
 
 import './../envConfig.ts';
 
-import { db } from './../src/db';
+export const db = drizzle({
+	client: neon(process.env.DATABASE_URL as string),
+	relations,
+	casing: 'snake_case',
+});
 
 const output = path.join(__dirname, '../src/app/lib/data/currencies.json');
 
