@@ -1,8 +1,11 @@
 'use server';
 
 import { and, eq, isNull, sql } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import type z from 'zod/v4';
 
+import { cleanupAddresses, cleanupClientData } from '@/lib/actions/utils';
 import { clientData as clientDataSchema } from '@/lib/validation/client';
 import { db } from '@/db';
 import { clientData, clients } from '@/db/schema';
@@ -44,18 +47,29 @@ export async function updateClient(input: z.infer<typeof clientDataSchema>) {
 	const data = clientDataSchema.parse(input);
 
 	// Must be a transaction to allow insert to see updated DB snapshot
-	await db.transaction(async tx => {
-		await tx
-			.update(clientData)
-			.set({ validTo: sql`now()` })
-			.where(
-				and(
-					isNull(clientData.validTo),
-					eq(clientData.clientId, data.clientId),
-					eq(clientData.userId, session.user.id),
-				),
-			);
+	await db
+		.transaction(async tx => {
+			await tx
+				.update(clientData)
+				.set({ validTo: sql`now()` })
+				.where(
+					and(
+						isNull(clientData.validTo),
+						eq(clientData.clientId, data.clientId),
+						eq(clientData.userId, session.user.id),
+					),
+				);
 
-		await tx.insert(clientData).values({ ...data, userId: session.user.id });
-	});
+			await tx.insert(clientData).values({ ...data, userId: session.user.id });
+		})
+		.then(async () => {
+			// Revalidate the cache for the invoices page, where the formatting may have changed.
+			revalidatePath('/dashboard/invoices');
+			revalidatePath('/dashboard/settings');
+
+			// Useful to ensure consecutive insertions do not produce redundant rows
+			after(() =>
+				Promise.all([cleanupClientData(session.user.id), cleanupAddresses(session.user.id)]),
+			);
+		});
 }

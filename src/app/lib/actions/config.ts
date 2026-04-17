@@ -1,31 +1,17 @@
 'use server';
 
-import {
-	and,
-	eq,
-	isNotNull,
-	isNull,
-	notExists,
-	sql,
-	type WithSubqueryWithoutSelection,
-} from 'drizzle-orm';
+import { and, eq, isNull, sql, type WithSubqueryWithoutSelection } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { after } from 'next/server';
 import { v4 as uuid } from 'uuid';
 import type z from 'zod';
 
+import { cleanupAddresses, cleanupConfigs } from '@/lib/actions/utils';
 import { crypto } from '@/lib/encrypt';
 import { isAddressEqual } from '@/lib/utils/address';
 import { config as configInput } from '@/lib/validation/config';
 import { db } from '@/db';
-import {
-	address as addressSchema,
-	clientData as clientDataSchema,
-	config as configSchema,
-	configTaxes as configTaxesSchema,
-	invoices as invoicesSchema,
-	taxes as taxesSchema,
-} from '@/db/schema';
+import * as tables from '@/db/schema';
 
 import { getSession } from '@/auth';
 
@@ -95,7 +81,7 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 
 				// Insert new address record
 				const insertedAddress = await tx
-					.insert(addressSchema)
+					.insert(tables.address)
 					.values({
 						...safeConfig.address,
 						streetAddress:
@@ -103,7 +89,7 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 							(await vault.encrypt(safeConfig.address.streetAddress)),
 						userId: session.user.id,
 					})
-					.returning({ id: addressSchema.id })
+					.returning({ id: tables.address.id })
 					.then(([v]) => v);
 
 				return insertedAddress.id;
@@ -113,7 +99,7 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 			const actions: WithSubqueryWithoutSelection<string>[] = [
 				// Insert new config
 				tx.$with('create_config').as(
-					tx.insert(configSchema).values({
+					tx.insert(tables.config).values({
 						...safeConfig,
 						id: configId,
 						userId: session.user.id,
@@ -124,9 +110,9 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 				// Void previously active config
 				tx.$with('void_config').as(
 					tx
-						.update(configSchema)
+						.update(tables.config)
 						.set({ validTo: sql`now()` })
-						.where(and(eq(configSchema.userId, session.user.id), isNull(configSchema.validTo))),
+						.where(and(eq(tables.config.userId, session.user.id), isNull(tables.config.validTo))),
 				),
 			];
 
@@ -134,19 +120,19 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 			if (taxes?.length > 0) {
 				// Insert new taxes; skip if already exists. Tax identity must be unique.
 				const dbTaxes = await tx
-					.insert(taxesSchema)
+					.insert(tables.taxes)
 					.values(taxes)
 					// Necessary to perform empty update to return values
 					.onConflictDoUpdate({
-						target: [taxesSchema.userId, taxesSchema.name, taxesSchema.rate],
-						set: { userId: taxesSchema.userId },
+						target: [tables.taxes.userId, tables.taxes.name, tables.taxes.rate],
+						set: { userId: tables.taxes.userId },
 					})
 					.returning();
 
 				actions.push(
 					// Insert new tax-config junctions
 					tx.$with('tax_config_junction').as(
-						tx.insert(configTaxesSchema).values(
+						tx.insert(tables.configTaxes).values(
 							taxes.map(tax => {
 								// Find the tax id in the database, using returned values from insert
 								// Necessary as order is not in tax db schema, and so can't be piped down with CTEs
@@ -168,7 +154,7 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 			return await tx
 				.with(...actions)
 				.select()
-				.from(configSchema);
+				.from(tables.config);
 		})
 		.finally(() => vault.destroy())
 		.then(async () => {
@@ -177,46 +163,8 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 			revalidatePath('/dashboard/settings');
 
 			// Useful to ensure consecutive insertions (eg. saving as progressing through form) do not produce redundant rows
-			after(() => databaseCleanup(session.user.id));
+			after(() =>
+				Promise.all([cleanupConfigs(session.user.id), cleanupAddresses(session.user.id)]),
+			);
 		});
-}
-
-/** Clean up unused configs and addresses for a given user */
-async function databaseCleanup(userId: string) {
-	await Promise.all([
-		db
-			.delete(configSchema)
-			.where(
-				and(
-					eq(configSchema.userId, userId),
-					isNotNull(configSchema.validTo),
-					notExists(
-						// No invoices reference config row
-						db.select().from(invoicesSchema).where(eq(invoicesSchema.configId, configSchema.id)),
-					),
-				),
-			)
-			// Error should not bubble up: non-essential cleanup
-			.catch(() => console.error('Unable to clean up unused configs')),
-
-		db
-			.delete(addressSchema)
-			.where(
-				and(
-					eq(addressSchema.userId, userId),
-					notExists(
-						// No configs reference address row
-						db.select().from(configSchema).where(eq(configSchema.addressId, addressSchema.id)),
-					),
-					notExists(
-						// No clients reference address row
-						db
-							.select()
-							.from(clientDataSchema)
-							.where(eq(clientDataSchema.addressId, addressSchema.id)),
-					),
-				),
-			)
-			.catch(() => console.error('Unable to clean up unused addresses')),
-	]);
 }
