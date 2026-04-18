@@ -12,8 +12,10 @@ import {
 	type SQL,
 	sumDistinct,
 } from 'drizzle-orm';
+import { getRegisteredCountries } from 'lib-address';
 
 import { crypto, type Decrypted } from '@/lib/encrypt';
+import { fetchAddressMetadata, formatAddress } from '@/lib/utils/address';
 import { jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
 import { db } from '@/db';
 import { type address, clientData, clients, invoices, invoicesWithSum } from '@/db/schema';
@@ -31,6 +33,10 @@ export interface ClientResult {
 		email: string;
 		notes: string | null;
 		address: Omit<Decrypted<typeof address.$inferSelect>, 'userId' | 'id'> | null;
+		/** Address string formatted according to country metadata.
+		 *
+		 * This is included to avoid a waterfall on the client, as metadata registration is needed to format. */
+		formattedAddress: string | null;
 	};
 }
 
@@ -43,53 +49,71 @@ export async function fetchClients(id?: string) {
 	if (!session) throw new Error('Request not authenticated');
 
 	try {
-		const res = await db.query.clients
-			.findMany({
-				columns: {
-					id: true,
-					isFavorite: true,
-					isDeleted: true,
+		const res = await db.query.clients.findMany({
+			columns: {
+				id: true,
+				isFavorite: true,
+				isDeleted: true,
+			},
+			with: {
+				data: {
+					columns: { id: false },
+					with: { address: { columns: { id: false, userId: false } } },
+					extras: { scdId: data => data.id.getSQL() as SQL<string> },
+					where: { validTo: { isNull: true } },
+					limit: 1,
 				},
-				with: {
-					data: {
-						columns: { id: false },
-						with: { address: { columns: { id: false, userId: false } } },
-						extras: { scdId: data => data.id.getSQL() as SQL<string> },
-						where: { validTo: { isNull: true } },
-						limit: 1,
-					},
-				},
-				extras: {
-					/** Includes voided invoices */
-					invoiceCount: (c, { sql }) =>
-						sql<number>`(${db
-							.select({ count: count(invoices.id) })
-							.from(clientData)
-							.where(eq(clientData.clientId, c.id))
-							.leftJoin(invoices, eq(invoices.clientDataId, clientData.id))}
-						)`,
-				},
-				where: {
-					userId: { eq: session.user.id },
-					// Exclude deleted clients, unless requesting a specific id
-					...(id ? { id: { eq: id } } : { isDeleted: { eq: false } }),
-				},
-
-				orderBy: (c, { sql }) =>
-					sql<string>`(${db
-						.select({ name: clientData.name })
+			},
+			extras: {
+				/** Includes voided invoices */
+				invoiceCount: (c, { sql }) =>
+					sql<number>`(${db
+						.select({ count: count(invoices.id) })
 						.from(clientData)
-						.where(and(eq(clientData.clientId, c.id), isNull(clientData.validTo)))
-						.limit(1)}
-					)`,
-			})
-			.then(res => res.map(client => ({ ...client, data: client.data?.[0] })));
+						.where(eq(clientData.clientId, c.id))
+						.leftJoin(invoices, eq(invoices.clientDataId, clientData.id))}
+						)`,
+			},
+			where: {
+				userId: { eq: session.user.id },
+				// Exclude deleted clients, unless requesting a specific id
+				...(id ? { id: { eq: id } } : { isDeleted: { eq: false } }),
+			},
+			orderBy: (c, { sql }) =>
+				sql<string>`(${db
+					.select({ name: clientData.name })
+					.from(clientData)
+					.where(and(eq(clientData.clientId, c.id), isNull(clientData.validTo)))
+					.limit(1)}
+				)`,
+		});
 
 		const vault = await crypto(session.user.id);
-		const decrypted: ClientResult[] = await Promise.all(res.map(el => vault.decryptObject(el)));
+		const decrypted = await Promise.all(res.map(el => vault.decryptObject(el)));
 		vault.destroy();
 
-		return id ? decrypted[0] : decrypted;
+		const mapped: ClientResult[] = await Promise.all(
+			decrypted.map(async client => {
+				const clientData = client.data?.[0];
+
+				const registered = getRegisteredCountries().map(c => c.value);
+
+				// At build, all countries should be registered. During dev, fetch metadata for any non-registered country.
+				if (clientData?.address?.country && !registered.includes(clientData.address.country)) {
+					await fetchAddressMetadata(clientData.address.country);
+				}
+
+				return {
+					...client,
+					data: {
+						...clientData,
+						formattedAddress: formatAddress(clientData?.address),
+					},
+				};
+			}),
+		);
+
+		return id ? mapped[0] : mapped;
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch clients.');

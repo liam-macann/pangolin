@@ -46,7 +46,9 @@ export function isAddressEqual(a?: Address | null, b?: Address | null) {
  *
  * Ensure region is registered before use. The function will throw if the country is not registered.
  */
-export function formatAddress(address: Address) {
+export function formatAddress(address: Address | null | undefined) {
+	if (!address) return null;
+
 	const {
 		streetAddress,
 		dependentLocality,

@@ -81,7 +81,33 @@ export function Header({ initialClient }: { initialClient: ClientData }) {
 				</UpdateClientDialog>
 			</div>
 
-			<p className='flex items-center gap-2 text-muted-foreground'>{client.data.email}</p>
+			<section className='flex flex-col gap-2 text-muted-foreground text-sms'>
+				<p>{client.data.email}</p>
+
+				{client.data.address && (
+					<p className='leading-tight'>
+						{client.data.formattedAddress?.split('\n').map(line => {
+							// Continuous strings of all caps, including numbers
+							const regex = /(\b[A-Z][A-Z 0-9]+\b)/g;
+
+							return (
+								<span key={line}>
+									{line.split(regex).map(word => {
+										if (!regex.test(word)) return word;
+
+										return (
+											<span key={word} className='small-caps'>
+												{word}
+											</span>
+										);
+									})}
+									<br />
+								</span>
+							);
+						})}
+					</p>
+				)}
+			</section>
 		</>
 	);
 }
