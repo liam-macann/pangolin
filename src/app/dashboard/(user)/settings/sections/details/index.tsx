@@ -146,7 +146,6 @@ export function Details<TForm extends UseFormReturn<Fields>>({
 										<FieldLegend className='mb-0 flex items-center gap-2'>
 											<Switch
 												id='addressEnabled'
-												size='sm'
 												{...enabledField}
 												checked={enabledValue}
 												onCheckedChange={val => {

@@ -20,8 +20,9 @@ const switchVariants = cva(
 	{
 		variants: {
 			size: {
-				default: 'h-5 w-11',
-				sm: 'h-4 w-9',
+				sm: 'h-3 w-7 rounded-sm',
+				default: 'h-4 w-9',
+				lg: 'h-5 w-11',
 			},
 		},
 		defaultVariants: { size: 'default' },
@@ -38,8 +39,9 @@ const thumbVariants = cva(
 	{
 		variants: {
 			size: {
-				default: 'h-5 w-5.5',
-				sm: 'h-4 w-4.5',
+				sm: 'h-3 w-3.5 rounded-[3px]',
+				default: 'h-4 w-4.5',
+				lg: 'h-5 w-5.5',
 			},
 		},
 		defaultVariants: { size: 'default' },
@@ -57,13 +59,10 @@ function Switch({
 		<SwitchPrimitive.Root
 			data-slot='switch'
 			data-size={size}
-			className={switchVariants({ size, className })}
+			className={cn(switchVariants({ size, className }))}
 			{...props}
 		>
-			<SwitchPrimitive.Thumb
-				data-slot='switch-thumb'
-				className={thumbVariants({ size, className })}
-			/>
+			<SwitchPrimitive.Thumb data-slot='switch-thumb' className={cn(thumbVariants({ size }))} />
 		</SwitchPrimitive.Root>
 	);
 }
