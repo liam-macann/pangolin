@@ -7,6 +7,7 @@ import {
 	Controller,
 	type FieldArrayWithId,
 	type UseFieldArrayReturn,
+	type UseFormReturn,
 	useFieldArray,
 	useFormContext,
 	useFormState,
@@ -36,17 +37,14 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 type FormValues = z.input<typeof formSchema>;
 type Fields = Pick<FormValues, 'taxRegistration' | 'taxes'>;
 
-export function TaxRateField<T extends Fields>({
+export function TaxRateField<TForm extends UseFormReturn<Fields>>({
 	className,
 	// Control is not necessary when using FormProvider, but provides type guard
-	control: _control,
+	control,
 }: {
 	className?: string;
-	control: Control<T>;
+	control: TForm extends UseFormReturn<infer I> ? Control<I> : never;
 }) {
-	// Necessary, as RHF can't extract typings from the generic
-	const control = _control as unknown as Control<Fields>;
-
 	const { fields, ...actions } = useFieldArray({ control, name: 'taxes' });
 	const addTax = () => actions.append({ name: '', rate: '' });
 
@@ -173,15 +171,13 @@ function TaxRow({
 	);
 }
 
-export function DuplicateWarning<T extends Fields>({
-	control: _control,
+export function DuplicateWarning<TForm extends UseFormReturn<Fields>>({
+	control,
 	className,
 }: {
-	control: Control<T>;
+	control: TForm extends UseFormReturn<infer I> ? Control<I> : never;
 	className?: string;
 }) {
-	const control = _control as unknown as Control<Fields>;
-
 	const taxes = useWatch({ control, name: 'taxes' });
 	const names = taxes?.map(tax => tax.name).filter(name => name.trim() !== '') || [];
 

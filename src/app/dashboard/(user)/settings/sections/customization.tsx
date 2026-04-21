@@ -2,7 +2,12 @@
 
 import { CheckIcon } from '@phosphor-icons/react';
 import { type ComponentProps, useId } from 'react';
-import { type Control, Controller, type ControllerRenderProps } from 'react-hook-form';
+import {
+	type Control,
+	Controller,
+	type ControllerRenderProps,
+	type UseFormReturn,
+} from 'react-hook-form';
 import type z from 'zod/v4';
 
 import { cn } from '@/lib/utils';
@@ -28,10 +33,11 @@ import schemes from '@/src/app/ui/colorSchemes';
 type FormValues = z.input<typeof formSchema>;
 type Fields = Pick<FormValues, 'colorScheme' | 'numberingScheme'>;
 
-export function Customization<T extends Fields>({ control: _control }: { control: Control<T> }) {
-	// Necessary, as RHF can't extract typings from the generic
-	const control = _control as unknown as Control<Fields>;
-
+export function Customization<TForm extends UseFormReturn<FormValues>>({
+	control,
+}: {
+	control: TForm extends UseFormReturn<infer I> ? Control<I> : never;
+}) {
 	return (
 		<FieldGroup>
 			<Controller
