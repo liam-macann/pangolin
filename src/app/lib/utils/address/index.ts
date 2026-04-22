@@ -29,7 +29,7 @@ type Address = z.input<typeof structuralSchema>;
 /** Accepts two unencrypted addresses and returns true if they are equal.
  *
  * @remarks Nullish values are not treated as equal. User ownership is not considered. */
-export function isAddressEqual(a?: Address | null, b?: Address | null) {
+export function isAddressEqual(a: Address, b?: Address | null): b is Address {
 	if (!a || !b) return false;
 
 	// Transform addresses to normalized form before comparing
