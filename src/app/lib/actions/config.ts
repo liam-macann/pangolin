@@ -23,7 +23,7 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 	const vault = await crypto(session.user.id);
 
 	// Validate the input data
-	const { taxes, ...safeConfig } = await configInput.parseAsync(config).then(async v => ({
+	const { taxes, address, ...safeConfig } = await configInput.parseAsync(config).then(async v => ({
 		...v,
 
 		email: v.email ? await vault.encrypt(v.email) : null,
@@ -54,7 +54,7 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 			/** Checks the previous config to see if the address has changed.
 			 * Returns the address ID if unchanged, otherwise inserts a new record and returns the new ID */
 			async function getAddressId() {
-				if (!safeConfig.address) return null;
+				if (!address) return null;
 				if (!session) throw new Error('Request not authenticated');
 
 				/** Returns the address recorded on the last config record and decrypts it */
@@ -64,29 +64,18 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 						with: { address: { columns: { userId: false } } },
 						columns: { addressId: true },
 					})
-					.then(
-						async res =>
-							res?.address && {
-								...res.address,
-								streetAddress:
-									res.address.streetAddress && (await vault.decrypt(res.address.streetAddress)),
-							},
-					);
-
-				const isAddressUnchanged =
-					lastConfigAddress && isAddressEqual(lastConfigAddress, safeConfig.address);
+					.then(async res => res?.address && (await vault.decryptObject(res.address)));
 
 				// If the address is unchanged, reuse the existing address record to prevent duplicate rows
+				const isAddressUnchanged = isAddressEqual(address, lastConfigAddress);
 				if (isAddressUnchanged) return lastConfigAddress.id;
 
 				// Insert new address record
 				const insertedAddress = await tx
 					.insert(tables.address)
 					.values({
-						...safeConfig.address,
-						streetAddress:
-							safeConfig.address.streetAddress &&
-							(await vault.encrypt(safeConfig.address.streetAddress)),
+						...address,
+						streetAddress: address.streetAddress && (await vault.encrypt(address.streetAddress)),
 						userId: session.user.id,
 					})
 					.returning({ id: tables.address.id })

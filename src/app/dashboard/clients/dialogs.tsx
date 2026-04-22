@@ -5,21 +5,21 @@ import { WarningIcon } from '@phosphor-icons/react';
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import {
-	type Control,
 	Controller,
-	type FieldValues,
 	FormProvider,
 	type UseFormReturn,
 	useForm,
 	useFormState,
 } from 'react-hook-form';
 import { toast } from 'sonner';
-import type z from 'zod/v4';
+import z from 'zod/v4';
 
 import { createClient, updateClient } from '@/lib/actions/client';
 import { useClient, useClients } from '@/lib/hooks';
-import { clientData as formSchema } from '@/lib/validation/client';
+import { transform as addressTransformSchema } from '@/lib/validation/address';
+import { clientData as schema } from '@/lib/validation/client';
 
+import { AddressInput } from '@/components/address-input';
 import { Alert, AlertTitle } from '@/ui/alert';
 import { Button } from '@/ui/button';
 import {
@@ -31,23 +31,46 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '@/ui/dialog';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/ui/field';
+import {
+	Field,
+	FieldContent,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+	FieldLegend,
+	FieldSet,
+} from '@/ui/field';
 import { Input } from '@/ui/input';
+import { Switch } from '@/ui/switch';
+
+/** Uses local addressEnabled flag to toggle address validation, and drops it after parsing */
+const formSchema = schema
+	.extend({
+		address: addressTransformSchema.nullable(),
+		addressEnabled: z.boolean(),
+	})
+	.transform(data => {
+		if (!data.addressEnabled) return { ...data, address: null };
+		return data;
+	})
+	.transform(({ addressEnabled, ...data }) => data as z.input<typeof schema>)
+	.pipe(schema);
 
 export function CreateClientDialog({ children }: { children: ReactElement }) {
 	const { mutate } = useClients();
 
 	const form = useForm({
-		resolver: zodResolver(formSchema.omit({ clientId: true })),
+		resolver: zodResolver(formSchema),
 		defaultValues: {
 			name: '',
 			email: '',
+			addressEnabled: false,
 		},
 	});
 
 	return (
 		<ClientDialog
-			title={'Create client'}
+			title='Create client'
 			form={form}
 			onSubmit={async data => {
 				const promise = createClient(data).then(() => void mutate());
@@ -71,19 +94,19 @@ export function UpdateClientDialog({
 	defaultValues,
 }: {
 	children: ReactElement;
-	defaultValues: z.infer<typeof formSchema>;
+	defaultValues: Omit<z.input<typeof formSchema>, 'addressEnabled'>;
 }) {
 	const { mutate: mutateClients } = useClients();
 	const { mutate: mutateClient } = useClient(defaultValues.clientId);
 
 	const form = useForm({
 		resolver: zodResolver(formSchema),
-		defaultValues,
+		defaultValues: { ...defaultValues, addressEnabled: !!defaultValues.address },
 	});
 
 	return (
 		<ClientDialog
-			title={'Update client'}
+			title='Update client'
 			form={form}
 			onSubmit={async data => {
 				const promise = updateClient(data).then(() => {
@@ -105,23 +128,31 @@ export function UpdateClientDialog({
 	);
 }
 
-/** Fields set by the user, excluding ids etc. */
-type FormFields = Omit<z.infer<typeof formSchema>, 'clientId'>;
-type ClientDialog<T extends FieldValues> = {
+type ClientDialog<TForm> = {
 	title: ReactNode;
 	children: ReactElement;
 
-	form: UseFormReturn<T>;
-	onSubmit: (data: T, form: UseFormReturn<T>) => Promise<void>;
+	// biome-ignore lint/suspicious/noExplicitAny: Specific shape irrelevant for conditional type
+	form: TForm extends UseFormReturn<any, any, any> ? TForm : never;
+	onSubmit: (
+		// biome-ignore lint/suspicious/noExplicitAny: Specific shape irrelevant for conditional type
+		data: TForm extends UseFormReturn<any, any, infer O> ? O : never,
+		// biome-ignore lint/suspicious/noExplicitAny: Specific shape irrelevant for conditional type
+		form: TForm extends UseFormReturn<any, any, any> ? TForm : never,
+	) => Promise<void>;
 };
 
-function ClientDialog<T extends FormFields>({ title, form, onSubmit, children }: ClientDialog<T>) {
+/** Generic client dialog, reused for creation and updates */
+// biome-ignore lint/suspicious/noExplicitAny: Return type need not be known within this component. Types are inferred for callback props.
+function ClientDialog<TForm extends UseFormReturn<z.input<typeof formSchema>, unknown, any>>({
+	title,
+	form,
+	onSubmit,
+	children,
+}: ClientDialog<TForm>) {
 	const [open, setOpen] = useState(false);
 
-	const { control: _control, reset, handleSubmit } = form;
-
-	// Necessary, as RHF can't extract typings from the generic
-	const control = _control as unknown as Control<FormFields>;
+	const { control, reset, handleSubmit, clearErrors } = form;
 
 	// NOTE: Hook is necessary, as destructuring from `form` will not subscribe to state updates
 	const { isSubmitting } = useFormState({ control });
@@ -188,6 +219,46 @@ function ClientDialog<T extends FormFields>({ title, form, onSubmit, children }:
 												{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 											</div>
 										</Field>
+									)}
+								/>
+
+								<Controller
+									name='addressEnabled'
+									control={control}
+									render={({
+										field: { value: enabledValue, onChange: enabledOnChange, ...enabledField },
+										fieldState: enabledFieldState,
+									}) => (
+										<FieldSet className='mb-4 min-w-0'>
+											<FieldContent>
+												<FieldContent>
+													<FieldLegend variant='label' className='mb-0 flex items-center gap-2'>
+														<Switch
+															id='addressEnabled'
+															{...enabledField}
+															checked={enabledValue}
+															onCheckedChange={val => {
+																enabledOnChange(val);
+																if (!val) clearErrors('address');
+															}}
+														/>
+														<label htmlFor='addressEnabled'>Address</label>
+													</FieldLegend>
+													{enabledFieldState.error && (
+														<FieldError errors={[enabledFieldState.error]} />
+													)}
+												</FieldContent>
+
+												<Controller
+													name='address'
+													control={control}
+													render={({ fieldState }) => (
+														<>{fieldState.error && <FieldError errors={[fieldState.error]} />}</>
+													)}
+												/>
+											</FieldContent>
+											<AddressInput disabled={!enabledValue} control={control} />
+										</FieldSet>
 									)}
 								/>
 							</FieldGroup>
