@@ -173,24 +173,37 @@ export const columns: ColumnDef<Invoice>[] = [
 		),
 		cell: ({ row }) => {
 			const locale = useContext(LocaleContext);
+			const scribbleSize = '6rem';
+
 			return (
 				<div className='text-right font-medium tabular-nums decoration-2'>
 					<span className='relative'>
 						{formatCurrency(row.original.grossTotal, row.original.config.currency, locale)}
 						<div
 							aria-hidden='true'
-							className='absolute -inset-1.5 inset-y-0 hidden scale-y-120 overflow-hidden rounded-[1rem_0rem/0.4rem] group-even/row:rotate-180 group-nth-[3n]/row:scale-y-150 group-data-void/row:block'
-							style={{ cornerShape: 'bevel' } as React.CSSProperties & { cornerShape: string }}
-						>
-							<div
-								className='pointer-events-none absolute inset-0 bg-center bg-size-[6rem] bg-repeat-x opacity-90 dark:[--scribble-brightness:1]'
-								style={{
-									backgroundImage: 'url("/scribble.svg")',
-									filter:
-										'url("/pencil.svg#stroke") brightness(0) invert(var(--scribble-brightness, 0.01)) sepia(1) saturate(4)',
-								}}
-							/>
-						</div>
+							className={cn(
+								'pointer-events-none absolute mx-auto scale-y-120 bg-repeat-x opacity-90 dark:[--scribble-brightness:1]',
+								// Conditionally show when void
+								'hidden group-data-void/row:block',
+								// Row-to-row variation
+								'group-even/row:rotate-180 group-nth-[3n]/row:scale-y-150',
+							)}
+							style={{
+								// Scribble outdent on the x-axis
+								inset: '0 calc(var(--spacing) * -2.5)',
+								// Quantise width to frequency of scribble (each 1/7th increment is a clean point to cut)
+								// (NB: Outdent value must be added to percentage width, which does not account for absolute positioning)
+								width: `round(down, calc(100% + calc(var(--spacing) * 2.5 * 2)), calc(${scribbleSize}/7))`,
+								backgroundImage: 'url("/scribble.svg")',
+								// Center scribble pattern, locking to grid position
+								// (left and right positioning would also work, but this ensures the first and last strokes vary)
+								backgroundPosition: `round(down, 50%, calc(${scribbleSize}/7)) 50%`,
+								backgroundSize: scribbleSize,
+								// Use sepia to force color into stroke
+								filter:
+									'url("/pencil.svg#stroke") brightness(0) invert(var(--scribble-brightness, 0.01)) sepia(1) saturate(4)',
+							}}
+						/>
 					</span>
 				</div>
 			);
