@@ -68,6 +68,7 @@
 		"swr": "^2.3.6",
 		"tailwind-merge": "^3.3.1",
 		"tailwindcss": "4.1.12",
+		"tinykeys": "^3.0.0",
 		"use-debounce": "^10.0.4",
 		"uuid": "^13.0.0",
 		"ws": "^8.18.3",
@@ -99,6 +100,9 @@
 		"overrides": {
 			"@types/react": "19.2.7",
 			"@types/react-dom": "19.2.3"
+		},
+		"patchedDependencies": {
+			"tinykeys": "patches/tinykeys.patch"
 		}
 	},
 	"packageManager": "pnpm@10.33.0"
