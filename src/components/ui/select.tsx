@@ -121,7 +121,7 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
 			className={cn(
 				"relative flex w-full cursor-default select-none items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
 				// Helps to diguise jitter with item-aligned select during scale-in animation
-				'fade-in-50 fade-out-50 duration-100 group-data-closed/select-popup:animate-out group-data-open/select-popup:animate-in group-data-closed/select-popup:ease-out-circ group-data-open/select-popup:ease-in',
+				'fade-in-50 fade-out-50 transition-none duration-100 group-data-closed/select-popup:animate-out group-data-open/select-popup:animate-in group-data-closed/select-popup:ease-out-circ group-data-open/select-popup:ease-in',
 				className,
 			)}
 			{...props}
