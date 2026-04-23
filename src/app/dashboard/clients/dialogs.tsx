@@ -22,6 +22,7 @@ import { clientData as schema } from '@/lib/validation/client';
 import { AddressInput } from '@/components/address-input';
 import { Alert, AlertTitle } from '@/ui/alert';
 import { Button } from '@/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/ui/collapsible';
 import {
 	Dialog,
 	DialogClose,
@@ -38,6 +39,7 @@ import {
 	FieldGroup,
 	FieldLabel,
 	FieldLegend,
+	FieldSeparator,
 	FieldSet,
 } from '@/ui/field';
 import { Input } from '@/ui/input';
@@ -222,45 +224,53 @@ function ClientDialog<TForm extends UseFormReturn<z.input<typeof formSchema>, un
 									)}
 								/>
 
-								<Controller
-									name='addressEnabled'
-									control={control}
-									render={({
-										field: { value: enabledValue, onChange: enabledOnChange, ...enabledField },
-										fieldState: enabledFieldState,
-									}) => (
-										<FieldSet className='mb-4 min-w-0'>
-											<FieldContent>
-												<FieldContent>
-													<FieldLegend variant='label' className='mb-0 flex items-center gap-2'>
-														<Switch
-															id='addressEnabled'
-															{...enabledField}
-															checked={enabledValue}
-															onCheckedChange={val => {
-																enabledOnChange(val);
-																if (!val) clearErrors('address');
-															}}
-														/>
-														<label htmlFor='addressEnabled'>Address</label>
-													</FieldLegend>
-													{enabledFieldState.error && (
-														<FieldError errors={[enabledFieldState.error]} />
-													)}
-												</FieldContent>
+								<FieldSeparator className='-mx-6 my-2' />
 
-												<Controller
-													name='address'
-													control={control}
-													render={({ fieldState }) => (
-														<>{fieldState.error && <FieldError errors={[fieldState.error]} />}</>
-													)}
-												/>
-											</FieldContent>
-											<AddressInput disabled={!enabledValue} control={control} />
-										</FieldSet>
-									)}
-								/>
+								<FieldSet>
+									<Controller
+										name='addressEnabled'
+										control={control}
+										render={({
+											field: { value: enabledValue, onChange: enabledOnChange, ...enabledField },
+											fieldState: enabledState,
+										}) => (
+											<Collapsible open={enabledValue}>
+												<FieldLegend>
+													<CollapsibleTrigger
+														render={FieldLabel}
+														nativeButton={false}
+														tabIndex={-1}
+													>
+														<Field>
+															<span className='flex items-center gap-2'>
+																<Switch
+																	size='sm'
+																	{...enabledField}
+																	checked={enabledValue}
+																	onCheckedChange={enabledOnChange}
+																/>
+																Billing address
+															</span>
+															{enabledState.error && <FieldError errors={[enabledState.error]} />}
+														</Field>
+													</CollapsibleTrigger>
+												</FieldLegend>
+												<CollapsibleContent render={FieldGroup} className='mt-2'>
+													<Controller
+														name='address'
+														control={control}
+														render={({ fieldState }) => (
+															<>
+																<AddressInput control={control} />
+																{fieldState.error && <FieldError errors={[fieldState.error]} />}
+															</>
+														)}
+													/>
+												</CollapsibleContent>
+											</Collapsible>
+										)}
+									/>
+								</FieldSet>
 							</FieldGroup>
 
 							<DialogFooter className='!flex-row-reverse !justify-start mt-6'>
