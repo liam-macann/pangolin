@@ -1,6 +1,6 @@
 'use client';
 
-import { MagnifyingGlassIcon, UserCircleIcon } from '@phosphor-icons/react';
+import { ArrowElbowDownLeftIcon, MagnifyingGlassIcon, UserCircleIcon } from '@phosphor-icons/react';
 import { type ComponentProps, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { toast } from 'sonner';
@@ -43,13 +43,19 @@ function GlobalSearch() {
 			<CommandDialog
 				title='Search'
 				description='Find people or invoices…'
-				className='max-w-sm rounded-lg border'
 				open={open}
 				onOpenChange={setOpen}
+				render={<nav />}
 			>
 				<Command>
 					<CommandInput placeholder='Search for people or invoices…' />
 					<Items />
+					<footer className='flex items-center gap-2 border-input/30 border-t px-4 py-2 pb-2.5 text-muted-foreground text-xs'>
+						<Kbd className='size-5'>
+							<ArrowElbowDownLeftIcon aria-label='Enter' />
+						</Kbd>
+						Enter to navigate
+					</footer>
 				</Command>
 			</CommandDialog>
 		</ErrorBoundary>
@@ -82,8 +88,8 @@ function Items() {
 			<CommandEmpty>No results found.</CommandEmpty>
 			<CommandGroup heading='Clients'>
 				{clients.data?.map(client => (
-					<CommandItem key={client.id}>
-						<UserCircleIcon />
+					<CommandItem key={client.id} className='*:last:hidden'>
+						<UserCircleIcon className='-translate-x-px text-muted-foreground' />
 						<div className='flex w-full gap-2'>
 							<span>{client.data.name}</span>
 							<span className='grow text-right text-muted-foreground'>
@@ -97,8 +103,10 @@ function Items() {
 			{/* Allow invoices to populate after clients appear */}
 			<CommandGroup heading='Invoices'>
 				{invoices.data?.map(invoice => (
-					<CommandItem key={invoice.id} className='flex w-full gap-2'>
-						<span className='font-medium tabular-nums'>{invoice.reference}</span>
+					<CommandItem key={invoice.id} className='flex w-full items-baseline gap-2 *:last:hidden'>
+						<span className='font-medium text-xs tabular-nums group-not-data-selected/command-item:text-muted-foreground'>
+							{invoice.reference}
+						</span>
 						<span>{invoice.clientData.name}</span>
 						<span className='grow text-right text-muted-foreground'>
 							{formatCurrency(invoice.grossTotal, invoice.config.currency, locale)}
