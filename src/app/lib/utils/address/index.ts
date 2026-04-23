@@ -42,6 +42,9 @@ export function isAddressEqual(a: Address, b?: Address | null): b is Address {
 	return key.every(key => isDeepStrictEqual(transformedA[key], transformedB[key]));
 }
 
+export function formatAddress(address: Address): string;
+export function formatAddress(address: null | undefined): null;
+export function formatAddress(address: Address | null | undefined): string | null;
 /** Accepts a decrypted address and formats for display according to country locale.
  *
  * Ensure region is registered before use. The function will throw if the country is not registered.
