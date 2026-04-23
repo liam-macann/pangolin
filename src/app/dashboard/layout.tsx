@@ -2,6 +2,7 @@ import { SignOutIcon, SlidersHorizontalIcon } from '@phosphor-icons/react/ssr';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
+import GlobalSearch from '@/components/global-search';
 import UserAvatar, { AvatarEmpty } from '@/ui/avatar';
 import { Button } from '@/ui/button';
 import {
@@ -22,7 +23,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 		<div className='min-h-screen text-foreground'>
 			<header className='gap-y-4 border-b py-4'>
 				<div className='mx-auto flex max-w-5xl flex-col px-6'>
-					<div className='self-end'>
+					<div className='flex items-center gap-4 self-end'>
+						<GlobalSearch />
 						<Suspense fallback={<Trigger aria-disabled image={null} />}>
 							<AccountMenuContent />
 						</Suspense>
