@@ -1,6 +1,7 @@
 'use client';
 
 import { ArrowElbowDownLeftIcon, MagnifyingGlassIcon, UserCircleIcon } from '@phosphor-icons/react';
+import { useRouter } from 'next/navigation';
 import { type ComponentProps, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { toast } from 'sonner';
@@ -49,7 +50,7 @@ function GlobalSearch() {
 			>
 				<Command>
 					<CommandInput placeholder='Search for people or invoices…' />
-					<Items />
+					<Items onOpenChange={setOpen} />
 					<footer className='flex items-center gap-2 border-input/30 border-t px-4 py-2 pb-2.5 text-muted-foreground text-xs'>
 						<Kbd className='size-5'>
 							<ArrowElbowDownLeftIcon aria-label='Enter' />
@@ -62,11 +63,12 @@ function GlobalSearch() {
 	);
 }
 
-function Items() {
+function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 	const clients = useClients();
 	const invoices = useInvoices();
-
 	const config = useConfig();
+
+	const router = useRouter();
 
 	if (config.isLoading || clients.isLoading)
 		return (
@@ -88,7 +90,14 @@ function Items() {
 			<CommandEmpty>No results found.</CommandEmpty>
 			<CommandGroup heading='Clients'>
 				{clients.data?.map(client => (
-					<CommandItem key={client.id} className='*:last:hidden'>
+					<CommandItem
+						key={client.id}
+						className='*:last:hidden'
+						onSelect={() => {
+							router.push(`/dashboard/clients/${client.id}`);
+							onOpenChange(false);
+						}}
+					>
 						<UserCircleIcon className='-translate-x-px text-muted-foreground' />
 						<div className='flex w-full gap-2'>
 							<span>{client.data.name}</span>
@@ -103,7 +112,11 @@ function Items() {
 			{/* Allow invoices to populate after clients appear */}
 			<CommandGroup heading='Invoices'>
 				{invoices.data?.map(invoice => (
-					<CommandItem key={invoice.id} className='flex w-full items-baseline gap-2 *:last:hidden'>
+					<CommandItem
+						key={invoice.id}
+						className='flex w-full items-baseline gap-2 *:last:hidden'
+						onSelect={() => router.push(`/dashboard/invoices/${invoice.id}`)}
+					>
 						<span className='font-medium text-xs tabular-nums group-not-data-selected/command-item:text-muted-foreground'>
 							{invoice.reference}
 						</span>
@@ -130,7 +143,9 @@ const Trigger = ({ ...props }: ComponentProps<typeof Button>) => {
 		>
 			<MagnifyingGlassIcon />
 			Search…
-			<Kbd className='-mr-1 rounded-full px-1.5'>{isApple ? '⌘ K' : 'Ctrl + K'}</Kbd>
+			<Kbd className='-mr-1 rounded-full px-1.5 shadow-xs ring ring-input/50'>
+				{isApple ? '⌘ K' : 'Ctrl + K'}
+			</Kbd>
 		</Button>
 	);
 };
