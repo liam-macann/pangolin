@@ -67,12 +67,12 @@ export async function fetchClients(id?: string) {
 			extras: {
 				/** Includes voided invoices */
 				invoiceCount: (c, { sql }) =>
-					sql<number>`(${db
+					sql`(${db
 						.select({ count: count(invoices.id) })
 						.from(clientData)
 						.where(eq(clientData.clientId, c.id))
 						.leftJoin(invoices, eq(invoices.clientDataId, clientData.id))}
-						)`,
+						)`.mapWith(Number),
 			},
 			where: {
 				userId: { eq: session.user.id },

@@ -83,7 +83,7 @@ export async function fetchInvoice(id: string) {
 		db
 			.select({
 				contribution:
-					sql<number>`${withFilter(sumDistinct(invoiceItems.netAmount), eq(itemTaxes.taxId, taxesSchema.id))} * ${taxesSchema.rate} * ${configSchema.taxRegistration}::int`
+					sql`${withFilter(sumDistinct(invoiceItems.netAmount), eq(itemTaxes.taxId, taxesSchema.id))} * ${taxesSchema.rate} * ${configSchema.taxRegistration}::int`
 						.mapWith(Number)
 						.as('contribution'),
 
