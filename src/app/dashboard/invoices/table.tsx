@@ -179,12 +179,16 @@ export const columns: ColumnDef<Invoice>[] = [
 						{formatCurrency(row.original.grossTotal, row.original.config.currency, locale)}
 						<div
 							aria-hidden='true'
-							className='absolute -inset-1 inset-y-0 hidden scale-y-120 overflow-hidden rounded-[1rem_0rem/0.4rem] group-even/row:rotate-180 group-nth-[3n]/row:scale-y-150 group-data-void/row:block'
+							className='absolute -inset-1.5 inset-y-0 hidden scale-y-120 overflow-hidden rounded-[1rem_0rem/0.4rem] group-even/row:rotate-180 group-nth-[3n]/row:scale-y-150 group-data-void/row:block'
 							style={{ cornerShape: 'bevel' } as React.CSSProperties & { cornerShape: string }}
 						>
 							<div
-								className='mask-size-[6rem] mask-center mask-repeat-x pointer-events-none absolute inset-0 bg-red-12'
-								style={{ maskImage: 'url("/scribble.svg")' }}
+								className='pointer-events-none absolute inset-0 bg-center bg-size-[6rem] bg-repeat-x opacity-90 dark:[--scribble-brightness:1]'
+								style={{
+									backgroundImage: 'url("/scribble.svg")',
+									filter:
+										'url("/pencil.svg#stroke") brightness(0) invert(var(--scribble-brightness, 0.01)) sepia(1) saturate(4)',
+								}}
 							/>
 						</div>
 					</span>
