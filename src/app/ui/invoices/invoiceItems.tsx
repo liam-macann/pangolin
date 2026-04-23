@@ -8,7 +8,6 @@ import {
 	type FieldArrayWithId,
 	type FieldValues,
 	type UseFormGetValues,
-	type UseFormReturn,
 	useFieldArray,
 	useFormState,
 	useWatch,
@@ -62,17 +61,21 @@ type Config = Pick<
 	'currency' | 'locale' | 'taxes' | 'taxRegistration'
 >;
 
-export function InvoiceItemsField<TForm extends UseFormReturn<FormValues>>({
+export function InvoiceItemsField<T extends FormValues>({
 	className,
-	control,
-	getValues,
+	control: _control,
+	getValues: _getValues,
 	config,
 }: {
 	className?: string;
-	control: TForm extends UseFormReturn<infer I> ? Control<I> : never;
-	getValues: TForm extends UseFormReturn<infer I> ? UseFormGetValues<I> : never;
+	control: Control<T>;
+	getValues: UseFormGetValues<T>;
 	config: Config;
 }) {
+	// Necessary, as RHF can't extract typings from the generic
+	const control = _control as unknown as Control<FormValues>;
+	const getValues = _getValues as unknown as UseFormGetValues<FormValues>;
+
 	return (
 		<FieldSet className={cn('gap-0', className)}>
 			<FieldLegend className='sr-only'>Items</FieldLegend>

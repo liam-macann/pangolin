@@ -30,11 +30,10 @@ type Fields = Pick<
 	'tradingName' | 'email' | 'phone' | 'header' | 'registrationNumber' | 'paymentDetails' | 'address'
 > & { addressEnabled: boolean };
 
-export function Details<TForm extends UseFormReturn<Fields>>({
-	control,
-}: {
-	control: TForm extends UseFormReturn<infer I> ? Control<I> : never;
-}) {
+export function Details<T extends Fields>({ control: _control }: { control: Control<T> }) {
+	// Necessary, as RHF can't extract typings from the generic
+	const control = _control as unknown as Control<Fields>;
+
 	return (
 		<FieldGroup>
 			<h2 className='font-bold text-2xl' id='details'>

@@ -1,6 +1,6 @@
 'use client';
 
-import { type Control, Controller, type UseFormReturn, useFormContext } from 'react-hook-form';
+import { type Control, Controller, useFormContext } from 'react-hook-form';
 import type z from 'zod/v4';
 
 import { type config as formSchema } from '@/lib/validation/config';
@@ -23,11 +23,10 @@ import { DuplicateWarning, TaxRateField } from './taxRates';
 type FormValues = z.input<typeof formSchema>;
 type Fields = Pick<FormValues, 'taxRegistration' | 'taxes'>;
 
-export function Taxation<TForm extends UseFormReturn<Fields>>({
-	control,
-}: {
-	control: TForm extends UseFormReturn<infer I> ? Control<I> : never;
-}) {
+export function Taxation<T extends Fields>({ control: _control }: { control: Control<T> }) {
+	// Necessary, as RHF can't extract typings from the generic
+	const control = _control as unknown as Control<Fields>;
+
 	const { trigger } = useFormContext<Fields>();
 
 	return (

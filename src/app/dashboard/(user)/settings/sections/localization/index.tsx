@@ -1,7 +1,7 @@
 'use client';
 
 import { Combobox } from '@base-ui/react';
-import { type Control, Controller, type UseFormReturn } from 'react-hook-form';
+import { type Control, Controller } from 'react-hook-form';
 import type z from 'zod/v4';
 
 import { type config as formSchema } from '@/lib/validation/config';
@@ -22,11 +22,10 @@ import {
 type FormValues = z.input<typeof formSchema>;
 type Fields = Pick<FormValues, 'region' | 'timezone' | 'currency'>;
 
-export function Localization<TForm extends UseFormReturn<Fields>>({
-	control,
-}: {
-	control: TForm extends UseFormReturn<infer I> ? Control<I> : never;
-}) {
+export function Localization<T extends Fields>({ control: _control }: { control: Control<T> }) {
+	// Necessary, as RHF can't extract typings from the generic
+	const control = _control as unknown as Control<Fields>;
+
 	return (
 		<FieldGroup>
 			<h2 className='flex items-baseline gap-3 font-bold text-2xl' id='localisation'>
