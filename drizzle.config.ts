@@ -1,5 +1,3 @@
-import 'server-only';
-
 import './envConfig.ts';
 
 import { defineConfig } from 'drizzle-kit';
