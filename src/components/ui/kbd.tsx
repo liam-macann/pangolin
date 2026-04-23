@@ -1,3 +1,4 @@
+import { useIsAppleDevice } from '@/lib/hooks/utils';
 import { cn } from '@/lib/utils/index';
 
 function Kbd({ className, ...props }: React.ComponentProps<'kbd'>) {
@@ -23,4 +24,10 @@ function KbdGroup({ className, ...props }: React.ComponentProps<'div'>) {
 	);
 }
 
-export { Kbd, KbdGroup };
+/** Returns a modifier character based on the client platform */
+function KbdModifier() {
+	const isApple = useIsAppleDevice();
+	return isApple ? '⌘' : 'Ctrl';
+}
+
+export { Kbd, KbdGroup, KbdModifier };
