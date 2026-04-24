@@ -175,3 +175,13 @@ export async function voidInvoice(id: string) {
 		.set({ isVoid: true })
 		.where(and(eq(invoicesSchema.id, id), eq(invoicesSchema.userId, session.user.id)));
 }
+
+export async function setInvoiceNotes(id: string, notes: string) {
+	const session = await getSession();
+	if (!session) throw new Error('Request not authenticated');
+
+	await db
+		.update(invoicesSchema)
+		.set({ notes })
+		.where(and(eq(invoicesSchema.id, id), eq(invoicesSchema.userId, session.user.id)));
+}

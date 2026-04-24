@@ -2,14 +2,14 @@
 'use client';
 
 import { TZDate } from '@date-fns/tz';
-import { DotsThreeIcon } from '@phosphor-icons/react';
+import { ChatTextIcon, DotsThreeIcon } from '@phosphor-icons/react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { cva } from 'class-variance-authority';
-import { type ComponentProps, createContext, useContext } from 'react';
+import { type ComponentProps, createContext, useContext, useId } from 'react';
 import { toast } from 'sonner';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
-import { updateInvoiceStatus, voidInvoice } from '@/lib/actions/invoice';
+import { setInvoiceNotes, updateInvoiceStatus, voidInvoice } from '@/lib/actions/invoice';
 import { useInvoices } from '@/lib/hooks';
 import { cn, type ElementType, formatCurrency, formatDateToLocal } from '@/lib/utils';
 import { type Enum } from '@/lib/utils/drizzle';
@@ -38,6 +38,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
 import {
 	Select,
 	SelectContent,
@@ -47,6 +48,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/ui/select';
+import { Textarea } from '@/ui/textarea';
 
 export const statusVariants = cva('!px-2 rounded-sm border py-1 capitalize', {
 	variants: {
@@ -107,22 +109,22 @@ export const columns: ColumnDef<Invoice>[] = [
 						value={status}
 						onValueChange={v => {
 							if (!v) return;
+
+							const updatedInvoices = (curr: InvoiceData | undefined) =>
+								curr ? curr.map(item => (item.id === id ? { ...item, status: v } : item)) : [];
+
 							mutate(
 								async current => {
 									await updateInvoiceStatus(id, v).catch(err => {
 										toast.error('Failed to update invoice status');
+										// Error must rethrow to revert data on failure
 										throw err;
 									});
 
 									// Function does not return. On success, use optimistic data.
-									return current
-										? current.map(item => (item.id === id ? { ...item, status: v } : item))
-										: [];
+									return updatedInvoices(current);
 								},
-								{
-									optimisticData: curr =>
-										curr ? curr.map(item => (item.id === id ? { ...item, status: v } : item)) : [],
-								},
+								{ optimisticData: updatedInvoices },
 							);
 						}}
 					>
@@ -220,24 +222,26 @@ export const columns: ColumnDef<Invoice>[] = [
 
 			return (
 				<AlertDialog>
-					<div className='-mr-2 flex justify-end gap-1'>
-						<Button
-							size='sm'
-							variant='ghost'
-							className='pointer-fine:opacity-0 transition-none focus:opacity-100 group-hover/row:opacity-100 max-md:hidden'
-							nativeButton={false}
-							render={
-								<a href={`/dashboard/invoices/${invoice.id}`}>
-									View<span>↗</span>
-								</a>
-							}
-						/>
+					<div className='-mr-2 flex justify-end'>
+						{invoice.notes && (
+							<NotesButton
+								invoiceId={invoice.id}
+								defaultValue={invoice.notes}
+								render={
+									<Button variant='ghost' size='icon-sm'>
+										<span className='sr-only'>Notes</span>
+										<ChatTextIcon aria-hidden />
+									</Button>
+								}
+							/>
+						)}
+
 						<DropdownMenu modal={false}>
 							<DropdownMenuTrigger
 								render={
-									<Button variant='ghost' size='icon' className='size-8 p-0'>
+									<Button variant='ghost' size='icon-sm'>
 										<span className='sr-only'>Open menu</span>
-										<DotsThreeIcon className='size-4' />
+										<DotsThreeIcon aria-hidden />
 									</Button>
 								}
 							/>
@@ -246,8 +250,11 @@ export const columns: ColumnDef<Invoice>[] = [
 									<DropdownMenuLabel>Actions</DropdownMenuLabel>
 
 									<DropdownMenuItem
-										render={<a href={`/dashboard/invoices/${invoice.id}`}>Download</a>}
+										render={<a href={`/dashboard/invoices/${invoice.id}`}>View invoice</a>}
 									/>
+
+									<DropdownMenuItem disabled>Add notes</DropdownMenuItem>
+
 									<DropdownMenuItem
 										onClick={() => navigator.clipboard.writeText(invoice.reference)}
 									>
@@ -313,9 +320,58 @@ export const columns: ColumnDef<Invoice>[] = [
 				</AlertDialog>
 			);
 		},
-		size: 125,
+		size: 64,
 	},
 ];
+
+function NotesButton({
+	invoiceId,
+	defaultValue,
+	...props
+}: ComponentProps<typeof PopoverTrigger> & { invoiceId: string; defaultValue?: string }) {
+	const { mutate } = useInvoices();
+	const fieldId = useId();
+
+	return (
+		<Popover>
+			<PopoverTrigger {...props} />
+			<PopoverContent className='w-48 p-1' side='right' align='start'>
+				<label htmlFor={fieldId} className='sr-only'>
+					Your private notes
+				</label>
+				<Textarea
+					id={fieldId}
+					onBlur={e => {
+						const value = e.target.value;
+
+						const updatedInvoices = (curr: InvoiceData | undefined) =>
+							curr
+								? curr.map(item => (item.id === invoiceId ? { ...item, notes: value } : item))
+								: [];
+
+						mutate(
+							async current => {
+								await setInvoiceNotes(invoiceId, value).catch(err => {
+									toast.error('Failed to update invoice notes');
+									// Error must rethrow to revert data on failure
+									throw err;
+								});
+
+								// Function does not return. On success, use optimistic data.
+								return updatedInvoices(current);
+							},
+							{ optimisticData: updatedInvoices },
+						);
+					}}
+					defaultValue={defaultValue}
+					placeholder='Your private notes'
+					className='!ring-0 !border-border inset-shadow-xs rounded-sm shadow-none'
+					autoFocus
+				/>
+			</PopoverContent>
+		</Popover>
+	);
+}
 
 const LocaleContext = createContext<string>('en-AU');
 
