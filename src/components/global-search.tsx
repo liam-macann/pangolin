@@ -47,11 +47,12 @@ function GlobalSearch() {
 				open={open}
 				onOpenChange={setOpen}
 				render={<nav />}
+				className='top-1/4 max-h-[calc(75%---spacing(12))]'
 			>
 				<Command>
 					<CommandInput placeholder='Search for people or invoices…' />
 					<Items onOpenChange={setOpen} />
-					<footer className='flex items-center gap-2 border-input/30 border-t px-4 py-2 pb-2.5 text-muted-foreground text-xs'>
+					<footer className='sticky bottom-0 flex items-center gap-2 border-input/30 border-t bg-background px-4 py-2 pb-2.5 text-muted-foreground text-xs dark:bg-popover'>
 						<Kbd className='size-5'>
 							<ArrowElbowDownLeftIcon aria-label='Enter' />
 						</Kbd>
