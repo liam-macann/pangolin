@@ -128,7 +128,7 @@ export const columns: ColumnDef<Invoice>[] = [
 					>
 						<SelectTrigger
 							size='sm'
-							className={cn('h-auto gap-1', statusVariants({ variant: status }))}
+							className={cn('group-data-void/row:opacity-50', statusVariants({ variant: status }))}
 						>
 							<SelectValue placeholder='Update status…'>{status}</SelectValue>
 						</SelectTrigger>
@@ -152,7 +152,7 @@ export const columns: ColumnDef<Invoice>[] = [
 		cell: ({ row }) => {
 			const locale = useContext(LocaleContext);
 			return (
-				<span className='text-muted-foreground'>
+				<span className='text-muted-foreground group-data-void/row:text-muted-foreground/50'>
 					{formatDateToLocal(
 						new TZDate(row.original.issuedAt, row.original.config.timezone),
 						false,
@@ -173,7 +173,7 @@ export const columns: ColumnDef<Invoice>[] = [
 		),
 		cell: ({ row }) => {
 			const locale = useContext(LocaleContext);
-			const scribbleSize = '6rem';
+			const scribbleSize = '8rem';
 
 			return (
 				<div className='text-right font-medium tabular-nums decoration-2'>
@@ -182,26 +182,23 @@ export const columns: ColumnDef<Invoice>[] = [
 						<div
 							aria-hidden='true'
 							className={cn(
-								'pointer-events-none absolute mx-auto scale-y-120 bg-repeat-x opacity-90 dark:[--scribble-brightness:1]',
-								// Conditionally show when void
-								'hidden group-data-void/row:block',
-								// Row-to-row variation
-								'group-even/row:rotate-180 group-nth-[3n]/row:scale-y-150',
+								'pointer-events-none absolute inset-0 left-1/2 -translate-x-1/2 scale-x-100 bg-repeat-x opacity-90 dark:[--scribble-brightness:1]',
+								'hidden group-data-void/row:block', // Conditionally show when void
+								'group-even/row:rotate-180 group-nth-[3n]/row:scale-y-120', // Row-to-row variation
 							)}
 							style={{
-								// Scribble outdent on the x-axis
-								inset: '0 calc(var(--spacing) * -2.5)',
 								// Quantise width to frequency of scribble (each 1/7th increment is a clean point to cut)
-								// (NB: Outdent value must be added to percentage width, which does not account for absolute positioning)
-								width: `round(down, calc(100% + calc(var(--spacing) * 2.5 * 2)), calc(${scribbleSize}/7))`,
-								backgroundImage: 'url("/scribble.svg")',
+								width: `round(up, 100%, calc(${scribbleSize}/7))`,
+
 								// Center scribble pattern, locking to grid position
 								// (left and right positioning would also work, but this ensures the first and last strokes vary)
 								backgroundPosition: `round(down, 50%, calc(${scribbleSize}/7)) 50%`,
 								backgroundSize: scribbleSize,
+								backgroundImage: 'url("/scribble.svg")',
+
 								// Use sepia to force color into stroke
 								filter:
-									'url("/pencil.svg#stroke") brightness(0) invert(var(--scribble-brightness, 0.01)) sepia(1) saturate(4)',
+									'url("/pencil.svg#stroke") brightness(0) invert(var(--scribble-brightness, 0.15)) sepia(1) saturate(2)',
 							}}
 						/>
 					</span>
@@ -354,13 +351,13 @@ export function createInvoiceTable<TValue>(columns: ColumnDef<Invoice, TValue>[]
                                45deg,
                                transparent,
                                transparent 2px,
-                               var(--color-gray-3) 2px,
-                               var(--color-gray-3) 4px
-                             )`,
+                               color-mix(var(--color-gray-3) 50%, transparent) 2px,
+                               color-mix(var(--color-gray-3) 50%, transparent) 4px
+                          )`,
 							backgroundSize: 'calc(4px * sqrt(2))',
 						}
 					: undefined,
-				className: 'data-void:opacity-50 group/row',
+				className: 'data-void:text-foreground/50 group/row',
 			})}
 			{...props}
 		/>
