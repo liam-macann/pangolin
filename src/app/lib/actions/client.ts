@@ -25,6 +25,16 @@ export async function updateClientFavorite(clientId: string, status: boolean) {
 		.where(and(eq(clients.id, clientId), eq(clients.userId, session.user.id)));
 }
 
+export async function updateClientDeleted(clientId: string, status: boolean) {
+	const session = await getSession();
+	if (!session) throw new Error('Request not authenticated');
+
+	await db
+		.update(clients)
+		.set({ isDeleted: status })
+		.where(and(eq(clients.id, clientId), eq(clients.userId, session.user.id)));
+}
+
 export async function createClient(input: Omit<z.infer<typeof clientDataSchema>, 'clientId'>) {
 	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');

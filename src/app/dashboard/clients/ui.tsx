@@ -24,7 +24,7 @@ import 'scrollyfills';
 import { toast } from 'sonner';
 
 import { type Data as ClientData } from '@/api/clients/route';
-import { updateClientFavorite } from '@/lib/actions/client';
+import { updateClientDeleted, updateClientFavorite } from '@/lib/actions/client';
 import { useClients } from '@/lib/hooks';
 import { cn, type ElementType, pluralize } from '@/lib/utils';
 
@@ -215,9 +215,12 @@ function Card({
 	variant?: 'secondary' | 'outline';
 } & HTMLMotionProps<'div'>) {
 	const { mutate } = useClients();
+	const id = client.id;
 
 	const setFavorite = (v: boolean) => {
-		const id = client.id;
+		const data = (curr: Client[] | undefined) =>
+			curr ? curr.map(item => (item.id === id ? { ...item, isFavorite: v } : item)) : [];
+
 		mutate(
 			async curr => {
 				await updateClientFavorite(id, v).catch(err => {
@@ -225,12 +228,44 @@ function Card({
 					throw err;
 				});
 
-				return curr?.map(item => (item.id === id ? { ...item, isFavorite: v } : item));
+				return data(curr);
 			},
-			{
-				optimisticData: curr =>
-					curr ? curr.map(item => (item.id === id ? { ...item, isFavorite: v } : item)) : [],
+			{ optimisticData: data },
+		);
+	};
+
+	const setArchived = (v: boolean) => {
+		const toastId = `archive-${client.id}`;
+		toast.loading(`${v ? 'Archiving' : 'Restoring'} client…`, { id: toastId, action: undefined });
+
+		const data = (curr: Client[] | undefined) =>
+			curr ? curr.map(item => (item.id === id ? { ...item, isDeleted: v } : item)) : [];
+
+		mutate(
+			async curr => {
+				await updateClientDeleted(id, v)
+					.then(() =>
+						toast.success(`${client.data.name} ${v ? 'archived' : 'restored'}`, {
+							id: toastId,
+							action: v
+								? {
+										label: 'Undo',
+										onClick: e => {
+											e.preventDefault();
+											setArchived(!v);
+										},
+									}
+								: undefined,
+						}),
+					)
+					.catch(err => {
+						toast.error('Failed to archive client. Please try again later.', { id: toastId });
+						throw err;
+					});
+
+				return data(curr);
 			},
+			{ optimisticData: data },
 		);
 	};
 
@@ -268,6 +303,9 @@ function Card({
 						<DropdownMenuLabel>Actions</DropdownMenuLabel>
 						<DropdownMenuItem onClick={() => setFavorite(!client.isFavorite)}>
 							{client.isFavorite ? 'Unpin client' : 'Pin client'}
+						</DropdownMenuItem>
+						<DropdownMenuItem variant='destructive' onClick={() => setArchived(true)}>
+							Archive
 						</DropdownMenuItem>
 					</DropdownMenuGroup>
 				</DropdownMenuContent>
