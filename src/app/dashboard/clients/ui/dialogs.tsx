@@ -34,7 +34,6 @@ import {
 } from '@/ui/dialog';
 import {
 	Field,
-	FieldContent,
 	FieldError,
 	FieldGroup,
 	FieldLabel,
@@ -154,7 +153,7 @@ function ClientDialog<TForm extends UseFormReturn<z.input<typeof formSchema>, un
 }: ClientDialog<TForm>) {
 	const [open, setOpen] = useState(false);
 
-	const { control, reset, handleSubmit, clearErrors } = form;
+	const { control, reset, handleSubmit } = form;
 
 	// NOTE: Hook is necessary, as destructuring from `form` will not subscribe to state updates
 	const { isSubmitting } = useFormState({ control });

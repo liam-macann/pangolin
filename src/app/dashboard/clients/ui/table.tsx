@@ -18,28 +18,17 @@ import {
 import { AnimatePresence, type HTMLMotionProps, motion } from 'motion/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { type JSX, useEffect, useRef, useState } from 'react';
-import 'scrollyfills';
-
-import { toast } from 'sonner';
+import { useState } from 'react';
 
 import { type Data as ClientData } from '@/api/clients/route';
-import { updateClientDeleted, updateClientFavorite } from '@/lib/actions/client';
-import { useClients } from '@/lib/hooks';
 import { cn, type ElementType, pluralize } from '@/lib/utils';
 
 import { Button } from '@/ui/button';
 import { ButtonGroup } from '@/ui/button-group';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuGroup,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuTrigger,
-} from '@/ui/dropdown-menu';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 import { Toggle } from '@/ui/toggle';
+
+import { OverflowMenu, useClientActions } from './menu';
 
 type Client = ElementType<ClientData>;
 
@@ -62,38 +51,6 @@ const columns: ColumnDef<Client>[] = [
 		header: 'Invoices',
 	},
 ];
-
-export function Clients({ initial }: { initial: Client[] }) {
-	const { data } = useClients(initial, { suspense: true });
-	const favorites = data.filter(client => client.isFavorite);
-
-	return (
-		<>
-			{favorites.length > 0 && (
-				<>
-					<section className='flex gap-4 max-lg:-mx-6 max-lg:-mb-4 max-lg:overflow-scroll max-lg:px-6 max-lg:pb-4 lg:grid lg:grid-cols-4'>
-						<AnimatePresence mode='popLayout' initial={false}>
-							{favorites.map(client => (
-								<Card
-									key={client.id}
-									client={client}
-									className='shrink-0 basis-60 max-lg:max-w-[90%]'
-									variant='secondary'
-								/>
-							))}
-						</AnimatePresence>
-					</section>
-
-					<hr className='my-12' />
-				</>
-			)}
-
-			<PinHeight>
-				<Table data={data} />
-			</PinHeight>
-		</>
-	);
-}
 
 export function Table({ data }: { data: Client[] }) {
 	'use no memo';
@@ -203,7 +160,7 @@ export function Table({ data }: { data: Client[] }) {
 	);
 }
 
-function Card({
+export function Card({
 	client,
 	className,
 	ref,
@@ -214,60 +171,7 @@ function Card({
 	ref?: React.Ref<HTMLDivElement>;
 	variant?: 'secondary' | 'outline';
 } & HTMLMotionProps<'div'>) {
-	const { mutate } = useClients();
-	const id = client.id;
-
-	const setFavorite = (v: boolean) => {
-		const data = (curr: Client[] | undefined) =>
-			curr ? curr.map(item => (item.id === id ? { ...item, isFavorite: v } : item)) : [];
-
-		mutate(
-			async curr => {
-				await updateClientFavorite(id, v).catch(err => {
-					toast.error('Failed to update client. Please try again later.');
-					throw err;
-				});
-
-				return data(curr);
-			},
-			{ optimisticData: data },
-		);
-	};
-
-	const setArchived = (v: boolean) => {
-		const toastId = `archive-${client.id}`;
-		toast.loading(`${v ? 'Archiving' : 'Restoring'} client…`, { id: toastId, action: undefined });
-
-		const data = (curr: Client[] | undefined) =>
-			curr ? curr.map(item => (item.id === id ? { ...item, isDeleted: v } : item)) : [];
-
-		mutate(
-			async curr => {
-				await updateClientDeleted(id, v)
-					.then(() =>
-						toast.success(`${client.data.name} ${v ? 'archived' : 'restored'}`, {
-							id: toastId,
-							action: v
-								? {
-										label: 'Undo',
-										onClick: e => {
-											e.preventDefault();
-											setArchived(!v);
-										},
-									}
-								: undefined,
-						}),
-					)
-					.catch(err => {
-						toast.error('Failed to archive client. Please try again later.', { id: toastId });
-						throw err;
-					});
-
-				return data(curr);
-			},
-			{ optimisticData: data },
-		);
-	};
+	const { setFavorite } = useClientActions(client);
 
 	return (
 		<motion.div
@@ -286,30 +190,21 @@ function Card({
 			{...props}
 		>
 			{/* Outside of Link for semantics: <button> may not be within <a> */}
-			<DropdownMenu>
-				<DropdownMenuTrigger
-					render={
-						<Button
-							size='icon-xs'
-							variant='ghost'
-							className='absolute top-3 left-3 z-10 text-inherit'
-						>
-							<DotsThreeIcon />
-						</Button>
-					}
-				/>
-				<DropdownMenuContent side='left' align='start'>
-					<DropdownMenuGroup>
-						<DropdownMenuLabel>Actions</DropdownMenuLabel>
-						<DropdownMenuItem onClick={() => setFavorite(!client.isFavorite)}>
-							{client.isFavorite ? 'Unpin client' : 'Pin client'}
-						</DropdownMenuItem>
-						<DropdownMenuItem variant='destructive' onClick={() => setArchived(true)}>
-							Archive
-						</DropdownMenuItem>
-					</DropdownMenuGroup>
-				</DropdownMenuContent>
-			</DropdownMenu>
+			<OverflowMenu
+				side='left'
+				align='start'
+				client={client}
+				render={
+					<Button
+						size='icon-xs'
+						variant='ghost'
+						className='absolute top-3 left-3 z-10 text-inherit'
+					>
+						<DotsThreeIcon />
+					</Button>
+				}
+			/>
+
 			<Link
 				href={`clients/${client.id}`}
 				className={cn(
@@ -351,41 +246,5 @@ function Card({
 				/>
 			</Toggle>
 		</motion.div>
-	);
-}
-
-/** Prevents visible contraction. If a child element shrinks, it will maintain the same height — recalculating to contract after scroll. */
-function PinHeight({ children }: { children: JSX.Element }) {
-	const ref = useRef<HTMLDivElement>(null);
-
-	const [height, setHeight] = useState(0);
-
-	useEffect(() => {
-		const callback = () => {
-			if (!ref.current) return;
-
-			const rect = ref.current.getBoundingClientRect();
-			const visibleHeight = Math.min(window.innerHeight - rect.top, rect.height);
-
-			setHeight(visibleHeight);
-		};
-
-		// Set initial value on page load
-		callback();
-
-		// Polyfilled event
-		window.addEventListener('scrollend', callback);
-		window.addEventListener('resize', callback);
-
-		return () => {
-			removeEventListener('scrollend', callback);
-			removeEventListener('resize', callback);
-		};
-	}, []);
-
-	return (
-		<div ref={ref} style={{ minHeight: height }}>
-			{children}
-		</div>
 	);
 }

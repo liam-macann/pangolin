@@ -11,7 +11,7 @@ import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 
 import { columns, createInvoiceTable, statusVariants } from './../../invoices/table';
-import { UpdateClientDialog } from './../dialogs';
+import { UpdateClientDialog } from './../ui/dialogs';
 
 const DataTable = createInvoiceTable(
 	columns
@@ -67,14 +67,14 @@ export function Header({ initialClient }: { initialClient: ClientData }) {
 				<div className='space-x-4'>
 					<h1 className='mt-4 inline-block font-display text-3xl'>{client.data.name}</h1>
 					{client.isDeleted && (
-						<Badge variant='outline' className='-translate-0.5'>
+						<Badge className='-translate-0.5'>
 							<ArchiveIcon /> Archived
 						</Badge>
 					)}
 				</div>
 
 				<UpdateClientDialog defaultValues={{ ...client.data, clientId: client.id }}>
-					<Button variant='outline'>
+					<Button variant='outline' aria-label='Edit details' disabled={!!client.isDeleted}>
 						<PencilIcon />
 						<span className='hidden sm:block'>Edit details</span>
 					</Button>

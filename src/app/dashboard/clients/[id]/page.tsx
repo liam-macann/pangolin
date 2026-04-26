@@ -40,7 +40,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 				render={
 					<Link href='/dashboard/clients'>
 						<CaretLeftIcon className='-ml-1' />
-						Back
+						All clients
 					</Link>
 				}
 			/>
