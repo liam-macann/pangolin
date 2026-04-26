@@ -13,7 +13,6 @@ import {
 	DropdownMenuContent,
 	DropdownMenuGroup,
 	DropdownMenuItem,
-	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
 
@@ -86,18 +85,14 @@ export function OverflowMenu({
 	...props
 }: { client: Client; children?: JSX.Element } & ComponentProps<typeof DropdownMenuContent> &
 	Pick<ComponentProps<typeof DropdownMenuTrigger>, 'render'>) {
-	const { setFavorite, setArchived } = useClientActions(client);
+	const { setArchived } = useClientActions(client);
 
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger render={render} />
 			<DropdownMenuContent {...props}>
 				<DropdownMenuGroup>
-					<DropdownMenuLabel>Actions</DropdownMenuLabel>
 					{children}
-					<DropdownMenuItem onClick={() => setFavorite(!client.isFavorite)}>
-						{client.isFavorite ? 'Unpin' : 'Pin'}
-					</DropdownMenuItem>
 					<DropdownMenuItem variant='destructive' onClick={() => setArchived(!client.isDeleted)}>
 						{client.isDeleted ? 'Restore' : 'Archive'}
 					</DropdownMenuItem>

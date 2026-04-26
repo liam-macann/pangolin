@@ -1,6 +1,6 @@
 'use client';
 
-import { ArchiveIcon, PencilIcon } from '@phosphor-icons/react/dist/ssr';
+import { ArchiveIcon, DotsThreeVerticalIcon, PencilIcon } from '@phosphor-icons/react/dist/ssr';
 
 import { type Data as ClientData } from '@/api/clients/[id]/route';
 import { type Data as InvoiceData } from '@/api/invoices/route';
@@ -12,6 +12,7 @@ import { Button } from '@/ui/button';
 
 import { columns, createInvoiceTable, statusVariants } from './../../invoices/table';
 import { UpdateClientDialog } from './../ui/dialogs';
+import { OverflowMenu } from './../ui/menu';
 
 const DataTable = createInvoiceTable(
 	columns
@@ -73,12 +74,23 @@ export function Header({ initialClient }: { initialClient: ClientData }) {
 					)}
 				</div>
 
-				<UpdateClientDialog defaultValues={{ ...client.data, clientId: client.id }}>
-					<Button variant='outline' aria-label='Edit details' disabled={!!client.isDeleted}>
-						<PencilIcon />
-						<span className='hidden sm:block'>Edit details</span>
-					</Button>
-				</UpdateClientDialog>
+				<div className='flex gap-2'>
+					<OverflowMenu
+						align='end'
+						client={client}
+						render={
+							<Button variant='ghost' size='icon'>
+								<DotsThreeVerticalIcon />
+							</Button>
+						}
+					/>
+					<UpdateClientDialog defaultValues={{ ...client.data, clientId: client.id }}>
+						<Button variant='outline' aria-label='Edit details' disabled={!!client.isDeleted}>
+							<PencilIcon />
+							<span className='hidden sm:block'>Edit details</span>
+						</Button>
+					</UpdateClientDialog>
+				</div>
 			</div>
 
 			<section className='flex flex-col gap-2 text-muted-foreground text-sms'>
