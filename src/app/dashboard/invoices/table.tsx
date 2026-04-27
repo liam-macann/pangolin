@@ -216,7 +216,7 @@ export const columns: ColumnDef<Invoice>[] = [
 
 								// Use sepia to force color into stroke
 								filter:
-									'url("/pencil.svg#stroke") brightness(0) invert(var(--scribble-brightness, 0.15)) sepia(1) saturate(2)',
+									'url("/pencil.svg#stroke") brightness(0) invert(var(--scribble-brightness, 0.15)) sepia(1) saturate(.5)',
 							}}
 						/>
 					</span>
