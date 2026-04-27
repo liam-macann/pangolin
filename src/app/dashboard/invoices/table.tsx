@@ -50,7 +50,7 @@ import {
 } from '@/ui/select';
 import { Textarea } from '@/ui/textarea';
 
-export const statusVariants = cva('!px-2 rounded-sm border py-1 capitalize', {
+export const statusVariants = cva('capitalize', {
 	variants: {
 		variant: {
 			unpaid:
@@ -130,7 +130,10 @@ export const columns: ColumnDef<Invoice>[] = [
 					>
 						<SelectTrigger
 							size='sm'
-							className={cn('group-data-void/row:opacity-50', statusVariants({ variant: status }))}
+							className={cn(
+								'!px-2 size-auto h-7 gap-1 rounded-sm group-data-void/row:opacity-50 [&_svg]:-mr-px! [&_svg]:size-3!',
+								statusVariants({ variant: status }),
+							)}
 						>
 							<SelectValue placeholder='Update status…'>{status}</SelectValue>
 						</SelectTrigger>
