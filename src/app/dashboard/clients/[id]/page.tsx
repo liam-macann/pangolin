@@ -76,7 +76,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 			</section>
 			<section className='mt-16'>
 				<h2 className='mb-6 font-display font-semibold text-2xl'>Recent activity</h2>
-				<Table initialClient={client} locale={config.locale} data={invoices} />
+				<Table initialClient={client} locale={config.locale} initialInvoices={invoices} />
 			</section>
 		</>
 	);

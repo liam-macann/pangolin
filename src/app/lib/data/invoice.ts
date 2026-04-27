@@ -29,7 +29,7 @@ export async function fetchInvoices(
 					userId: false,
 				},
 				with: {
-					clientData: { columns: { name: true } },
+					clientData: { columns: { name: true, clientId: true } },
 					config: {
 						columns: {
 							validFrom: false,

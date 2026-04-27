@@ -36,6 +36,12 @@ import { type Data as InvoiceData } from '@/api/invoices/route';
 export const useInvoices = <C extends Config>(initial?: InvoiceData, config?: C) =>
 	useSWR('/api/invoices', initial, config);
 
+export const useClientInvoices = <C extends Config>(
+	id: string,
+	initial?: InvoiceData,
+	config?: C,
+) => useSWR(`/api/invoices?client=${id}`, initial, config);
+
 import { type Data as ConfigData } from '@/api/config/route';
 export const useConfig = <C extends Config>(initial?: ConfigData, config?: C) =>
 	useSWR('/api/config', initial, config);

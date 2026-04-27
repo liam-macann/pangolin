@@ -4,55 +4,44 @@ import { ArchiveIcon, DotsThreeVerticalIcon, PencilIcon } from '@phosphor-icons/
 
 import { type Data as ClientData } from '@/api/clients/[id]/route';
 import { type Data as InvoiceData } from '@/api/invoices/route';
-import { useClient } from '@/lib/hooks';
+import { useClient, useClientInvoices } from '@/lib/hooks';
 import { pluralize } from '@/lib/utils';
 
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 
-import { columns, createInvoiceTable, statusVariants } from './../../invoices/table';
+import { columns, createInvoiceTable } from './../../invoices/table';
 import { UpdateClientDialog } from './../ui/dialogs';
 import { OverflowMenu } from './../ui/menu';
 
-const DataTable = createInvoiceTable(
-	columns
-		.filter(column => column.id !== 'name')
-		.map(v => {
-			const column = { ...v };
-
-			// Prevent mutation — route data is not fed from SWR hook, so will not refresh
-			if (column.id === 'status') {
-				column.cell = ({ row }) => (
-					<span className={statusVariants({ variant: row.original.status })}>
-						{row.getValue('status')}
-					</span>
-				);
-			}
-
-			return { ...column, enableSorting: false };
-		}),
-);
+const DataTable = createInvoiceTable(columns.filter(column => column.id !== 'name'));
 
 export function Table({
 	initialClient,
+	initialInvoices,
 	...props
 }: {
 	initialClient: ClientData;
-	data: InvoiceData;
+	initialInvoices: InvoiceData;
 	locale: string;
 }) {
 	const { data: client } = useClient(initialClient.id, initialClient, { suspense: true });
+	const { data: invoices } = useClientInvoices(initialClient.id, initialInvoices, {
+		suspense: true,
+	});
+
+	const limit = 5;
 
 	return (
 		<>
-			<DataTable.Root pagination={false} {...props}>
+			<DataTable.Root pagination={false} data={invoices.slice(0, limit)} {...props}>
 				<DataTable.Content />
 			</DataTable.Root>
 
-			{client.invoiceCount > props.data.length && (
+			{client.invoiceCount > Math.min(invoices.length, limit) && (
 				<div className='mt-3 ml-4 rounded-md font-medium text-muted-foreground text-sm'>
-					+ {client.invoiceCount - props.data.length} more{' '}
-					{pluralize(client.invoiceCount - props.data.length, 'invoice', 'invoices')}
+					+ {client.invoiceCount - Math.min(invoices.length, limit)} more{' '}
+					{pluralize(client.invoiceCount - Math.min(invoices.length, limit), 'invoice', 'invoices')}
 				</div>
 			)}
 		</>

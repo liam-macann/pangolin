@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
 import { setInvoiceNotes, updateInvoiceStatus, voidInvoice } from '@/lib/actions/invoice';
-import { useInvoices } from '@/lib/hooks';
+import { useClientInvoices, useInvoices } from '@/lib/hooks';
 import { cn, type ElementType, formatCurrency, formatDateToLocal } from '@/lib/utils';
 import { type Enum } from '@/lib/utils/drizzle';
 import { type statusEnum } from '@/db/schema';
@@ -64,6 +64,19 @@ export const statusVariants = cva('capitalize', {
 
 type Invoice = ElementType<InvoiceData>;
 
+/** Mutate invoices and client invoices simultaneously */
+function useMutateRow(clientId: string) {
+	const { mutate: mutateInvoices } = useInvoices();
+	const { mutate: mutateClientInvoices } = useClientInvoices(clientId);
+
+	const mutate: typeof mutateInvoices = (...props) => {
+		mutateClientInvoices(...props);
+		return mutateInvoices(...props);
+	};
+
+	return { mutate };
+}
+
 /** Column definitions for invoices */
 export const columns: ColumnDef<Invoice>[] = [
 	{
@@ -101,7 +114,7 @@ export const columns: ColumnDef<Invoice>[] = [
 			const status: Enum<typeof statusEnum> = row.getValue('status');
 			const id = row.original.id;
 
-			const { mutate } = useInvoices();
+			const { mutate } = useMutateRow(row.original.clientData.clientId);
 
 			return (
 				<div>
@@ -221,7 +234,8 @@ export const columns: ColumnDef<Invoice>[] = [
 		id: 'actions',
 		cell: function OverflowMenu({ row }) {
 			const invoice = row.original;
-			const { mutate } = useInvoices();
+
+			const { mutate } = useMutateRow(row.original.clientData.clientId);
 
 			return (
 				<AlertDialog>
@@ -229,6 +243,7 @@ export const columns: ColumnDef<Invoice>[] = [
 						{invoice.notes && (
 							<NotesButton
 								invoiceId={invoice.id}
+								clientId={row.original.clientData.clientId}
 								defaultValue={invoice.notes}
 								render={
 									<Button variant='ghost' size='icon-sm'>
@@ -329,10 +344,16 @@ export const columns: ColumnDef<Invoice>[] = [
 
 function NotesButton({
 	invoiceId,
+	clientId,
 	defaultValue,
 	...props
-}: ComponentProps<typeof PopoverTrigger> & { invoiceId: string; defaultValue?: string }) {
-	const { mutate } = useInvoices();
+}: ComponentProps<typeof PopoverTrigger> & {
+	invoiceId: string;
+	clientId: string;
+	defaultValue?: string;
+}) {
+	const { mutate } = useMutateRow(clientId);
+
 	const fieldId = useId();
 
 	return (
