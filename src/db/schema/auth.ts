@@ -1,6 +1,8 @@
-import { boolean, index, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, index, pgRole, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { encrypted } from '@/lib/utils/drizzle';
+
+export const authenticated = pgRole('authenticated');
 
 export const users = pgTable('user', {
 	id: uuid('id').defaultRandom().primaryKey(),
@@ -73,6 +75,14 @@ export const verifications = pgTable(
 	},
 	t => [index('verification_identifier_idx').on(t.identifier)],
 );
+
+export const jwkss = pgTable('jwkss', {
+	id: uuid('id').defaultRandom().primaryKey(),
+	publicKey: text('public_key').notNull(),
+	privateKey: text('private_key').notNull(),
+	createdAt: timestamp('created_at').notNull(),
+	expiresAt: timestamp('expires_at'),
+});
 
 export const keychain = pgTable('keychain', {
 	id: uuid()

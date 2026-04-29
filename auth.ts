@@ -2,6 +2,7 @@ import 'server-only';
 
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { betterAuth } from 'better-auth/minimal';
+import { jwt } from 'better-auth/plugins';
 import { headers } from 'next/headers';
 import { cache } from 'react';
 
@@ -15,6 +16,7 @@ export const auth = betterAuth({
 		provider: 'pg',
 		usePlural: true,
 	}),
+	plugins: [jwt()],
 	// experimental: { joins: true },
 	errorURL: '/auth/error',
 	onAPIError: { errorURL: '/auth/error' },
