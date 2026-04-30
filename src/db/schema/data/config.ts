@@ -20,7 +20,7 @@ import { encrypted } from '@/lib/utils/drizzle';
 import { users } from '@/db/schema/auth';
 import { currencies, supportedTimezones } from '@/db/schema/i18n';
 
-import { scdDates } from './_helpers';
+import { scdTable } from './_helpers';
 import { address } from './address';
 
 // Records should be immutable if referenced
@@ -65,7 +65,7 @@ export const numberingScheme = pgEnum('numbering_scheme', ['sequential', 'annual
 //
 // Slowly changing dimension (SCD) — history table necessary for stable invoice references
 
-export const config = pgTable(
+export const config = scdTable(
 	'config',
 	{
 		id: uuid().defaultRandom().primaryKey(),
@@ -100,13 +100,11 @@ export const config = pgTable(
 		registrationNumber: encrypted('registration_number').array(),
 		numberingScheme: numberingScheme('numbering_scheme').notNull(),
 		colorScheme: colorEnum('color_scheme').notNull().default('blue'),
-		...scdDates,
 	},
 	t => [
 		// Ensure that a user has only one valid configuration (multiple null values will conflict)
 		unique('uq_config_version').on(t.userId, t.validTo).nullsNotDistinct(),
 
-		check('chk_config_valid', sql`${t.validFrom} <= now()`),
 		check('chk_language_lowercase', sql`${t.language} = lower(${t.language})`),
 		check('chk_region_uppercase', sql`${t.region} = upper(${t.region})`),
 

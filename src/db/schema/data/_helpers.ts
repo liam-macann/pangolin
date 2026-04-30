@@ -10,12 +10,17 @@ import {
 } from 'drizzle-orm';
 import {
 	type AnyPgColumn,
+	type AnyPgColumnBuilder,
+	check,
 	type ExtraConfigColumn,
+	type PgBuildExtraConfigColumns,
 	type PgColumnBaseConfig,
 	type PgPolicy,
 	type PgPolicyToOption,
 	PgRole,
+	type PgTableExtraConfigValue,
 	pgPolicy,
+	pgTable,
 	timestamp,
 } from 'drizzle-orm/pg-core';
 
@@ -26,10 +31,34 @@ import {
 //
 // Slowly changing dimension (SCD) — history table necessary for stable invoice references
 
-export const scdDates = {
+const scdDates = {
 	validFrom: timestamp('valid_from', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 	validTo: timestamp('valid_to', { withTimezone: true, mode: 'date' }),
 };
+
+export function scdTable<TColumnsMap extends Record<string, AnyPgColumnBuilder>>(
+	name: string,
+	// Don't allow SCD validity dates to be overridden
+	columns: TColumnsMap & { [K in keyof typeof scdDates]?: never },
+
+	extraConfig?: (
+		self: PgBuildExtraConfigColumns<TColumnsMap & typeof scdDates>,
+	) => PgTableExtraConfigValue[],
+) {
+	return pgTable(
+		name,
+		{
+			...scdDates,
+			...(columns as TColumnsMap),
+		},
+		t => [
+			...(extraConfig ? extraConfig(t) : []),
+
+			// Ensure validFrom is in the past (scheduled updates are not allowed)
+			check(`chk_${name}_valid`, sql`${t.validFrom} <= now()`),
+		],
+	);
+}
 
 //
 //

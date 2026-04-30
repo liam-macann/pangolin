@@ -1,18 +1,8 @@
-import { sql } from 'drizzle-orm';
-import {
-	boolean,
-	check,
-	foreignKey,
-	pgTable,
-	text,
-	unique,
-	uuid,
-	varchar,
-} from 'drizzle-orm/pg-core';
+import { boolean, foreignKey, pgTable, text, unique, uuid, varchar } from 'drizzle-orm/pg-core';
 
 import { users } from '@/db/schema/auth';
 
-import { scdDates } from './_helpers';
+import { scdTable } from './_helpers';
 import { address } from './address';
 
 // Logical client. Data is stored in SCD table.
@@ -38,7 +28,7 @@ export const clients = pgTable(
 // Slowly changing dimension (SCD) — history table necessary for stable invoice references
 
 // All data used to construct invoice should be here
-export const clientData = pgTable(
+export const clientData = scdTable(
 	'client_data',
 	{
 		id: uuid().defaultRandom().primaryKey(),
@@ -54,7 +44,6 @@ export const clientData = pgTable(
 		notes: text('notes'),
 
 		addressId: uuid('address_id').references(() => address.id),
-		...scdDates,
 	},
 	t => [
 		// Necessary for ownership constraint on clientData
@@ -66,6 +55,5 @@ export const clientData = pgTable(
 			columns: [t.clientId, t.userId],
 			foreignColumns: [clients.id, clients.userId],
 		}),
-		check('chk_client_data_valid', sql`${t.validFrom} <= now()`),
 	],
 );
