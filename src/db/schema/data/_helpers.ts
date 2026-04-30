@@ -9,6 +9,7 @@ import {
 	sql,
 } from 'drizzle-orm';
 import {
+	type AnyPgColumn,
 	type ExtraConfigColumn,
 	type PgColumnBaseConfig,
 	type PgPolicy,
@@ -184,3 +185,6 @@ export function immutable<TConfig extends PgColumnBaseConfig<ColumnType>>(
     )`,
 	});
 }
+
+export const authUid = (userIdColumn: AnyPgColumn) =>
+	sql`(select current_setting('app.user_id')::uuid = ${userIdColumn})`;
