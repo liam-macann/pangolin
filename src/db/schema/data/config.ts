@@ -1,4 +1,5 @@
 import { type SQL, sql } from 'drizzle-orm';
+import { authenticatedRole } from 'drizzle-orm/neon';
 import {
 	boolean,
 	char,
@@ -16,11 +17,10 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { encrypted } from '@/lib/utils/drizzle';
-// Schema imports
 import { users } from '@/db/schema/auth';
 import { currencies, supportedTimezones } from '@/db/schema/i18n';
 
-import { scdTable } from './_helpers';
+import { authUid, immutable, policy, scdTable } from './_helpers';
 import { address } from './address';
 
 // Records should be immutable if referenced
@@ -34,7 +34,19 @@ export const taxes = pgTable(
 		name: varchar({ length: 10 }).notNull(),
 		rate: numeric({ precision: 5, scale: 4, mode: 'number' }).notNull(),
 	},
-	t => [unique('uq_tax_user_name_rate').on(t.userId, t.name, t.rate)],
+	t => [
+		unique('uq_tax_user_name_rate').on(t.userId, t.name, t.rate),
+
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.userId),
+			insert: authUid(t.userId),
+			update: false,
+			delete: authUid(t.userId),
+		}),
+
+		immutable(t),
+	],
 );
 
 /** Join table for config and taxes */
@@ -48,10 +60,25 @@ export const configTaxes = pgTable(
 		taxId: uuid('tax_id')
 			.notNull()
 			.references(() => taxes.id),
+
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id),
 	},
 	t => [
 		primaryKey({ name: 'pk_config_tax', columns: [t.configId, t.taxId] }),
 		unique('uq_config_tax_order').on(t.configId, t.order),
+
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.userId),
+			insert: authUid(t.userId),
+			update: false,
+			delete: false,
+		}),
+
+		// Config taxes are fixed to their config
+		immutable(t, { primaryKey: [t.configId, t.taxId] }),
 	],
 );
 
@@ -113,6 +140,14 @@ export const config = scdTable(
 			name: 'fk_config_address_ownership',
 			columns: [t.addressId, t.userId],
 			foreignColumns: [address.id, address.userId],
+		}),
+
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.userId),
+			insert: authUid(t.userId),
+			update: authUid(t.userId),
+			delete: authUid(t.userId),
 		}),
 	],
 );

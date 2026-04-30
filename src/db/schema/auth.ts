@@ -1,21 +1,36 @@
+import { authenticatedRole } from 'drizzle-orm/neon';
 import { boolean, index, pgRole, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { encrypted } from '@/lib/utils/drizzle';
 
+import { authUid, policy } from './data/_helpers';
+
 export const authenticated = pgRole('authenticated');
 
-export const users = pgTable('user', {
-	id: uuid('id').defaultRandom().primaryKey(),
-	name: text('name').notNull(),
-	email: text('email').notNull().unique(),
-	emailVerified: boolean('email_verified').default(false).notNull(),
-	image: text('image'),
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at')
-		.defaultNow()
-		.$onUpdate(() => /* @__PURE__ */ new Date())
-		.notNull(),
-});
+export const users = pgTable(
+	'user',
+	{
+		id: uuid('id').defaultRandom().primaryKey(),
+		name: text('name').notNull(),
+		email: text('email').notNull().unique(),
+		emailVerified: boolean('email_verified').default(false).notNull(),
+		image: text('image'),
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.defaultNow()
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull(),
+	},
+	t => [
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.id),
+			insert: false,
+			update: false,
+			delete: false,
+		}),
+	],
+);
 
 export const sessions = pgTable(
 	'session',
@@ -33,7 +48,16 @@ export const sessions = pgTable(
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
 	},
-	t => [index('session_userId_idx').on(t.userId)],
+	t => [
+		index('session_userId_idx').on(t.userId),
+		policy({
+			role: authenticatedRole,
+			select: false,
+			insert: false,
+			update: false,
+			delete: false,
+		}),
+	],
 );
 
 export const accounts = pgTable(
@@ -57,7 +81,16 @@ export const accounts = pgTable(
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 	},
-	t => [index('account_userId_idx').on(t.userId)],
+	t => [
+		index('account_userId_idx').on(t.userId),
+		policy({
+			role: authenticatedRole,
+			select: false,
+			insert: false,
+			update: false,
+			delete: false,
+		}),
+	],
 );
 
 export const verifications = pgTable(
@@ -73,20 +106,41 @@ export const verifications = pgTable(
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 	},
-	t => [index('verification_identifier_idx').on(t.identifier)],
+	t => [
+		index('verification_identifier_idx').on(t.identifier),
+		policy({
+			role: authenticatedRole,
+			select: false,
+			insert: false,
+			update: false,
+			delete: false,
+		}),
+	],
 );
 
-export const keychain = pgTable('keychain', {
-	id: uuid()
-		.references(() => users.id)
-		.primaryKey(),
+export const keychain = pgTable(
+	'keychain',
+	{
+		id: uuid()
+			.references(() => users.id)
+			.primaryKey(),
 
-	/** Wrapped DEK */
-	key: encrypted().notNull(),
+		/** Wrapped DEK */
+		key: encrypted().notNull(),
 
-	createdAt: timestamp('created_at').defaultNow().notNull(),
-	updatedAt: timestamp('updated_at')
-		.defaultNow()
-		.$onUpdate(() => /* @__PURE__ */ new Date())
-		.notNull(),
-});
+		createdAt: timestamp('created_at').defaultNow().notNull(),
+		updatedAt: timestamp('updated_at')
+			.defaultNow()
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull(),
+	},
+	t => [
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.id),
+			insert: authUid(t.id),
+			update: false,
+			delete: false,
+		}),
+	],
+);

@@ -1,4 +1,5 @@
 import { type SQL, sql } from 'drizzle-orm';
+import { authenticatedRole } from 'drizzle-orm/neon';
 import {
 	boolean,
 	check,
@@ -19,6 +20,7 @@ import {
 
 import { users } from '@/db/schema/auth';
 
+import { authUid, immutable, policy } from './_helpers';
 import { clientData } from './clients';
 import { config, configTaxes, taxes } from './config';
 
@@ -37,6 +39,7 @@ export const invoices = pgTable(
 		title: varchar('title', { length: 100 }),
 		/** Description printed under invoice reference */
 		description: text('description'),
+
 		status: statusEnum().notNull(),
 		/** Private notes for the user */
 		notes: text('notes'),
@@ -87,6 +90,16 @@ export const invoices = pgTable(
 			t.yearIndex,
 		),
 		check('chk_due_after_issued', sql`${t.dueAt} > ${t.issuedAt}`),
+
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.userId),
+			insert: authUid(t.userId),
+			update: authUid(t.userId),
+			delete: false,
+		}),
+
+		immutable(t, { except: [t.status, t.notes, t.isVoid] }),
 	],
 );
 
@@ -119,7 +132,11 @@ export const invoiceItems = pgTable(
 		/** Optional sorting index */
 		order: integer(),
 
-		// Config reference is propagated down to facilitate fk constraints
+		// User ID is stored down to facilitate ownership constraints
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id),
+		// Config reference is propagated down to facilitate fk constraints on itemTaxes
 		configId: uuid('config_id')
 			.notNull()
 			.references(() => config.id),
@@ -133,6 +150,16 @@ export const invoiceItems = pgTable(
 			columns: [t.invoiceId, t.configId],
 			foreignColumns: [invoices.id, invoices.configId],
 		}),
+
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.userId),
+			insert: authUid(t.userId),
+			update: false,
+			delete: false,
+		}),
+
+		immutable(t),
 	],
 );
 
@@ -147,6 +174,10 @@ export const itemTaxes = pgTable(
 			.notNull()
 			.references(() => taxes.id),
 
+		// User ID is stored down to facilitate ownership constraints
+		userId: uuid('user_id')
+			.notNull()
+			.references(() => users.id),
 		// Config reference is propagated down to facilitate fk constraints
 		configId: uuid('config_id')
 			.notNull()
@@ -168,16 +199,38 @@ export const itemTaxes = pgTable(
 			columns: [t.configId, t.taxId],
 			foreignColumns: [configTaxes.configId, configTaxes.taxId],
 		}),
+
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.userId),
+			insert: authUid(t.userId),
+			update: false,
+			delete: false,
+		}),
+
+		immutable(t, { primaryKey: [t.itemId, t.taxId] }),
 	],
 );
 
 /** Watermark table: resolves concurrency issues */
-export const invoiceCount = pgTable('invoice_count', {
-	userId: uuid('user_id')
-		.primaryKey()
-		.references(() => users.id, { onDelete: 'cascade' }),
-	count: integer().notNull().default(0),
-	// Reset with app logic
-	yearCount: integer('year_count').notNull().default(0),
-	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
-});
+export const invoiceCount = pgTable(
+	'invoice_count',
+	{
+		userId: uuid('user_id')
+			.primaryKey()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		count: integer().notNull().default(0),
+		// Reset with app logic
+		yearCount: integer('year_count').notNull().default(0),
+		updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+	},
+	t => [
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.userId),
+			insert: authUid(t.userId),
+			update: authUid(t.userId),
+			delete: false,
+		}),
+	],
+);

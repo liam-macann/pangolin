@@ -1,13 +1,28 @@
+import { authenticatedRole } from 'drizzle-orm/neon';
 import { boolean, char, interval, pgTable, pgView, smallint, text } from 'drizzle-orm/pg-core';
 
+import { policy } from './data/_helpers';
+
 /** Seeded from ISO 4217 list of currencies and currency codes */
-export const currencies = pgTable('currency', {
-	iso: char({ length: 3 }).primaryKey(),
-	/** Human readable currency name */
-	name: text('name').notNull(),
-	isActive: boolean('is_active').default(true).notNull(),
-	minorUnit: smallint('minor_unit'),
-});
+export const currencies = pgTable(
+	'currency',
+	{
+		iso: char({ length: 3 }).primaryKey(),
+		/** Human readable currency name */
+		name: text('name').notNull(),
+		isActive: boolean('is_active').default(true).notNull(),
+		minorUnit: smallint('minor_unit'),
+	},
+	() => [
+		policy({
+			role: authenticatedRole,
+			select: true,
+			insert: false,
+			update: false,
+			delete: false,
+		}),
+	],
+);
 
 /** System view with live timezone data */
 export const timezones = pgView('pg_timezone_names', {
@@ -18,6 +33,18 @@ export const timezones = pgView('pg_timezone_names', {
 }).existing();
 
 /** Enforces FK in config record */
-export const supportedTimezones = pgTable('timezone', {
-	name: text('name').primaryKey(),
-});
+export const supportedTimezones = pgTable(
+	'timezone',
+	{
+		name: text('name').primaryKey(),
+	},
+	() => [
+		policy({
+			role: authenticatedRole,
+			select: true,
+			insert: false,
+			update: false,
+			delete: false,
+		}),
+	],
+);

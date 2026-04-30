@@ -54,6 +54,9 @@ export function scdTable<TColumnsMap extends Record<string, AnyPgColumnBuilder>>
 		t => [
 			...(extraConfig ? extraConfig(t) : []),
 
+			// Allow invalidation, but no other mutation
+			immutable(t, { except: [t.validTo] }),
+
 			// Ensure validFrom is in the past (scheduled updates are not allowed)
 			check(`chk_${name}_valid`, sql`${t.validFrom} <= now()`),
 		],
@@ -167,7 +170,10 @@ export function immutable<TConfig extends PgColumnBaseConfig<ColumnType>>(
 	options?: {
 		/** The name of the generated policy */
 		name?: string;
-		except: ExtraConfigColumn<TConfig>[];
+		except?: ExtraConfigColumn<TConfig>[];
+		/** Required when the table uses a composite primaryKey() in extra config,
+		 *  since those columns cannot be introspected without causing a circular evaluation. */
+		primaryKey?: ExtraConfigColumn<TConfig>[];
 	},
 ) {
 	// Both object and array inputs can be passed to Object.values()
@@ -180,8 +186,12 @@ export function immutable<TConfig extends PgColumnBaseConfig<ColumnType>>(
 	const tableName = getTableName(table);
 
 	/** The primary key column(s) of the table. Composite PKs may cause multiple conditions to be generated. */
-	const pkCols = allCols.filter(col => col.primary);
-	if (pkCols.length === 0) throw new Error(`immutable(): no primary key found on "${tableName}"`);
+	const pkCols = [...(options?.primaryKey ?? []), ...allCols.filter(col => col.primary)];
+	if (pkCols.length === 0)
+		throw new Error(
+			`immutable(): no primary key found on "${tableName}". ` +
+				`If using a composite primaryKey() in table config, pass it explicitly via options.primaryKey.`,
+		);
 
 	const old = sql.identifier('old');
 

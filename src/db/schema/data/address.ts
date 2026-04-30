@@ -1,8 +1,11 @@
+import { authenticatedRole } from 'drizzle-orm/neon';
 import { pgTable, text, unique, uuid } from 'drizzle-orm/pg-core';
 import { type CountryCode } from 'lib-address';
 
 import { encrypted } from '@/lib/utils/drizzle';
 import { users } from '@/db/schema/auth';
+
+import { authUid, immutable, policy } from './_helpers';
 
 // Schema taken from Google open-source address metadata
 // https://github.com/google/libaddressinput/wiki/AddressValidationMetadata
@@ -30,6 +33,19 @@ export const address = pgTable(
 			.references(() => users.id, { onDelete: 'cascade' })
 			.notNull(),
 	},
-	t => [unique('uq_address_user').on(t.id, t.userId)],
-	// Necessary for ownership constraint on config
+	t => [
+		// Necessary for ownership constraint on config
+		unique('uq_address_user').on(t.id, t.userId),
+
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.userId),
+			insert: authUid(t.userId),
+			update: false,
+			delete: authUid(t.userId),
+		}),
+
+		// Addresses must be stable to be referenced by SCD tables
+		immutable(t),
+	],
 );

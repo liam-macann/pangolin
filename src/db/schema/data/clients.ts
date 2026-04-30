@@ -1,8 +1,9 @@
+import { authenticatedRole } from 'drizzle-orm/neon';
 import { boolean, foreignKey, pgTable, text, unique, uuid, varchar } from 'drizzle-orm/pg-core';
 
 import { users } from '@/db/schema/auth';
 
-import { scdTable } from './_helpers';
+import { authUid, policy, scdTable } from './_helpers';
 import { address } from './address';
 
 // Logical client. Data is stored in SCD table.
@@ -17,7 +18,17 @@ export const clients = pgTable(
 		isDeleted: boolean('is_deleted').notNull().default(false),
 	},
 	// Necessary for ownership constraint on clientData
-	t => [unique('uq_client_user').on(t.id, t.userId)],
+	t => [
+		unique('uq_client_user').on(t.id, t.userId),
+
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.userId),
+			insert: authUid(t.userId),
+			update: authUid(t.userId),
+			delete: authUid(t.userId),
+		}),
+	],
 );
 
 //
@@ -54,6 +65,14 @@ export const clientData = scdTable(
 			name: 'fk_client_data_ownership',
 			columns: [t.clientId, t.userId],
 			foreignColumns: [clients.id, clients.userId],
+		}),
+
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.userId),
+			insert: authUid(t.userId),
+			update: authUid(t.userId),
+			delete: authUid(t.userId),
 		}),
 	],
 );
