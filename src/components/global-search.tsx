@@ -89,45 +89,49 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 	return (
 		<CommandList>
 			<CommandEmpty>No results found.</CommandEmpty>
-			<CommandGroup heading='Clients'>
-				{clients.data?.map(client => (
-					<CommandItem
-						key={client.id}
-						className='*:last:hidden'
-						onSelect={() => {
-							router.push(`/dashboard/clients/${client.id}`);
-							onOpenChange(false);
-						}}
-					>
-						<UserCircleIcon className='-translate-x-px text-muted-foreground' />
-						<div className='flex w-full gap-2'>
-							<span>{client.data.name}</span>
-							<span className='grow text-right text-muted-foreground'>
-								{`${client.invoiceCount || 'No'} ${pluralize(client.invoiceCount, 'invoice', 'invoices')}`}
-							</span>
-						</div>
-					</CommandItem>
-				))}
-			</CommandGroup>
+			{clients.data?.length && (
+				<CommandGroup heading='Clients'>
+					{clients.data?.map(client => (
+						<CommandItem
+							key={client.id}
+							className='*:last:hidden'
+							onSelect={() => {
+								router.push(`/dashboard/clients/${client.id}`);
+								onOpenChange(false);
+							}}
+						>
+							<UserCircleIcon className='-translate-x-px text-muted-foreground' />
+							<div className='flex w-full gap-2'>
+								<span>{client.data.name}</span>
+								<span className='grow text-right text-muted-foreground'>
+									{`${client.invoiceCount || 'No'} ${pluralize(client.invoiceCount, 'invoice', 'invoices')}`}
+								</span>
+							</div>
+						</CommandItem>
+					))}
+				</CommandGroup>
+			)}
 
 			{/* Allow invoices to populate after clients appear */}
-			<CommandGroup heading='Invoices'>
-				{invoices.data?.map(invoice => (
-					<CommandItem
-						key={invoice.id}
-						className='flex w-full items-baseline gap-2 *:last:hidden'
-						onSelect={() => router.push(`/dashboard/invoices/${invoice.id}`)}
-					>
-						<span className='font-medium text-xs tabular-nums group-not-data-selected/command-item:text-muted-foreground'>
-							{invoice.reference}
-						</span>
-						<span>{invoice.clientData.name}</span>
-						<span className='grow text-right text-muted-foreground'>
-							{formatCurrency(invoice.grossTotal, invoice.config.currency, locale)}
-						</span>
-					</CommandItem>
-				))}
-			</CommandGroup>
+			{invoices.data?.length && (
+				<CommandGroup heading='Invoices'>
+					{invoices.data?.map(invoice => (
+						<CommandItem
+							key={invoice.id}
+							className='flex w-full items-baseline gap-2 *:last:hidden'
+							onSelect={() => router.push(`/dashboard/invoices/${invoice.id}`)}
+						>
+							<span className='font-medium text-xs tabular-nums group-not-data-selected/command-item:text-muted-foreground'>
+								{invoice.reference}
+							</span>
+							<span>{invoice.clientData.name}</span>
+							<span className='grow text-right text-muted-foreground'>
+								{formatCurrency(invoice.grossTotal, invoice.config.currency, locale)}
+							</span>
+						</CommandItem>
+					))}
+				</CommandGroup>
+			)}
 		</CommandList>
 	);
 }
