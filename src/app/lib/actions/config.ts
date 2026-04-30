@@ -10,7 +10,7 @@ import { cleanupAddresses, cleanupConfigs } from '@/lib/actions/utils';
 import { crypto } from '@/lib/encrypt';
 import { isAddressEqual } from '@/lib/utils/address';
 import { config as configInput } from '@/lib/validation/config';
-import { db } from '@/db';
+import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
 import { getSession } from '@/auth';
@@ -47,104 +47,103 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 		})),
 	}));
 
-	return db
-		.transaction(async tx => {
-			const configId = uuid();
+	return withRLS(async tx => {
+		const configId = uuid();
 
-			/** Checks the previous config to see if the address has changed.
-			 * Returns the address ID if unchanged, otherwise inserts a new record and returns the new ID */
-			async function getAddressId() {
-				if (!address) return null;
-				if (!session) throw new Error('Request not authenticated');
+		/** Checks the previous config to see if the address has changed.
+		 * Returns the address ID if unchanged, otherwise inserts a new record and returns the new ID */
+		async function getAddressId() {
+			if (!address) return null;
+			if (!session) throw new Error('Request not authenticated');
 
-				/** Returns the address recorded on the last config record and decrypts it */
-				const lastConfigAddress = await tx.query.config
-					.findFirst({
-						where: { validTo: { isNull: true }, userId: session.user.id },
-						with: { address: { columns: { userId: false } } },
-						columns: { addressId: true },
-					})
-					.then(async res => res?.address && (await vault.decryptObject(res.address)));
+			/** Returns the address recorded on the last config record and decrypts it */
+			const lastConfigAddress = await tx.query.config
+				.findFirst({
+					where: { validTo: { isNull: true }, userId: session.user.id },
+					with: { address: { columns: { userId: false } } },
+					columns: { addressId: true },
+				})
+				.then(async res => res?.address && (await vault.decryptObject(res.address)));
 
-				// If the address is unchanged, reuse the existing address record to prevent duplicate rows
-				const isAddressUnchanged = isAddressEqual(address, lastConfigAddress);
-				if (isAddressUnchanged) return lastConfigAddress.id;
+			// If the address is unchanged, reuse the existing address record to prevent duplicate rows
+			const isAddressUnchanged = isAddressEqual(address, lastConfigAddress);
+			if (isAddressUnchanged) return lastConfigAddress.id;
 
-				// Insert new address record
-				const insertedAddress = await tx
-					.insert(tables.address)
-					.values({
-						...address,
-						streetAddress: address.streetAddress && (await vault.encrypt(address.streetAddress)),
-						userId: session.user.id,
-					})
-					.returning({ id: tables.address.id })
-					.then(([v]) => v);
+			// Insert new address record
+			const insertedAddress = await tx
+				.insert(tables.address)
+				.values({
+					...address,
+					streetAddress: address.streetAddress && (await vault.encrypt(address.streetAddress)),
+					userId: session.user.id,
+				})
+				.returning({ id: tables.address.id })
+				.then(([v]) => v);
 
-				return insertedAddress.id;
-			}
+			return insertedAddress.id;
+		}
 
-			// Define as CTEs for transactional behaviour without network round-trips
-			const actions: WithSubqueryWithoutSelection<string>[] = [
-				// Insert new config
-				tx.$with('create_config').as(
-					tx.insert(tables.config).values({
-						...safeConfig,
-						id: configId,
-						userId: session.user.id,
-						addressId: await getAddressId(),
-					}),
-				),
+		// Define as CTEs for transactional behaviour without network round-trips
+		const actions: WithSubqueryWithoutSelection<string>[] = [
+			// Insert new config
+			tx.$with('create_config').as(
+				tx.insert(tables.config).values({
+					...safeConfig,
+					id: configId,
+					userId: session.user.id,
+					addressId: await getAddressId(),
+				}),
+			),
 
-				// Void previously active config
-				tx.$with('void_config').as(
-					tx
-						.update(tables.config)
-						.set({ validTo: sql`now()` })
-						.where(and(eq(tables.config.userId, session.user.id), isNull(tables.config.validTo))),
-				),
-			];
+			// Void previously active config
+			tx.$with('void_config').as(
+				tx
+					.update(tables.config)
+					.set({ validTo: sql`now()` })
+					.where(and(eq(tables.config.userId, session.user.id), isNull(tables.config.validTo))),
+			),
+		];
 
-			// If taxes are defined
-			if (taxes?.length > 0) {
-				// Insert new taxes; skip if already exists. Tax identity must be unique.
-				const dbTaxes = await tx
-					.insert(tables.taxes)
-					.values(taxes)
-					// Necessary to perform empty update to return values
-					.onConflictDoUpdate({
-						target: [tables.taxes.userId, tables.taxes.name, tables.taxes.rate],
-						set: { userId: tables.taxes.userId },
-					})
-					.returning();
+		// If taxes are defined
+		if (taxes?.length > 0) {
+			// Insert new taxes; skip if already exists. Tax identity must be unique.
+			const dbTaxes = await tx
+				.insert(tables.taxes)
+				.values(taxes)
+				// Necessary to perform empty update to return values
+				.onConflictDoUpdate({
+					target: [tables.taxes.userId, tables.taxes.name, tables.taxes.rate],
+					set: { userId: tables.taxes.userId },
+				})
+				.returning();
 
-				actions.push(
-					// Insert new tax-config junctions
-					tx.$with('tax_config_junction').as(
-						tx.insert(tables.configTaxes).values(
-							taxes.map(tax => {
-								// Find the tax id in the database, using returned values from insert
-								// Necessary as order is not in tax db schema, and so can't be piped down with CTEs
-								const taxId = dbTaxes.find(i => i.name === tax.name && i.rate === tax.rate);
-								if (!taxId)
-									throw new Error(`Tax ${tax.name} with rate ${tax.rate} not found in database`);
+			actions.push(
+				// Insert new tax-config junctions
+				tx.$with('tax_config_junction').as(
+					tx.insert(tables.configTaxes).values(
+						taxes.map(tax => {
+							// Find the tax id in the database, using returned values from insert
+							// Necessary as order is not in tax db schema, and so can't be piped down with CTEs
+							const taxId = dbTaxes.find(i => i.name === tax.name && i.rate === tax.rate);
+							if (!taxId)
+								throw new Error(`Tax ${tax.name} with rate ${tax.rate} not found in database`);
 
-								return {
-									...tax,
-									configId,
-									taxId: taxId.id,
-								};
-							}),
-						),
+							return {
+								...tax,
+								configId,
+								taxId: taxId.id,
+							};
+						}),
 					),
-				);
-			}
+				),
+			);
+		}
 
-			return await tx
-				.with(...actions)
-				.select()
-				.from(tables.config);
-		})
+		return await tx
+			.with(...actions)
+			.select()
+			.from(tables.config);
+	})
 		.finally(() => vault.destroy())
 		.then(async () => {
 			// Revalidate the cache for the invoices page, where the formatting may have changed.

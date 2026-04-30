@@ -1,7 +1,7 @@
 import { type RelationsFilter } from 'drizzle-orm';
 
 import { invoiceReference } from '@/lib/utils';
-import { db } from '@/db';
+import { withRLS } from '@/db';
 import { type relations } from '@/db/relations';
 
 import { getSession } from '@/auth';
@@ -17,8 +17,8 @@ export async function fetchInvoices(
 
 	try {
 		// Get current config to format historical invoices
-		return await db.query.invoicesWithSum
-			.findMany({
+		return await withRLS(async db =>
+			db.query.invoicesWithSum.findMany({
 				where: {
 					...filter,
 					userId: { eq: session.user.id },
@@ -42,13 +42,13 @@ export async function fetchInvoices(
 				},
 				orderBy: { index: 'desc' },
 				limit,
-			})
-			.then(res =>
-				res.map(inv => ({
-					...inv,
-					reference: invoiceReference(inv, inv.config.numberingScheme),
-				})),
-			);
+			}),
+		).then(res =>
+			res.map(inv => ({
+				...inv,
+				reference: invoiceReference(inv, inv.config.numberingScheme),
+			})),
+		);
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoices');
@@ -77,36 +77,36 @@ export async function fetchInvoice(id: string) {
 	const session = await getSession();
 	if (!session) throw new Error('Request not authenticated');
 
-	// Get all active taxes, and calculate sum for display in the invoice subtotals
-	// Executed as CTE to collapse tax rows that share the same name (eg. GST(10%) and GST(5%) would share one sum)
-	const taxContribution = db.$with('tax_calc').as(
-		db
-			.select({
-				contribution:
-					sql`${withFilter(sumDistinct(invoiceItems.netAmount), eq(itemTaxes.taxId, taxesSchema.id))} * ${taxesSchema.rate} * ${configSchema.taxRegistration}::int`
-						.mapWith(Number)
-						.as('contribution'),
-
-				taxId: taxesSchema.id,
-				configId: configSchema.id,
-				order: configTaxes.order,
-				name: taxesSchema.name,
-				rate: taxesSchema.rate,
-			})
-			.from(invoices)
-			.where(eq(invoices.id, id))
-			.innerJoin(configSchema, eq(invoices.configId, configSchema.id))
-			.innerJoin(configTaxes, eq(configTaxes.configId, configSchema.id))
-			.leftJoin(taxesSchema, eq(taxesSchema.id, configTaxes.taxId))
-			.leftJoin(invoiceItems, eq(invoiceItems.invoiceId, invoices.id))
-			.leftJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
-			.groupBy(configSchema.id, taxesSchema.id, configTaxes.order)
-			.orderBy(configTaxes.order),
-	);
-
 	try {
-		const [res, tax] = await Promise.all([
-			db.query.invoicesWithSum.findFirst({
+		const { res, tax } = await withRLS(async db => {
+			// Get all active taxes, and calculate sum for display in the invoice subtotals
+			// Executed as CTE to collapse tax rows that share the same name (eg. GST(10%) and GST(5%) would share one sum)
+			const taxContribution = db.$with('tax_calc').as(
+				db
+					.select({
+						contribution:
+							sql`${withFilter(sumDistinct(invoiceItems.netAmount), eq(itemTaxes.taxId, taxesSchema.id))} * ${taxesSchema.rate} * ${configSchema.taxRegistration}::int`
+								.mapWith(Number)
+								.as('contribution'),
+
+						taxId: taxesSchema.id,
+						configId: configSchema.id,
+						order: configTaxes.order,
+						name: taxesSchema.name,
+						rate: taxesSchema.rate,
+					})
+					.from(invoices)
+					.where(eq(invoices.id, id))
+					.innerJoin(configSchema, eq(invoices.configId, configSchema.id))
+					.innerJoin(configTaxes, eq(configTaxes.configId, configSchema.id))
+					.leftJoin(taxesSchema, eq(taxesSchema.id, configTaxes.taxId))
+					.leftJoin(invoiceItems, eq(invoiceItems.invoiceId, invoices.id))
+					.leftJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
+					.groupBy(configSchema.id, taxesSchema.id, configTaxes.order)
+					.orderBy(configTaxes.order),
+			);
+
+			const res = await db.query.invoicesWithSum.findFirst({
 				where: { userId: { eq: session.user.id }, id: { eq: id } },
 				columns: {
 					clientDataId: false,
@@ -128,10 +128,10 @@ export async function fetchInvoice(id: string) {
 					items: { with: { taxes: true } },
 				},
 				orderBy: { index: 'desc' },
-			}),
+			});
 
 			// Collapse tax rows that share the same name
-			db
+			const tax = await db
 				.with(taxContribution)
 				.select({
 					name: taxContribution.name,
@@ -139,8 +139,10 @@ export async function fetchInvoice(id: string) {
 				})
 				.from(taxContribution)
 				.groupBy(taxContribution.name)
-				.orderBy(asc(min(taxContribution.order))),
-		]);
+				.orderBy(asc(min(taxContribution.order)));
+
+			return { res, tax };
+		});
 
 		if (!res) throw new Error('Invoice not found');
 

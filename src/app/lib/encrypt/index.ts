@@ -5,7 +5,7 @@ import { concatBytes, hexToBytes, managedNonce, randomBytes } from '@noble/ciphe
 import { eq } from 'drizzle-orm';
 
 import { type Encrypted, isEncrypted } from '@/lib/utils/encrypt';
-import { db } from '@/db';
+import { withRLS } from '@/db';
 import { keychain } from '@/db/schema';
 
 import { getSession } from '@/auth';
@@ -208,27 +208,29 @@ async function retrieveDEK(uuid: string) {
 	// Explicit about which user DEK is requested
 	if (session?.user.id !== uuid) throw new Error('Unauthorized');
 
-	const insertDEK = async () => {
-		const [res] = await db
-			.insert(keychain)
-			.values({ id: session.user.id, key: generateWrappedDEK() })
-			.onConflictDoNothing()
-			.returning({ key: keychain.key });
+	const key = await withRLS(async db => {
+		const insertDEK = async () => {
+			const [res] = await db
+				.insert(keychain)
+				.values({ id: session.user.id, key: generateWrappedDEK() })
+				.onConflictDoNothing()
+				.returning({ key: keychain.key });
 
-		// Refetch if key already exists (`onConflictDoNothing()` prevents return)
-		// Addresses concurrency issue when multiple requests are made prior to keygen
-		// (Avoids recursion to allow single retry and prevent infinite loop)
-		return res.key || fetchDEK();
-	};
+			// Refetch if key already exists (`onConflictDoNothing()` prevents return)
+			// Addresses concurrency issue when multiple requests are made prior to keygen
+			// (Avoids recursion to allow single retry and prevent infinite loop)
+			return res.key || fetchDEK();
+		};
 
-	const fetchDEK = async () =>
-		await db
-			.select({ key: keychain.key })
-			.from(keychain)
-			.where(eq(keychain.id, session.user.id))
-			.then(([res]) => res?.key);
+		const fetchDEK = async () =>
+			await db
+				.select({ key: keychain.key })
+				.from(keychain)
+				.where(eq(keychain.id, session.user.id))
+				.then(([res]) => res?.key);
 
-	const key = (await fetchDEK()) ?? (await insertDEK());
+		return (await fetchDEK()) ?? (await insertDEK());
+	});
 
 	try {
 		return unwrap(key);

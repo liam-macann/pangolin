@@ -8,7 +8,7 @@ import 'server-only';
 
 import { and, eq, isNotNull, notExists } from 'drizzle-orm';
 
-import { db } from '@/db';
+import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
 //
@@ -18,9 +18,8 @@ import * as tables from '@/db/schema';
 
 /** Clean up unused configs for a given user, preserving the current configuration */
 export const cleanupConfigs = (userId: string) =>
-	db
-		.delete(tables.config)
-		.where(
+	withRLS(db =>
+		db.delete(tables.config).where(
 			and(
 				eq(tables.config.userId, userId),
 				isNotNull(tables.config.validTo),
@@ -29,15 +28,15 @@ export const cleanupConfigs = (userId: string) =>
 					db.select().from(tables.invoices).where(eq(tables.invoices.configId, tables.config.id)),
 				),
 			),
-		)
+		),
+	)
 		// Error should not bubble up: non-essential cleanup
 		.catch(() => console.error('Unable to clean up unused configs'));
 
 /** Clean up unused client data for a given user, preserving the current data */
 export const cleanupClientData = (userId: string) =>
-	db
-		.delete(tables.clientData)
-		.where(
+	withRLS(db =>
+		db.delete(tables.clientData).where(
 			and(
 				eq(tables.clientData.userId, userId),
 				isNotNull(tables.clientData.validTo),
@@ -49,15 +48,15 @@ export const cleanupClientData = (userId: string) =>
 						.where(eq(tables.invoices.clientDataId, tables.clientData.id)),
 				),
 			),
-		)
+		),
+	)
 		// Error should not bubble up: non-essential cleanup
 		.catch(() => console.error('Unable to clean up unused configs'));
 
 /** Clean up unused addresses for a given user */
 export const cleanupAddresses = (userId: string) =>
-	db
-		.delete(tables.address)
-		.where(
+	withRLS(db =>
+		db.delete(tables.address).where(
 			and(
 				eq(tables.address.userId, userId),
 				notExists(
@@ -72,5 +71,5 @@ export const cleanupAddresses = (userId: string) =>
 						.where(eq(tables.clientData.addressId, tables.address.id)),
 				),
 			),
-		)
-		.catch(() => console.error('Unable to clean up unused addresses'));
+		),
+	).catch(() => console.error('Unable to clean up unused addresses'));
