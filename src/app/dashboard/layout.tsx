@@ -1,5 +1,7 @@
 import { SignOutIcon, SlidersHorizontalIcon } from '@phosphor-icons/react/ssr';
+import { headers } from 'next/headers';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
 import GlobalSearch from '@/components/global-search';
@@ -63,7 +65,8 @@ async function AccountMenuContent() {
 					<DropdownMenuItem
 						onClick={async () => {
 							'use server';
-							await signOut();
+							await signOut({ headers: await headers() });
+							redirect('/auth/login');
 						}}
 					>
 						<SignOutIcon />
