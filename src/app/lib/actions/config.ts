@@ -1,6 +1,6 @@
 'use server';
 
-import { and, eq, isNull, or, sql, type WithSubqueryWithoutSelection } from 'drizzle-orm';
+import { and, eq, or, type WithSubqueryWithoutSelection } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { after } from 'next/server';
 import { v4 as uuid } from 'uuid';
@@ -12,6 +12,7 @@ import { isAddressEqual } from '@/lib/utils/address';
 import { config as configInput } from '@/lib/validation/config';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
+import { invalidateActiveScd } from '@/db/schema/data/_helpers';
 
 import { getSession } from '@/auth';
 
@@ -83,6 +84,9 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 			return insertedAddress.id;
 		}
 
+		// Void previously active config
+		await invalidateActiveScd(tx, tables.config);
+
 		// Define as CTEs for transactional behaviour without network round-trips
 		const actions: WithSubqueryWithoutSelection<string>[] = [
 			// Insert new config
@@ -93,14 +97,6 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 					userId: session.user.id,
 					addressId: await getAddressId(),
 				}),
-			),
-
-			// Void previously active config
-			tx.$with('void_config').as(
-				tx
-					.update(tables.config)
-					.set({ validTo: sql`now()` })
-					.where(and(eq(tables.config.userId, session.user.id), isNull(tables.config.validTo))),
 			),
 		];
 

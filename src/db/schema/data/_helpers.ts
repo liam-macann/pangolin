@@ -1,28 +1,22 @@
-import {
-	type Columns,
-	type ColumnType,
-	getColumns,
-	getColumnTable,
-	getTableName,
-	is,
-	type SQL,
-	sql,
-} from 'drizzle-orm';
+import { type Column, getTableName, is, type SQL, sql, type Table } from 'drizzle-orm';
+import { authenticatedRole } from 'drizzle-orm/neon';
 import {
 	type AnyPgColumn,
 	type AnyPgColumnBuilder,
 	check,
-	type ExtraConfigColumn,
 	type PgBuildExtraConfigColumns,
-	type PgColumnBaseConfig,
 	type PgPolicy,
 	type PgPolicyToOption,
 	PgRole,
 	type PgTableExtraConfigValue,
+	type PgUUID,
 	pgPolicy,
 	snakeCase,
 	timestamp,
 } from 'drizzle-orm/pg-core';
+
+import { type Brand } from '@/lib/utils';
+import { type AuthTransaction } from '@/db';
 
 //
 //
@@ -33,8 +27,15 @@ import {
 
 const scdDates = {
 	validFrom: timestamp('valid_from', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+	/** Date that the record ceased to be active (`null` indicates the record is still active)
+	 *
+	 * Use the {@link invalidateActiveScd()} function to invalidate the active SCD row.
+	 */
 	validTo: timestamp('valid_to', { withTimezone: true, mode: 'date' }),
 };
+
+type SCDFields = { [K in keyof typeof scdDates]: Column };
+type SCDTable<T extends Table & SCDFields = Table & SCDFields> = Brand<T, 'ScdTable'>;
 
 export function scdTable<TColumnsMap extends Record<string, AnyPgColumnBuilder>>(
 	name: string,
@@ -45,7 +46,7 @@ export function scdTable<TColumnsMap extends Record<string, AnyPgColumnBuilder>>
 		self: PgBuildExtraConfigColumns<TColumnsMap & typeof scdDates>,
 	) => PgTableExtraConfigValue[],
 ) {
-	return snakeCase.table(
+	const table = snakeCase.table(
 		name,
 		{
 			...scdDates,
@@ -54,11 +55,28 @@ export function scdTable<TColumnsMap extends Record<string, AnyPgColumnBuilder>>
 		t => [
 			...(extraConfig ? extraConfig(t) : []),
 
+			/** Prevent updates to SCD data */
+			pgPolicy(`scd_table_immutable`, {
+				as: 'restrictive',
+				for: 'update',
+				using: sql`false`,
+				withCheck: sql`false`,
+			}),
+
 			// Ensure validFrom is in the past (scheduled updates are not allowed)
 			check(`chk_${name}_valid`, sql`${t.validFrom} <= now()`),
 		],
 	);
+
+	// Apply your existing Brand helper here
+	return table as SCDTable<typeof table>;
 }
+
+/** Invalidates the active SCD row for the given table, for the user authenticated via RLS. */
+export const invalidateActiveScd = <TTable extends SCDTable & { userId: PgUUID }>(
+	tx: AuthTransaction,
+	table: TTable,
+) => tx.execute(`SELECT invalidate_active_scd('${getTableName(table)}')`);
 
 //
 //
