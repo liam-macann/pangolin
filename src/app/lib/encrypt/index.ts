@@ -203,12 +203,10 @@ function generateWrappedDEK() {
 }
 
 async function retrieveDEK(uuid: string) {
-	const session = await getSession();
+	const key = await withRLS(async (db, session) => {
+		// Explicit about which user DEK is requested
+		if (session?.user.id !== uuid) throw new Error('Unauthorized');
 
-	// Explicit about which user DEK is requested
-	if (session?.user.id !== uuid) throw new Error('Unauthorized');
-
-	const key = await withRLS(async db => {
 		const insertDEK = async () => {
 			const [res] = await db
 				.insert(keychain)

@@ -41,6 +41,8 @@ export const auth = betterAuth({
 
 export const { signOut, signInSocial } = auth.api;
 
+export type Session = typeof auth.$Infer.Session;
+
 export const getSession = cache(
 	async (ctx?: Parameters<typeof auth.api.getSession>[0]) =>
 		await auth.api.getSession({
