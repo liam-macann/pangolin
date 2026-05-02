@@ -20,7 +20,7 @@ import {
 
 import { users } from '@/db/schema/auth';
 
-import { authUid, immutable, policy } from './_helpers';
+import { authUid, policy } from './_helpers';
 import { clientData } from './clients';
 import { config, configTaxes, taxes } from './config';
 
@@ -39,7 +39,11 @@ export const invoices = snakeCase.table(
 		title: varchar({ length: 100 }),
 		/** Description printed under invoice reference */
 		description: text(),
-
+		/** Invoice payment status.
+		 *
+		 * @remarks Note that this does not include the invoice void state.
+		 * This is intentional, as payment realities may vary (eg. a client may accidentally pay a voided invoice)
+		 */
 		status: statusEnum().notNull(),
 		/** Private notes for the user */
 		notes: text(),
@@ -76,13 +80,17 @@ export const invoices = snakeCase.table(
 	},
 	t => [
 		unique('uq_invoice_id_config').on(t.id, t.configId),
+
+		// Enforce that client data is owned by the same user as the invoice
 		foreignKey({
 			name: 'fk_invoice_client',
 			columns: [t.clientDataId, t.userId],
 			foreignColumns: [clientData.id, clientData.userId],
 		}),
+
 		// Ensure that the sequence is unique for each user
 		unique('uq_invoice_user_index').on(t.userId, t.index),
+
 		// Ensure that the yearly sequence is unique for each user, for each year
 		uniqueIndex('uq_user_year_year_index').on(
 			t.userId,
@@ -96,10 +104,9 @@ export const invoices = snakeCase.table(
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
 			update: authUid(t.userId),
+			// Invoices may be voided but not deleted
 			delete: false,
 		}),
-
-		immutable(t, { except: [t.status, t.notes, t.isVoid] }),
 	],
 );
 
@@ -111,28 +118,25 @@ export const invoiceItems = snakeCase.table(
 		invoiceId: uuid()
 			.notNull()
 			.references(() => invoices.id, { onDelete: 'cascade' }),
+
 		/** Invoice entry label */
 		label: varchar({ length: 60 }).notNull(),
 		/** Optional information to describe the item */
 		note: varchar({ length: 60 }),
+
 		quantity: numeric({ precision: 8, scale: 2, mode: 'number' }).notNull(),
+		/** Unit by which quantity is measured. Unitless quantities are valid (eg. 3 hours; 6; 1 item) */
 		unit: unitEnum(),
-		unitCost: numeric({
-			precision: 15,
-			scale: 4,
-			mode: 'number',
-		}).notNull(),
-		netAmount: numeric({
-			precision: 15,
-			scale: 4,
-			mode: 'number',
-		})
+		unitCost: numeric({ precision: 15, scale: 4, mode: 'number' }).notNull(),
+
+		netAmount: numeric({ precision: 15, scale: 4, mode: 'number' })
 			.generatedAlwaysAs((): SQL => sql`${invoiceItems.quantity} * ${invoiceItems.unitCost}`)
 			.notNull(),
+
 		/** Optional sorting index */
 		order: integer(),
 
-		// User ID is stored down to facilitate ownership constraints
+		// User ID is propagated down to facilitate ownership constraints
 		userId: uuid()
 			.notNull()
 			.references(() => users.id),
@@ -155,11 +159,11 @@ export const invoiceItems = snakeCase.table(
 			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
+			// Items must be immutable for stable invoice data
 			update: false,
+			// Delete only on cascade
 			delete: false,
 		}),
-
-		immutable(t),
 	],
 );
 
@@ -204,11 +208,11 @@ export const itemTaxes = snakeCase.table(
 			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
+			// item/tax junction must be stable to prevent invoice totals changing
 			update: false,
+			// Delete only on cascade
 			delete: false,
 		}),
-
-		immutable(t, { primaryKey: [t.itemId, t.taxId] }),
 	],
 );
 

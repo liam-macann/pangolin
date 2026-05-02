@@ -20,10 +20,9 @@ import { encrypted } from '@/lib/utils/drizzle';
 import { users } from '@/db/schema/auth';
 import { currencies, supportedTimezones } from '@/db/schema/i18n';
 
-import { authUid, immutable, policy, scdTable } from './_helpers';
+import { authUid, policy, scdTable } from './_helpers';
 import { address } from './address';
 
-// Records should be immutable if referenced
 export const taxes = snakeCase.table(
 	'tax',
 	{
@@ -41,11 +40,10 @@ export const taxes = snakeCase.table(
 			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
+			// Records should be immutable if referenced
 			update: false,
 			delete: authUid(t.userId),
 		}),
-
-		immutable(t),
 	],
 );
 
@@ -73,12 +71,10 @@ export const configTaxes = snakeCase.table(
 			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
+			// Config taxes are fixed to their config
 			update: false,
 			delete: false,
 		}),
-
-		// Config taxes are fixed to their config
-		immutable(t, { primaryKey: [t.configId, t.taxId] }),
 	],
 );
 

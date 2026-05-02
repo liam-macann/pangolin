@@ -54,9 +54,6 @@ export function scdTable<TColumnsMap extends Record<string, AnyPgColumnBuilder>>
 		t => [
 			...(extraConfig ? extraConfig(t) : []),
 
-			// Allow invalidation, but no other mutation
-			immutable(t, { except: [t.validTo] }),
-
 			// Ensure validFrom is in the past (scheduled updates are not allowed)
 			check(`chk_${name}_valid`, sql`${t.validFrom} <= now()`),
 		],
@@ -148,82 +145,6 @@ export const policy = (options: {
 			}),
 	].filter(Boolean);
 };
-
-// It is perhaps more idiomatic to perform Column Level Security (CLS) via revoking update permissions,
-// but this approach allows policy to be captured in migrations
-//
-/** Returns a policy that blocks updates to the specified columns via RLS.
- *
- * @example
- * ```ts
- * // Specify which columns should be immutable
- * immutable([t.id]);
- *
- * // Or specify a whitelist of columns to be mutable
- * immutable(t, { except: [t.validTo] });
- * ```
- */
-export function immutable<TConfig extends PgColumnBaseConfig<ColumnType>>(
-	/** An array of columns that should be immutable */
-	columns: ExtraConfigColumn<TConfig>[] | Record<string, ExtraConfigColumn<TConfig>>,
-
-	options?: {
-		/** The name of the generated policy */
-		name?: string;
-		except?: ExtraConfigColumn<TConfig>[];
-		/** Required when the table uses a composite primaryKey() in extra config,
-		 *  since those columns cannot be introspected without causing a circular evaluation. */
-		primaryKey?: ExtraConfigColumn<TConfig>[];
-	},
-) {
-	// Both object and array inputs can be passed to Object.values()
-	const inputCols = Object.values(columns);
-
-	// TypeScript ensures all columns belong to the same table, so accessing the first element is safe
-	const table = getColumnTable(inputCols[0]);
-	const allCols = Object.values(getColumns(table) as Columns);
-
-	const tableName = getTableName(table);
-
-	/** The primary key column(s) of the table. Composite PKs may cause multiple conditions to be generated. */
-	const pkCols = [...(options?.primaryKey ?? []), ...allCols.filter(col => col.primary)];
-	if (pkCols.length === 0)
-		throw new Error(
-			`immutable(): no primary key found on "${tableName}". ` +
-				`If using a composite primaryKey() in table config, pass it explicitly via options.primaryKey.`,
-		);
-
-	const old = sql.identifier('old');
-
-	// Filter out excluded columns
-	const excluded = new Set(options?.except?.map(col => col.name) ?? []);
-	const included = inputCols.filter(col => !excluded.has(col.name));
-	if (included.length === 0) throw new Error(`immutable(): no columns selected on "${tableName}"`);
-
-	const conditions = [
-		// Filter subquery to select same row
-		...pkCols.map(pk => {
-			const name = sql.identifier(pk.name);
-			return sql`${old}.${name} = ${name}`;
-		}),
-
-		// Check that immutable columns haven't changed
-		...included.map(col => {
-			const name = sql.identifier(col.name);
-			return sql`${old}.${name} IS NOT DISTINCT FROM ${name}`;
-		}),
-	];
-
-	return pgPolicy(options?.name ?? `${tableName}_immutable_cols`, {
-		as: 'restrictive',
-		for: 'update',
-		using: sql`true`,
-		withCheck: sql`EXISTS (
-      SELECT * FROM ${sql.identifier(tableName)} ${old}
-      WHERE ${sql.join(conditions, sql` AND `)}
-    )`,
-	});
-}
 
 export const authUid = (userIdColumn: AnyPgColumn) =>
 	sql`(select current_setting('app.user_id')::uuid = ${userIdColumn})`;

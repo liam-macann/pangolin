@@ -5,7 +5,7 @@ import { type CountryCode } from 'lib-address';
 import { encrypted } from '@/lib/utils/drizzle';
 import { users } from '@/db/schema/auth';
 
-import { authUid, immutable, policy } from './_helpers';
+import { authUid, policy } from './_helpers';
 
 // Schema taken from Google open-source address metadata
 // https://github.com/google/libaddressinput/wiki/AddressValidationMetadata
@@ -41,11 +41,9 @@ export const address = snakeCase.table(
 			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
+			// Addresses must be stable to be referenced by SCD tables
 			update: false,
 			delete: authUid(t.userId),
 		}),
-
-		// Addresses must be stable to be referenced by SCD tables
-		immutable(t),
 	],
 );
