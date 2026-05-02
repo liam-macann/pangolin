@@ -32,11 +32,9 @@ export async function fetchInvoices(
 					clientData: { columns: { name: true, clientId: true } },
 					config: {
 						columns: {
-							validFrom: false,
-							validTo: false,
-							id: false,
-							userId: false,
-							paymentDetails: false,
+							timezone: true,
+							currency: true,
+							numberingScheme: true,
 						},
 					},
 				},

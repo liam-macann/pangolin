@@ -53,44 +53,43 @@ export async function getUserConfig() {
 
 	try {
 		const res = await withRLS(async db =>
-			db.query.config
-				.findFirst({
-					where: {
-						userId: session.user.id,
-						validTo: undefined,
+			db.query.config.findFirst({
+				where: {
+					userId: session.user.id,
+					validTo: undefined,
+				},
+				with: {
+					user: true,
+					address: true,
+					configTaxes: {
+						with: { taxes: { columns: { userId: false } } },
+						orderBy: { order: 'asc' },
 					},
-					with: {
-						user: true,
-						address: true,
-						configTaxes: {
-							with: { taxes: { columns: { userId: false } } },
-							orderBy: { order: 'asc' },
-						},
-					},
-					orderBy: { validFrom: 'desc' },
-				})
-				.then(async res => {
-					if (!res) return;
+				},
+				orderBy: { validFrom: 'desc' },
+			}),
+		)
+			.then(async res => {
+				if (!res) return;
 
-					const decrypted = await vault.decryptObject(res);
+				const decrypted = await vault.decryptObject(res);
 
-					return {
-						...decrypted,
-						paymentDetails: decrypted.paymentDetails?.map(v => {
-							const [label, value] = v.split(/: (.*)/s);
-							return { label, value };
-						}),
-						registrationNumber: decrypted.registrationNumber?.map(v => {
-							const [label, value] = v.split(/: (.*)/s);
-							return { label, value };
-						}),
-					};
-				})
-				.then(res => {
-					if (!res) return;
-					return { ...res, taxes: res.configTaxes.map(i => i.taxes) };
-				}),
-		);
+				return {
+					...decrypted,
+					paymentDetails: decrypted.paymentDetails?.map(v => {
+						const [label, value] = v.split(/: (.*)/s);
+						return { label, value };
+					}),
+					registrationNumber: decrypted.registrationNumber?.map(v => {
+						const [label, value] = v.split(/: (.*)/s);
+						return { label, value };
+					}),
+				};
+			})
+			.then(res => {
+				if (!res) return;
+				return { ...res, taxes: res.configTaxes.map(i => i.taxes) };
+			});
 
 		// If user has no current config
 		if (!res) throw new Error('User has no current valid config.');
