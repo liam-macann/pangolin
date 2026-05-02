@@ -34,6 +34,7 @@ export const taxes = snakeCase.table(
 		rate: numeric({ precision: 5, scale: 4, mode: 'number' }).notNull(),
 	},
 	t => [
+		// Eliminate redundant storage (force application to reuse identical rows)
 		unique('uq_tax_user_name_rate').on(t.userId, t.name, t.rate),
 
 		policy({

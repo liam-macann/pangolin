@@ -1,6 +1,6 @@
 'use server';
 
-import { and, eq, isNull, sql, type WithSubqueryWithoutSelection } from 'drizzle-orm';
+import { and, eq, isNull, or, sql, type WithSubqueryWithoutSelection } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { after } from 'next/server';
 import { v4 as uuid } from 'uuid';
@@ -107,15 +107,24 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 		// If taxes are defined
 		if (taxes?.length > 0) {
 			// Insert new taxes; skip if already exists. Tax identity must be unique.
+			// Fetch all IDs (both newly inserted and previously existing)
 			const dbTaxes = await tx
-				.insert(tables.taxes)
-				.values(taxes)
-				// Necessary to perform empty update to return values
-				.onConflictDoUpdate({
-					target: [tables.taxes.userId, tables.taxes.name, tables.taxes.rate],
-					set: { userId: tables.taxes.userId },
-				})
-				.returning();
+				.with(
+					tx.$with('insert_taxes').as(tx.insert(tables.taxes).values(taxes).onConflictDoNothing()),
+				)
+				.select()
+				.from(tables.taxes)
+				.where(
+					or(
+						...taxes.map(tax =>
+							and(
+								eq(tables.taxes.userId, tax.userId),
+								eq(tables.taxes.name, tax.name),
+								eq(tables.taxes.rate, tax.rate),
+							),
+						),
+					),
+				);
 
 			actions.push(
 				// Insert new tax-config junctions
