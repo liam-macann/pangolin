@@ -20,7 +20,7 @@ import {
 	PgRole,
 	type PgTableExtraConfigValue,
 	pgPolicy,
-	pgTable,
+	snakeCase,
 	timestamp,
 } from 'drizzle-orm/pg-core';
 
@@ -45,7 +45,7 @@ export function scdTable<TColumnsMap extends Record<string, AnyPgColumnBuilder>>
 		self: PgBuildExtraConfigColumns<TColumnsMap & typeof scdDates>,
 	) => PgTableExtraConfigValue[],
 ) {
-	return pgTable(
+	return snakeCase.table(
 		name,
 		{
 			...scdDates,

@@ -8,8 +8,8 @@ import {
 	integer,
 	numeric,
 	pgEnum,
-	pgTable,
 	primaryKey,
+	snakeCase,
 	text,
 	unique,
 	uuid,
@@ -24,7 +24,7 @@ import { authUid, immutable, policy, scdTable } from './_helpers';
 import { address } from './address';
 
 // Records should be immutable if referenced
-export const taxes = pgTable(
+export const taxes = snakeCase.table(
 	'tax',
 	{
 		id: uuid().defaultRandom().primaryKey(),
@@ -50,18 +50,18 @@ export const taxes = pgTable(
 );
 
 /** Join table for config and taxes */
-export const configTaxes = pgTable(
+export const configTaxes = snakeCase.table(
 	'config_tax',
 	{
 		order: integer().notNull(),
-		configId: uuid('config_id')
+		configId: uuid()
 			.notNull()
 			.references(() => config.id, { onDelete: 'cascade' }),
-		taxId: uuid('tax_id')
+		taxId: uuid()
 			.notNull()
 			.references(() => taxes.id),
 
-		userId: uuid('user_id')
+		userId: uuid()
 			.notNull()
 			.references(() => users.id),
 	},
@@ -96,14 +96,14 @@ export const config = scdTable(
 	'config',
 	{
 		id: uuid().defaultRandom().primaryKey(),
-		userId: uuid('user_id')
+		userId: uuid()
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
 
-		tradingName: text('trading_name').notNull(),
-		email: encrypted('email'),
-		phone: encrypted('phone'),
-		header: encrypted('header'),
+		tradingName: text().notNull(),
+		email: encrypted(),
+		phone: encrypted(),
+		header: encrypted(),
 
 		// The time zone of record, for invoice dates and yearly sequencing. This should eventually reference a table of time zones.
 		timezone: text()
@@ -121,12 +121,12 @@ export const config = scdTable(
 		currency: char({ length: 3 })
 			.references(() => currencies.iso)
 			.notNull(),
-		addressId: uuid('address_id').references(() => address.id),
-		taxRegistration: boolean('tax_registration').notNull(),
-		paymentDetails: encrypted('payment_details').array(),
-		registrationNumber: encrypted('registration_number').array(),
-		numberingScheme: numberingScheme('numbering_scheme').notNull(),
-		colorScheme: colorEnum('color_scheme').notNull().default('blue'),
+		addressId: uuid().references(() => address.id),
+		taxRegistration: boolean().notNull(),
+		paymentDetails: encrypted().array(),
+		registrationNumber: encrypted().array(),
+		numberingScheme: numberingScheme().notNull(),
+		colorScheme: colorEnum().notNull().default('blue'),
 	},
 	t => [
 		// Ensure that a user has only one valid configuration (multiple null values will conflict)

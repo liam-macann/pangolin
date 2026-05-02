@@ -1,5 +1,5 @@
 import { authenticatedRole } from 'drizzle-orm/neon';
-import { pgTable, text, unique, uuid } from 'drizzle-orm/pg-core';
+import { snakeCase, text, unique, uuid } from 'drizzle-orm/pg-core';
 import { type CountryCode } from 'lib-address';
 
 import { encrypted } from '@/lib/utils/drizzle';
@@ -9,27 +9,27 @@ import { authUid, immutable, policy } from './_helpers';
 
 // Schema taken from Google open-source address metadata
 // https://github.com/google/libaddressinput/wiki/AddressValidationMetadata
-export const address = pgTable(
+export const address = snakeCase.table(
 	'address',
 	{
 		id: uuid().defaultRandom().primaryKey(),
 
 		// A – Street Address Line(s)
-		streetAddress: encrypted('street_address').array(),
+		streetAddress: encrypted().array(),
 		// D – Dependent locality (may be an inner-city district or a suburb)
-		dependentLocality: text('dependent_locality'),
+		dependentLocality: text(),
 		// C – City or Locality
-		city: text('city'),
+		city: text(),
 		// S – Administrative area such as a state, province, island etc
-		administrativeArea: text('administrative_area'),
+		administrativeArea: text(),
 		// Z – Zip or postal code
-		postalCode: text('postal_code'),
+		postalCode: text(),
 		// X – Sorting code
-		sortingCode: text('sorting_code'),
+		sortingCode: text(),
 		// Country or territory
-		country: text('country').$type<Exclude<CountryCode, 'ZZ'>>().notNull(),
+		country: text().$type<Exclude<CountryCode, 'ZZ'>>().notNull(),
 
-		userId: uuid('user_id')
+		userId: uuid()
 			.references(() => users.id, { onDelete: 'cascade' })
 			.notNull(),
 	},

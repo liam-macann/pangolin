@@ -1,10 +1,10 @@
 import { authenticatedRole } from 'drizzle-orm/neon';
-import { boolean, char, interval, pgTable, pgView, smallint, text } from 'drizzle-orm/pg-core';
+import { boolean, char, interval, pgView, smallint, snakeCase, text } from 'drizzle-orm/pg-core';
 
 import { policy } from './data/_helpers';
 
 /** Seeded from ISO 4217 list of currencies and currency codes */
-export const currencies = pgTable(
+export const currencies = snakeCase.table(
 	'currency',
 	{
 		iso: char({ length: 3 }).primaryKey(),
@@ -33,7 +33,7 @@ export const timezones = pgView('pg_timezone_names', {
 }).existing();
 
 /** Enforces FK in config record */
-export const supportedTimezones = pgTable(
+export const supportedTimezones = snakeCase.table(
 	'timezone',
 	{
 		name: text('name').primaryKey(),

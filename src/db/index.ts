@@ -23,7 +23,6 @@ const pool = new Pool({
 const db = drizzle({
 	client: pool,
 	relations,
-	casing: 'snake_case',
 });
 
 export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];

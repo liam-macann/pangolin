@@ -10,12 +10,8 @@ import * as relations from '@/db/relations';
 import * as schema from '@/db/schema';
 
 // Use super-user connection string to bypass RLS
-export const db = drizzle({
-	// biome-ignore lint/style/noNonNullAssertion: Connection URL is guaranteed to be defined in production
-	connection: process.env.DATABASE_URL!,
-	schema: { ...schema, ...relations },
-	casing: 'snake_case',
-});
+// biome-ignore lint/style/noNonNullAssertion: Connection URL is guaranteed to be defined in production
+export const db = drizzle({ connection: process.env.DATABASE_URL! });
 
 export const auth = betterAuth({
 	database: drizzleAdapter(db, {

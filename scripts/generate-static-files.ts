@@ -5,12 +5,11 @@ import { drizzle } from 'drizzle-orm/neon-http';
 
 import { relations } from './../src/db/relations.ts';
 
-import './../envConfig.ts';
+import './../env-config.ts';
 
 export const db = drizzle({
 	client: neon(process.env.DATABASE_URL as string),
 	relations,
-	casing: 'snake_case',
 });
 
 const output = path.join(__dirname, '../src/app/lib/data/currencies.json');

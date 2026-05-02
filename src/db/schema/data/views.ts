@@ -1,5 +1,5 @@
 import { eq, getColumns, sql, sum } from 'drizzle-orm';
-import { pgView } from 'drizzle-orm/pg-core';
+import { snakeCase } from 'drizzle-orm/pg-core';
 
 // Schema imports
 import { config, taxes } from './config';
@@ -11,7 +11,8 @@ import { invoiceItems, invoices, itemTaxes } from './index';
 // VIEWS
 //
 
-export const itemsWithTax = pgView('items_with_tax')
+export const itemsWithTax = snakeCase
+	.view('items_with_tax')
 	.with({ securityInvoker: true })
 	.as(qb =>
 		qb
@@ -32,7 +33,8 @@ export const itemsWithTax = pgView('items_with_tax')
 			.groupBy(invoiceItems.id, config.id),
 	);
 
-export const invoicesWithSum = pgView('invoice_with_sum')
+export const invoicesWithSum = snakeCase
+	.view('invoice_with_sum')
 	.with({ securityInvoker: true })
 	.as(qb =>
 		qb

@@ -1,5 +1,5 @@
 import { authenticatedRole } from 'drizzle-orm/neon';
-import { boolean, foreignKey, pgTable, text, unique, uuid, varchar } from 'drizzle-orm/pg-core';
+import { boolean, foreignKey, snakeCase, text, unique, uuid, varchar } from 'drizzle-orm/pg-core';
 
 import { users } from '@/db/schema/auth';
 
@@ -7,15 +7,15 @@ import { authUid, policy, scdTable } from './_helpers';
 import { address } from './address';
 
 // Logical client. Data is stored in SCD table.
-export const clients = pgTable(
+export const clients = snakeCase.table(
 	'client',
 	{
 		id: uuid().defaultRandom().primaryKey(),
-		userId: uuid('user_id')
+		userId: uuid()
 			.references(() => users.id, { onDelete: 'cascade' })
 			.notNull(),
-		isFavorite: boolean('is_favorite').notNull().default(false),
-		isDeleted: boolean('is_deleted').notNull().default(false),
+		isFavorite: boolean().notNull().default(false),
+		isDeleted: boolean().notNull().default(false),
 	},
 	// Necessary for ownership constraint on clientData
 	t => [
@@ -44,17 +44,17 @@ export const clientData = scdTable(
 	{
 		id: uuid().defaultRandom().primaryKey(),
 		// Denormalised to allow DB-level ownership constraint
-		userId: uuid('user_id')
+		userId: uuid()
 			.references(() => users.id, { onDelete: 'cascade' })
 			.notNull(),
-		clientId: uuid('client_id')
+		clientId: uuid()
 			.references(() => clients.id, { onDelete: 'cascade' })
 			.notNull(),
 		name: varchar({ length: 255 }).notNull(),
 		email: varchar({ length: 255 }).notNull(),
-		notes: text('notes'),
+		notes: text(),
 
-		addressId: uuid('address_id').references(() => address.id),
+		addressId: uuid().references(() => address.id),
 	},
 	t => [
 		// Necessary for ownership constraint on clientData

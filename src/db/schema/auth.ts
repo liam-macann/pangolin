@@ -1,5 +1,5 @@
 import { authenticatedRole } from 'drizzle-orm/neon';
-import { boolean, index, pgRole, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, index, pgRole, snakeCase, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { encrypted } from '@/lib/utils/drizzle';
 
@@ -7,7 +7,7 @@ import { authUid, policy } from './data/_helpers';
 
 export const authenticated = pgRole('authenticated');
 
-export const users = pgTable(
+export const users = snakeCase.table(
 	'user',
 	{
 		id: uuid('id').defaultRandom().primaryKey(),
@@ -32,7 +32,7 @@ export const users = pgTable(
 	],
 );
 
-export const sessions = pgTable(
+export const sessions = snakeCase.table(
 	'session',
 	{
 		id: uuid('id').defaultRandom().primaryKey(),
@@ -60,7 +60,7 @@ export const sessions = pgTable(
 	],
 );
 
-export const accounts = pgTable(
+export const accounts = snakeCase.table(
 	'account',
 	{
 		id: uuid('id').defaultRandom().primaryKey(),
@@ -93,7 +93,7 @@ export const accounts = pgTable(
 	],
 );
 
-export const verifications = pgTable(
+export const verifications = snakeCase.table(
 	'verification',
 	{
 		id: uuid('id').defaultRandom().primaryKey(),
@@ -118,7 +118,7 @@ export const verifications = pgTable(
 	],
 );
 
-export const keychain = pgTable(
+export const keychain = snakeCase.table(
 	'keychain',
 	{
 		id: uuid()
