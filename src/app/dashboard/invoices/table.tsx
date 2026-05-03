@@ -12,8 +12,6 @@ import { type Data as InvoiceData } from '@/api/invoices/route';
 import { setInvoiceNotes, updateInvoiceStatus, voidInvoice } from '@/lib/actions/invoice';
 import { useClientInvoices, useInvoices } from '@/lib/hooks';
 import { cn, type ElementType, formatCurrency, formatDateToLocal } from '@/lib/utils';
-import { type Enum } from '@/lib/utils/drizzle';
-import { type statusEnum } from '@/db/schema';
 
 import { createDataTable } from '@/components/data-table';
 import { ToggleHeader } from '@/components/data-table/column-header';
@@ -91,7 +89,7 @@ export const columns: ColumnDef<Invoice>[] = [
 		header: ({ column }) => <ToggleHeader column={column} title='Reference' />,
 		cell: ({ row }) => (
 			<div className='font-medium tabular-nums'>
-				<span className='sr-only'>{row.original.isVoid && 'Void, '}</span>
+				<span className='sr-only'>{row.original.status.isVoid && 'Void, '}</span>
 				{row.original.reference}
 			</div>
 		),
@@ -107,11 +105,12 @@ export const columns: ColumnDef<Invoice>[] = [
 		cell: ({ row }) => <div className='truncate'>{row.original.clientData.name}</div>,
 	},
 	{
-		accessorKey: 'status',
+		accessorFn: row => row.status.status,
+		accessorKey: 'status.status',
 		id: 'status',
 		header: ({ column }) => <ToggleHeader column={column} title='Status' />,
 		cell: function StatusSelect({ row }) {
-			const status: Enum<typeof statusEnum> = row.getValue('status');
+			const status = row.original.status.status;
 			const id = row.original.id;
 
 			const { mutate } = useMutateRow(row.original.clientData.clientId);
@@ -124,7 +123,11 @@ export const columns: ColumnDef<Invoice>[] = [
 							if (!v) return;
 
 							const updatedInvoices = (curr: InvoiceData | undefined) =>
-								curr ? curr.map(item => (item.id === id ? { ...item, status: v } : item)) : [];
+								curr
+									? curr.map(item =>
+											item.id === id ? { ...item, status: { ...item.status, status: v } } : item,
+										)
+									: [];
 
 							mutate(
 								async current => {
@@ -240,11 +243,11 @@ export const columns: ColumnDef<Invoice>[] = [
 			return (
 				<AlertDialog>
 					<div className='-mr-2 flex justify-end'>
-						{invoice.notes && (
+						{invoice.status.notes && (
 							<NotesButton
 								invoiceId={invoice.id}
 								clientId={row.original.clientData.clientId}
-								defaultValue={invoice.notes}
+								defaultValue={invoice.status.notes}
 								render={
 									<Button variant='ghost' size='icon-sm'>
 										<span className='sr-only'>Notes</span>
@@ -281,7 +284,7 @@ export const columns: ColumnDef<Invoice>[] = [
 									<DropdownMenuSeparator />
 
 									<DropdownMenuItem
-										disabled={invoice.isVoid}
+										disabled={invoice.status.isVoid}
 										variant='destructive'
 										nativeButton
 										render={<AlertDialogTrigger />}
@@ -424,8 +427,8 @@ export function createInvoiceTable<TValue>(columns: ColumnDef<Invoice, TValue>[]
 	const Content = (props: ComponentProps<typeof FactoryDataTable.Content>) => (
 		<FactoryDataTable.Content
 			getRowAttr={row => ({
-				'data-void': row.isVoid || undefined,
-				style: row.isVoid
+				'data-void': row.status.isVoid || undefined,
+				style: row.status.isVoid
 					? {
 							background: `repeating-linear-gradient(
                                45deg,

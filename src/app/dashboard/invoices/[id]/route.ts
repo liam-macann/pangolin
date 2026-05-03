@@ -187,7 +187,7 @@ async function generatePdf(invoiceId: string) {
 				},
 			};
 		},
-		...(invoice.isVoid
+		...(invoice.status.isVoid
 			? {
 					watermark: {
 						text: 'VOID',

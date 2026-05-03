@@ -2,9 +2,9 @@ import { createInsertSchema } from 'drizzle-zod';
 import z from 'zod/v4';
 
 import { intlNumber } from '@/lib/zod';
-import { invoiceItems, invoices as invoicesSchema } from '@/db/schema/data';
+import * as schema from '@/db/schema/data';
 
-const item = createInsertSchema(invoiceItems, {
+const item = createInsertSchema(schema.invoiceItems, {
 	label: z => z.min(1, 'Please enter a description'),
 	quantity: s =>
 		intlNumber(
@@ -28,7 +28,7 @@ const item = createInsertSchema(invoiceItems, {
 		taxes: z.set(z.uuid('Invalid tax: check configuration')),
 	});
 
-export const invoice = createInsertSchema(invoicesSchema, {
+export const invoice = createInsertSchema(schema.invoices, {
 	clientDataId: z.uuid({ error: 'Please select a client' }),
 	title: z
 		.string()
@@ -40,11 +40,6 @@ export const invoice = createInsertSchema(invoicesSchema, {
 		.transform(v => v?.trim())
 		.transform(v => (v === '' ? undefined : v))
 		.optional(),
-	notes: z
-		.string()
-		.transform(v => v.trim())
-		.transform(v => (v === '' ? undefined : v))
-		.optional(),
 	issuedAt: z.date({ error: 'Please enter an issue date' }).optional(),
 	dueAt: z.date({ error: 'Please enter a due date' }),
 })
@@ -52,9 +47,17 @@ export const invoice = createInsertSchema(invoicesSchema, {
 		clientDataId: true,
 		title: true,
 		description: true,
-		notes: true,
 		issuedAt: true,
 		dueAt: true,
-		status: true,
 	})
-	.extend({ items: z.array(item).min(1, 'Invoice must contain items') });
+	.extend({
+		...createInsertSchema(schema.invoiceStatus, {
+			notes: z
+				.string()
+				.transform(v => v.trim())
+				.transform(v => (v === '' ? undefined : v))
+				.optional(),
+		}).pick({ status: true, notes: true }).shape,
+
+		items: z.array(item).min(1, 'Invoice must contain items'),
+	});

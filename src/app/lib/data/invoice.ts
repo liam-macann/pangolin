@@ -29,6 +29,7 @@ export async function fetchInvoices(
 					userId: false,
 				},
 				with: {
+					status: { columns: { id: false } },
 					clientData: { columns: { name: true, clientId: true } },
 					config: {
 						columns: {
@@ -112,6 +113,7 @@ export async function fetchInvoice(id: string) {
 					userId: false,
 				},
 				with: {
+					status: { columns: { id: false, userId: false } },
 					clientData: true,
 					config: {
 						columns: {

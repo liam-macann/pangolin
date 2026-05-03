@@ -18,7 +18,7 @@ import { crypto, type Decrypted } from '@/lib/encrypt';
 import { fetchAddressMetadata, formatAddress } from '@/lib/utils/address';
 import { jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
-import { type address, clientData, clients, invoices, invoicesWithSum } from '@/db/schema';
+import * as schema from '@/db/schema';
 
 import { getSession } from '@/auth';
 
@@ -32,7 +32,7 @@ export interface ClientResult {
 		name: string;
 		email: string;
 		notes: string | null;
-		address: Omit<Decrypted<typeof address.$inferSelect>, 'userId' | 'id'> | null;
+		address: Omit<Decrypted<typeof schema.address.$inferSelect>, 'userId' | 'id'> | null;
 		/** Address string formatted according to country metadata.
 		 *
 		 * This is included to avoid a waterfall on the client, as metadata registration is needed to format. */
@@ -69,10 +69,10 @@ export async function fetchClients(id?: string) {
 					/** Includes voided invoices */
 					invoiceCount: (c, { sql }) =>
 						sql`(${db
-							.select({ count: count(invoices.id) })
-							.from(clientData)
-							.where(eq(clientData.clientId, c.id))
-							.leftJoin(invoices, eq(invoices.clientDataId, clientData.id))}
+							.select({ count: count(schema.invoices.id) })
+							.from(schema.clientData)
+							.where(eq(schema.clientData.clientId, c.id))
+							.leftJoin(schema.invoices, eq(schema.invoices.clientDataId, schema.clientData.id))}
 						)`.mapWith(Number),
 				},
 				where: {
@@ -82,9 +82,9 @@ export async function fetchClients(id?: string) {
 				},
 				orderBy: (c, { sql }) =>
 					sql<string>`(${db
-						.select({ name: clientData.name })
-						.from(clientData)
-						.where(and(eq(clientData.clientId, c.id), isNull(clientData.validTo)))
+						.select({ name: schema.clientData.name })
+						.from(schema.clientData)
+						.where(and(eq(schema.clientData.clientId, c.id), isNull(schema.clientData.validTo)))
 						.limit(1)}
 				)`,
 			}),
@@ -123,24 +123,29 @@ export async function fetchClients(id?: string) {
 }
 
 export async function fetchClientStats(id: string) {
-	const session = await getSession();
-	if (!session) throw new Error('Request not authenticated');
-
-	return withRLS(async db => {
+	return withRLS(async (db, session) => {
 		/** Access all invoices for a given client that have not been voided */
-		const validityFilter = db
-			.select({ ...getColumns(invoicesWithSum) })
-			.from(clients)
-			.leftJoin(clientData, eq(clientData.clientId, clients.id))
-			.leftJoin(invoicesWithSum, eq(invoicesWithSum.clientDataId, clientData.id))
-			.where(
-				and(
-					eq(clients.userId, session.user.id),
-					eq(invoicesWithSum.isVoid, false),
-					eq(clients.id, id),
+		const validityFilter = db.$with('validity_filter').as(
+			db
+				.select({
+					...getColumns(schema.invoicesWithSum),
+					status: schema.invoiceStatus.status,
+				})
+				.from(schema.clients)
+				.leftJoin(schema.clientData, eq(schema.clientData.clientId, schema.clients.id))
+				.leftJoin(
+					schema.invoicesWithSum,
+					eq(schema.invoicesWithSum.clientDataId, schema.clientData.id),
+				)
+				.leftJoin(schema.invoiceStatus, eq(schema.invoiceStatus.id, schema.invoicesWithSum.id))
+				.where(
+					and(
+						eq(schema.clients.userId, session.user.id),
+						eq(schema.invoiceStatus.isVoid, false),
+						eq(schema.clients.id, id),
+					),
 				),
-			)
-			.as('validity_filter');
+		);
 
 		// Currency may change when configuration is updated.
 		// Figures are not aware of currency, hence may not be aggregated over the entire table.

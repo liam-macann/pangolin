@@ -7,7 +7,9 @@ import {
 	foreignKey,
 	integer,
 	numeric,
+	type PgTableExtraConfigValue,
 	pgEnum,
+	pgTable,
 	primaryKey,
 	snakeCase,
 	text,
@@ -39,16 +41,6 @@ export const invoices = snakeCase.table(
 		title: varchar({ length: 100 }),
 		/** Description printed under invoice reference */
 		description: text(),
-		/** Invoice payment status.
-		 *
-		 * @remarks Note that this does not include the invoice void state.
-		 * This is intentional, as payment realities may vary (eg. a client may accidentally pay a voided invoice)
-		 */
-		status: statusEnum().notNull(),
-		/** Private notes for the user */
-		notes: text(),
-		/** Whether the invoice has been voided */
-		isVoid: boolean().notNull().default(false),
 
 		/** Timestamp instant of record creation: do not use for invoice display */
 		createdAt: timestamp({ withTimezone: true, mode: 'date' }).notNull().defaultNow(),
@@ -78,14 +70,24 @@ export const invoices = snakeCase.table(
 			.notNull()
 			.references(() => config.id),
 	},
-	t => [
+	(t): PgTableExtraConfigValue[] => [
 		unique('uq_invoice_id_config').on(t.id, t.configId),
+		unique('uq_invoice_id_user_id').on(t.id, t.userId),
 
 		// Enforce that client data is owned by the same user as the invoice
 		foreignKey({
 			name: 'fk_invoice_client',
 			columns: [t.clientDataId, t.userId],
 			foreignColumns: [clientData.id, clientData.userId],
+		}),
+
+		// Enforce 1:1 relationship between invoice and invoice status
+		// This must be a deferrable foreign key.
+		// Drizzle has no helper for this configuration, so this is implemented through a migration
+		foreignKey({
+			name: 'fk_invoice_status',
+			columns: [t.id],
+			foreignColumns: [invoiceStatus.id],
 		}),
 
 		// Ensure that the sequence is unique for each user
@@ -103,8 +105,48 @@ export const invoices = snakeCase.table(
 			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
-			update: authUid(t.userId),
+			update: false,
 			// Invoices may be voided but not deleted
+			delete: false,
+		}),
+	],
+);
+
+export const invoiceStatus = pgTable(
+	'invoice_status',
+	{
+		id: uuid()
+			.primaryKey()
+			.references(() => invoices.id, { onDelete: 'cascade' }),
+
+		userId: uuid()
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+
+		/** Invoice payment status.
+		 *
+		 * @remarks Note that this does not include the invoice void state.
+		 * This is intentional, as payment realities may vary (eg. a client may accidentally pay a voided invoice)
+		 */
+		status: statusEnum().notNull(),
+		/** Private notes for the user */
+		notes: text(),
+		/** Whether the invoice has been voided */
+		isVoid: boolean().notNull().default(false),
+	},
+	t => [
+		// Enforce that status data is owned by the same user as the invoice
+		foreignKey({
+			name: 'fk_invoice_status_invoice',
+			columns: [t.id, t.userId],
+			foreignColumns: [invoices.id, invoices.userId],
+		}),
+
+		policy({
+			role: authenticatedRole,
+			select: authUid(t.userId),
+			insert: authUid(t.userId),
+			update: authUid(t.userId),
 			delete: false,
 		}),
 	],

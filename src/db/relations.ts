@@ -31,6 +31,11 @@ function invoiceBaseRelations(
 			from: table.id,
 			to: r.itemsWithTax.invoiceId,
 		}),
+		status: r.one.invoiceStatus({
+			from: table.id,
+			to: r.invoiceStatus.id,
+			optional: false,
+		}),
 	};
 }
 
