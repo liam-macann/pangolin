@@ -123,7 +123,7 @@ export async function fetchInvoice(id: string) {
 						},
 						with: { address: true },
 					},
-					items: { with: { taxes: true } },
+					items: { with: { taxes: true }, orderBy: { order: 'asc' } },
 				},
 				orderBy: { index: 'desc' },
 			});
