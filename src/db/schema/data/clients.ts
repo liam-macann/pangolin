@@ -1,5 +1,15 @@
+import { isNull } from 'drizzle-orm';
 import { authenticatedRole } from 'drizzle-orm/neon';
-import { boolean, foreignKey, snakeCase, text, unique, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+	boolean,
+	foreignKey,
+	snakeCase,
+	text,
+	unique,
+	uniqueIndex,
+	uuid,
+	varchar,
+} from 'drizzle-orm/pg-core';
 
 import { users } from '@/db/schema/auth';
 
@@ -59,8 +69,10 @@ export const clientData = scdTable(
 	t => [
 		// Necessary for ownership constraint on clientData
 		unique('uq_client_data_user').on(t.id, t.userId),
+
 		// Ensure that a client has only one valid configuration (multiple null values will conflict)
-		unique('uq_client_version').on(t.clientId, t.validTo).nullsNotDistinct(),
+		uniqueIndex('uq_client_active_version').on(t.clientId).where(isNull(t.validTo)),
+
 		foreignKey({
 			name: 'fk_client_data_ownership',
 			columns: [t.clientId, t.userId],

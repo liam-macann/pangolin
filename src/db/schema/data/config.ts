@@ -1,4 +1,4 @@
-import { type SQL, sql } from 'drizzle-orm';
+import { isNull, type SQL, sql } from 'drizzle-orm';
 import { authenticatedRole } from 'drizzle-orm/neon';
 import {
 	boolean,
@@ -12,6 +12,7 @@ import {
 	snakeCase,
 	text,
 	unique,
+	uniqueIndex,
 	uuid,
 	varchar,
 } from 'drizzle-orm/pg-core';
@@ -127,7 +128,7 @@ export const config = scdTable(
 	},
 	t => [
 		// Ensure that a user has only one valid configuration (multiple null values will conflict)
-		unique('uq_config_version').on(t.userId, t.validTo).nullsNotDistinct(),
+		uniqueIndex('uq_config_active_version').on(t.userId).where(isNull(t.validTo)),
 
 		check('chk_language_lowercase', sql`${t.language} = lower(${t.language})`),
 		check('chk_region_uppercase', sql`${t.region} = upper(${t.region})`),
