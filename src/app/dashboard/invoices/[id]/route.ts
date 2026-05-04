@@ -19,7 +19,7 @@ declare module 'pdfmake/interfaces' {
 import { getRegisteredCountries } from 'lib-address';
 
 import { getSession } from '@/auth';
-import schemes from '@/src/app/ui/colorSchemes';
+import schemes from '@/src/app/ui/color-schemes';
 
 const fontSize = {
 	base: 10,

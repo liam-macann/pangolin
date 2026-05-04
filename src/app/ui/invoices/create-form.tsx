@@ -53,7 +53,7 @@ import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/ui/
 import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
 
-import { InvoiceItemsField } from './invoiceItems';
+import { InvoiceItemsField } from './invoice-items';
 
 export function CreateInvoiceDialog({
 	children,

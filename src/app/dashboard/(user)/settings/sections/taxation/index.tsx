@@ -18,7 +18,7 @@ import {
 	FieldSet,
 } from '@/ui/field';
 
-import { DuplicateWarning, TaxRateField } from './taxRates';
+import { DuplicateWarning, TaxRateField } from './tax-rates';
 
 type FormValues = z.input<typeof formSchema>;
 type Fields = Pick<FormValues, 'taxRegistration' | 'taxes'>;

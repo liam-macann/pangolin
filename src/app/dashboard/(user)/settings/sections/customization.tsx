@@ -23,7 +23,7 @@ import {
 } from '@/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
 
-import schemes from '@/src/app/ui/colorSchemes';
+import schemes from '@/src/app/ui/color-schemes';
 
 type FormValues = z.input<typeof formSchema>;
 type Fields = Pick<FormValues, 'colorScheme' | 'numberingScheme'>;

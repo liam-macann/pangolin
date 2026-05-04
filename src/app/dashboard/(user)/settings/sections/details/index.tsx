@@ -21,8 +21,8 @@ import { Input } from '@/ui/input';
 import { Switch } from '@/ui/switch';
 import { Textarea } from '@/ui/textarea';
 
-import { PaymentDetailsField } from './paymentDetails';
-import { RegistrationNumberField } from './registrationNumber';
+import { PaymentDetailsField } from './payment-details';
+import { RegistrationNumberField } from './registration-number';
 
 type FormValues = z.input<typeof formSchema>;
 type Fields = Pick<
