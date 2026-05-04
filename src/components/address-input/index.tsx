@@ -69,11 +69,11 @@ function LocaleForm({ region, disabled }: { region: CountryCode; disabled?: bool
 	if (!isValidCountryCode(region)) throw new Error(`Invalid country code: ${region}`);
 
 	// Fetch region from cache or Google Address Metadata API
-	const { data, isLoading, isError } = useAddressMetadata(region, undefined, {
+	const { data, isLoading, error } = useAddressMetadata(region, undefined, {
 		keepPreviousData: true,
 	});
 
-	if (isError || (!isLoading && !data))
+	if (error || (!isLoading && !data))
 		return (
 			<Alert variant='destructive' className='m-2 mb-1 w-auto rounded-sm'>
 				<WarningCircleIcon />

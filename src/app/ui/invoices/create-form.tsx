@@ -236,7 +236,7 @@ export function CreateInvoiceDialog({
 }
 
 function BillTo({ control }: { control: Control<z.input<typeof schema>> }) {
-	const { data: clientsData, isLoading: isClientsLoading, isError: isClientsError } = useClients();
+	const { data: clientsData, isLoading: isClientsLoading, error: isClientsError } = useClients();
 
 	const items = (clientsData || []).map(client => ({
 		value: client.data.scdId,
@@ -256,7 +256,7 @@ function BillTo({ control }: { control: Control<z.input<typeof schema>> }) {
 						<Combobox
 							id='clientId'
 							items={items}
-							disabled={isClientsLoading || isClientsError || !clientsData}
+							disabled={isClientsLoading || !!isClientsError || !clientsData}
 							{...field}
 							value={items.find(i => i.value === (field.value || '')) || null}
 							onValueChange={v => field.onChange(v?.value)}
@@ -280,7 +280,7 @@ function BillTo({ control }: { control: Control<z.input<typeof schema>> }) {
 							</ComboboxContent>
 						</Combobox>
 
-						{isClientsError && <FieldError errors={[{ message: 'Failed to fetch clients' }]} />}
+						{!!isClientsError && <FieldError errors={[{ message: 'Failed to fetch clients' }]} />}
 						{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 					</div>
 				</Field>

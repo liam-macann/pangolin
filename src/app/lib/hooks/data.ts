@@ -10,19 +10,14 @@ import { fetcher } from '@/api';
 // SWR helpers
 
 type Config = Omit<SWRConfiguration, 'fallbackData'>;
-type Response<T, C> = SWRResponse<T, unknown, C> & { isError: boolean };
 
 /** Wraps a SWR hook to handle custom application behaviour */
 function makeWrapper(hook: typeof _useSWR) {
-	return <T, C extends Config>(key: string, initial?: T, config?: C) => {
-		const swr = hook(key, fetcher<T>, {
+	return <T, C extends Config>(key: string, initial?: T, config?: C) =>
+		hook(key, fetcher<T>, {
 			...config,
 			...(initial !== undefined ? { fallbackData: initial } : {}),
-		});
-
-		// Assertion is used to restore discriminated types after forming new object
-		return { ...swr, isError: swr.error !== undefined } as Response<T, C>;
-	};
+		}) as SWRResponse<T, unknown, C>;
 }
 
 const useSWR = makeWrapper(_useSWR);
