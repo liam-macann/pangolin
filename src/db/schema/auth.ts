@@ -1,4 +1,3 @@
-import { authenticatedRole } from 'drizzle-orm/neon';
 import { boolean, index, pgRole, snakeCase, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 import { encrypted } from '@/lib/utils/drizzle';
@@ -23,7 +22,6 @@ export const users = snakeCase.table(
 	},
 	t => [
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.id),
 			insert: false,
 			update: false,
@@ -51,7 +49,6 @@ export const sessions = snakeCase.table(
 	t => [
 		index('session_userId_idx').on(t.userId),
 		policy({
-			role: authenticatedRole,
 			select: false,
 			insert: false,
 			update: false,
@@ -84,7 +81,6 @@ export const accounts = snakeCase.table(
 	t => [
 		index('account_userId_idx').on(t.userId),
 		policy({
-			role: authenticatedRole,
 			select: false,
 			insert: false,
 			update: false,
@@ -109,7 +105,6 @@ export const verifications = snakeCase.table(
 	t => [
 		index('verification_identifier_idx').on(t.identifier),
 		policy({
-			role: authenticatedRole,
 			select: false,
 			insert: false,
 			update: false,
@@ -136,7 +131,6 @@ export const keychain = snakeCase.table(
 	},
 	t => [
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.id),
 			insert: authUid(t.id),
 			update: false,

@@ -1,5 +1,4 @@
 import { isNull } from 'drizzle-orm';
-import { authenticatedRole } from 'drizzle-orm/neon';
 import {
 	boolean,
 	foreignKey,
@@ -32,7 +31,6 @@ export const clients = snakeCase.table(
 		unique('uq_client_user').on(t.id, t.userId),
 
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
 			update: authUid(t.userId),
@@ -80,7 +78,6 @@ export const clientData = scdTable(
 		}),
 
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
 			update: authUid(t.userId),

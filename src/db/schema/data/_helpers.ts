@@ -1,5 +1,4 @@
 import { type Column, getTableName, is, type SQL, sql, type Table } from 'drizzle-orm';
-import { authenticatedRole } from 'drizzle-orm/neon';
 import {
 	type AnyPgColumn,
 	type AnyPgColumnBuilder,
@@ -17,6 +16,7 @@ import {
 
 import { type Brand } from '@/lib/utils';
 import { type AuthTransaction } from '@/db';
+import { authenticated } from '@/db/schema/auth';
 
 //
 //
@@ -105,9 +105,12 @@ export const invalidateActiveScd = <TTable extends SCDTable & { userId: PgUUID }
  *
  * @remarks Modified version of the Neon crudPolicy helper that is explicit about each operation
  */
-export const policy = (options: {
+export const policy = ({
+	role = authenticated,
+	...options
+}: {
 	/** The PostgreSQL role(s) to apply the policy to. Can be a single `PgRole` instance or an array of `PgRole` instances or role names. */
-	role: PgPolicyToOption;
+	role?: PgPolicyToOption;
 
 	select: SQL | boolean | null;
 	insert: SQL | boolean | null;
@@ -131,7 +134,7 @@ export const policy = (options: {
 	const update = value(options.update);
 	const del = value(options.delete);
 
-	const roleNames = (Array.isArray(options.role) ? options.role : [options.role])
+	const roleNames = (Array.isArray(role) ? role : [role])
 		.map(it => (is(it, PgRole) ? it.name : it))
 		.join('-');
 
@@ -139,26 +142,26 @@ export const policy = (options: {
 		select &&
 			pgPolicy(`granular-crud-${roleNames}-policy-select`, {
 				for: 'select',
-				to: options.role,
+				to: role,
 				using: select,
 			}),
 		insert &&
 			pgPolicy(`granular-crud-${roleNames}-policy-insert`, {
 				for: 'insert',
-				to: options.role,
+				to: role,
 				withCheck: insert,
 			}),
 		update &&
 			pgPolicy(`granular-crud-${roleNames}-policy-update`, {
 				for: 'update',
-				to: options.role,
+				to: role,
 				using: update,
 				withCheck: update,
 			}),
 		del &&
 			pgPolicy(`granular-crud-${roleNames}-policy-delete`, {
 				for: 'delete',
-				to: options.role,
+				to: role,
 				using: del,
 			}),
 	].filter(Boolean);

@@ -1,4 +1,3 @@
-import { authenticatedRole } from 'drizzle-orm/neon';
 import { boolean, char, interval, pgView, smallint, snakeCase, text } from 'drizzle-orm/pg-core';
 
 import { policy } from './data/_helpers';
@@ -15,7 +14,6 @@ export const currencies = snakeCase.table(
 	},
 	() => [
 		policy({
-			role: authenticatedRole,
 			select: true,
 			insert: false,
 			update: false,
@@ -40,7 +38,6 @@ export const supportedTimezones = snakeCase.table(
 	},
 	() => [
 		policy({
-			role: authenticatedRole,
 			select: true,
 			insert: false,
 			update: false,

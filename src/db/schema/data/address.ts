@@ -1,4 +1,3 @@
-import { authenticatedRole } from 'drizzle-orm/neon';
 import { snakeCase, text, unique, uuid } from 'drizzle-orm/pg-core';
 import { type CountryCode } from 'lib-address';
 
@@ -38,7 +37,6 @@ export const address = snakeCase.table(
 		unique('uq_address_user').on(t.id, t.userId),
 
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
 			// Addresses must be stable to be referenced by SCD tables

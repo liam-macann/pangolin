@@ -1,5 +1,4 @@
 import { isNull, type SQL, sql } from 'drizzle-orm';
-import { authenticatedRole } from 'drizzle-orm/neon';
 import {
 	boolean,
 	char,
@@ -39,7 +38,6 @@ export const taxes = snakeCase.table(
 		unique('uq_tax_user_name_rate').on(t.userId, t.name, t.rate),
 
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
 			// Records should be immutable if referenced
@@ -70,7 +68,6 @@ export const configTaxes = snakeCase.table(
 		unique('uq_config_tax_order').on(t.configId, t.order),
 
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
 			// Config taxes are fixed to their config
@@ -141,7 +138,6 @@ export const config = scdTable(
 		}),
 
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
 			update: authUid(t.userId),

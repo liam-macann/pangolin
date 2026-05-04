@@ -1,5 +1,4 @@
 import { type SQL, sql } from 'drizzle-orm';
-import { authenticatedRole } from 'drizzle-orm/neon';
 import {
 	boolean,
 	check,
@@ -102,7 +101,6 @@ export const invoices = snakeCase.table(
 		check('chk_due_after_issued', sql`${t.dueAt} > ${t.issuedAt}`),
 
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
 			update: false,
@@ -143,7 +141,6 @@ export const invoiceStatus = pgTable(
 		}),
 
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
 			update: authUid(t.userId),
@@ -198,7 +195,6 @@ export const invoiceItems = snakeCase.table(
 		}),
 
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
 			// Items must be immutable for stable invoice data
@@ -247,7 +243,6 @@ export const itemTaxes = snakeCase.table(
 		}),
 
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
 			// item/tax junction must be stable to prevent invoice totals changing
@@ -272,7 +267,6 @@ export const invoiceCount = snakeCase.table(
 	},
 	t => [
 		policy({
-			role: authenticatedRole,
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
 			update: authUid(t.userId),
