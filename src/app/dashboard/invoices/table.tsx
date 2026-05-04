@@ -7,10 +7,10 @@ import { type ColumnDef } from '@tanstack/react-table';
 import { cva } from 'class-variance-authority';
 import { type ComponentProps, createContext, useContext, useId } from 'react';
 import { toast } from 'sonner';
+import { useSWRConfig } from 'swr';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
 import { setInvoiceNotes, updateInvoiceStatus, voidInvoice } from '@/lib/actions/invoice';
-import { useClientInvoices, useInvoices } from '@/lib/hooks';
 import { cn, type ElementType, formatCurrency, formatDateToLocal } from '@/lib/utils';
 
 import { createDataTable } from '@/components/data-table';
@@ -64,15 +64,16 @@ type Invoice = ElementType<InvoiceData>;
 
 /** Mutate invoices and client invoices simultaneously */
 function useMutateRow(clientId: string) {
-	const { mutate: mutateInvoices } = useInvoices();
-	const { mutate: mutateClientInvoices } = useClientInvoices(clientId);
+	const { mutate } = useSWRConfig();
 
-	const mutate: typeof mutateInvoices = (...props) => {
-		mutateClientInvoices(...props);
-		return mutateInvoices(...props);
+	type Params = Parameters<typeof mutate<InvoiceData>>;
+
+	const fn = (data?: Params[1], opts?: Params[2]) => {
+		mutate<InvoiceData>('/api/invoices', data, opts);
+		mutate<InvoiceData>(`/api/invoices?client=${clientId}`, data, opts);
 	};
 
-	return { mutate };
+	return { mutate: fn };
 }
 
 /** Column definitions for invoices */
@@ -219,7 +220,7 @@ export const columns: ColumnDef<Invoice>[] = [
 
 								// Use sepia to force color into stroke
 								filter:
-									'brightness(0) invert(var(--scribble-lum, 0.2)) sepia(1) saturate(var(--scribble-sat, 3)) url("/pencil.svg#stroke") contrast(.9)',
+									'brightness(0) invert(var(--scribble-lum, 0.2)) sepia(1) saturate(var(--scribble-sat, 3.5)) url("/pencil.svg#stroke") contrast(.9)',
 							}}
 						/>
 					</span>

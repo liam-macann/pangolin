@@ -2,11 +2,10 @@
 
 import { type ComponentProps, type JSX } from 'react';
 import { toast } from 'sonner';
+import { useSWRConfig } from 'swr';
 
-import { type Data as ClientData } from '@/api/clients/route';
+import { type Data as Client } from '@/api/clients/[id]/route';
 import { updateClientDeleted, updateClientFavorite } from '@/lib/actions/client';
-import { useClient, useClients } from '@/lib/hooks';
-import { type ElementType } from '@/lib/utils';
 
 import {
 	DropdownMenu,
@@ -16,24 +15,32 @@ import {
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
 
-type Client = ElementType<ClientData>;
+/** Mutate client array and individual client simultaneously */
+function useMutateClient(clientId: string) {
+	const { mutate } = useSWRConfig();
+
+	type Data = Client | Promise<Client> | undefined;
+	type Opts = { optimisticData?: Client };
+
+	/** Maps the entire client list, replacing the mutated client with the resolved data */
+	const replace = (curr: Client[] | undefined, resolved: Client | undefined) =>
+		curr?.map(item => (item.id === clientId ? (resolved ?? item) : item)) ?? [];
+
+	const fn = (data?: Data, opts?: Opts) => {
+		mutate<Client>(`/api/clients/${clientId}`, data, opts);
+		mutate<Client[]>(
+			'/api/clients',
+			curr => (data instanceof Promise ? data.then(r => replace(curr, r)) : replace(curr, data)),
+			{ ...opts, optimisticData: curr => replace(curr, opts?.optimisticData) },
+		);
+	};
+
+	return { mutate: fn };
+}
 
 export function useClientActions(client: Client) {
-	const { mutate: mutateClients } = useClients();
-	const { mutate: mutateClient } = useClient(client.id, client);
+	const { mutate } = useMutateClient(client.id);
 	const id = client.id;
-
-	/** Mutates SWR hooks with optimistic updates */
-	const mutate = (promise: Promise<unknown>, mutation: Client) => {
-		const map = (curr: Client[] | undefined) =>
-			curr ? curr.map(item => (item.id === id ? mutation : item)) : [];
-
-		mutateClients(async curr => promise.then(() => map(curr)), {
-			optimisticData: curr => map(curr),
-		});
-
-		mutateClient(async () => promise.then(() => mutation), { optimisticData: mutation });
-	};
 
 	const setFavorite = (v: boolean) => {
 		const mutation = { ...client, isFavorite: v };
@@ -43,7 +50,10 @@ export function useClientActions(client: Client) {
 			throw err;
 		});
 
-		mutate(promise, mutation);
+		mutate(
+			promise.then(() => mutation),
+			{ optimisticData: mutation },
+		);
 	};
 
 	const setArchived = (v: boolean) => {
@@ -72,7 +82,10 @@ export function useClientActions(client: Client) {
 				throw err;
 			});
 
-		mutate(promise, mutation);
+		mutate(
+			promise.then(() => mutation),
+			{ optimisticData: mutation },
+		);
 	};
 
 	return { setFavorite, setArchived };
