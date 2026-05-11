@@ -44,7 +44,7 @@ export function TimezoneSelectCombobox({ className, ...props }: ComboboxPrimitiv
 	return (
 		<>
 			<ComboboxTrigger className={cn('min-w-60', className)} {...props}>
-				<ComboboxValue />
+				<ComboboxValue placeholder='Select time zone…' />
 			</ComboboxTrigger>
 
 			<TimezoneSelectContent>

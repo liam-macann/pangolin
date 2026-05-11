@@ -14,7 +14,7 @@ const Combobox = <Value, Multiple extends boolean | undefined = false>(
 ) => <ComboboxPrimitive.Root autoHighlight {...props} />;
 
 function ComboboxValue({ ...props }: ComboboxPrimitive.Value.Props) {
-	return <ComboboxPrimitive.Value data-slot='combobox-value' {...props} />;
+	return <ComboboxPrimitive.Value placeholder='Select…' data-slot='combobox-value' {...props} />;
 }
 
 function ComboboxTrigger({ className, children, ...props }: ComboboxPrimitive.Trigger.Props) {
@@ -22,7 +22,7 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxPrimitive.Tr
 		<ComboboxPrimitive.Trigger
 			data-slot='combobox-trigger'
 			className={cn(
-				"not-disabled:active:motion-safe:scale-100 [&_svg:not([class*='size-'])]:size-4",
+				"data-placeholder:text-muted-foreground not-disabled:active:motion-safe:scale-100 [&_svg:not([class*='size-'])]:size-4",
 				className,
 			)}
 			render={<Button variant='outline' className='justify-between' />}
@@ -30,7 +30,7 @@ function ComboboxTrigger({ className, children, ...props }: ComboboxPrimitive.Tr
 		>
 			{children}
 			<CaretDownIcon className='pointer-events-none hidden size-4 text-muted-foreground group-data-[slot="input-group"]/input-group:block' />
-			<CaretUpDownIcon className='pointer-events-none size-4 text-muted-foreground group-data-[slot="input-group"]/input-group:hidden' />
+			<CaretUpDownIcon className='pointer-events-none ml-auto size-4 text-muted-foreground group-data-[slot="input-group"]/input-group:hidden' />
 		</ComboboxPrimitive.Trigger>
 	);
 }

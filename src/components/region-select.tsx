@@ -48,7 +48,7 @@ export function RegionSelectCombobox({ className, ...props }: ComboboxPrimitive.
 	return (
 		<>
 			<ComboboxTrigger className={cn('min-w-60', className)} {...props}>
-				<ComboboxValue />
+				<ComboboxValue placeholder='Select region…' />
 			</ComboboxTrigger>
 
 			<RegionSelectContent>
