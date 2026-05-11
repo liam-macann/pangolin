@@ -1,6 +1,9 @@
+import { getTimeZones } from '@vvo/tzdb';
+import { getCountryDataList } from 'countries-list';
 import { createInsertSchema } from 'drizzle-zod';
 import z from 'zod/v4';
 
+import currencies from '@/lib/data/currencies.json';
 import { intlNumber } from '@/lib/zod';
 import { config as configSchema, taxes as taxesSchema } from '@/db/schema/data';
 
@@ -60,7 +63,7 @@ export const config = createInsertSchema(configSchema, {
 				value: z.string('Required').min(1, 'Required').max(255, 'Too long'),
 			}),
 		)
-		.max(15, 'No more than 15 items allowed'),
+		.max(10, 'No more than 10 items allowed'),
 	registrationNumber: z
 		.array(
 			z.object({
@@ -69,9 +72,40 @@ export const config = createInsertSchema(configSchema, {
 			}),
 		)
 		.max(15, 'No more than 15 items allowed'),
-	email: z.email('Invalid email').optional(),
-	phone: z.string().optional(), // Phone numbers can be alphanumeric, and contain characters (eg. separators, parentheses)
-	header: z.string().optional(),
+	email: z
+		.email('Invalid email')
+		.optional()
+		.transform(value => value || undefined),
+	phone: z
+		.string()
+		.optional()
+		.transform(value => value || undefined), // Phone numbers can be alphanumeric, and contain characters (eg. separators, parentheses)
+	header: z
+		.string()
+		.optional()
+		.transform(value => value || undefined),
+
+	currency: s =>
+		z
+			.enum(
+				currencies.map(c => c.iso),
+				'Please enter a valid currency',
+			)
+			.pipe(s),
+	timezone: s =>
+		z
+			.enum(
+				getTimeZones().map(tz => tz.name),
+				'Please enter a valid timezone',
+			)
+			.pipe(s),
+	region: s =>
+		z
+			.enum<string[]>(
+				getCountryDataList().map(c => c.iso2),
+				'Please enter a valid region',
+			)
+			.pipe(s),
 })
 	.omit({
 		id: true,
@@ -82,7 +116,7 @@ export const config = createInsertSchema(configSchema, {
 	})
 	.strict()
 	.extend({
-		address: address.nullable(),
+		address: address.nullish().transform(value => value || null),
 		/** Minimal insertion record for database configuration, excluding generated fields */
 		taxes: taxes,
 	})

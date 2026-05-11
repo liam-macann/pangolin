@@ -1,27 +1,26 @@
+import { getCountryData, type TCountryCode } from 'countries-list';
 import { type Metadata } from 'next';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-
-import { Button } from '@/ui/button';
 
 import { getSession } from '@/auth';
 
-export const metadata: Metadata = {
-	title: 'Welcome',
-};
+import { type Geo, Wizard } from './ui';
+
+export const metadata: Metadata = { title: 'Welcome' };
 
 export default async function Page() {
 	const session = await getSession();
 	if (!session) redirect('/auth/login');
 
-	return (
-		<div className='flex flex-col gap-y-4 rounded-md border bg-card p-4 py-8 shadow md:p-8'>
-			<h1 className='mb-2 font-bold text-xl'>
-				{session.user.name ? `Hi, ${session.user.name}` : 'Welcome'}
-			</h1>
-			<div className='text-muted-foreground'>
-				Invoicer is a dead-simple platform for managing your income as a sole-trader.
-			</div>
-			<Button className='mt-4 self-start'>Get started</Button>
-		</div>
-	);
+	const headerList = await headers();
+	const country = headerList.get('x-vercel-ip-country');
+
+	const geo: Geo = {
+		country,
+		currency: country && getCountryData(country as TCountryCode)?.currency[0],
+		timezone: headerList.get('x-vercel-ip-timezone'),
+	};
+
+	return <Wizard session={session} geo={geo} />;
 }

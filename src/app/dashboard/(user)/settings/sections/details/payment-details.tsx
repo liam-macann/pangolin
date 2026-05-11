@@ -77,7 +77,7 @@ export function PaymentDetailsField<T extends FormValues>({
 				<Button size='sm' onClick={() => remove()} variant='secondary'>
 					Clear
 				</Button>
-				<Button size='sm' onClick={addLine}>
+				<Button size='sm' onClick={addLine} disabled={fields.length >= 8}>
 					Add Detail
 				</Button>
 			</div>
@@ -120,8 +120,8 @@ function Item({
 								placeholder='eg. IBAN'
 								{...field}
 							/>
-							<AutocompletePositioner sideOffset={6}>
-								<AutocompletePopup className='data-empty:hidden'>
+							<AutocompletePositioner align='start' sideOffset={6}>
+								<AutocompletePopup className='min-w-48 data-empty:hidden'>
 									<AutocompleteEmpty>No matches found.</AutocompleteEmpty>
 									<AutocompleteList>
 										{(label: Label) => (
@@ -132,7 +132,9 @@ function Item({
 												onClick={() => setScheme(label.placeholder || null)}
 											>
 												{label.value}
-												<span className='text-muted-foreground text-xs'>{label.region}</span>
+												<span className='text-right text-muted-foreground text-xs'>
+													{label.region}
+												</span>
 											</AutocompleteItem>
 										)}
 									</AutocompleteList>

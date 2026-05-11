@@ -56,13 +56,17 @@ export function Customization<T extends Fields>({ control: _control }: { control
 				render={({ field: { onChange, ...field }, fieldState }) => {
 					return (
 						<FieldSet className='mt-4'>
-							<FieldLegend variant='label' className='flex items-center gap-2'>
-								Numbering scheme
-								<InfoTip side='right'>
-									Existing invoices will not be affected by changes to numbering scheme
-								</InfoTip>
-							</FieldLegend>
-							<FieldDescription>Choose the method used to identify your invoices.</FieldDescription>
+							<FieldContent>
+								<FieldLegend variant='label' className='flex items-center gap-2'>
+									Numbering scheme
+									<InfoTip side='right'>
+										Existing invoices will not be affected by changes to numbering scheme
+									</InfoTip>
+								</FieldLegend>
+								<FieldDescription>
+									Choose the method used to identify your invoices.
+								</FieldDescription>
+							</FieldContent>
 
 							<RadioGroup
 								{...field}
@@ -113,7 +117,7 @@ export function Customization<T extends Fields>({ control: _control }: { control
 	);
 }
 
-function ColorPalette({ onChange, ...field }: ControllerRenderProps<Fields, 'colorScheme'>) {
+export function ColorPalette({ onChange, ...field }: ControllerRenderProps<Fields, 'colorScheme'>) {
 	return (
 		<RadioGroup
 			className='group/color-palette flex gap-2'
