@@ -204,7 +204,7 @@ export const columns: ColumnDef<Invoice>[] = [
 						<div
 							aria-hidden='true'
 							className={cn(
-								'pointer-events-none absolute inset-0 left-1/2 -translate-x-1/2 scale-x-100 bg-repeat-x opacity-85 dark:[--scribble-lum:1] dark:[--scribble-sat:0.5]',
+								'filter-pencil-solid pointer-events-none absolute inset-0 left-1/2 -translate-x-1/2 scale-x-100 bg-repeat-x opacity-85',
 								'hidden group-data-void/row:block', // Conditionally show when void
 								'group-even/row:rotate-180 group-nth-[3n]/row:scale-y-120', // Row-to-row variation
 							)}
@@ -217,10 +217,6 @@ export const columns: ColumnDef<Invoice>[] = [
 								backgroundPosition: `round(down, 50%, calc(${scribbleSize}/7)) 50%`,
 								backgroundSize: scribbleSize,
 								backgroundImage: 'url("/scribble.svg")',
-
-								// Use sepia to force color into stroke
-								filter:
-									'brightness(0) invert(var(--scribble-lum, 0.2)) sepia(1) saturate(var(--scribble-sat, 3.5)) url("/pencil.svg#stroke") contrast(.9)',
 							}}
 						/>
 					</span>
