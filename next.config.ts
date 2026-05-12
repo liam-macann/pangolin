@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
 		useCache: true,
 		optimizePackageImports: ['@phosphor-icons/react'],
 	},
+	turbopack: {
+		rules: {
+			'*.svg': {
+				loaders: ['@svgr/webpack'],
+				as: '*.js',
+			},
+		},
+	},
 	serverExternalPackages: ['pdfmake'],
 };
 
