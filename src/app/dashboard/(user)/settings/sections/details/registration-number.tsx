@@ -47,7 +47,7 @@ export function RegistrationNumberField<T extends FormValues>({
 				<Button onClick={addLine}>Add Number</Button>
 			</SortableEmpty>
 
-			<div className='grid grid-cols-[1rem_1fr_2fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
+			<div className='grid grid-cols-[1.5rem_1fr_2fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
 				<FieldLabel className='col-start-2'>Label</FieldLabel>
 				<FieldLabel>Value</FieldLabel>
 			</div>
@@ -83,7 +83,7 @@ function Item({
 	children: React.ReactNode;
 }) {
 	return (
-		<SortableItem id={id} index={index} className='grid grid-cols-[1rem_1fr_2fr_2.25rem]'>
+		<SortableItem id={id} index={index} className='grid grid-cols-[1.5rem_1fr_2fr_2.25rem]'>
 			<SortableHandle />
 
 			<Controller

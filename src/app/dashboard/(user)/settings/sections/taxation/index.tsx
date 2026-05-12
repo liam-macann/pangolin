@@ -65,7 +65,7 @@ export function Taxation<T extends Fields>({ control: _control }: { control: Con
 				name='taxes'
 				control={control}
 				render={({ fieldState }) => (
-					<FieldSet className='-mb-4'>
+					<FieldSet className='-mb-4 has-data-[slot="sortable-empty"]:ml-8'>
 						<FieldContent>
 							<FieldLegend className='flex items-center gap-2'>
 								Tax rates
@@ -82,7 +82,10 @@ export function Taxation<T extends Fields>({ control: _control }: { control: Con
 						{/* AnimatePresence doesn't work with gap; wrapper needed */}
 						<div className='isolate'>
 							<DuplicateWarning control={control} className='ml-6 pb-6' />
-							<TaxRateField control={control} className='relative z-10 not-data-empty:-my-2' />
+							<TaxRateField
+								control={control}
+								className='relative z-10 not-data-empty:-my-2 not-data-empty:-ml-8'
+							/>
 						</div>
 					</FieldSet>
 				)}

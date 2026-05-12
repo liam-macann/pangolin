@@ -56,7 +56,7 @@ export function TaxRateField<T extends Fields>({
 			items={fields}
 			onReorder={({ initialIndex, index }) => actions.move(initialIndex, index)}
 		>
-			<div className='grid grid-cols-[1rem_1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
+			<div className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
 				<FieldLabel className='col-start-2'>Label</FieldLabel>
 				<FieldLabel>
 					Rate
@@ -70,7 +70,7 @@ export function TaxRateField<T extends Fields>({
 				{(tax, i) => <TaxRow key={tax.id} tax={tax} index={i} actions={actions} />}
 			</SortableList>
 
-			<SortableEmpty className='ml-8 flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
+			<SortableEmpty className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
 				<p className='font-medium text-muted-foreground text-sm'>No taxes configured</p>
 				<Button onClick={addTax}>Add Tax</Button>
 			</SortableEmpty>
@@ -104,7 +104,7 @@ function TaxRow({
 		<SortableItem
 			id={tax.id}
 			index={index}
-			className='grid grid-cols-[1rem_1fr_1fr_2.25rem] gap-y-0.5'
+			className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-y-0.5'
 		>
 			<SortableHandle />
 

@@ -79,7 +79,13 @@ export function SortableList({
 
 /** Visible when there are no items in the sortable list */
 export function SortableEmpty({ className, ...props }: React.ComponentProps<'div'>) {
-	return <div className={cn('group-not-data-[empty]/sortable:hidden', className)} {...props} />;
+	return (
+		<div
+			data-slot='sortable-empty'
+			className={cn('group-not-data-[empty]/sortable:hidden', className)}
+			{...props}
+		/>
+	);
 }
 
 interface SortableItemContext {

@@ -58,7 +58,7 @@ export function PaymentDetailsField<T extends FormValues>({
 				<Button onClick={addLine}>Add Details</Button>
 			</SortableEmpty>
 
-			<div className='grid grid-cols-[1rem_1fr_2fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
+			<div className='grid grid-cols-[1.5rem_1fr_2fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
 				<FieldLabel className='col-start-2'>Label</FieldLabel>
 				<FieldLabel>Value</FieldLabel>
 			</div>
@@ -100,7 +100,7 @@ function Item({
 	const [scheme, setScheme] = useState<string | null>(null);
 
 	return (
-		<SortableItem id={id} index={index} className='grid grid-cols-[1rem_1fr_2fr_2.25rem] gap-2'>
+		<SortableItem id={id} index={index} className='grid grid-cols-[1.5rem_1fr_2fr_2.25rem] gap-2'>
 			<SortableHandle />
 
 			<Controller
