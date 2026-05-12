@@ -115,7 +115,7 @@ function TaxRow({
 					<Field className='gap-0.5' data-invalid={fieldState.invalid || !!itemErrors?.message}>
 						<Input
 							type='text'
-							placeholder='Label'
+							placeholder='eg. VAT'
 							{...field}
 							onChange={e => {
 								field.onChange(e);
@@ -137,10 +137,12 @@ function TaxRow({
 					<Field className='gap-0.5' data-invalid={fieldState.invalid || !!itemErrors?.message}>
 						<InputGroup>
 							<InputGroupInput
-								type='text'
-								inputMode='decimal'
-								placeholder='eg. 12.5'
+								type='number'
+								min='0'
+								max='200'
 								step='any'
+								inputMode='decimal'
+								placeholder='--'
 								onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
 								{...field}
 								onChange={e => {
