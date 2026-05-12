@@ -82,43 +82,43 @@ function Item({ tz }: { tz: TimeZone }) {
 	return (
 		<ComboboxItem key={tz.name} value={tz} className='items-baseline overflow-hidden pr-2'>
 			<div className='flex w-full flex-col gap-0.5 overflow-hidden'>
-				<span className='line-clamp-1 w-full items-baseline truncate whitespace-pre pr-6 font-medium'>
+				<span className='w-full items-baseline pr-6 font-medium'>
 					{tz.countryName}
-					<span className='ml-1.5 text-muted-foreground text-xs'>
-						{tz.mainCities
-							.filter(inp => inp.localeCompare(tz.countryName))
-							.slice(0, 3)
-							.map((city, i, arr) => (
-								<span key={city}>
-									{i === 0 && <span className='sr-only'>: </span>}
-									{city}
-									{i < arr.length - 1 && (
-										<>
-											, <wbr />
-										</>
-									)}
-								</span>
-							))}
-					</span>
+					<span className='ml-1.5 shrink-0 text-muted-foreground text-xs'>{formatUTC(tz)}</span>
 				</span>
-				<div className='line-clamp-1 flex w-full truncate whitespace-pre text-muted-foreground text-xs'>
-					<span>{tz.alternativeName} – </span>
-					<span className='shrink-0 text-muted-foreground'>
-						{(() => {
-							const m = tz.currentTimeOffsetInMinutes;
-							const sign = m > 0 ? '+' : m < 0 ? '−' : '';
-							const hours = Math.abs(m) / 60 || '';
-							return (
-								<>
-									UTC<span className='mx-[0.25px]'>{sign}</span>
-									{hours}
-								</>
-							);
-						})()}
-					</span>
+				<div className='line-clamp-1 w-full truncate whitespace-pre text-muted-foreground text-xs'>
+					{tz.mainCities
+						// Limit to 5 cities (more than needed), to reduce expense of following filter
+						.slice(0, 5)
+						// Some cities may match the country name, so filter them out to avoid redundant information
+						.filter(inp => inp.localeCompare(tz.countryName))
+						// Limit to 48 characters to avoid overflow
+						.reduce<string[]>((acc, city) => {
+							const next = `${acc.join(', ')}, ${city}`;
+							if (next.length <= 48) acc.push(city);
+							return acc;
+						}, [])
+						.map((city, i, arr) => (
+							<span key={city}>
+								{city}
+								{i < arr.length - 1 && ', '}
+							</span>
+						))}
 				</div>
 			</div>
 		</ComboboxItem>
+	);
+}
+
+function formatUTC(tz: TimeZone) {
+	const m = tz.currentTimeOffsetInMinutes;
+	const sign = m > 0 ? '+' : m < 0 ? '−' : '';
+	const hours = Math.abs(m) / 60 || '';
+	return (
+		<>
+			UTC<span className='mx-[0.25px]'>{sign}</span>
+			{hours}
+		</>
 	);
 }
 
