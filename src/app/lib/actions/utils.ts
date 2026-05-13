@@ -51,7 +51,7 @@ export const cleanupClientData = (userId: string) =>
 		),
 	)
 		// Error should not bubble up: non-essential cleanup
-		.catch(() => console.error('Unable to clean up unused configs'));
+		.catch(() => console.error('Unable to clean up unused client data'));
 
 /** Clean up unused addresses for a given user */
 export const cleanupAddresses = (userId: string) =>

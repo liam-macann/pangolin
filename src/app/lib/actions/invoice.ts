@@ -144,7 +144,7 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 						})),
 					);
 
-					await tx.insert(schema.itemTaxes).values(values);
+					if (values.length > 0) await tx.insert(schema.itemTaxes).values(values);
 				}
 			});
 	})

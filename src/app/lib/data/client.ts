@@ -115,7 +115,12 @@ export async function fetchClients(id?: string) {
 			}),
 		);
 
-		return id ? mapped[0] : mapped;
+		if (id) {
+			if (!mapped[0]) throw new Error('Client not found.');
+			return mapped[0];
+		}
+
+		return mapped;
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch clients.');

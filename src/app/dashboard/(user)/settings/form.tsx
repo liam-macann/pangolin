@@ -25,7 +25,6 @@ const formSchema = configSchema
 	.omit({ address: true })
 	.extend({ addressEnabled: z.boolean(), address: z.any() })
 	.transform((val): z.input<typeof configSchema> => {
-		console.log(val);
 		return {
 			...val,
 			address: val.addressEnabled ? val.address : null,

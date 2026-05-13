@@ -217,7 +217,7 @@ async function retrieveDEK(uuid: string) {
 			// Refetch if key already exists (`onConflictDoNothing()` prevents return)
 			// Addresses concurrency issue when multiple requests are made prior to keygen
 			// (Avoids recursion to allow single retry and prevent infinite loop)
-			return res.key || fetchDEK();
+			return res?.key || fetchDEK();
 		};
 
 		const fetchDEK = async () =>

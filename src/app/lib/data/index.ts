@@ -56,7 +56,7 @@ export async function getUserConfig() {
 			db.query.config.findFirst({
 				where: {
 					userId: session.user.id,
-					validTo: undefined,
+					validTo: { isNull: true },
 				},
 				with: {
 					user: true,
