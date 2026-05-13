@@ -3,7 +3,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 
-import { InfoTip } from '@/components/info';
 import { Button } from '@/ui/button';
 import {
 	Field,
