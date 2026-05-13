@@ -171,7 +171,11 @@ function InvoiceItemsInput({
 	} = useFormState({ control, name: 'items' });
 
 	return (
-		<Sortable items={fields} onReorder={({ initialIndex, index }) => move(initialIndex, index)}>
+		<Sortable
+			items={fields}
+			onReorder={({ initialIndex, index }) => move(initialIndex, index)}
+			className='gap-1'
+		>
 			<div className='grid grid-cols-[1rem_2fr_1.1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
 				<div className='col-start-2'>
 					<FieldLabel>Description</FieldLabel>
