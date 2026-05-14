@@ -97,7 +97,6 @@
 		"drizzle-orm": "1.0.0-rc.1",
 		"drizzle-seed": "1.0.0-rc.1",
 		"husky": "^9.1.7",
-		"lint-staged": "^16.1.6",
 		"postgres": "^3.4.6",
 		"ts-node": "^10.9.2",
 		"tsx": "^4.20.5",
