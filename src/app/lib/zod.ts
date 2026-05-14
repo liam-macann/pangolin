@@ -35,17 +35,36 @@ function buildIntlNumber({ schema, error }: { schema?: z.ZodNumber; error?: Erro
 					// for thousands separation (although beyond max for this schema)
 					// eg. "1.200,5" || "1,200.5" → "1200.5"
 					//
+					// Spaces and apostrophes are unambiguous thousands separators — strip them first.
+					// eg. "1 234 567,89" || "1'234'567.89" → "1234567.89"
+					const normalized = val.replaceAll(/[\s']/g, '');
 
-					// Use the last separator to infer the formatting.
-					const isCommaDecimal = val.includes(',') && val.lastIndexOf(',') > val.lastIndexOf('.');
+					// Count the number of commas and periods in the normalized string
+					const commas = normalized.match(/,/g)?.length ?? 0;
+					const periods = normalized.match(/\./g)?.length ?? 0;
+
+					const isCommaDecimal =
+						// If there is exactly one comma, and there is no period after it, infer comma-decimal formatting
+						(commas === 1 && normalized.lastIndexOf(',') > normalized.lastIndexOf('.')) ||
+						// If there is no comma but multiple periods, infer that the period character is a thousands separator
+						(commas === 0 && periods > 1);
+
+					const isPeriodDecimal =
+						!isCommaDecimal &&
+						// If there is exactly one period, and there is no comma after it, infer period-decimal formatting
+						((periods === 1 && normalized.lastIndexOf('.') > normalized.lastIndexOf(',')) ||
+							// If there is no period but multiple commas, infer that the comma character is a thousands separator
+							(periods === 0 && commas > 1));
 
 					if (isCommaDecimal) {
 						// Remove all periods (thousand separators) and replace the decimal comma with a period
-						return val.replaceAll('.', '').replace(',', '.').trim();
-					} else {
+						return normalized.replaceAll('.', '').replace(',', '.').trim();
+					} else if (isPeriodDecimal) {
 						// Otherwise, for period decimals, strip all commas (thousand separators)
-						return val.replaceAll(',', '').trim();
+						return normalized.replaceAll(',', '').trim();
 					}
+
+					return normalized;
 				}
 
 				return val;
