@@ -21,7 +21,6 @@ import { RegistrationNumberField } from '@/src/app/dashboard/(user)/settings/sec
 import { details, useOnboardingStore } from '@/src/app/onboarding/state';
 
 import { Footer } from './../ui';
-import { Separator } from '@/components/ui/separator';
 
 export function Details({ session }: { session: Session }) {
 	const config = useOnboardingStore(state => state.config);
