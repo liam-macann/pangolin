@@ -100,6 +100,10 @@ export const invoices = snakeCase.table(
 		),
 		check('chk_due_after_issued', sql`${t.dueAt} > ${t.issuedAt}`),
 
+		check('chk_invoice_count_year_index', sql`${t.yearIndex} <= ${t.index}`),
+		check('chk_positive_year_index', sql`${t.yearIndex} >= 0`),
+		check('chk_positive_index', sql`${t.index} >= 0`),
+
 		policy({
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
@@ -265,7 +269,12 @@ export const invoiceCount = snakeCase.table(
 		yearCount: integer().notNull().default(0),
 		updatedAt: timestamp({ withTimezone: true, mode: 'date' }).notNull().defaultNow(),
 	},
+
 	t => [
+		check('chk_invoice_count_year_count', sql`${t.yearCount} <= ${t.count}`),
+		check('chk_positive_year_count', sql`${t.yearCount} >= 0`),
+		check('chk_positive_count', sql`${t.count} >= 0`),
+
 		policy({
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
