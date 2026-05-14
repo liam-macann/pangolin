@@ -283,7 +283,23 @@ async function generatePdf(invoiceId: string) {
 								bold: true,
 							},
 						],
-						[{ stack: [{ text: 'Bill To', bold: true }, invoice.clientData.name], colSpan: 2 }],
+						[
+							{
+								stack: [
+									{ text: 'Bill To', bold: true },
+									invoice.clientData.name,
+									invoice.clientData.address
+										? [
+												{
+													text: formatAddress(invoice.clientData.address),
+													marginTop: spacing(4),
+												},
+											]
+										: [],
+								],
+								colSpan: 2,
+							},
+						],
 					],
 				},
 				fontSize: fontSize.base,

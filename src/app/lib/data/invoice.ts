@@ -114,7 +114,7 @@ export async function fetchInvoice(id: string) {
 				},
 				with: {
 					status: { columns: { id: false, userId: false } },
-					clientData: true,
+					clientData: { with: { address: true } },
 					config: {
 						columns: {
 							validFrom: false,
@@ -152,6 +152,7 @@ export async function fetchInvoice(id: string) {
 			...res,
 			reference: invoiceReference(res, res.config.numberingScheme),
 			config: await vault.decryptObject(res.config),
+			clientData: await vault.decryptObject(res.clientData),
 		};
 
 		vault.destroy();
