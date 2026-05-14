@@ -21,13 +21,13 @@ export const formatNumber = (amount: number, locale: string) => {
 	}).format(amount);
 };
 
-export const getTimezoneTime = (tz: string) =>
-	new Date(new Date().toLocaleString(undefined, { timeZone: tz }));
-
 export const invoiceReference = (
 	invoice: Pick<typeof invoices.$inferSelect, 'index' | 'yearIndex' | 'issueYear'>,
 	scheme: ElementType<typeof numberingScheme.enumValues>,
 ) => {
+	if (invoice.index < 0 || invoice.yearIndex < 0)
+		throw new Error('Index and yearIndex must be non-negative');
+
 	switch (scheme) {
 		case 'sequential':
 			return `INV-${invoice.index.toString().padStart(3, '0')}`;

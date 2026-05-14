@@ -13,7 +13,10 @@
 		"db:seed": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" node --import tsx --env-file=.env.local ./scripts/seed.ts",
 		"db:view": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" pnpm exec drizzle-kit studio",
 		"db:generate": "drizzle-kit generate",
-		"db:migrate": "drizzle-kit migrate"
+		"db:migrate": "drizzle-kit migrate",
+		"test": "vitest",
+		"test:run": "vitest run",
+		"coverage": "vitest run --coverage"
 	},
 	"lint-staged": {
 		"*": ["biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"]
@@ -80,12 +83,13 @@
 		"@hookform/devtools": "^4.4.0",
 		"@svgr/webpack": "^8.1.0",
 		"@types/bcrypt": "^5.0.2",
-		"@types/node": "22.10.7",
+		"@types/node": "25.7.0",
 		"@types/pdfkit": "^0.17.3",
 		"@types/react": "19.2.7",
 		"@types/react-dom": "19.2.3",
 		"@types/ws": "^8.18.1",
 		"@typescript/native-preview": "7.0.0-dev.20260310.1",
+		"@vitest/coverage-v8": "4.1.6",
 		"drizzle-kit": "1.0.0-rc.1",
 		"drizzle-orm": "1.0.0-rc.1",
 		"drizzle-seed": "1.0.0-rc.1",
@@ -95,7 +99,8 @@
 		"ts-node": "^10.9.2",
 		"tsx": "^4.20.5",
 		"tw-animate-css": "^1.3.8",
-		"typescript": "5.9.3"
+		"typescript": "5.9.3",
+		"vitest": "^4.1.6"
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": ["bcrypt", "sharp"],

@@ -26,6 +26,7 @@ src/env.d.ts
 .vercel
 .env*.local
 next-env.d.ts
+coverage/
 
 # generated files
 src/app/lib/data/currencies.json
