@@ -148,6 +148,13 @@ export type AllSameKeys<T extends [object, ...object[]]> = T extends [
 /** Omit properties without breaking discriminated unions */
 export type OmitUnion<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
 
+/** Deeply partialize an object type */
+export type DeepPartial<T> = T extends object
+	? {
+			[P in keyof T]?: DeepPartial<T[P]>;
+		}
+	: T;
+
 declare const __brand: unique symbol;
 /** Simulate nominal typing by specifying a key */
 export type Brand<T, B> = T & { [__brand]: B };
