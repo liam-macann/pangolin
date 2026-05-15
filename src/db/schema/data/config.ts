@@ -106,7 +106,7 @@ export const config = scdTable(
 			.notNull(),
 
 		language: text().default('en').notNull(), // eg. `en`
-		region: text(), // eg. `AU`
+		region: text().notNull(), // eg. `AU`
 		locale: text()
 			.generatedAlwaysAs(
 				(): SQL => sql`${config.language} || COALESCE('-' || ${config.region}, '')`,

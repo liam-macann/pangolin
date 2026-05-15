@@ -1,0 +1,1 @@
+ALTER TABLE "config" ALTER COLUMN "region" SET NOT NULL;
