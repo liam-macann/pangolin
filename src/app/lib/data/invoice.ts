@@ -98,7 +98,7 @@ export async function fetchInvoice(id: string) {
 					.where(eq(invoices.id, id))
 					.innerJoin(configSchema, eq(invoices.configId, configSchema.id))
 					.innerJoin(configTaxes, eq(configTaxes.configId, configSchema.id))
-					.leftJoin(taxesSchema, eq(taxesSchema.id, configTaxes.taxId))
+					.innerJoin(taxesSchema, eq(taxesSchema.id, configTaxes.taxId))
 					.leftJoin(invoiceItems, eq(invoiceItems.invoiceId, invoices.id))
 					.leftJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
 					.groupBy(configSchema.id, taxesSchema.id, configTaxes.order)
@@ -111,10 +111,17 @@ export async function fetchInvoice(id: string) {
 					clientDataId: false,
 					configId: false,
 					userId: false,
+
+					// Included with config data
+					taxRegistration: false,
+					currency: false,
 				},
 				with: {
 					status: { columns: { id: false, userId: false } },
-					clientData: { with: { address: true } },
+					clientData: {
+						columns: { name: true },
+						with: { address: true },
+					},
 					config: {
 						columns: {
 							validFrom: false,
@@ -125,10 +132,23 @@ export async function fetchInvoice(id: string) {
 						},
 						with: { address: true },
 					},
-					items: { with: { taxes: true }, orderBy: { order: 'asc' } },
+					items: {
+						columns: {
+							id: false,
+							invoiceId: false,
+							userId: false,
+							configId: false,
+							taxRegistration: false,
+							order: false,
+						},
+						with: { taxes: { columns: { userId: false, id: false } } },
+						orderBy: { order: 'asc' },
+					},
 				},
 				orderBy: { index: 'desc' },
 			});
+
+			const test = res?.items[0];
 
 			// Collapse tax rows that share the same name
 			const tax = await db

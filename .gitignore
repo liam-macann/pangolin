@@ -26,7 +26,12 @@ src/env.d.ts
 .vercel
 .env*.local
 next-env.d.ts
+
+# reports
 coverage/
+
+# typegen
+tsconfig.tsbuildinfo
 
 # generated files
 src/app/lib/data/currencies.json
