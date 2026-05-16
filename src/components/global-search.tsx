@@ -148,7 +148,7 @@ const Trigger = ({ ...props }: ComponentProps<typeof Button>) => {
 		>
 			<MagnifyingGlassIcon />
 			Search…
-			<Kbd className='-mr-1 rounded-full px-1.5 shadow-xs ring ring-input/50'>
+			<Kbd className='-mr-1.5 ml-1 rounded-full px-1.5 shadow-xs'>
 				{isApple ? '⌘ K' : 'Ctrl + K'}
 			</Kbd>
 		</Button>
