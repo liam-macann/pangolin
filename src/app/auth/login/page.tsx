@@ -1,4 +1,4 @@
-import { ArrowUpRightIcon, CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
+import { CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { type Metadata } from 'next';
 import { z } from 'zod';
 
@@ -41,9 +41,7 @@ export default async function LoginPage({
 					</Alert>
 				)}
 
-				<LoginButton variant='primary' callbackURL={callbackUrl}>
-					Login <ArrowUpRightIcon />
-				</LoginButton>
+				<LoginButton variant='primary' callbackURL={callbackUrl} />
 			</section>
 			<section className='mt-12'>
 				<h2 className='mb-2 font-semibold text-lg'>What this is</h2>

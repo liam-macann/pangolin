@@ -57,12 +57,18 @@ function Button({
 	className,
 	variant,
 	size = 'default',
+	disabled,
+	loading = false,
 	...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & { loading?: boolean }) {
 	return (
 		<ButtonPrimitive
 			data-slot='button'
-			className={cn(buttonVariants({ variant, size, className }))}
+			className={cn(
+				buttonVariants({ variant, size, className }),
+				loading && 'disabled:cursor-progress',
+			)}
+			disabled={disabled || loading}
 			{...props}
 		/>
 	);

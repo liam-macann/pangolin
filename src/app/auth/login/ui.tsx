@@ -1,28 +1,46 @@
 'use client';
 
-import { type ComponentProps } from 'react';
+import { ArrowUpRightIcon } from '@phosphor-icons/react';
+import { type ComponentProps, useState } from 'react';
 
 import { signIn } from '@/lib/auth';
 
 import { Button } from '@/ui/button';
+import { Spinner } from '@/ui/spinner';
 
 export function LoginButton({
 	callbackURL,
+	children,
 	...props
-}: { callbackURL: string } & ComponentProps<typeof Button>) {
+}: { callbackURL: string } & Omit<ComponentProps<typeof Button>, 'loading'>) {
+	const [loading, setLoading] = useState(false);
+
 	return (
 		<Button
 			className='grow'
+			loading={loading}
 			onClick={async () => {
-				await signIn.social({
-					provider: 'google',
-					callbackURL,
-					newUserCallbackURL: '/onboarding',
-					errorCallbackURL: '/auth/login',
-				});
+				if (loading) return;
+				setLoading(true);
+
+				await signIn
+					.social({
+						provider: 'google',
+						callbackURL,
+						newUserCallbackURL: '/onboarding',
+						errorCallbackURL: '/auth/login',
+					})
+					.catch(() => setLoading(false));
 			}}
 			size='lg'
 			{...props}
-		/>
+		>
+			Login{' '}
+			{!loading ? (
+				<ArrowUpRightIcon data-icon='inline-end' />
+			) : (
+				<Spinner className='translate-x-0.5' data-icon='inline-end' />
+			)}
+		</Button>
 	);
 }
