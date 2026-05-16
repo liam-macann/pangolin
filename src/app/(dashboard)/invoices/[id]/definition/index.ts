@@ -23,7 +23,7 @@ type FetchResult = Awaited<ReturnType<typeof fetchInvoice>>;
 /** A subset of API invoice data used for printing invoices */
 export type InvoicePrintData = Omit<
 	FetchResult,
-	'id' | 'status' | 'item' | 'issueYear' | 'index' | 'yearIndex'
+	'id' | 'status' | 'items' | 'issueYear' | 'index' | 'yearIndex'
 > & {
 	// isVoid is the only mutable status that may be accessed
 	status: Pick<FetchResult['status'], 'isVoid'>;

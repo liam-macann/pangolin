@@ -27,8 +27,11 @@ import { RegistrationNumberField } from './registration-number';
 type FormValues = z.input<typeof formSchema>;
 type Fields = Pick<
 	FormValues,
-	'tradingName' | 'email' | 'phone' | 'header' | 'registrationNumber' | 'paymentDetails' | 'address'
-> & { addressEnabled: boolean };
+	'tradingName' | 'email' | 'phone' | 'header' | 'registrationNumber' | 'paymentDetails'
+> & {
+	address: NonNullable<FormValues['address']> | null;
+	addressEnabled: boolean;
+};
 
 export function Details<T extends Fields>({ control: _control }: { control: Control<T> }) {
 	// Necessary, as RHF can't extract typings from the generic
