@@ -267,9 +267,7 @@ export const columns: ColumnDef<Invoice>[] = [
 								<DropdownMenuGroup>
 									<DropdownMenuLabel>Actions</DropdownMenuLabel>
 
-									<DropdownMenuItem
-										render={<a href={`/dashboard/invoices/${invoice.id}`}>View invoice</a>}
-									/>
+									<DropdownMenuItem render={<a href={`/invoices/${invoice.id}`}>View invoice</a>} />
 
 									<DropdownMenuItem disabled>Add notes</DropdownMenuItem>
 

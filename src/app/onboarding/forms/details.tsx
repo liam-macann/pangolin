@@ -17,7 +17,7 @@ import {
 import { Input } from '@/ui/input';
 
 import { type Session } from '@/auth';
-import { RegistrationNumberField } from '@/src/app/dashboard/(user)/settings/sections/details/registration-number';
+import { RegistrationNumberField } from '@/src/app/(dashboard)/(user)/settings/sections/details/registration-number';
 import { details, useOnboardingStore } from '@/src/app/onboarding/state';
 
 import { Footer } from './../ui';

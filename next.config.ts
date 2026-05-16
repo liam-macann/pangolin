@@ -14,6 +14,20 @@ const nextConfig: NextConfig = {
 			},
 		},
 	},
+	async redirects() {
+		return [
+			{
+				source: '/dashboard',
+				destination: '/invoices',
+				permanent: true,
+			},
+			{
+				source: '/dashboard/:path+',
+				destination: '/:path+',
+				permanent: true,
+			},
+		];
+	},
 	serverExternalPackages: ['pdfmake'],
 };
 

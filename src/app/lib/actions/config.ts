@@ -152,8 +152,8 @@ export async function updateUserConfig(config: z.infer<typeof configInput>) {
 		.finally(() => vault.destroy())
 		.then(async () => {
 			// Revalidate the cache for the invoices page, where the formatting may have changed.
-			revalidatePath('/dashboard/invoices');
-			revalidatePath('/dashboard/settings');
+			revalidatePath('/invoices');
+			revalidatePath('/settings');
 
 			// Useful to ensure consecutive insertions (eg. saving as progressing through form) do not produce redundant rows
 			after(() =>

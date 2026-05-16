@@ -38,7 +38,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 				className='-ml-2.5'
 				nativeButton={false}
 				render={
-					<Link href='/dashboard/clients'>
+					<Link href='/clients'>
 						<CaretLeftIcon className='-ml-1' />
 						All clients
 					</Link>

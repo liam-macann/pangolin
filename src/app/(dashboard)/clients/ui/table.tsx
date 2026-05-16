@@ -96,7 +96,7 @@ export function Table({ data }: { data: Client[] }) {
 					onKeyDown={e => {
 						if (e.key === 'Enter' && e.currentTarget.value !== '') {
 							const id = table.getRowModel().rows[0]?.original?.id;
-							if (id) router.push(`/dashboard/clients/${id}`);
+							if (id) router.push(`/clients/${id}`);
 						}
 					}}
 					onFocus={() => setIsFiltering(true)}

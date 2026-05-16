@@ -55,7 +55,7 @@ async function AccountMenuContent() {
 					<DropdownMenuSeparator />
 					<DropdownMenuItem
 						render={
-							<Link href='/dashboard/settings'>
+							<Link href='/settings'>
 								<SlidersHorizontalIcon />
 								Settings
 							</Link>

@@ -117,8 +117,8 @@ export async function updateClient(input: z.infer<typeof clientDataSchema>) {
 		await tx.insert(clientData).values({ ...data, userId: session.user.id, addressId });
 	}).then(async () => {
 		// Revalidate the cache for the invoices page, where the formatting may have changed.
-		revalidatePath('/dashboard/invoices');
-		revalidatePath(`/dashboard/clients/${data.clientId}`);
+		revalidatePath('/invoices');
+		revalidatePath(`/clients/${data.clientId}`);
 
 		// Useful to ensure consecutive insertions do not produce redundant rows
 		after(() =>

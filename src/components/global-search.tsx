@@ -96,7 +96,7 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 							key={client.id}
 							className='*:last:hidden'
 							onSelect={() => {
-								router.push(`/dashboard/clients/${client.id}`);
+								router.push(`/clients/${client.id}`);
 								onOpenChange(false);
 							}}
 						>
@@ -119,7 +119,7 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 						<CommandItem
 							key={invoice.id}
 							className='flex w-full items-baseline gap-2 *:last:hidden'
-							onSelect={() => router.push(`/dashboard/invoices/${invoice.id}`)}
+							onSelect={() => router.push(`/invoices/${invoice.id}`)}
 						>
 							<span className='font-medium text-xs tabular-nums group-not-data-selected/command-item:text-muted-foreground'>
 								{invoice.reference}

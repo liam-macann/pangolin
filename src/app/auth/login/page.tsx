@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 import { errorDetails } from './../error/page';
 
 const paramsSchema = z.object({
-	callbackUrl: z.url().catch('/dashboard'),
+	callbackUrl: z.url().catch('/invoices'),
 	error: z.enum(Object.keys(errorDetails)).catch('error').default(''),
 });
 

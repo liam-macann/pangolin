@@ -10,7 +10,7 @@ import { getSession } from '@/auth';
 
 import { buildDocDefinition } from './definition';
 
-export async function GET(_request: NextRequest, ctx: RouteContext<'/dashboard/invoices/[id]'>) {
+export async function GET(_request: NextRequest, ctx: RouteContext<'/invoices/[id]'>) {
 	const { id: invoiceId } = await ctx.params;
 
 	const session = await getSession();

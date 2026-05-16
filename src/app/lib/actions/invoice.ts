@@ -148,7 +148,7 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 				}
 			});
 	})
-		.then(() => revalidatePath('/dashboard/invoices'))
+		.then(() => revalidatePath('/invoices'))
 		.catch(err => {
 			console.error(err);
 			throw new Error(`Database Error: failed to create invoice`);

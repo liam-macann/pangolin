@@ -6,7 +6,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Button } from '@/ui/button';
 import { FieldContent, FieldError, FieldGroup, FieldSet } from '@/ui/field';
 
-import { PaymentDetailsField } from '@/src/app/dashboard/(user)/settings/sections/details/payment-details';
+import { PaymentDetailsField } from '@/src/app/(dashboard)/(user)/settings/sections/details/payment-details';
 import { payment, useOnboardingStore } from '@/src/app/onboarding/state';
 import { Footer } from '@/src/app/onboarding/ui';
 

@@ -37,7 +37,7 @@ import { Button } from '@/src/components/ui/button';
 const links = [
 	{
 		name: 'Invoices',
-		href: '/dashboard/invoices',
+		href: '/invoices',
 	},
-	{ name: 'Clients', href: '/dashboard/clients' },
+	{ name: 'Clients', href: '/clients' },
 ];
