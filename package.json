@@ -17,8 +17,8 @@
 		"db:view": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" pnpm exec drizzle-kit studio",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
-		"test": "vitest",
-		"test:run": "vitest run",
+		"test": "vitest --typecheck",
+		"test:run": "vitest run --typecheck",
 		"coverage": "vitest run --coverage"
 	},
 	"lint-staged": {

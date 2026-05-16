@@ -1,37 +1,20 @@
 import 'server-only';
 
-import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
-import { concatBytes, hexToBytes, managedNonce, randomBytes } from '@noble/ciphers/utils.js';
-import { eq } from 'drizzle-orm';
-
 import { type Encrypted, isEncrypted } from '@/lib/utils/encrypt';
-import { withRLS } from '@/db';
-import { keychain } from '@/db/schema';
 
 import { getSession } from '@/auth';
 
-import { header, version } from './constants';
+import {
+	chacha,
+	concatHeader,
+	type Decrypted,
+	decoder,
+	encoder,
+	stripHeader,
+} from './internal/helpers';
+import { retrieveDEK } from './internal/keys';
 
-const encoder = new TextEncoder();
-const decoder = new TextDecoder();
-const chacha = managedNonce(xchacha20poly1305);
-
-// biome-ignore format: Nested conditions easier to read when flat
-export type Decrypted<T> =
-	T extends Encrypted ? string :
-	T extends Array<infer U> ? Decrypted<U>[] :
-	T extends Set<infer U> ? Set<Decrypted<U>> :
-	T extends Map<infer K, infer U> ? Map<Decrypted<K>, Decrypted<U>> :
-	T extends object ? { [K in keyof T]: Decrypted<T[K]> } :
-	T;
-
-/* Idempotent header concatenation */
-const concatHeader = (ciphertext: Uint8Array): Encrypted =>
-	isEncrypted(ciphertext) ? ciphertext : (concatBytes(header, version, ciphertext) as Encrypted);
-
-/* Idempotent header removal */
-const stripHeader = (ciphertext: Uint8Array): Uint8Array =>
-	isEncrypted(ciphertext) ? ciphertext.slice(header.length + version.length) : ciphertext;
+export type { Decrypted };
 
 /** Encrypts a string using the provided Data Encryption Key (DEK)
  * @internal
@@ -160,80 +143,4 @@ export async function crypto(uuid: string) {
 		/** Clear the internal DEK from memory */
 		destroy,
 	};
-}
-
-//
-//
-//
-// Key handling
-//
-
-/**
- * Use the Key Encryption Key (KEK) to perform operations on data.
- *
- * @internal
- *
- * @param callback - The function to execute with the KEK.
- * @returns The result of the callback function.
- */
-function withKEK<T>(callback: (KEK: Uint8Array) => T) {
-	const SECRET_KEK = hexToBytes(process.env.DB_ENCRYPTION_SECRET as string);
-
-	const val = callback(SECRET_KEK);
-	SECRET_KEK.fill(0);
-	return val;
-}
-
-const wrap = (DEK: Uint8Array): Encrypted => withKEK(KEK => concatHeader(chacha(KEK).encrypt(DEK)));
-const unwrap = (DEK: Encrypted): Uint8Array =>
-	withKEK(KEK => chacha(KEK).decrypt(stripHeader(DEK)));
-
-//
-//
-//
-// DB operations
-//
-
-function generateWrappedDEK() {
-	const SECRET_DEK = randomBytes(32);
-	const key = wrap(SECRET_DEK);
-	SECRET_DEK.fill(0);
-
-	return key;
-}
-
-async function retrieveDEK(uuid: string) {
-	const key = await withRLS(async (db, session) => {
-		// Explicit about which user DEK is requested
-		if (session?.user.id !== uuid) throw new Error('Unauthorized');
-
-		const insertDEK = async () => {
-			const [res] = await db
-				.insert(keychain)
-				.values({ id: session.user.id, key: generateWrappedDEK() })
-				.onConflictDoNothing()
-				.returning({ key: keychain.key });
-
-			// Refetch if key already exists (`onConflictDoNothing()` prevents return)
-			// Addresses concurrency issue when multiple requests are made prior to keygen
-			// (Avoids recursion to allow single retry and prevent infinite loop)
-			return res?.key || fetchDEK();
-		};
-
-		const fetchDEK = async () =>
-			await db
-				.select({ key: keychain.key })
-				.from(keychain)
-				.where(eq(keychain.id, session.user.id))
-				.then(([res]) => res?.key);
-
-		return (await fetchDEK()) ?? (await insertDEK());
-	});
-
-	try {
-		return unwrap(key);
-	} catch {
-		// Avoid leaking errors
-		throw new Error('Failed to unwrap DEK');
-	}
 }
