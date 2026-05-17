@@ -254,17 +254,19 @@ function ClientDialog<TForm extends UseFormReturn<z.input<typeof formSchema>, un
 														</Field>
 													</CollapsibleTrigger>
 												</FieldLegend>
-												<CollapsibleContent render={FieldGroup} className='mt-2'>
-													<Controller
-														name='address'
-														control={control}
-														render={({ fieldState }) => (
-															<>
-																<AddressInput control={control} />
-																{fieldState.error && <FieldError errors={[fieldState.error]} />}
-															</>
-														)}
-													/>
+												<CollapsibleContent>
+													<FieldGroup>
+														<Controller
+															name='address'
+															control={control}
+															render={({ fieldState }) => (
+																<>
+																	<AddressInput control={control} />
+																	{fieldState.error && <FieldError errors={[fieldState.error]} />}
+																</>
+															)}
+														/>
+													</FieldGroup>
 												</CollapsibleContent>
 											</Collapsible>
 										)}
