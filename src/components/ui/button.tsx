@@ -9,7 +9,7 @@ const buttonVariants = cva(
 		'transition ease-out focus-visible:ring disabled:cursor-not-allowed disabled:opacity-50',
 		"[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
 		'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40',
-		'*:data-[icon=inline-end]:-mr-0.5 *:data-[icon=inline-start]:-ml-0.5 *:[svg]:not-data-icon:first:-ml-0.5 *:[svg]:not-data-icon:last:-mr-0.5',
+		'*:data-[icon=inline-end]:-mr-0.5 *:data-[icon=inline-start]:-ml-0.5 not-data-[size^=icon-]:*:[svg]:not-data-icon:first:-ml-0.5 not-data-[size^=icon-]:*:[svg]:not-data-icon:last:-mr-0.5',
 	),
 	{
 		variants: {
@@ -35,12 +35,12 @@ const buttonVariants = cva(
 			},
 			size: {
 				default: 'h-9 gap-1.5 in-data-[slot=button-group]:rounded-md px-3.5',
-				xs: "h-6 gap-1 in-data-[slot=button-group]:rounded-md rounded-[min(var(--radius-md),8px)] px-1.5 text-xs [&_svg:not([class*='size-'])]:size-3",
+				xs: 'h-6 gap-1 in-data-[slot=button-group]:rounded-md rounded-[min(var(--radius-md),8px)] px-1.5 text-xs',
 				sm: 'h-8 gap-1.5 in-data-[slot=button-group]:rounded-md rounded-[min(var(--radius-md),10px)] px-3',
 				lg: 'h-10 gap-1.5 px-4',
 				icon: 'size-9',
 				'icon-xs':
-					"size-6 in-data-[slot=button-group]:rounded-md rounded-[min(var(--radius-md),8px)] [&_svg:not([class*='size-'])]:size-3",
+					'size-6 in-data-[slot=button-group]:rounded-md rounded-[min(var(--radius-md),8px)]',
 				'icon-sm':
 					'size-8 in-data-[slot=button-group]:rounded-md rounded-[min(var(--radius-md),10px)]',
 				'icon-lg': 'size-10',
@@ -64,6 +64,7 @@ function Button({
 	return (
 		<ButtonPrimitive
 			data-slot='button'
+			data-size={size}
 			className={cn(
 				buttonVariants({ variant, size, className }),
 				loading && 'disabled:cursor-progress',
