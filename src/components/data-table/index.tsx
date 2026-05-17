@@ -3,6 +3,7 @@
 
 import { CaretLeftIcon, CaretRightIcon, MagnifyingGlassIcon } from '@phosphor-icons/react';
 import {
+	type Cell,
 	type ColumnDef,
 	flexRender,
 	getCoreRowModel,
@@ -22,10 +23,18 @@ import {
 	useState,
 } from 'react';
 
+import { cn } from '@/lib/utils';
+
 import { Button } from '@/ui/button';
 import { ButtonGroup } from '@/ui/button-group';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
+
+declare module '@tanstack/react-table' {
+	interface ColumnMeta<TData, TValue> {
+		className?: string;
+	}
+}
 
 /** Component factory, to create a typed data table */
 export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>[]) {
@@ -87,9 +96,23 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 			},
 			'data-state' | 'key'
 		>;
+
+		/** Set attributes according to cell data
+		 *
+		 * @example
+		 * ```ts
+		 * getCellAttr={cell => ({ 'data-void': row.isVoid })}
+		 * ```
+		 */
+		getCellAttr?: (cell: Cell<TData, unknown>) => Omit<
+			DetailedHTMLProps<HTMLAttributes<HTMLTableCellElement>, HTMLTableCellElement> & {
+				[key: `data-${string}`]: string | boolean | number | undefined;
+			},
+			'key'
+		>;
 	}
 
-	function Content({ getRowAttr }: DataTableProps) {
+	function Content({ getRowAttr, getCellAttr }: DataTableProps) {
 		const table = useContext(TableContext);
 		if (table === null) throw new Error('Content must be used within a DataTable.Root');
 
@@ -109,6 +132,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 													maxWidth: `${header.column.columnDef.maxSize}px`,
 												}}
 												key={header.id}
+												className={header.column.columnDef.meta?.className}
 											>
 												{header.isPlaceholder
 													? null
@@ -127,11 +151,19 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 										data-state={row.getIsSelected() && 'selected'}
 										{...getRowAttr?.(row.original)}
 									>
-										{row.getVisibleCells().map(cell => (
-											<TableCell key={cell.id}>
-												{flexRender(cell.column.columnDef.cell, cell.getContext())}
-											</TableCell>
-										))}
+										{row.getVisibleCells().map(cell => {
+											const props = getCellAttr?.(cell);
+
+											return (
+												<TableCell
+													key={cell.id}
+													{...props}
+													className={cn(props?.className, cell.column.columnDef.meta?.className)}
+												>
+													{flexRender(cell.column.columnDef.cell, cell.getContext())}
+												</TableCell>
+											);
+										})}
 									</TableRow>
 								))
 							) : (

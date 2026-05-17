@@ -85,7 +85,7 @@ export function ToggleHeader<TData, TValue>({
 			onClick={column.getToggleSortingHandler()}
 			variant='ghost'
 			size='sm'
-			className='!bg-transparent !-mx-2 !px-2 h-7 gap-1'
+			className={cn('!bg-transparent !-mx-2 !px-2 h-7 gap-1', className)}
 		>
 			<span>{title}</span>
 			{(() => {
