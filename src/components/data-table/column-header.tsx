@@ -8,6 +8,7 @@ import {
 	EyeSlashIcon,
 } from '@phosphor-icons/react/ssr';
 import { type Column } from '@tanstack/react-table';
+import { type ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -75,9 +76,15 @@ export function ToggleHeader<TData, TValue>({
 	column,
 	title,
 	className,
-}: DataTableColumnHeaderProps<TData, TValue>) {
+	children,
+}: // Title and children are mutually exclusive. Title prop is kept for consistency with Tanstack API
+	| (Omit<DataTableColumnHeaderProps<TData, TValue>, 'children'> & { children?: never })
+	| (Omit<DataTableColumnHeaderProps<TData, TValue>, 'title'> & {
+			title?: never;
+			children: ReactNode;
+	  })) {
 	if (!column.getCanSort()) {
-		return <div className={cn(className)}>{title}</div>;
+		return <div className={cn(className)}>{children || title}</div>;
 	}
 
 	return (
@@ -87,13 +94,13 @@ export function ToggleHeader<TData, TValue>({
 			size='sm'
 			className={cn('!bg-transparent !-mx-2 !px-2 h-7 gap-1', className)}
 		>
-			<span>{title}</span>
+			<span>{children || title}</span>
 			{(() => {
 				switch (column.getIsSorted()) {
 					case 'desc':
-						return <CaretDownIcon weight='bold' className='translate-y-[0.5px]' />;
+						return <CaretDownIcon className='translate-y-[0.5px]' />;
 					case 'asc':
-						return <CaretUpIcon weight='bold' className='translate-y-[1px]' />;
+						return <CaretUpIcon className='translate-y-[1px]' />;
 				}
 			})()}
 		</Button>

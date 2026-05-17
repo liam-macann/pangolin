@@ -10,11 +10,11 @@ import { pluralize } from '@/lib/utils';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 
-import { columns, createInvoiceTable } from './../../invoices/table';
+import { createInvoiceTable } from './../../invoices/table';
 import { UpdateClientDialog } from './../ui/dialogs';
 import { OverflowMenu } from './../ui/menu';
 
-const DataTable = createInvoiceTable(columns.filter(column => column.id !== 'name'));
+const DataTable = createInvoiceTable();
 
 export function Table({
 	initialClient,

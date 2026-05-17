@@ -48,7 +48,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 			<section className='flex flex-col gap-2'>
 				<Header initialClient={client} />
 
-				<div className='grid grid-cols-3 gap-2'>
+				<div className='mt-8 grid xs:grid-cols-2 gap-2 sm:grid-cols-3'>
 					<Suspense
 						fallback={
 							<>
@@ -96,7 +96,7 @@ function StatCard({
 	return (
 		<div
 			className={cn(
-				'mt-8 flex flex-col gap-1 rounded-md border bg-card p-6 py-4 font-medium text-xl',
+				'flex flex-col gap-1 rounded-md border bg-card p-6 py-4 font-medium text-xl',
 				className,
 			)}
 		>
