@@ -137,20 +137,14 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 }
 
 const Trigger = ({ ...props }: ComponentProps<typeof Button>) => {
-	const isApple = useIsAppleDevice();
-
 	return (
 		<Button
 			variant='outline'
-			className='scale-100! rounded-full bg-none font-normal text-muted-foreground'
+			className='scale-100! rounded-full bg-none pr-8 font-normal text-muted-foreground'
 			size='sm'
 			{...props}
 		>
-			<MagnifyingGlassIcon />
-			Search…
-			<Kbd className='-mr-1.5 ml-1 rounded-full px-1.5 shadow-xs'>
-				{isApple ? '⌘ K' : 'Ctrl + K'}
-			</Kbd>
+			<MagnifyingGlassIcon /> Search…
 		</Button>
 	);
 };
