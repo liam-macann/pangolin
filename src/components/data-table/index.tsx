@@ -10,6 +10,7 @@ import {
 	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
+	type SortingState,
 	type TableOptions,
 	type Table as TanstackTable,
 	useReactTable,
@@ -44,6 +45,10 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		data: TData[];
 		children: React.ReactNode;
 		pagination?: number | false;
+		defaultFilter?: string;
+		onGlobalFilterChange?: (value: string) => void;
+		onSortingChange?: (sorting: SortingState) => void;
+		onPageIndexChange?: (pageIndex: number) => void;
 	} & Pick<TableOptions<TData>, 'initialState' | 'enableSortingRemoval'>;
 
 	function Root({
@@ -51,9 +56,17 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		initialState = {},
 		children,
 		pagination = 20,
+		onGlobalFilterChange,
+		onSortingChange,
+		onPageIndexChange,
 		...options
 	}: DataTableRootProps) {
-		const [globalFilter, setGlobalFilter] = useState<string>('');
+		const [globalFilter, setGlobalFilter] = useState(initialState.globalFilter ?? '');
+
+		const [sorting, setSorting] = useState<SortingState>(initialState.sorting ?? []);
+
+		const pageSize = typeof pagination === 'number' ? pagination : 20;
+		const [pageIndex, setPageIndex] = useState(initialState.pagination?.pageIndex ?? 0);
 
 		const table = useReactTable({
 			data,
@@ -69,13 +82,27 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 			onGlobalFilterChange: val => {
 				table.resetPageIndex();
 				setGlobalFilter(val);
+				onGlobalFilterChange?.(val);
+			},
+
+			onSortingChange: updater => {
+				const next = typeof updater === 'function' ? updater(sorting) : updater;
+				table.resetPageIndex();
+				setSorting(next);
+				onSortingChange?.(next);
+			},
+
+			onPaginationChange: updater => {
+				const next = typeof updater === 'function' ? updater({ pageSize, pageIndex }) : updater;
+				setPageIndex(next.pageIndex);
+				onPageIndexChange?.(next.pageIndex);
 			},
 
 			...options,
-			state: { globalFilter },
+			state: { globalFilter, sorting, pagination: { pageSize, pageIndex } },
 			initialState: {
-				pagination: { pageSize: pagination || 20 },
 				...initialState,
+				pagination: { ...initialState.pagination, pageSize },
 			},
 		});
 
@@ -211,7 +238,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 				<ButtonGroup>
 					<Button
 						variant='secondary'
-						size='sm'
+						size='icon-sm'
 						onClick={() => table.previousPage()}
 						disabled={!table.getCanPreviousPage()}
 					>
@@ -222,13 +249,13 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 						variant='secondary'
 						size='sm'
 						className='bg-secondary px-2 font-medium text-muted-foreground text-sm tabular-nums'
-						onClick={() => table.resetPageIndex()}
+						onClick={() => table.resetPageIndex(true)}
 					>
 						{table.getState().pagination.pageIndex + 1}
 					</Button>
 					<Button
 						variant='secondary'
-						size='sm'
+						size='icon-sm'
 						onClick={() => table.nextPage()}
 						disabled={!table.getCanNextPage()}
 					>

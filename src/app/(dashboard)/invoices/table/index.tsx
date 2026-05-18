@@ -1,7 +1,8 @@
 'use no memo';
 'use client';
 
-import { type ColumnDef } from '@tanstack/react-table';
+import { type ColumnDef, type SortingState } from '@tanstack/react-table';
+import { toMerged } from 'es-toolkit';
 import { type ComponentProps, createContext } from 'react';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
@@ -12,6 +13,7 @@ import { createDataTable } from '@/components/data-table';
 import { columns } from './columns';
 
 export const LocaleContext = createContext<string>('en-AU');
+export const DEFAULT_SORT: SortingState = [{ id: 'reference', desc: true }];
 
 type Invoice = ElementType<InvoiceData>;
 
@@ -22,6 +24,7 @@ export function createInvoiceTable<TValue>(cols: ColumnDef<Invoice, TValue>[] = 
 	const Root = ({
 		data,
 		locale,
+		initialState = {},
 		...props
 	}: ComponentProps<typeof FactoryDataTable.Root> & { locale: string }) => (
 		<LocaleContext value={locale}>
@@ -31,7 +34,7 @@ export function createInvoiceTable<TValue>(cols: ColumnDef<Invoice, TValue>[] = 
 					...('grossTotal' in invoice ? { grossTotal: Number(invoice.grossTotal) } : {}),
 				}))}
 				enableSortingRemoval={false}
-				initialState={{ sorting: [{ id: 'reference', desc: true }] }}
+				initialState={toMerged({ sorting: DEFAULT_SORT }, initialState)}
 				{...props}
 			/>
 		</LocaleContext>
