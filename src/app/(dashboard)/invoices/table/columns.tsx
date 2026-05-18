@@ -155,7 +155,7 @@ export const columns: ColumnDef<Invoice>[] = [
 
 function FormatPrice({ row, className, ...props }: { row: Row<Invoice> } & ComponentProps<'div'>) {
 	const locale = useContext(LocaleContext);
-	const scribbleSize = '8rem';
+	const scribbleSize = '6rem';
 
 	return (
 		<div className={cn('font-medium tabular-nums decoration-2', className)} {...props}>
@@ -164,7 +164,7 @@ function FormatPrice({ row, className, ...props }: { row: Row<Invoice> } & Compo
 				<div
 					aria-hidden='true'
 					className={cn(
-						'filter-pencil-solid pointer-events-none absolute inset-0 left-1/2 -translate-x-1/2 scale-x-100 bg-repeat-x opacity-85',
+						'filter-pencil-solid pointer-events-none absolute -inset-1 left-1/2 -translate-x-1/2 scale-x-100 bg-repeat-x',
 						'hidden group-data-void/row:block', // Conditionally show when void
 						'group-even/row:rotate-180 group-nth-[3n]/row:scale-y-120', // Row-to-row variation
 					)}
