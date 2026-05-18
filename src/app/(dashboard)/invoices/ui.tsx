@@ -55,19 +55,19 @@ export default function Table({
 	const { data } = useInvoices(initial, { suspense: true });
 
 	const pageParam = Number(searchParams.get('page'));
+	const clientParam = searchParams.get('client');
 
 	return (
 		<InvoiceTable.Root
 			data={data}
 			locale={locale}
-			// Read search params
 			initialState={{
 				sorting: parseSortParam(searchParams.get('sort')),
 				pagination: { pageIndex: pageParam > 1 ? pageParam - 1 : 0 },
 				globalFilter: searchParams.get('q'),
+				...(clientParam && { columnFilters: [{ id: 'clientId', value: clientParam }] }),
 			}}
-			// Serialize state in search params
-			onGlobalFilterChange={q => updateParams({ q })}
+			onGlobalFilterChange={q => updateParams({ q, client: null })}
 			onSortingChange={next => updateParams({ sort: serializeSortParam(next) })}
 			onPageIndexChange={index => updateParams({ page: index === 0 ? null : String(index + 1) })}
 		>

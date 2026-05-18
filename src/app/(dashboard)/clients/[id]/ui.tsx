@@ -1,6 +1,7 @@
 'use client';
 
 import { ArchiveIcon, DotsThreeVerticalIcon, PencilIcon } from '@phosphor-icons/react/dist/ssr';
+import Link from 'next/link';
 
 import { type Data as ClientData } from '@/api/clients/[id]/route';
 import { type Data as InvoiceData } from '@/api/invoices/route';
@@ -39,10 +40,13 @@ export function Table({
 			</DataTable.Root>
 
 			{client.invoiceCount > Math.min(invoices.length, limit) && (
-				<div className='mt-3 ml-4 rounded-md font-medium text-muted-foreground text-sm'>
+				<Link
+					href={`/invoices?client=${initialClient.id}`}
+					className='mt-3 ml-4 inline-block rounded-md font-medium text-muted-foreground text-sm'
+				>
 					+ {client.invoiceCount - Math.min(invoices.length, limit)} more{' '}
 					{pluralize(client.invoiceCount - Math.min(invoices.length, limit), 'invoice', 'invoices')}
-				</div>
+				</Link>
 			)}
 		</>
 	);

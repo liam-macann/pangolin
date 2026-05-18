@@ -143,6 +143,14 @@ export const columns: ColumnDef<Invoice>[] = [
 		size: 150,
 	},
 	{
+		id: 'clientId',
+		accessorFn: row => row.clientData.clientId,
+		filterFn: 'equals',
+		enableSorting: false,
+		header: () => null,
+		cell: () => null,
+	},
+	{
 		id: 'actions',
 		cell: ({ row }) => (
 			<div className='-m-2 ml-0 flex translate-y-0.5 justify-end'>

@@ -80,6 +80,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 			/** Prevent page reset on data revalidation */
 			autoResetPageIndex: false,
 			onGlobalFilterChange: val => {
+				table.setColumnFilters([]);
 				table.resetPageIndex();
 				setGlobalFilter(val);
 				onGlobalFilterChange?.(val);
@@ -270,9 +271,11 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 	function Search({
 		onChange,
 		placeholder,
+		children,
+		value,
 		...props
 	}: ComponentProps<typeof InputGroup> &
-		Pick<ComponentProps<typeof InputGroupInput>, 'placeholder'>) {
+		Pick<ComponentProps<typeof InputGroupInput>, 'placeholder' | 'value'>) {
 		const table = useContext(TableContext);
 		if (table === null) throw new Error('Search must be used within a DataTable.Root');
 
@@ -284,12 +287,13 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 				<InputGroupInput
 					aria-label='Search'
 					placeholder={placeholder ?? 'Search…'}
-					value={table.getState().globalFilter}
+					value={value ?? table.getState().globalFilter}
 					onChange={e => {
 						onChange?.(e);
 						table.setGlobalFilter(e.target.value);
 					}}
 				/>
+				{children}
 			</InputGroup>
 		);
 	}

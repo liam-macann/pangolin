@@ -3,7 +3,7 @@
 
 import { type ColumnDef, type SortingState } from '@tanstack/react-table';
 import { toMerged } from 'es-toolkit';
-import { type ComponentProps, createContext } from 'react';
+import { type ComponentProps, createContext, useContext } from 'react';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
 import { cn, type ElementType } from '@/lib/utils';
@@ -34,7 +34,10 @@ export function createInvoiceTable<TValue>(cols: ColumnDef<Invoice, TValue>[] = 
 					...('grossTotal' in invoice ? { grossTotal: Number(invoice.grossTotal) } : {}),
 				}))}
 				enableSortingRemoval={false}
-				initialState={toMerged({ sorting: DEFAULT_SORT }, initialState)}
+				initialState={toMerged(
+					{ sorting: DEFAULT_SORT, columnVisibility: { clientId: false } },
+					initialState,
+				)}
 				{...props}
 			/>
 		</LocaleContext>
@@ -63,9 +66,26 @@ export function createInvoiceTable<TValue>(cols: ColumnDef<Invoice, TValue>[] = 
 		/>
 	);
 
-	const Search = (props: ComponentProps<typeof FactoryDataTable.Search>) => (
-		<FactoryDataTable.Search placeholder='Search invoices…' {...props} />
-	);
+	const Search = (props: ComponentProps<typeof FactoryDataTable.Search>) => {
+		const table = useContext(FactoryDataTable.Context);
+		if (!table) throw new Error('Search must be used within a DataTable.Root');
+
+		const clientFilter = table.getState().columnFilters.find(f => f.id === 'clientId');
+		const clientId = clientFilter ? String(clientFilter.value) : null;
+
+		const clientName = clientId
+			? (table.getCoreRowModel().rows.find(r => r.original.clientData.clientId === clientId)
+					?.original.clientData.name ?? clientId)
+			: null;
+
+		return (
+			<FactoryDataTable.Search
+				value={clientName ?? undefined}
+				placeholder='Search invoices…'
+				{...props}
+			/>
+		);
+	};
 
 	return { ...FactoryDataTable, Root, Content, Search };
 }
