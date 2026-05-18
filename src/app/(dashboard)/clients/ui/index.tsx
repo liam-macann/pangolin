@@ -20,13 +20,13 @@ export function Clients({ initial }: { initial: Client[] }) {
 		<>
 			{favorites.length > 0 && (
 				<>
-					<section className='flex gap-4 max-lg:-mx-6 max-lg:-mb-4 max-lg:overflow-scroll max-lg:px-6 max-lg:pb-4 lg:grid lg:grid-cols-4'>
+					<section className='no-scrollbar flex snap-x gap-4 max-lg:-mx-6 max-lg:scroll-px-6 max-lg:overflow-scroll max-lg:px-6 lg:grid lg:grid-cols-4'>
 						<AnimatePresence mode='popLayout' initial={false}>
 							{favorites.map(client => (
 								<Card
 									key={client.id}
 									client={client}
-									className='shrink-0 basis-60 max-lg:max-w-[90%]'
+									className='shrink-0 basis-60 snap-start max-lg:max-w-[90%]'
 									variant='secondary'
 								/>
 							))}
