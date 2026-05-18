@@ -40,8 +40,9 @@ export function AddressInput<T extends FormValues>({
 		<FieldSet
 			className={cn(
 				'isolate min-w-0 gap-0 rounded-md border border-dotted bg-background dark:bg-secondary',
-				'transition duration-200 ease-in-out-quart',
-				disabled && 'cursor-not-allowed bg-muted opacity-50 *:pointer-events-none',
+				'transition duration-150 ease-out-quart',
+				disabled &&
+					'cursor-not-allowed bg-muted opacity-50 *:pointer-events-none **:disabled:opacity-100!',
 			)}
 		>
 			<ErrorBoundary
