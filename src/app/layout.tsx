@@ -10,6 +10,8 @@ import { TooltipProvider } from '@/ui/tooltip';
 
 import { InstrumentSans } from '@/src/app/ui/fonts';
 
+import { cn } from './lib/utils';
+
 export const metadata: Metadata = {
 	title: {
 		template: '%s ∙ Invoicer',
@@ -21,11 +23,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang='en' className={InstrumentSans.variable}>
+		<html
+			lang='en'
+			data-scroll-behavior='smooth'
+			className={cn(InstrumentSans.variable, 'motion-safe:scroll-smooth')}
+		>
 			<TooltipProvider>
 				<SWRConfig>
 					<MotionConfig reducedMotion='user'>
-						<body className={`bg-background font-sans antialiased`}>
+						<body className='bg-background font-sans antialiased'>
 							<Provider>
 								{children}
 								<Toaster />
