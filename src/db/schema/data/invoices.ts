@@ -257,7 +257,7 @@ export const itemTaxes = snakeCase.table(
 	],
 );
 
-/** Watermark table: resolves concurrency issues */
+/** Watermark table: resolves concurrency issues for the global sequential counter */
 export const invoiceCount = snakeCase.table(
 	'invoice_count',
 	{
@@ -265,15 +265,46 @@ export const invoiceCount = snakeCase.table(
 			.primaryKey()
 			.references(() => users.id, { onDelete: 'cascade' }),
 		count: integer().notNull().default(0),
-		// Reset with app logic
-		yearCount: integer().notNull().default(0),
-		updatedAt: timestamp({ withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+
+		/** Logs the when the count was last modified */
+		updatedAt: timestamp({ withTimezone: true, mode: 'date' })
+			.defaultNow()
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull(),
 	},
 
 	t => [
-		check('chk_invoice_count_year_count', sql`${t.yearCount} <= ${t.count}`),
-		check('chk_positive_year_count', sql`${t.yearCount} >= 0`),
 		check('chk_positive_count', sql`${t.count} >= 0`),
+
+		policy({
+			select: authUid(t.userId),
+			insert: authUid(t.userId),
+			update: authUid(t.userId),
+			delete: false,
+		}),
+	],
+);
+
+/** Watermark table: resolves concurrency issues for the per-year sequential counter */
+export const invoiceYearCount = snakeCase.table(
+	'invoice_year_count',
+	{
+		userId: uuid()
+			.notNull()
+			.references(() => users.id, { onDelete: 'cascade' }),
+		year: integer().notNull(),
+		count: integer().notNull().default(0),
+
+		/** Logs the when the count was last modified */
+		updatedAt: timestamp({ withTimezone: true, mode: 'date' })
+			.defaultNow()
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull(),
+	},
+
+	t => [
+		primaryKey({ name: 'invoice_year_count_pkey', columns: [t.userId, t.year] }),
+		check('chk_positive_year_count', sql`${t.count} >= 0`),
 
 		policy({
 			select: authUid(t.userId),

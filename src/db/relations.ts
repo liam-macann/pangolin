@@ -111,6 +111,13 @@ export const relations = defineRelations(schema, r => ({
 		}),
 	},
 
+	invoiceYearCount: {
+		user: r.one.users({
+			from: r.invoiceYearCount.userId,
+			to: r.users.id,
+		}),
+	},
+
 	itemsWithTax: {
 		taxes: r.many.taxes({
 			from: r.itemsWithTax.id.through(r.itemTaxes.itemId),

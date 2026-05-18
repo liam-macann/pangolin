@@ -17,52 +17,8 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 	const { items, notes, status, ...invoice } = zodSchema.parse(input);
 
 	return withRLS(async (tx, session) => {
-		const tzSubquery = tx
-			.select({ timezone: schema.config.timezone })
-			.from(schema.config)
-			.where(and(eq(schema.config.userId, session.user.id), isNull(schema.config.validTo)))
-			.orderBy(desc(schema.config.validFrom))
-			.limit(1)
-			.getSQL();
-
-		// Upsert watermark table with invoice count
-		const [count] = await tx
-			.insert(schema.invoiceCount)
-			.values({
-				userId: session.user.id,
-				updatedAt: sql`transaction_timestamp()`,
-				count: 1,
-				yearCount: 1,
-			})
-			.onConflictDoUpdate({
-				target: schema.invoiceCount.userId,
-				set: {
-					updatedAt: sql`transaction_timestamp()`,
-					count: increment(schema.invoiceCount.count),
-					yearCount: sql`
-        				CASE
-      				  -- Evaluate against config time zone. If the year is after the tracked date, reset the yearly counter.
-                    WHEN EXTRACT(YEAR FROM transaction_timestamp() AT TIME ZONE (${tzSubquery}))
-                      > EXTRACT(YEAR FROM ${schema.invoiceCount.updatedAt} AT TIME ZONE (${tzSubquery}))
-                    THEN 1
-                    -- Evaluate against config time zone. If the year is the same, increment the year count.
-                    WHEN EXTRACT(YEAR FROM transaction_timestamp() AT TIME ZONE (${tzSubquery}))
-                        = EXTRACT(YEAR FROM ${schema.invoiceCount.updatedAt} AT TIME ZONE (${tzSubquery}))
-                    THEN ${schema.invoiceCount.yearCount} + 1
-                    -- If now() is before the tracked date, do nothing.
-                    ELSE ${schema.invoiceCount.yearCount}
-                END
-                `,
-				},
-				where: and(eq(schema.invoiceCount.userId, session.user.id)),
-			})
-			.returning({
-				count: schema.invoiceCount.count,
-				yearCount: schema.invoiceCount.yearCount,
-			});
-
-		// CTE, executed within insert to retrieve current valid config
-		const [c] = await tx
+		// Fetch config first — timezone is needed to determine the current issue year before upserts
+		const [currentConfig] = await tx
 			.select({
 				id: schema.config.id,
 				userId: schema.config.userId,
@@ -74,6 +30,35 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 			.orderBy(desc(schema.config.validFrom))
 			.limit(1);
 
+		/** When the invoice is set to be issued — either the supplied date, or the current time */
+		const issuedAt =
+			invoice.issuedAt?.toISOString() ||
+			sql`transaction_timestamp() AT TIME ZONE ${currentConfig.timezone}`;
+
+		// Update global sequence counter
+		const [{ count }] = await tx
+			.insert(schema.invoiceCount)
+			.values({ userId: session.user.id, count: 1 })
+			.onConflictDoUpdate({
+				target: schema.invoiceCount.userId,
+				set: { count: increment(schema.invoiceCount.count) },
+			})
+			.returning({ count: schema.invoiceCount.count });
+
+		// Upsert per-year counter
+		const [{ yearCount }] = await tx
+			.insert(schema.invoiceYearCount)
+			.values({
+				userId: session.user.id,
+				year: sql`extract(year from ${issuedAt}::date)`,
+				count: 1,
+			})
+			.onConflictDoUpdate({
+				target: [schema.invoiceYearCount.userId, schema.invoiceYearCount.year],
+				set: { count: increment(schema.invoiceYearCount.count) },
+			})
+			.returning({ yearCount: schema.invoiceYearCount.count });
+
 		const [insertedInvoice] = await tx
 			.insert(schema.invoices)
 			.values([
@@ -82,19 +67,18 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 
 					userId: session.user.id,
 
-					issuedAt:
-						invoice.issuedAt?.toISOString() ||
-						sql`transaction_timestamp() AT TIME ZONE ${c.timezone}`,
+					issuedAt,
 					dueAt: invoice.dueAt.toISOString(),
 
-					index: count.count,
-					yearIndex: count.yearCount,
+					index: count,
+					yearIndex: yearCount,
 
-					configId: c.id,
+					configId: currentConfig.id,
 				},
 			])
 			.returning({ id: schema.invoices.id });
 
+		// Defined as CTE to prevent network roundtrip
 		const insertInvoiceStatus = tx.$with('insert_invoice_status').as(
 			tx.insert(schema.invoiceStatus).values({
 				id: insertedInvoice.id,
@@ -105,11 +89,7 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 		);
 
 		// Necessary to have stable ID to link taxes with items
-		const itemsWithId = items.map((item, i) => ({
-			...item,
-			id: uuid(),
-			order: i,
-		}));
+		const itemsWithId = items.map((item, i) => ({ ...item, id: uuid(), order: i }));
 
 		// Insert items for invoice
 		await tx
@@ -128,18 +108,18 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 					unitCost: i.unitCost,
 
 					order: i.order,
-					configId: c.id,
+					configId: currentConfig.id,
 					userId: session.user.id,
 				})),
 			)
 			.then(async () => {
 				// Link items with taxes, if registered
-				if (c.taxRegistration) {
+				if (currentConfig.taxRegistration) {
 					const values = itemsWithId.flatMap(item =>
 						[...item.taxes].map(taxId => ({
 							itemId: item.id,
 							taxId,
-							configId: c.id,
+							configId: currentConfig.id,
 							userId: session.user.id,
 						})),
 					);
