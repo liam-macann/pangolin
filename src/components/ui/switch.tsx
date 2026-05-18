@@ -14,7 +14,7 @@ const switchVariants = cva(
 		'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40',
 
 		'focus-visible:ring-2 focus-visible:ring-offset-1 aria-invalid:ring-2 aria-invalid:ring-offset-1',
-		'transition-colors duration-200 ease-in-out-expo',
+		'transition-colors duration-100 ease-in-out-quad',
 		'inset-shadow-xs rounded-md border',
 	),
 	{
@@ -32,7 +32,7 @@ const switchVariants = cva(
 const thumbVariants = cva(
 	cn(
 		'scheme-light pointer-events-none block bg-background dark:bg-foreground',
-		'transition-transform duration-200 ease-in-out-quart',
+		'transition-transform duration-100 ease-in-out-quad',
 		'scale-85 data-checked:translate-x-full data-unchecked:translate-x-0',
 		'rounded-[5px] shadow-xs ring-1 ring-foreground/10',
 	),
