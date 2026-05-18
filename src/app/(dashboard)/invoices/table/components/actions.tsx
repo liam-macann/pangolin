@@ -149,6 +149,7 @@ export function NotesButton({
 					Your private notes
 				</label>
 				<Textarea
+					ref={el => el?.focus({ preventScroll: true })}
 					id={fieldId}
 					onBlur={e => {
 						const value = e.target.value;
@@ -175,7 +176,6 @@ export function NotesButton({
 					defaultValue={defaultValue}
 					placeholder='Your private notes'
 					className='!ring-0 !border-border inset-shadow-xs rounded-sm shadow-none'
-					autoFocus
 				/>
 			</PopoverContent>
 		</Popover>
