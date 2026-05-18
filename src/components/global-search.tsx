@@ -73,8 +73,10 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 
 	if (config.isLoading || clients.isLoading)
 		return (
-			<CommandList>
-				<CommandEmpty className='animate-pulse font-medium'>Loading…</CommandEmpty>
+			<CommandList className='overflow-clip'>
+				<CommandEmpty className='animate-pulse justify-center py-16 font-medium'>
+					Loading…
+				</CommandEmpty>
 			</CommandList>
 		);
 
