@@ -51,7 +51,9 @@ export const taxes = snakeCase.table(
 export const configTaxes = snakeCase.table(
 	'config_tax',
 	{
+		/** Order used to define in what sequence taxes are printed on invoice */
 		order: integer().notNull(),
+
 		configId: uuid()
 			.notNull()
 			.references(() => config.id, { onDelete: 'cascade' }),
@@ -65,6 +67,8 @@ export const configTaxes = snakeCase.table(
 	},
 	t => [
 		primaryKey({ name: 'pk_config_tax', columns: [t.configId, t.taxId] }),
+
+		// Unique constraint ensures sorting by order produces predictable result
 		unique('uq_config_tax_order').on(t.configId, t.order),
 
 		policy({
@@ -127,6 +131,9 @@ export const config = scdTable(
 		// Ensure that a user has only one valid configuration (multiple null values will conflict)
 		uniqueIndex('uq_config_active_version').on(t.userId).where(isNull(t.validTo)),
 
+		// Necessary for ownership constraint on invoices
+		unique('uq_config_user').on(t.id, t.userId),
+
 		check('chk_language_lowercase', sql`${t.language} = lower(${t.language})`),
 		check('chk_region_uppercase', sql`${t.region} = upper(${t.region})`),
 
@@ -140,7 +147,7 @@ export const config = scdTable(
 		policy({
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
-			update: authUid(t.userId),
+			update: false,
 			delete: authUid(t.userId),
 		}),
 	],

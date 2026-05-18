@@ -80,7 +80,7 @@ export const clientData = scdTable(
 		policy({
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
-			update: authUid(t.userId),
+			update: false,
 			delete: authUid(t.userId),
 		}),
 	],

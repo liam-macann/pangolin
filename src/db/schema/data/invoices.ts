@@ -80,6 +80,13 @@ export const invoices = snakeCase.table(
 			foreignColumns: [clientData.id, clientData.userId],
 		}),
 
+		// Enforce that config is owned by the same user as the invoice
+		foreignKey({
+			name: 'fk_invoice_config_ownership',
+			columns: [t.configId, t.userId],
+			foreignColumns: [config.id, config.userId],
+		}),
+
 		// Enforce 1:1 relationship between invoice and invoice status
 		// This must be a deferrable foreign key.
 		// Drizzle has no helper for this configuration, so this is implemented through a migration
@@ -98,9 +105,9 @@ export const invoices = snakeCase.table(
 			sql`EXTRACT(YEAR FROM ${t.issuedAt})`,
 			t.yearIndex,
 		),
-		check('chk_due_after_issued', sql`${t.dueAt} > ${t.issuedAt}`),
+		check('chk_due_after_issued', sql`${t.dueAt} >= ${t.issuedAt}`),
 
-		check('chk_invoice_count_year_index', sql`${t.yearIndex} <= ${t.index}`),
+		check('chk_invoice_year_index', sql`${t.yearIndex} <= ${t.index}`),
 		check('chk_positive_year_index', sql`${t.yearIndex} >= 0`),
 		check('chk_positive_index', sql`${t.index} >= 0`),
 

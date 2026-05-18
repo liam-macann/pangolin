@@ -117,7 +117,7 @@ export const keychain = snakeCase.table(
 	'keychain',
 	{
 		id: uuid()
-			.references(() => users.id)
+			.references(() => users.id, { onDelete: 'cascade' })
 			.primaryKey(),
 
 		/** Wrapped DEK */
