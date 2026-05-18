@@ -1,46 +1,30 @@
 'use client';
 
 import { ArrowUpRightIcon } from '@phosphor-icons/react';
-import { type ComponentProps, useState } from 'react';
-
-import { signIn } from '@/lib/auth';
+import { type ComponentProps } from 'react';
+import { useFormStatus } from 'react-dom';
 
 import { Button } from '@/ui/button';
 import { Spinner } from '@/ui/spinner';
 
 export function LoginButton({
-	callbackURL,
-	children,
+	action,
 	...props
-}: { callbackURL: string } & Omit<ComponentProps<typeof Button>, 'loading'>) {
-	const [loading, setLoading] = useState(false);
+}: { action: () => void } & ComponentProps<typeof Button>) {
+	return (
+		<form action={action}>
+			<SubmitButton {...props} />
+		</form>
+	);
+}
+
+export function SubmitButton(props: Omit<ComponentProps<typeof Button>, 'loading' | 'children'>) {
+	const { pending } = useFormStatus();
 
 	return (
-		<Button
-			className='grow'
-			loading={loading}
-			onClick={async () => {
-				if (loading) return;
-				setLoading(true);
-
-				await signIn
-					.social({
-						provider: 'google',
-						callbackURL,
-						newUserCallbackURL: '/onboarding',
-						errorCallbackURL: '/auth/login',
-					})
-					.catch(() => setLoading(false));
-			}}
-			size='lg'
-			{...props}
-		>
+		<Button className='grow' type='submit' loading={pending} size='lg' {...props}>
 			Login{' '}
-			{!loading ? (
-				<ArrowUpRightIcon data-icon='inline-end' />
-			) : (
-				<Spinner className='translate-x-0.5' data-icon='inline-end' />
-			)}
+			{!pending ? <ArrowUpRightIcon data-icon='inline-end' /> : <Spinner data-icon='inline-end' />}
 		</Button>
 	);
 }

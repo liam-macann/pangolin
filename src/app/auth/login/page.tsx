@@ -1,16 +1,19 @@
 import { CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { type Metadata } from 'next';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 
+import { signInSocial } from '@/auth';
+
+import { errorDetails } from './../error/page';
 import { LoginButton } from './ui';
 
 export const metadata: Metadata = {
 	title: 'Login',
 };
-
-import { errorDetails } from './../error/page';
 
 const paramsSchema = z.object({
 	callbackUrl: z.url().catch('/invoices'),
@@ -23,6 +26,22 @@ export default async function LoginPage({
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
 	const { callbackUrl, error } = paramsSchema.parse(await searchParams);
+
+	async function login() {
+		'use server';
+
+		const response = await signInSocial({
+			headers: await headers(),
+			body: {
+				provider: 'google',
+				callbackURL: callbackUrl,
+				newUserCallbackURL: '/onboarding',
+				errorCallbackURL: '/auth/login',
+			},
+		});
+
+		if (response?.url) redirect(response.url);
+	}
 
 	const errorInfo =
 		error &&
@@ -41,7 +60,7 @@ export default async function LoginPage({
 					</Alert>
 				)}
 
-				<LoginButton variant='primary' callbackURL={callbackUrl} />
+				<LoginButton variant='primary' action={login} />
 			</section>
 			<section className='mt-12'>
 				<h2 className='mb-2 font-semibold text-lg'>What this is</h2>
