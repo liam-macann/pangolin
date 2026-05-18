@@ -2,6 +2,7 @@ import { isNull } from 'drizzle-orm';
 import {
 	boolean,
 	foreignKey,
+	index,
 	snakeCase,
 	text,
 	unique,
@@ -29,6 +30,8 @@ export const clients = snakeCase.table(
 	// Necessary for ownership constraint on clientData
 	t => [
 		unique('uq_client_user').on(t.id, t.userId),
+
+		index('idx_client_user_id').on(t.userId),
 
 		policy({
 			select: authUid(t.userId),
@@ -70,6 +73,10 @@ export const clientData = scdTable(
 
 		// Ensure that a client has only one valid configuration (multiple null values will conflict)
 		uniqueIndex('uq_client_active_version').on(t.clientId).where(isNull(t.validTo)),
+
+		index('idx_client_data_user_id').on(t.userId),
+		index('idx_client_data_client_id').on(t.clientId),
+		index('idx_client_data_address_id').on(t.addressId),
 
 		foreignKey({
 			name: 'fk_client_data_ownership',

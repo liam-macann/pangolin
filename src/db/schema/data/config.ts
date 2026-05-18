@@ -4,6 +4,7 @@ import {
 	char,
 	check,
 	foreignKey,
+	index,
 	integer,
 	numeric,
 	pgEnum,
@@ -71,6 +72,9 @@ export const configTaxes = snakeCase.table(
 		// Unique constraint ensures sorting by order produces predictable result
 		unique('uq_config_tax_order').on(t.configId, t.order),
 
+		index('idx_config_tax_tax_id').on(t.taxId),
+		index('idx_config_tax_user_id').on(t.userId),
+
 		policy({
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
@@ -133,6 +137,9 @@ export const config = scdTable(
 
 		// Necessary for ownership constraint on invoices
 		unique('uq_config_user').on(t.id, t.userId),
+
+		index('idx_config_user_id').on(t.userId),
+		index('idx_config_address_id').on(t.addressId),
 
 		check('chk_language_lowercase', sql`${t.language} = lower(${t.language})`),
 		check('chk_region_uppercase', sql`${t.region} = upper(${t.region})`),

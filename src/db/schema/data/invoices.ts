@@ -4,6 +4,7 @@ import {
 	check,
 	date,
 	foreignKey,
+	index,
 	integer,
 	numeric,
 	type PgTableExtraConfigValue,
@@ -72,6 +73,9 @@ export const invoices = snakeCase.table(
 	(t): PgTableExtraConfigValue[] => [
 		unique('uq_invoice_id_config').on(t.id, t.configId),
 		unique('uq_invoice_id_user_id').on(t.id, t.userId),
+
+		index('idx_invoice_client_data_id').on(t.clientDataId),
+		index('idx_invoice_config_id').on(t.configId),
 
 		// Enforce that client data is owned by the same user as the invoice
 		foreignKey({
@@ -144,6 +148,8 @@ export const invoiceStatus = pgTable(
 		isVoid: boolean().notNull().default(false),
 	},
 	t => [
+		index('idx_invoice_status_user_id').on(t.userId),
+
 		// Enforce that status data is owned by the same user as the invoice
 		foreignKey({
 			name: 'fk_invoice_status_invoice',
@@ -198,6 +204,10 @@ export const invoiceItems = snakeCase.table(
 	t => [
 		unique('uq_invoice_item_id_config').on(t.id, t.configId),
 
+		index('idx_invoice_item_invoice_id').on(t.invoiceId),
+		index('idx_invoice_item_user_id').on(t.userId),
+		index('idx_invoice_item_config_id').on(t.configId),
+
 		// Ensure this item references the same config as the associated invoice
 		foreignKey({
 			name: 'fk_invoice_item_invoice_config',
@@ -238,6 +248,10 @@ export const itemTaxes = snakeCase.table(
 	},
 	t => [
 		primaryKey({ name: 'item_tax_pkey', columns: [t.itemId, t.taxId] }),
+
+		index('idx_item_tax_tax_id').on(t.taxId),
+		index('idx_item_tax_user_id').on(t.userId),
+		index('idx_item_tax_config_id').on(t.configId),
 
 		// Ensure this record references the same config as the associated item
 		foreignKey({

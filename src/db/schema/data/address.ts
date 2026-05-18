@@ -1,4 +1,4 @@
-import { snakeCase, text, unique, uuid } from 'drizzle-orm/pg-core';
+import { index, snakeCase, text, unique, uuid } from 'drizzle-orm/pg-core';
 import { type CountryCode } from 'lib-address';
 
 import { encrypted } from '@/lib/utils/drizzle';
@@ -35,6 +35,8 @@ export const address = snakeCase.table(
 	t => [
 		// Necessary for ownership constraint on config
 		unique('uq_address_user').on(t.id, t.userId),
+
+		index('idx_address_user_id').on(t.userId),
 
 		policy({
 			select: authUid(t.userId),
