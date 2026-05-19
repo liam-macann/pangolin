@@ -8,7 +8,8 @@ import { type ElementType } from '@/lib/utils';
 
 import { MaintainHeight } from '@/components/maintain-height';
 
-import { Card, Table } from './table';
+import { Card } from './card';
+import { Table } from './table';
 
 type Client = ElementType<ClientData>;
 

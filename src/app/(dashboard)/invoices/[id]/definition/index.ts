@@ -207,12 +207,18 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 							{
 								stack: [
 									{ text: 'Bill To', bold: true },
-									invoice.clientData.name,
+									invoice.clientData.name
+										? [
+												invoice.clientData.organization ? 'Attn: ' : '',
+												invoice.clientData.name,
+											].join('')
+										: [],
+									invoice.clientData.organization || [],
 									invoice.clientData.address
 										? [
 												{
 													text: formatAddress(invoice.clientData.address),
-													marginTop: spacing(4),
+													marginTop: spacing(2),
 												},
 											]
 										: [],

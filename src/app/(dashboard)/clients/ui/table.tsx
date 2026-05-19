@@ -1,12 +1,6 @@
 'use client';
 
-import {
-	CaretLeftIcon,
-	CaretRightIcon,
-	DotsThreeIcon,
-	MagnifyingGlassIcon,
-	StarIcon,
-} from '@phosphor-icons/react/ssr';
+import { CaretLeftIcon, CaretRightIcon, MagnifyingGlassIcon } from '@phosphor-icons/react/ssr';
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
@@ -15,20 +9,18 @@ import {
 	getPaginationRowModel,
 	useReactTable,
 } from '@tanstack/react-table';
-import { AnimatePresence, type HTMLMotionProps, motion } from 'motion/react';
-import Link from 'next/link';
+import { AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { type Data as ClientData } from '@/api/clients/route';
-import { cn, type ElementType, pluralize } from '@/lib/utils';
+import { cn, type ElementType } from '@/lib/utils';
 
 import { Button } from '@/ui/button';
 import { ButtonGroup } from '@/ui/button-group';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
-import { Toggle } from '@/ui/toggle';
 
-import { OverflowMenu, useClientActions } from './menu';
+import { Card } from './card';
 
 type Client = ElementType<ClientData>;
 
@@ -41,6 +33,10 @@ const columns: ColumnDef<Client>[] = [
 	{
 		accessorKey: 'data.name',
 		header: 'Name',
+	},
+	{
+		accessorKey: 'data.organization',
+		header: 'Organisation',
 	},
 	{
 		accessorKey: 'data.email',
@@ -157,94 +153,5 @@ export function Table({ data }: { data: Client[] }) {
 				</div>
 			)}
 		</>
-	);
-}
-
-export function Card({
-	client,
-	className,
-	ref,
-	variant = 'outline',
-	...props
-}: {
-	client: Client;
-	ref?: React.Ref<HTMLDivElement>;
-	variant?: 'secondary' | 'outline';
-} & HTMLMotionProps<'div'>) {
-	const { setFavorite } = useClientActions(client);
-
-	return (
-		<motion.div
-			initial={{ scale: 0.95, opacity: 0, filter: 'blur(2px)', pointerEvents: 'none' }}
-			animate={{ scale: 1, opacity: 1, filter: 'blur(0px)', pointerEvents: 'auto' }}
-			exit={{ scale: 0.95, opacity: 0, filter: 'blur(1px)', pointerEvents: 'none' }}
-			transition={{
-				default: { mass: 0.2, stiffness: 150, damping: 10, type: 'spring' },
-				opacity: { duration: 0.2, ease: 'easeOut' },
-				filter: { duration: 0.2, ease: 'easeOut' },
-			}}
-			key={client.id}
-			layout='position'
-			ref={ref}
-			className={cn('relative flex flex-col', className)}
-			{...props}
-		>
-			{/* Outside of Link for semantics: <button> may not be within <a> */}
-			<OverflowMenu
-				side='left'
-				align='start'
-				client={client}
-				render={
-					<Button
-						size='icon-xs'
-						variant='ghost'
-						className='absolute top-3 left-3 z-10 text-inherit'
-					>
-						<DotsThreeIcon />
-					</Button>
-				}
-			/>
-
-			<Link
-				href={`clients/${client.id}`}
-				className={cn(
-					'!pt-12',
-					'rounded-md border p-4 outline-none focus-visible:border-ring focus-visible:ring-2',
-					'bg-card',
-					variant === 'secondary' && 'bg-secondary',
-				)}
-			>
-				<h2 className='line-clamp-1 break-all font-medium'>{client.data.name}</h2>
-				<p
-					style={{ textBox: 'trim-end cap alphabetic' }}
-					className={cn(
-						'text-sm opacity-70',
-						'pr-6', // Optical alignment with star
-					)}
-				>
-					{client.invoiceCount || 'No'} {pluralize(client.invoiceCount, 'invoice', 'invoices')}
-				</p>
-			</Link>
-
-			{/* Outside of Link for semantics: <button> may not be within <a> */}
-			<Toggle
-				pressed={client.isFavorite}
-				onClick={e => e.stopPropagation}
-				onPressedChange={setFavorite}
-				size='icon-xs'
-				variant='ghost'
-				className={cn(
-					'absolute right-3 bottom-3 translate-y-px',
-					client.isFavorite && '!bg-transparent',
-					'text-muted-foreground',
-				)}
-			>
-				<span className='sr-only'>Favourite</span>
-				<StarIcon
-					weight={client.isFavorite ? 'fill' : undefined}
-					className={cn('scale-95', client.isFavorite && 'text-primary')}
-				/>
-			</Toggle>
-		</motion.div>
 	);
 }

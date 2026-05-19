@@ -1,6 +1,11 @@
 'use client';
 
-import { ArchiveIcon, DotsThreeVerticalIcon, PencilIcon } from '@phosphor-icons/react/dist/ssr';
+import {
+	ArchiveIcon,
+	BuildingOfficeIcon,
+	DotsThreeVerticalIcon,
+	PencilIcon,
+} from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
 
 import { type Data as ClientData } from '@/api/clients/[id]/route';
@@ -58,12 +63,27 @@ export function Header({ initialClient }: { initialClient: ClientData }) {
 	return (
 		<>
 			<div className='flex items-baseline justify-between'>
-				<div className='space-x-4'>
-					<h1 className='mt-4 inline-block font-display text-3xl'>{client.data.name}</h1>
+				<div className='mt-4 space-x-4'>
+					<h1 className='inline-flex items-baseline gap-2.5 font-display text-3xl'>
+						{client.data.name || (
+							<>
+								<BuildingOfficeIcon className='relative top-[0.125em] -my-1 shrink-0' />
+								{client.data.organization}
+							</>
+						)}
+					</h1>
+
 					{client.isDeleted && (
 						<Badge className='-translate-0.5'>
 							<ArchiveIcon /> Archived
 						</Badge>
+					)}
+
+					{client.data.organization && client.data.name && (
+						<p className='row-start-1 mt-1 flex items-center gap-1 text-muted-foreground'>
+							<BuildingOfficeIcon />
+							<span>{client.data.organization}</span>
+						</p>
 					)}
 				</div>
 
@@ -86,7 +106,7 @@ export function Header({ initialClient }: { initialClient: ClientData }) {
 				</div>
 			</div>
 
-			<section className='flex flex-col gap-2 text-muted-foreground text-sms'>
+			<section className='flex flex-col gap-2 text-muted-foreground text-sm'>
 				<p>{client.data.email}</p>
 
 				{client.data.address && (

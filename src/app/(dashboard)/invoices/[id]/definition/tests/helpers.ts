@@ -36,7 +36,7 @@ export const invoiceDataBuilder = (data?: DeepPartial<InvoicePrintData>): Invoic
 		netTotal: 1000,
 		grossTotal: 1000,
 		status: { isVoid: false },
-		clientData: { name: 'Acme Corp', address: null },
+		clientData: { name: null, organization: null, address: null },
 		config: {
 			tradingName: 'My Business',
 			email: null,

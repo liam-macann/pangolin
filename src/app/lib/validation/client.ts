@@ -6,13 +6,17 @@ import { clientData as clientDataSchema } from '@/db/schema/data';
 
 export const clientData = createInsertSchema(clientDataSchema, {
 	email: z.email(),
-	name: z.string().min(1, 'Required'),
 })
 	.pick({
 		clientId: true,
 		name: true,
 		email: true,
+		organization: true,
 	})
 	.extend({
 		address: addressSchema.nullable(),
+	})
+	.refine(c => c.name || c.organization, {
+		message: 'Name or organisation must be present',
+		path: ['name'],
 	});

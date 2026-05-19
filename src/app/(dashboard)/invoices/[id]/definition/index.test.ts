@@ -1,5 +1,7 @@
 import { assert, describe, expect, test, vi } from 'vitest';
 
+import { formatAddress } from '@/lib/utils/address';
+
 import { buildDocDefinition, type InvoicePrintData } from './index';
 import { collectTextNodes, invoiceDataBuilder } from './tests/helpers';
 
@@ -84,6 +86,75 @@ describe('buildDocDefinition', () => {
 		expect(collector(invoiceDataBuilder())).not.toContainEqual(
 			expect.objectContaining({ text: description }),
 		);
+	});
+
+	describe('Bill To', () => {
+		test('Includes organization when defined', () => {
+			const organization = 'Acme Inc.';
+
+			const collector = (inv: InvoicePrintData) =>
+				collectTextNodes(buildDocDefinition(inv).content);
+
+			const toOrg = collector(invoiceDataBuilder({ clientData: { organization } }));
+			expect(toOrg).toContainEqual(expect.objectContaining({ text: organization }));
+
+			const toIndividual = collector(invoiceDataBuilder({ clientData: { name: 'Alaric Wivell' } }));
+			expect(toIndividual).not.toContainEqual(expect.objectContaining({ text: organization }));
+		});
+
+		test('Includes name when defined', () => {
+			const name = 'Alaric Wivell';
+
+			const collector = (inv: InvoicePrintData) =>
+				collectTextNodes(buildDocDefinition(inv).content);
+
+			const toOrg = collector(invoiceDataBuilder({ clientData: { name } }));
+			expect(toOrg).toContainEqual(expect.objectContaining({ text: name }));
+
+			const toIndividual = collector(invoiceDataBuilder({ clientData: { name: null } }));
+			expect(toIndividual).not.toContainEqual(expect.objectContaining({ text: name }));
+		});
+
+		test('Includes address when defined', () => {
+			const address = {
+				addressLine1: '1 Test St',
+				city: 'Sydney',
+				state: 'NSW',
+				postalCode: '2000',
+				countryCode: 'AU',
+			};
+
+			const formattedAddress = '1 Test St, Sydney NSW 2000, AU';
+			vi.mocked(formatAddress).mockReturnValue(formattedAddress);
+
+			const collector = (inv: InvoicePrintData) =>
+				collectTextNodes(buildDocDefinition(inv).content);
+
+			const withAddress = collector(invoiceDataBuilder({ clientData: { address } }));
+			expect(withAddress).toContainEqual(expect.objectContaining({ text: formattedAddress }));
+
+			const withoutAddress = collector(invoiceDataBuilder({ clientData: { address: null } }));
+			expect(withoutAddress).not.toContainEqual(
+				expect.objectContaining({ text: formattedAddress }),
+			);
+		});
+
+		test('Prepends "Attn:" to name when organization is set', () => {
+			const name = 'Alaric Wivell';
+
+			const collector = (inv: InvoicePrintData) =>
+				collectTextNodes(buildDocDefinition(inv).content);
+
+			const toIndividual = collector(invoiceDataBuilder({ clientData: { name } }));
+
+			expect(toIndividual).toContainEqual(expect.objectContaining({ text: name }));
+			expect(toIndividual).not.toContainEqual(expect.objectContaining({ text: `Attn: ${name}` }));
+
+			const toOrg = collector(invoiceDataBuilder({ clientData: { name, organization: 'Acme' } }));
+
+			expect(toOrg).toContainEqual(expect.objectContaining({ text: `Attn: ${name}` }));
+			expect(toOrg).not.toContainEqual(expect.objectContaining({ text: name }));
+		});
 	});
 
 	test('Prints payment details when set', () => {

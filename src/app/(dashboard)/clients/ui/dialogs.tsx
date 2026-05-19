@@ -46,7 +46,7 @@ import { Switch } from '@/ui/switch';
 
 /** Uses local addressEnabled flag to toggle address validation, and drops it after parsing */
 const formSchema = schema
-	.extend({
+	.safeExtend({
 		address: addressTransformSchema.nullable(),
 		addressEnabled: z.boolean(),
 	})
@@ -197,6 +197,27 @@ function ClientDialog<TForm extends UseFormReturn<z.input<typeof formSchema>, un
 													aria-invalid={fieldState.invalid}
 													placeholder='e.g. Abiel Mancusi'
 													{...field}
+													value={field.value || ''}
+												/>
+												{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+											</div>
+										</Field>
+									)}
+								/>
+
+								<Controller
+									name='organization'
+									control={control}
+									render={({ field, fieldState }) => (
+										<Field orientation='horizontal' data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor='organization'>Organisation</FieldLabel>
+											<div className='flex basis-60 flex-col items-end gap-1 sm:basis-72'>
+												<Input
+													id='organization'
+													aria-invalid={fieldState.invalid}
+													placeholder='e.g. Acme Inc.'
+													{...field}
+													value={field.value || ''}
 												/>
 												{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 											</div>

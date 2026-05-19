@@ -1,6 +1,7 @@
-import { isNull } from 'drizzle-orm';
+import { isNotNull, isNull, or, sql } from 'drizzle-orm';
 import {
 	boolean,
+	check,
 	foreignKey,
 	index,
 	snakeCase,
@@ -61,7 +62,8 @@ export const clientData = scdTable(
 		clientId: uuid()
 			.references(() => clients.id, { onDelete: 'cascade' })
 			.notNull(),
-		name: varchar({ length: 255 }).notNull(),
+		name: varchar({ length: 255 }),
+		organization: varchar({ length: 255 }),
 		email: varchar({ length: 255 }).notNull(),
 		notes: text(),
 
@@ -77,6 +79,8 @@ export const clientData = scdTable(
 		index('idx_client_data_user_id').on(t.userId),
 		index('idx_client_data_client_id').on(t.clientId),
 		index('idx_client_data_address_id').on(t.addressId),
+
+		check('chk_name_or_org', sql`${t.name} IS NOT NULL OR ${t.organization} IS NOT NULL`),
 
 		foreignKey({
 			name: 'fk_client_data_ownership',

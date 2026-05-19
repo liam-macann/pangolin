@@ -4,6 +4,7 @@ import { getRegisteredCountries } from 'lib-address';
 
 import { crypto, type Decrypted } from '@/lib/encrypt';
 import { fetchAddressMetadata, formatAddress } from '@/lib/utils/address';
+import { coalesce } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
 import * as schema from '@/db/schema';
 
@@ -17,8 +18,9 @@ export interface ClientResult {
 	isDeleted: boolean;
 	invoiceCount: number;
 	data: {
+		name: string | null;
+		organization: string | null;
 		scdId: string;
-		name: string;
 		email: string;
 		notes: string | null;
 		address: Omit<Decrypted<typeof schema.address.$inferSelect>, 'userId' | 'id'> | null;
@@ -71,7 +73,7 @@ export async function fetchClients(id?: string) {
 				},
 				orderBy: (c, { sql }) =>
 					sql<string>`(${db
-						.select({ name: schema.clientData.name })
+						.select({ name: coalesce(schema.clientData.organization, schema.clientData.name) })
 						.from(schema.clientData)
 						.where(and(eq(schema.clientData.clientId, c.id), isNull(schema.clientData.validTo)))
 						.limit(1)}
