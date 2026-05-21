@@ -1,6 +1,6 @@
 'use server';
 
-import { and, eq, or, type WithSubqueryWithoutSelection } from 'drizzle-orm';
+import { and, eq, isNull, or, type WithSubqueryWithoutSelection } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { after } from 'next/server';
 import { v4 as uuid } from 'uuid';
@@ -77,7 +77,16 @@ export async function updateUserConfig(input: z.infer<typeof configInput>) {
 		}
 
 		// Void previously active config
-		await invalidateActiveScd(db, tables.config);
+		await invalidateActiveScd(
+			db,
+			tables.config,
+			await db
+				.select({ id: tables.config.id })
+				.from(tables.config)
+				.where(and(isNull(tables.config.validTo), eq(tables.config.userId, session.user.id)))
+				.limit(1)
+				.then(([v]) => v.id),
+		);
 
 		// Define as CTEs for transactional behaviour without network round-trips
 		const actions: WithSubqueryWithoutSelection<string>[] = [

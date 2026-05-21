@@ -72,11 +72,15 @@ export function scdTable<TColumnsMap extends Record<string, AnyPgColumnBuilder>>
 	return table as SCDTable<typeof table>;
 }
 
-/** Invalidates the active SCD row for the given table, for the user authenticated via RLS. */
-export const invalidateActiveScd = <TTable extends SCDTable & { userId: PgUUID }>(
+/** Invalidates an active SCD row for the given table, for the user authenticated via RLS.
+ *
+ * @remarks No-op if provided row is already invalid
+ */
+export const invalidateActiveScd = <TTable extends SCDTable & { userId: PgUUID; id: PgUUID }>(
 	tx: AuthTransaction,
 	table: TTable,
-) => tx.execute(sql`SELECT invalidate_active_scd('${getTableName(table)}')`);
+	id: string,
+) => tx.execute(sql`SELECT invalidate_active_scd(${getTableName(table)}, ${id})`);
 
 //
 //

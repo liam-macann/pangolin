@@ -12,6 +12,7 @@ import { clientData as clientDataSchema } from '@/lib/validation/client';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 import { clientData, clients } from '@/db/schema';
+import { invalidateActiveScd } from '@/db/schema/data/_helpers';
 
 export async function updateClientFavorite(clientId: string, status: boolean) {
 	await withRLS((db, session) =>
@@ -88,16 +89,23 @@ export async function updateClient(input: z.infer<typeof clientDataSchema>) {
 			return insertedAddress.id;
 		})();
 
-		await db
-			.update(clientData)
-			.set({ validTo: sql`now()` })
-			.where(
-				and(
-					isNull(clientData.validTo),
-					eq(clientData.clientId, data.clientId),
-					eq(clientData.userId, session.user.id),
-				),
-			);
+		// Void previously active config
+		await invalidateActiveScd(
+			db,
+			tables.clientData,
+			await db
+				.select({ id: clientData.id })
+				.from(clientData)
+				.where(
+					and(
+						isNull(clientData.validTo),
+						eq(clientData.clientId, data.clientId),
+						eq(clientData.userId, session.user.id),
+					),
+				)
+				.limit(1)
+				.then(([v]) => v.id),
+		);
 
 		await db.insert(clientData).values({ ...data, userId: session.user.id, addressId });
 
