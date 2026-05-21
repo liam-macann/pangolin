@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
 	experimental: {
 		useCache: true,
 		optimizePackageImports: ['@phosphor-icons/react'],
+		authInterrupts: true,
 	},
 	turbopack: {
 		rules: {

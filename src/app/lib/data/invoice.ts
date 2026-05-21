@@ -22,20 +22,15 @@ import { withRLS } from '@/db';
 import { type relations } from '@/db/relations';
 import * as schema from '@/db/schema';
 
-import { getSession } from '@/auth';
-
 /** Fetch all invoices for authenticated user, including basic relational data */
 
 export async function fetchInvoices(
 	filter?: RelationsFilter<typeof relations.invoicesWithSum, typeof relations>,
 	limit?: number,
 ) {
-	const session = await getSession();
-	if (!session) throw new Error('Request not authenticated');
-
 	try {
 		// Get current config to format historical invoices
-		return await withRLS(async db =>
+		return await withRLS(async (db, session) =>
 			db.query.invoicesWithSum.findMany({
 				where: {
 					...filter,
@@ -78,11 +73,8 @@ export const fetchInvoicesForClient = (clientId: string, limit?: number) =>
 
 /** Join relational (incl. item) details with a single invoice record for authenticated user */
 export async function fetchInvoice(id: string) {
-	const session = await getSession();
-	if (!session) throw new Error('Request not authenticated');
-
 	try {
-		const { res, tax } = await withRLS(async db => {
+		return await withRLS(async (db, session) => {
 			// Get all active taxes, and calculate sum for display in the invoice subtotals
 			// Executed as CTE to collapse tax rows that share the same name (eg. GST(10%) and GST(5%) would share one sum)
 			const taxContribution = db.$with('tax_calc').as(
@@ -164,23 +156,20 @@ export async function fetchInvoice(id: string) {
 				.groupBy(taxContribution.name)
 				.orderBy(asc(min(taxContribution.order)));
 
-			return { res, tax };
+			if (!res) throw new Error('Invoice not found');
+
+			const vault = await crypto(session.user.id);
+			const inv = {
+				...res,
+				reference: invoiceReference(res, res.config.numberingScheme),
+				config: await vault.decryptObject(res.config),
+				clientData: await vault.decryptObject(res.clientData),
+				tax,
+			};
+			vault.destroy();
+
+			return inv;
 		});
-
-		if (!res) throw new Error('Invoice not found');
-
-		const vault = await crypto(session.user.id);
-
-		const inv = {
-			...res,
-			reference: invoiceReference(res, res.config.numberingScheme),
-			config: await vault.decryptObject(res.config),
-			clientData: await vault.decryptObject(res.clientData),
-		};
-
-		vault.destroy();
-
-		return { ...inv, tax };
 	} catch (error) {
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoice');

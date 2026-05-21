@@ -3,6 +3,7 @@ import 'server-only';
 import { Pool } from '@neondatabase/serverless';
 import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
+import { unauthorized } from 'next/navigation';
 
 import { type Brand } from '@/lib/utils';
 import { relations } from '@/db/relations';
@@ -35,7 +36,7 @@ export const withRLS = async <T>(
 	callback: (tx: AuthTransaction, session: Session) => Promise<T>,
 ): Promise<T> => {
 	const session = await getSession();
-	if (!session) throw new Error('Unauthenticated');
+	if (!session) unauthorized();
 
 	return db.transaction(async tx => {
 		// Super-users and table owners bypass RLS restrictions.
