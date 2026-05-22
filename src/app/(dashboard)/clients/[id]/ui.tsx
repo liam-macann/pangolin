@@ -61,78 +61,48 @@ export function Header({ initialClient }: { initialClient: ClientData }) {
 	const { data: client } = useClient(initialClient.id, initialClient, { suspense: true });
 
 	return (
-		<>
-			<div className='flex items-baseline justify-between'>
-				<div className='mt-4 space-x-4'>
-					<h1 className='inline-flex items-baseline gap-2.5 font-display text-3xl'>
-						{client.data.name || (
-							<>
-								<BuildingOfficeIcon className='relative top-[0.125em] -my-1 shrink-0' />
-								{client.data.organization}
-							</>
-						)}
-					</h1>
-
-					{client.isDeleted && (
-						<Badge className='-translate-0.5'>
-							<ArchiveIcon /> Archived
-						</Badge>
+		<div className='flex items-baseline justify-between'>
+			<div className='mt-4 space-x-4'>
+				<h1 className='inline-flex items-baseline gap-2.5 font-display text-3xl'>
+					{client.data.name || (
+						<>
+							<BuildingOfficeIcon className='relative top-[0.125em] -my-1 shrink-0' />
+							{client.data.organization}
+						</>
 					)}
+				</h1>
 
-					{client.data.organization && client.data.name && (
-						<p className='row-start-1 mt-1 flex items-center gap-1 text-muted-foreground'>
-							<BuildingOfficeIcon />
-							<span>{client.data.organization}</span>
-						</p>
-					)}
-				</div>
+				{client.isDeleted && (
+					<Badge className='-translate-0.5'>
+						<ArchiveIcon /> Archived
+					</Badge>
+				)}
 
-				<div className='flex gap-2'>
-					<OverflowMenu
-						align='end'
-						client={client}
-						render={
-							<Button variant='ghost' size='icon'>
-								<DotsThreeVerticalIcon />
-							</Button>
-						}
-					/>
-					<UpdateClientDialog defaultValues={{ ...client.data, clientId: client.id }}>
-						<Button variant='outline' aria-label='Edit details' disabled={!!client.isDeleted}>
-							<PencilIcon />
-							<span className='hidden sm:block'>Edit details</span>
-						</Button>
-					</UpdateClientDialog>
-				</div>
-			</div>
-
-			<section className='flex flex-col gap-2 text-muted-foreground text-sm'>
-				<p>{client.data.email}</p>
-
-				{client.data.address && (
-					<p className='leading-tight'>
-						{client.data.formattedAddress?.split('\n').map(line => {
-							// Continuous strings of all caps, including numbers
-							const regex = /(\b[A-Z][A-Z 0-9]+\b)/g;
-
-							return (
-								<span key={line}>
-									{line.split(regex).map(word => {
-										if (!regex.test(word)) return word;
-
-										return (
-											<span key={word} className='small-caps'>
-												{word}
-											</span>
-										);
-									})}
-									<br />
-								</span>
-							);
-						})}
+				{client.data.organization && client.data.name && (
+					<p className='row-start-1 mt-1.5 flex items-center gap-1 text-muted-foreground'>
+						<BuildingOfficeIcon />
+						<span>{client.data.organization}</span>
 					</p>
 				)}
-			</section>
-		</>
+			</div>
+
+			<div className='flex gap-2'>
+				<OverflowMenu
+					align='end'
+					client={client}
+					render={
+						<Button variant='ghost' size='icon'>
+							<DotsThreeVerticalIcon />
+						</Button>
+					}
+				/>
+				<UpdateClientDialog defaultValues={{ ...client.data, clientId: client.id }}>
+					<Button variant='outline' aria-label='Edit details' disabled={!!client.isDeleted}>
+						<PencilIcon />
+						<span className='hidden sm:block'>Edit details</span>
+					</Button>
+				</UpdateClientDialog>
+			</div>
+		</div>
 	);
 }
