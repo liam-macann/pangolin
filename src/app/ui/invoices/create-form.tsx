@@ -46,6 +46,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuSub,
 	DropdownMenuSubContent,
+	DropdownMenuSubContentTextarea,
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
@@ -302,20 +303,10 @@ function NotesSubmenu({ control }: { control: Control<z.input<typeof schema>> })
 							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
 						</div>
 					</DropdownMenuSubTrigger>
-					<DropdownMenuPortal>
-						<DropdownMenuSubContent>
-							<label htmlFor='notes' className='sr-only'>
-								Your private notes
-							</label>
-							<Textarea
-								onKeyDown={e => e.key !== 'Escape' && e.stopPropagation()}
-								placeholder='Your private notes'
-								{...field}
-								className='!ring-0 !border-border inset-shadow-xs w-48 shadow-none'
-								autoFocus
-							/>
-						</DropdownMenuSubContent>
-					</DropdownMenuPortal>
+
+					<DropdownMenuSubContent>
+						<DropdownMenuSubContentTextarea {...field} label='Your private notes' />
+					</DropdownMenuSubContent>
 				</DropdownMenuSub>
 			)}
 		/>

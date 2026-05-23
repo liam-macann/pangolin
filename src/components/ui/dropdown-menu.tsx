@@ -3,10 +3,12 @@
 import { Menu as MenuPrimitive } from '@base-ui/react/menu';
 import { CaretRightIcon, CheckIcon } from '@phosphor-icons/react';
 import type * as React from 'react';
+import { useId } from 'react';
 
 import { cn } from '@/lib/utils';
 
 import { Checkbox } from './checkbox';
+import { Textarea } from './textarea';
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
 	return <MenuPrimitive.Root data-slot='dropdown-menu' {...props} />;
@@ -26,11 +28,13 @@ function DropdownMenuContent({
 	side = 'bottom',
 	sideOffset = 4,
 	className,
+	keepMounted,
 	...props
 }: MenuPrimitive.Popup.Props &
-	Pick<MenuPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset'>) {
+	Pick<MenuPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset'> &
+	Pick<MenuPrimitive.Portal.Props, 'keepMounted'>) {
 	return (
-		<MenuPrimitive.Portal>
+		<MenuPrimitive.Portal keepMounted={keepMounted}>
 			<MenuPrimitive.Positioner
 				className='isolate z-50 outline-none'
 				align={align}
@@ -146,6 +150,34 @@ function DropdownMenuSubContent({
 			sideOffset={sideOffset}
 			{...props}
 		/>
+	);
+}
+
+export function DropdownMenuSubContentTextarea({
+	className,
+	label,
+	id,
+	onKeyDown,
+	...props
+}: React.ComponentProps<typeof Textarea> & { label: string }) {
+	const internalId = useId();
+	return (
+		<>
+			<label htmlFor={id || internalId} className='sr-only'>
+				{label}
+			</label>
+			<Textarea
+				id={id || internalId}
+				onKeyDown={e => {
+					if (e.key !== 'Escape') e.stopPropagation();
+					onKeyDown(e);
+				}}
+				placeholder={label}
+				className={cn('!ring-0 !border-border inset-shadow-xs w-48 shadow-none', className)}
+				autoFocus
+				{...props}
+			/>
+		</>
 	);
 }
 
