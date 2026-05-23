@@ -73,7 +73,7 @@ function CommandList({ className, ...props }: React.ComponentProps<typeof Comman
 		<CommandPrimitive.List
 			data-slot='command-list'
 			className={cn(
-				'no-scrollbar max-h-81 scroll-py-3 scroll-pt-2 overflow-y-auto overflow-x-hidden outline-none',
+				'no-scrollbar max-h-84 scroll-py-2 overflow-y-auto overflow-x-hidden outline-none',
 				className,
 			)}
 			{...props}
@@ -102,7 +102,7 @@ function CommandGroup({
 		<CommandPrimitive.Group
 			data-slot='command-group'
 			className={cn(
-				'overflow-hidden p-3 text-foreground **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:py-1.5 **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground **:[[cmdk-group-heading]]:text-xs',
+				'overflow-hidden p-3 text-foreground **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:py-2 **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground **:[[cmdk-group-heading]]:text-xs',
 				className,
 			)}
 			{...props}
@@ -132,7 +132,7 @@ function CommandItem({
 		<CommandPrimitive.Item
 			data-slot='command-item'
 			className={cn(
-				"group/command-item relative flex min-h-9.5 cursor-default select-none items-center gap-2 rounded-md px-2 py-2 text-sm data-[disabled=true]:pointer-events-none data-selected:bg-muted data-selected:text-foreground data-[disabled=true]:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 data-selected:**:[svg]:text-foreground",
+				"group/command-item relative flex min-h-8 cursor-default select-none items-center gap-2 rounded-md px-2 py-1.5 text-sm data-[disabled=true]:pointer-events-none data-selected:bg-muted data-selected:text-foreground data-[disabled=true]:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 data-selected:**:[svg]:text-foreground",
 				className,
 			)}
 			{...props}
