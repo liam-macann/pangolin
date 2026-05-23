@@ -41,7 +41,7 @@ function TooltipContent({
 					data-slot='tooltip-content'
 					className={cn(
 						'origin-(--transform-origin) duration-200 ease-out-quart',
-						'data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
+						'data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-safe:data-[ending-style]:scale-95 motion-safe:data-[starting-style]:scale-95',
 						'relative inset-0 z-50 w-fit text-balance rounded-sm bg-primary px-2 py-1 text-primary-foreground text-xs drop-shadow-xs',
 						className,
 					)}

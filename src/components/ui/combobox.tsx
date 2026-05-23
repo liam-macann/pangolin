@@ -116,7 +116,7 @@ function ComboboxContent({
 					data-slot='combobox-content'
 					data-chips={!!anchor}
 					className={cn(
-						'origin-(--transform-origin) duration-100 data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
+						'origin-(--transform-origin) duration-100 ease-out-quint data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-safe:data-[ending-style]:scale-95 motion-safe:data-[starting-style]:scale-95',
 						'group/combobox-content relative max-h-(--available-height) max-h-72 w-(--anchor-width) min-w-36 min-w-[calc(var(--anchor-width)+--spacing(7))] max-w-(--available-width) data-[chips=true]:min-w-(--anchor-width)',
 						'overflow-hidden rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-border',
 						'*:data-[slot=input-group]:m-1 *:data-[slot=input-group]:mb-0 *:data-[slot=input-group]:h-8 *:data-[slot=input-group]:border-input/30 *:data-[slot=input-group]:bg-input/30 *:data-[slot=input-group]:shadow-none',
