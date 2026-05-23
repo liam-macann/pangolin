@@ -42,6 +42,7 @@
 
 @variant dark {
 	:root {
+		--background: var(--color-gray-2);
 		--card: var(--color-gray-2);
 		--primary: var(--color-gray-10);
 		--primary-foreground: white;

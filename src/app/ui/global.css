@@ -61,6 +61,49 @@
 	}
 }
 
+@theme inline {
+	/*--shadow-2xs: var(--shadow-2xs);*/
+	--shadow-xs: var(--ds-shadow-small);
+	--shadow-sm: var(--ds-shadow-medium);
+	--shadow-md: var(--ds-shadow-large);
+	--shadow-lg: var(--ds-shadow-menu);
+	--shadow-xl: var(--ds-shadow-modal);
+	--shadow-2xl: var(--ds-shadow-fullscreen);
+}
+
+:root {
+	--ds-shadow-small: 0px 2px 2px rgba(0, 0, 0, 0.04);
+	--ds-shadow-medium: 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 8px -8px rgba(0, 0, 0, 0.04);
+	--ds-shadow-large: 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 16px -4px rgba(0, 0, 0, 0.04);
+	--ds-shadow-tooltip: 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 4px 8px rgba(0, 0, 0, 0.04);
+	--ds-shadow-menu:
+		0px 1px 1px rgba(0, 0, 0, 0.02), 0px 4px 8px -4px rgba(0, 0, 0, 0.04),
+		0px 16px 24px -8px rgba(0, 0, 0, 0.06);
+	--ds-shadow-modal:
+		0px 1px 1px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04),
+		0px 24px 32px -8px rgba(0, 0, 0, 0.06);
+	--ds-shadow-fullscreen:
+		0px 1px 1px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04),
+		0px 24px 32px -8px rgba(0, 0, 0, 0.06);
+
+	@variant dark {
+		/* biome-ignore lint/suspicious/noDuplicateCustomProperties: Dark mode variant */
+		--ds-shadow-small: 0px 1px 2px rgba(0, 0, 0, 0.08);
+		--ds-shadow-medium: 0px 2px 2px rgba(0, 0, 0, 0.32), 0px 8px 8px -8px rgba(0, 0, 0, 0.01);
+		--ds-shadow-large: 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 16px -4px rgba(0, 0, 0, 0.04);
+		--ds-shadow-tooltip: 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 4px 8px rgba(0, 0, 0, 0.04);
+		--ds-shadow-menu:
+			0px 1px 1px rgba(0, 0, 0, 0.02), 0px 4px 8px -4px rgba(0, 0, 0, 0.04),
+			0px 16px 24px -8px rgba(0, 0, 0, 0.06);
+		--ds-shadow-modal:
+			0px 1px 1px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04),
+			0px 24px 32px -8px rgba(0, 0, 0, 0.06);
+		--ds-shadow-fullscreen:
+			0px 1px 1px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04),
+			0px 24px 32px -8px rgba(0, 0, 0, 0.06);
+	}
+}
+
 @utility transition {
 	transition-property:
 		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
