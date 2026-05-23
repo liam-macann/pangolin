@@ -46,8 +46,7 @@ function DropdownMenuContent({
 					data-slot='dropdown-menu-content'
 					className={cn(
 						'z-50 max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-md bg-popover p-1 text-popover-foreground shadow-md outline-none ring-1 ring-foreground/10 data-closed:overflow-hidden',
-						'data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
-						'fade-in-0 zoom-in-95 fade-out-0 zoom-out-95 blur-in-[2px] blur-out-[2px] duration-150 ease-out-quint data-closed:animate-out data-open:animate-in',
+						'duration-150 ease-out-quint data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 data-[ending-style]:blur-[2px] data-[starting-style]:blur-[2px]',
 						className,
 					)}
 					{...props}
@@ -141,7 +140,7 @@ function DropdownMenuSubContent({
 		<DropdownMenuContent
 			data-slot='dropdown-menu-sub-content'
 			className={cn(
-				'data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 w-auto min-w-[96px] rounded-md bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-100 data-closed:animate-out data-open:animate-in',
+				'w-auto min-w-[96px] rounded-md bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-100',
 				className,
 			)}
 			align={align}

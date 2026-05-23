@@ -40,10 +40,8 @@ function TooltipContent({
 				<TooltipPrimitive.Popup
 					data-slot='tooltip-content'
 					className={cn(
-						'data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:fade-in-0 data-open:zoom-in-95 data-closed:fade-out-0 data-closed:zoom-out-95 duration-200 ease-out-quart',
-						'data-[side=bottom]:slide-in-from-top-1 data-[side=inline-end]:slide-in-from-left-1 data-[side=inline-start]:slide-in-from-right-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1',
-						'origin-(--transform-origin) data-[state=delayed-open]:animate-in data-closed:animate-out data-open:animate-in',
-						'z-50 w-fit max-w-xs rounded-md bg-foreground px-3 py-1.5 text-background text-xs outline-none',
+						'origin-(--transform-origin) duration-200 ease-out-quart',
+						'data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
 						'relative inset-0 z-50 w-fit text-balance rounded-sm bg-primary px-2 py-1 text-primary-foreground text-xs drop-shadow-xs',
 						className,
 					)}

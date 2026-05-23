@@ -89,8 +89,7 @@ function SelectContent({
 					data-align-trigger={alignItemWithTrigger}
 					className={cn(
 						'group/select-popup relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 data-closed:overflow-hidden',
-						'data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
-						'fade-in-0 zoom-in-95 fade-out-0 zoom-out-95 blur-in-[2px] blur-out-[2px] duration-150 ease-out-quint data-closed:animate-out data-open:animate-in',
+						'duration-150 ease-out-quint data-[ending-style]:scale-95 data-[starting-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 data-[ending-style]:blur-[2px] data-[starting-style]:blur-[2px]',
 						className,
 					)}
 					{...props}
@@ -120,8 +119,8 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
 			data-slot='select-item'
 			className={cn(
 				"relative flex w-full cursor-default select-none items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
-				// Helps to diguise jitter with item-aligned select during scale-in animation
-				'fade-in-50 fade-out-50 transition-none duration-100 group-data-closed/select-popup:animate-out group-data-open/select-popup:animate-in group-data-closed/select-popup:ease-out-circ group-data-open/select-popup:ease-in',
+				// Fade items during popup enter/exit to disguise scale-in jitter
+				'transition-none group-data-[ending-style]/select-popup:opacity-50 group-data-[starting-style]/select-popup:opacity-50',
 				className,
 			)}
 			{...props}
