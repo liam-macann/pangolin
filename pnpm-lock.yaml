@@ -103,7 +103,7 @@ importers:
         version: 17.2.2
       drizzle-zod:
         specifier: 1.0.0-beta.11-05230d9
-        version: 1.0.0-beta.11-05230d9(drizzle-orm@1.0.0-rc.1(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8))(zod@4.1.8)
+        version: 1.0.0-beta.11-05230d9(drizzle-orm@1.0.0-rc.3(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8))(zod@4.1.8)
       es-toolkit:
         specifier: ^1.46.1
         version: 1.46.1
@@ -223,14 +223,14 @@ importers:
         specifier: 4.1.6
         version: 4.1.6(vitest@4.1.6)
       drizzle-kit:
-        specifier: 1.0.0-rc.1
-        version: 1.0.0-rc.1
+        specifier: 1.0.0-rc.3
+        version: 1.0.0-rc.3
       drizzle-orm:
-        specifier: 1.0.0-rc.1
-        version: 1.0.0-rc.1(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8)
+        specifier: 1.0.0-rc.3
+        version: 1.0.0-rc.3(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8)
       drizzle-seed:
-        specifier: 1.0.0-rc.1
-        version: 1.0.0-rc.1(drizzle-orm@1.0.0-rc.1(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8))
+        specifier: 1.0.0-rc.3
+        version: 1.0.0-rc.3(drizzle-orm@1.0.0-rc.3(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8))
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -3650,12 +3650,12 @@ packages:
     resolution: {integrity: sha512-Sf2LSQP+bOlhKWWyhFsn0UsfdK/kCWRv1iuA2gXAwt3dyNabr6QSj00I2V10pidqz69soatm9ZwZvpQMTIOd5Q==}
     engines: {node: '>=12'}
 
-  drizzle-kit@1.0.0-rc.1:
-    resolution: {integrity: sha512-eDvXzRhke7OwvmN7AciGOU1E2y17MKNhghGciyw1RbmmkuD/2KDXLn3rFRZcDBmfj6CQSEnyvbU+7Fqrn2JQyA==}
+  drizzle-kit@1.0.0-rc.3:
+    resolution: {integrity: sha512-lwGIi6GTlEYzrtac1Szecns+zrAxjaOoNysfBCKRQOXQE7nMJ8IU2I2S6ek3FHEm1N30dQb5YrTdqV7zNH6n7A==}
     hasBin: true
 
-  drizzle-orm@1.0.0-rc.1:
-    resolution: {integrity: sha512-jGCqAgxpz+OSHP2jQGooUHBxnFMTYl0TTRSfULBl52VNf7CtyNRnazUi+VdbSxvJrDP2lnIsmUh5O+HhKeSJCg==}
+  drizzle-orm@1.0.0-rc.3:
+    resolution: {integrity: sha512-akZOa5UxapFbdBG8IDkfBRpSZJpMHaOJtGgp7oi1oHaiU8S3KN92waHo2l5aRuv1D9tMGYpv3BQFOsiGcNjLTQ==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -3770,8 +3770,8 @@ packages:
       zod:
         optional: true
 
-  drizzle-seed@1.0.0-rc.1:
-    resolution: {integrity: sha512-8jT8pp6ylBw6O7HlxxstO97UQVx0tMrqpZTCY0gAC81w2QlyTSGvWPSY/hKzvmUWJAapeK7kRMEEp0bMGI16gQ==}
+  drizzle-seed@1.0.0-rc.3:
+    resolution: {integrity: sha512-oqBUEGoAjyriu5V3OxubfzBe+ebYb5nCslY0YqGCUY2MzRJLJid4+qW3zCuvtGbNy0vmd1MUPloyIVtrFrH75A==}
     peerDependencies:
       drizzle-orm: '>=1.0.0-beta.2'
 
@@ -9518,7 +9518,7 @@ snapshots:
 
   dotenv@17.2.2: {}
 
-  drizzle-kit@1.0.0-rc.1:
+  drizzle-kit@1.0.0-rc.3:
     dependencies:
       '@drizzle-team/brocli': 0.11.0
       '@js-temporal/polyfill': 0.5.1
@@ -9526,7 +9526,7 @@ snapshots:
       get-tsconfig: 4.13.7
       jiti: 2.6.1
 
-  drizzle-orm@1.0.0-rc.1(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8):
+  drizzle-orm@1.0.0-rc.3(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8):
     optionalDependencies:
       '@neondatabase/serverless': 1.0.2
       '@opentelemetry/api': 1.9.1
@@ -9537,14 +9537,14 @@ snapshots:
       postgres: 3.4.6
       zod: 4.1.8
 
-  drizzle-seed@1.0.0-rc.1(drizzle-orm@1.0.0-rc.1(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8)):
+  drizzle-seed@1.0.0-rc.3(drizzle-orm@1.0.0-rc.3(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8)):
     dependencies:
-      drizzle-orm: 1.0.0-rc.1(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8)
+      drizzle-orm: 1.0.0-rc.3(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8)
       pure-rand: 6.1.0
 
-  drizzle-zod@1.0.0-beta.11-05230d9(drizzle-orm@1.0.0-rc.1(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8))(zod@4.1.8):
+  drizzle-zod@1.0.0-beta.11-05230d9(drizzle-orm@1.0.0-rc.3(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8))(zod@4.1.8):
     dependencies:
-      drizzle-orm: 1.0.0-rc.1(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8)
+      drizzle-orm: 1.0.0-rc.3(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8)
       zod: 4.1.8
 
   dunder-proto@1.0.1:
