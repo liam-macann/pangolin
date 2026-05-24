@@ -105,7 +105,7 @@ export function Card({
 			{/* Outside of Link for semantics: <button> may not be within <a> */}
 			<Toggle
 				pressed={client.isFavorite}
-				onClick={e => e.stopPropagation}
+				onClick={e => e.stopPropagation()}
 				onPressedChange={setFavorite}
 				size='icon-xs'
 				variant='ghost'

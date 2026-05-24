@@ -11,7 +11,7 @@ import * as schema from '@/db/schema';
 
 // Use super-user connection string to bypass RLS
 // biome-ignore lint/style/noNonNullAssertion: Connection URL is guaranteed to be defined in production
-export const db = drizzle({ connection: process.env.DATABASE_URL! });
+const db = drizzle({ connection: process.env.DATABASE_URL! });
 
 export const auth = betterAuth({
 	database: drizzleAdapter(db, {

@@ -107,7 +107,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 			},
 		});
 
-		return <TableContext value={{ ...table }}>{children}</TableContext>;
+		return <TableContext value={table}>{children}</TableContext>;
 	}
 
 	interface DataTableProps {

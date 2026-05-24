@@ -37,7 +37,7 @@ export default async function Page(_props: {
 				locale={config.locale}
 				header={
 					<Suspense fallback={<DialogTrigger />}>
-						<Dialog />
+						<Dialog config={config} />
 					</Suspense>
 				}
 			/>
@@ -45,9 +45,7 @@ export default async function Page(_props: {
 	);
 }
 
-async function Dialog() {
-	const config = await getUserConfig().catch(() => redirect('/onboarding'));
-
+async function Dialog({ config }: { config: Awaited<ReturnType<typeof getUserConfig>> }) {
 	return (
 		<CreateInvoiceDialog config={config}>
 			<DialogTrigger />
