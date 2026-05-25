@@ -231,6 +231,9 @@ importers:
       drizzle-seed:
         specifier: 1.0.0-rc.3
         version: 1.0.0-rc.3(drizzle-orm@1.0.0-rc.3(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@types/mssql@9.1.8(@azure/core-client@1.10.1))(@types/pg@8.15.6)(mssql@11.0.1(@azure/core-client@1.10.1))(pg@8.20.0)(postgres@3.4.6)(zod@4.1.8))
+      git-format-staged:
+        specifier: ^4.0.1
+        version: 4.0.1
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -4087,6 +4090,10 @@ packages:
 
   get-tsconfig@4.13.7:
     resolution: {integrity: sha512-7tN6rFgBlMgpBML5j8typ92BKFi2sFQvIdpAqLA2beia5avZDrMs0FLZiM5etShWq5irVyGcGMEA1jcDaK7A/Q==}
+
+  git-format-staged@4.0.1:
+    resolution: {integrity: sha512-8C9Bw4VtZxa+VNMGh8Og8qG+rH527q+8un1SKpVgo3ZZXTCGI/U9a6oyJAFlfkeYFrOh7rTWWfH1NbL+63Sttw==}
+    hasBin: true
 
   glob-parent@5.1.2:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
@@ -9933,6 +9940,8 @@ snapshots:
   get-tsconfig@4.13.7:
     dependencies:
       resolve-pkg-maps: 1.0.0
+
+  git-format-staged@4.0.1: {}
 
   glob-parent@5.1.2:
     dependencies:
