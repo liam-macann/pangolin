@@ -14,6 +14,7 @@ import {
 	sumDistinct,
 } from 'drizzle-orm';
 import { QueryBuilder } from 'drizzle-orm/pg-core';
+import { notFound, unstable_rethrow } from 'next/navigation';
 
 import { crypto } from '@/lib/encrypt';
 import { invoiceReference } from '@/lib/utils';
@@ -62,6 +63,7 @@ export async function fetchInvoices(
 			})),
 		);
 	} catch (error) {
+		unstable_rethrow(error);
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoices');
 	}
@@ -156,7 +158,7 @@ export async function fetchInvoice(id: string) {
 				.groupBy(taxContribution.name)
 				.orderBy(asc(min(taxContribution.order)));
 
-			if (!res) throw new Error('Invoice not found');
+			if (!res) notFound();
 
 			const vault = await crypto(session.user.id);
 			const inv = {
@@ -171,6 +173,7 @@ export async function fetchInvoice(id: string) {
 			return inv;
 		});
 	} catch (error) {
+		unstable_rethrow(error);
 		console.error('Database Error:', error);
 		throw new Error('Failed to fetch invoice');
 	}

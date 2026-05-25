@@ -1,5 +1,6 @@
 import { countries } from 'countries-list';
 import { type CountryCode } from 'lib-address';
+import { unstable_rethrow } from 'next/navigation';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { type ApiResponse, type RouteResponse } from '@/api';
@@ -31,6 +32,8 @@ export async function GET(
 			},
 		});
 	} catch (error) {
+		unstable_rethrow(error);
+
 		console.error(error);
 
 		const response: ApiResponse<null> = {

@@ -1,3 +1,4 @@
+import { unstable_rethrow } from 'next/navigation';
 import { NextResponse } from 'next/server';
 
 import { type ApiResponse, type RouteResponse } from '@/api';
@@ -19,9 +20,9 @@ export async function GET(
 		const response: ApiResponse<Data> = { success: true, data: client };
 		return NextResponse.json(response);
 	} catch (error) {
+		unstable_rethrow(error);
+
 		console.error(error);
-		// This will likely be rejected auth.
-		// Will eventually be rewritten to separate auth and data fetching.
 		const response: ApiResponse<null> = { success: false, error: 'Failed to fetch client' };
 		return NextResponse.json(response, { status: 500 });
 	}

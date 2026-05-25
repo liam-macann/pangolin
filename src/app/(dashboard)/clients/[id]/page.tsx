@@ -25,11 +25,8 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 	const [client, invoices, config] = await Promise.all([
 		fetchClients(id),
 		fetchInvoicesForClient(id, 5),
-		getUserConfig().catch(() => redirect('/onboarding')),
-	]).catch(err => {
-		console.error(err);
-		notFound();
-	});
+		getUserConfig(),
+	]);
 
 	return (
 		<>

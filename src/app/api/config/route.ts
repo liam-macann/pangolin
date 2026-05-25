@@ -1,3 +1,4 @@
+import { unstable_rethrow } from 'next/navigation';
 import { NextResponse } from 'next/server';
 
 import { getUserConfig } from '@/lib/data';
@@ -13,10 +14,9 @@ export async function GET(): RouteResponse<Data> {
 		const response: ApiResponse<Data> = { success: true, data };
 		return NextResponse.json(response);
 	} catch (error) {
-		console.error(error);
+		unstable_rethrow(error);
 
-		// This will likely be rejected auth, as fetchInvoices throws a redirect.
-		// This will eventually be rewritten to separate auth and data fetching.
+		console.error(error);
 		const response: ApiResponse<null> = { success: false, error: 'Failed to fetch config' };
 		return NextResponse.json(response, { status: 500 });
 	}

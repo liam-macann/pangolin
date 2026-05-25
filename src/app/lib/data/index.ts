@@ -1,5 +1,6 @@
 import { eq, getColumns } from 'drizzle-orm';
 import { cacheLife } from 'next/cache';
+import { notFound, unstable_rethrow } from 'next/navigation';
 import { cache } from 'react';
 
 import { crypto } from '@/lib/encrypt';
@@ -30,16 +31,15 @@ export async function getUser() {
 	const user = await withRLS(async (db, session) =>
 		db.query.users.findFirst({ where: { id: session.user.id } }),
 	);
-	if (!user) throw new Error('User not found');
 
+	if (!user) notFound();
 	return user;
 }
 
 /** Gets the active configuration for the authenticated user */
 export const getUserConfig = cache(async function getUserConfig() {
 	try {
-		const res = await withRLS(async (db, session) => {
-			const vault = await crypto(session.user.id);
+		return await withRLS(async (db, session) => {
 			const res = await db.query.config.findFirst({
 				where: {
 					userId: session.user.id,
@@ -56,8 +56,10 @@ export const getUserConfig = cache(async function getUserConfig() {
 				orderBy: { validFrom: 'desc' },
 			});
 
-			if (!res) throw new Error('Config not found');
+			// If user has no current config
+			if (!res) notFound();
 
+			const vault = await crypto(session.user.id);
 			const decrypted = await vault.decryptObject(res);
 			vault.destroy();
 
@@ -75,12 +77,8 @@ export const getUserConfig = cache(async function getUserConfig() {
 				taxes: decrypted.configTaxes.map(i => i.taxes),
 			};
 		});
-
-		// If user has no current config
-		if (!res) throw new Error('User has no current valid config.');
-
-		return res;
 	} catch (error) {
+		unstable_rethrow(error);
 		console.error('Failed to fetch config:', error);
 		throw new Error('Failed to fetch config.');
 	}

@@ -1,3 +1,4 @@
+import { unstable_rethrow } from 'next/navigation';
 import { type NextRequest, NextResponse } from 'next/server';
 import z from 'zod/v4';
 
@@ -27,10 +28,9 @@ export async function GET(request: NextRequest): RouteResponse<Data> {
 		const response: ApiResponse<Data> = { success: true, data: invoices };
 		return NextResponse.json(response);
 	} catch (error) {
-		console.error(error);
+		unstable_rethrow(error);
 
-		// This will likely be rejected auth, as fetchInvoices throws a redirect.
-		// This will eventually be rewritten to separate auth and data fetching.
+		console.error(error);
 		const response: ApiResponse<null> = { success: false, error: 'Failed to fetch invoices' };
 		return NextResponse.json(response, { status: 500 });
 	}

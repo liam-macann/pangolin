@@ -22,10 +22,7 @@ export default async function Page(_props: {
 		page?: string;
 	}>;
 }) {
-	const [invoices, config] = await Promise.all([
-		fetchInvoices(),
-		getUserConfig().catch(() => redirect('/onboarding')),
-	]);
+	const [invoices, config] = await Promise.all([fetchInvoices(), getUserConfig()]);
 
 	return (
 		<div className='w-full'>
