@@ -2,6 +2,7 @@ import 'server-only';
 
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { betterAuth } from 'better-auth/minimal';
+import { nextCookies } from 'better-auth/next-js';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { headers } from 'next/headers';
 import { cache } from 'react';
@@ -20,6 +21,16 @@ export const auth = betterAuth({
 		usePlural: true,
 	}),
 	// experimental: { joins: true },
+	baseURL: {
+		allowedHosts: [
+			process.env.VERCEL_URL,
+			process.env.VERCEL_BRANCH_URL,
+			process.env.VERCEL_PROJECT_PRODUCTION_URL,
+			process.env.NODE_ENV === 'development' && 'localhost:*',
+		].filter((v): v is string => typeof v === 'string'),
+		protocol: process.env.NODE_ENV === 'development' ? 'http' : 'https',
+		fallback: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+	},
 	errorURL: '/auth/error',
 	onAPIError: { errorURL: '/auth/error' },
 	socialProviders: {
@@ -28,7 +39,10 @@ export const auth = betterAuth({
 			clientSecret: process.env.AUTH_GOOGLE_SECRET as string,
 		},
 	},
+	plugins: [nextCookies()],
 	advanced: {
+		cookiePrefix: 'invoicer',
+		useSecureCookies: true,
 		database: { generateId: false },
 	},
 	session: {

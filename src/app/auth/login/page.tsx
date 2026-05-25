@@ -7,8 +7,8 @@ import { z } from 'zod';
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 
 import { signInSocial } from '@/auth';
+import { errorDetails } from '@/src/app/auth/error/errorDetails';
 
-import { errorDetails } from './../error/page';
 import { LoginButton } from './ui';
 
 export const metadata: Metadata = {
