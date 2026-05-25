@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { forbidden } from 'next/navigation';
+
 import { type Encrypted, isEncrypted } from '@/lib/utils/encrypt';
 
 import { getSession } from '@/auth';
@@ -56,6 +58,7 @@ export async function crypto(uuid: string) {
 		// Explicit about which user DEK is requested
 		if (session?.user.id !== uuid) {
 			destroy();
+			forbidden();
 			throw new Error('Unauthorized');
 		}
 
