@@ -40,7 +40,7 @@ export const getUserConfig = cache(async function getUserConfig() {
 	try {
 		const res = await withRLS(async (db, session) => {
 			const vault = await crypto(session.user.id);
-			const res = db.query.config.findFirst({
+			const res = await db.query.config.findFirst({
 				where: {
 					userId: session.user.id,
 					validTo: { isNull: true },
