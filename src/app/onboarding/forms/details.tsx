@@ -17,7 +17,7 @@ import {
 import { Input } from '@/ui/input';
 
 import { type Session } from '@/auth';
-import { TradingNumberField } from '@/src/app/(dashboard)/(user)/settings/sections/details/trading-number';
+import { TradingNumberField } from '@/src/app/(dashboard)/settings/sections/details/trading-number';
 import { details, useOnboardingStore } from '@/src/app/onboarding/state';
 
 import { Footer } from './../ui';

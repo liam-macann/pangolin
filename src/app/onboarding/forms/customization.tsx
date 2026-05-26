@@ -17,7 +17,7 @@ import {
 } from '@/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group';
 
-import { ColorPalette } from '@/src/app/(dashboard)/(user)/settings/sections/customization';
+import { ColorPalette } from '@/src/app/(dashboard)/settings/sections/customization';
 import { customization, useOnboardingStore } from '@/src/app/onboarding/state';
 
 import { Footer } from './../ui';

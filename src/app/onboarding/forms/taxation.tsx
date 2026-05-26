@@ -16,7 +16,7 @@ import {
 } from '@/ui/field';
 import { Switch } from '@/ui/switch';
 
-import { TaxRateField } from '@/src/app/(dashboard)/(user)/settings/sections/taxation/tax-rates';
+import { TaxRateField } from '@/src/app/(dashboard)/settings/sections/taxation/tax-rates';
 import { taxation, useOnboardingStore } from '@/src/app/onboarding/state';
 import { Footer } from '@/src/app/onboarding/ui';
 
