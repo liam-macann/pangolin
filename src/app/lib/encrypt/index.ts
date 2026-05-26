@@ -89,7 +89,7 @@ export async function crypto(uuid: string) {
 			const seen = new WeakSet();
 
 			async function walker(input: unknown): Promise<unknown> {
-				if (input === null || input === undefined) return input;
+				if (input === null || input === undefined || typeof input === 'function') return input;
 
 				// Input is a Uint8Array; decrypt if encrypted
 				if (input instanceof Uint8Array) return isEncrypted(input) ? _decrypt(input) : input;
@@ -97,6 +97,19 @@ export async function crypto(uuid: string) {
 				if (typeof input === 'object') {
 					if (seen.has(input)) return input;
 					seen.add(input);
+
+					if (
+						input instanceof Date ||
+						input instanceof RegExp ||
+						input instanceof Error ||
+						input instanceof URL ||
+						input instanceof ArrayBuffer ||
+						input instanceof Promise ||
+						// Int32Array, Float64Array, DataView, etc.
+						ArrayBuffer.isView(input)
+					) {
+						return input;
+					}
 
 					// Input is an array
 					if (Array.isArray(input)) return await Promise.all(input.map(walker));

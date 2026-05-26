@@ -9,10 +9,22 @@ export const decoder = new TextDecoder();
 /** @internal */
 export const chacha = managedNonce(xchacha20poly1305);
 
+type Passthrough =
+	| Date
+	| RegExp
+	| Error
+	| URL
+	| ArrayBuffer
+	| ArrayBufferView
+	| ((...args: never) => unknown);
+
 // biome-ignore format: Nested conditions easier to read when flat
 /** @internal */
 export type Decrypted<T> =
 	T extends Encrypted ? string :
+	T extends Passthrough ? T :
+	T extends Promise<infer U> ? Promise<U> :
+	T extends ReadonlyArray<infer U> ? Decrypted<U>[] :
 	T extends Array<infer U> ? Decrypted<U>[] :
 	T extends Set<infer U> ? Set<Decrypted<U>> :
 	T extends Map<infer K, infer U> ? Map<Decrypted<K>, Decrypted<U>> :

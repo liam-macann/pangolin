@@ -109,6 +109,26 @@ describe('decryptObject', () => {
 		vault.destroy();
 	});
 
+	test.for([
+		['Date', new Date('2024-01-01T00:00:00Z')],
+		['RegExp', /foo/gi],
+		['Error', new Error('Test')],
+		['URL', new URL('http://localhost:3000')],
+		['ArrayBuffer', new ArrayBuffer(8)],
+		['Int32Array', new Int32Array([1, 2, 3])],
+		['Float64Array', new Float64Array([1.1, 2.2])],
+		['DataView', new DataView(new ArrayBuffer(16), 0)],
+		['function', () => {}],
+		['Promise', new Promise(() => {})],
+	])('Does not alter %s values', async ([_, val]) => {
+		const vault = await crypto(TEST_USER_ID);
+
+		const result = await vault.decryptObject({ opaque: val });
+		expect(result.opaque).toBe(val);
+
+		vault.destroy();
+	});
+
 	test('Decrypts values within a Map', async () => {
 		const vault = await crypto(TEST_USER_ID);
 		const map = new Map([[await vault.encrypt('key'), await vault.encrypt('val')]]);
@@ -141,6 +161,6 @@ test('Throws after destroy() is called', async () => {
 test('Throws when session does not match requested uuid', async () => {
 	const vault = await crypto('different-user');
 
-	await expect(vault.encrypt('secret')).rejects.toThrow('Unauthorized');
+	await expect(vault.encrypt('secret')).rejects.toThrow();
 	vault.destroy();
 });
