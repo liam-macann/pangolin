@@ -20,10 +20,10 @@ import { Field, FieldError, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 
 interface FormValues extends FieldValues {
-	registrationNumber: z.infer<typeof configSchema.shape.registrationNumber>;
+	tradingNumber: z.infer<typeof configSchema.shape.tradingNumber>;
 }
 
-export function RegistrationNumberField<T extends FormValues>({
+export function TradingNumberField<T extends FormValues>({
 	control: _control,
 	className,
 }: {
@@ -33,7 +33,7 @@ export function RegistrationNumberField<T extends FormValues>({
 	// Necessary, as RHF can't extract typings from the generic
 	const control = _control as unknown as Control<FormValues>;
 
-	const { fields, append, remove, move } = useFieldArray({ control, name: 'registrationNumber' });
+	const { fields, append, remove, move } = useFieldArray({ control, name: 'tradingNumber' });
 	const addLine = () => append({ label: '', value: '' });
 
 	return (
@@ -88,7 +88,7 @@ function Item({
 
 			<Controller
 				control={control}
-				name={`registrationNumber.${index}.label`}
+				name={`tradingNumber.${index}.label`}
 				render={({ field, fieldState }) => (
 					<Field className='gap-0.5' data-invalid={fieldState.invalid}>
 						<Input type='text' placeholder='eg. ABN' {...field} />
@@ -98,7 +98,7 @@ function Item({
 			/>
 			<Controller
 				control={control}
-				name={`registrationNumber.${index}.value`}
+				name={`tradingNumber.${index}.value`}
 				render={({ field, fieldState }) => (
 					<Field className='gap-0.5' data-invalid={fieldState.invalid}>
 						<Input type='text' {...field} className='tabular-nums' />

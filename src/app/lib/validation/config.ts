@@ -64,7 +64,7 @@ export const config = createInsertSchema(configSchema, {
 			}),
 		)
 		.max(10, 'No more than 10 items allowed'),
-	registrationNumber: z
+	tradingNumber: z
 		.array(
 			z.object({
 				label: z.string('Required').min(1, 'Required').max(255, 'Too long'),

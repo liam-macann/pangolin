@@ -50,7 +50,7 @@ export const invoiceDataBuilder = (data?: DeepPartial<InvoicePrintData>): Invoic
 			colorScheme: 'blue',
 			taxRegistration: false,
 			paymentDetails: null,
-			registrationNumber: null,
+			tradingNumber: null,
 			address: null,
 			numberingScheme: 'sequential',
 		},

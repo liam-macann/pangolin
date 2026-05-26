@@ -145,7 +145,7 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 							{
 								alignment: 'right',
 								stack: [
-									{ stack: invoice.config.registrationNumber || [] },
+									{ stack: invoice.config.tradingNumber || [] },
 
 									invoice.config.email ? { text: invoice.config.email } : [],
 									invoice.config.phone ? { text: invoice.config.phone } : [],

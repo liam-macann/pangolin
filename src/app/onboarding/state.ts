@@ -78,7 +78,7 @@ export const useOnboardingStore = create<OnboardingStore>((set, get) => ({
 // Steps
 //
 
-export const details = config.pick({ tradingName: true, email: true, registrationNumber: true });
+export const details = config.pick({ tradingName: true, email: true, tradingNumber: true });
 export const payment = config.pick({ paymentDetails: true });
 export const localization = config.pick({ timezone: true, region: true, currency: true });
 export const customization = config.pick({ numberingScheme: true, colorScheme: true });

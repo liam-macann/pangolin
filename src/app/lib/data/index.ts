@@ -69,7 +69,7 @@ export const getUserConfig = cache(async function getUserConfig() {
 					const [label, value] = v.split(/: (.*)/s);
 					return { label, value };
 				}),
-				registrationNumber: decrypted.registrationNumber?.map(v => {
+				tradingNumber: decrypted.tradingNumber?.map(v => {
 					const [label, value] = v.split(/: (.*)/s);
 					return { label, value };
 				}),

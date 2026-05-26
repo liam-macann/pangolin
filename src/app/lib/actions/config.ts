@@ -33,9 +33,9 @@ export async function updateUserConfig(input: z.infer<typeof configInput>) {
 					? await vault.encrypt(data.paymentDetails.map(v => `${v.label}: ${v.value}`))
 					: null,
 
-			registrationNumber:
-				data.registrationNumber.length > 0
-					? await vault.encrypt(data.registrationNumber.map(v => `${v.label}: ${v.value}`))
+			tradingNumber:
+				data.tradingNumber.length > 0
+					? await vault.encrypt(data.tradingNumber.map(v => `${v.label}: ${v.value}`))
 					: null,
 
 			taxes: data.taxes.map((tax, i) => ({ ...tax, userId: session.user.id, order: i })),

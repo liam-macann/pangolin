@@ -9,7 +9,6 @@ import {
 	numeric,
 	type PgTableExtraConfigValue,
 	pgEnum,
-	pgTable,
 	primaryKey,
 	snakeCase,
 	text,
@@ -125,7 +124,7 @@ export const invoices = snakeCase.table(
 	],
 );
 
-export const invoiceStatus = pgTable(
+export const invoiceStatus = snakeCase.table(
 	'invoice_status',
 	{
 		id: uuid()

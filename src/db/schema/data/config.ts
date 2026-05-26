@@ -127,7 +127,7 @@ export const config = scdTable(
 		addressId: uuid().references(() => address.id),
 		taxRegistration: boolean().notNull(),
 		paymentDetails: encrypted().array(),
-		registrationNumber: encrypted().array(),
+		tradingNumber: encrypted().array(),
 		numberingScheme: numberingScheme().notNull(),
 		colorScheme: colorEnum().notNull().default('blue'),
 	},

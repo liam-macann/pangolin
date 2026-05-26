@@ -51,7 +51,7 @@ const configAdapter = (config: Awaited<ReturnType<typeof getUserConfig>>): FormI
 	email: config.email || '',
 	phone: config.phone || '',
 	header: config.header || '',
-	registrationNumber: config.registrationNumber || [],
+	tradingNumber: config.tradingNumber || [],
 
 	addressEnabled: !!config.address,
 	// Specifying keys necessary to enforce object shape

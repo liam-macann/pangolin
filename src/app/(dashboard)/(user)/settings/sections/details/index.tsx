@@ -22,12 +22,12 @@ import { Switch } from '@/ui/switch';
 import { Textarea } from '@/ui/textarea';
 
 import { PaymentDetailsField } from './payment-details';
-import { RegistrationNumberField } from './registration-number';
+import { TradingNumberField } from './trading-number';
 
 type FormValues = z.input<typeof formSchema>;
 type Fields = Pick<
 	FormValues,
-	'tradingName' | 'email' | 'phone' | 'header' | 'registrationNumber' | 'paymentDetails'
+	'tradingName' | 'email' | 'phone' | 'header' | 'tradingNumber' | 'paymentDetails'
 > & {
 	address: NonNullable<FormValues['address']> | null;
 	addressEnabled: boolean;
@@ -178,7 +178,7 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 			</ConnectForm>
 
 			<Controller
-				name='registrationNumber'
+				name='tradingNumber'
 				control={control}
 				render={({ fieldState }) => (
 					<FieldSet>
@@ -189,7 +189,7 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 							</FieldDescription>
 							{fieldState.error && <FieldError errors={[fieldState.error]} />}
 						</FieldContent>
-						<RegistrationNumberField control={control} className='not-data-empty:-my-2' />
+						<TradingNumberField control={control} className='not-data-empty:-my-2' />
 					</FieldSet>
 				)}
 			/>

@@ -17,7 +17,7 @@ import {
 import { Input } from '@/ui/input';
 
 import { type Session } from '@/auth';
-import { RegistrationNumberField } from '@/src/app/(dashboard)/(user)/settings/sections/details/registration-number';
+import { TradingNumberField } from '@/src/app/(dashboard)/(user)/settings/sections/details/trading-number';
 import { details, useOnboardingStore } from '@/src/app/onboarding/state';
 
 import { Footer } from './../ui';
@@ -38,7 +38,7 @@ export function Details({ session }: { session: Session }) {
 		defaultValues: {
 			tradingName: config.tradingName,
 			email: config.email || session.user.email,
-			registrationNumber: config.registrationNumber || [],
+			tradingNumber: config.tradingNumber || [],
 		},
 	});
 
@@ -77,7 +77,7 @@ export function Details({ session }: { session: Session }) {
 				<hr className='my-2' />
 
 				<Controller
-					name='registrationNumber'
+					name='tradingNumber'
 					control={control}
 					render={({ fieldState }) => (
 						<FieldSet>
@@ -88,7 +88,7 @@ export function Details({ session }: { session: Session }) {
 								</FieldDescription>
 								<FieldError errors={[fieldState.error]} />
 							</FieldContent>
-							<RegistrationNumberField control={control} className='not-data-empty:-my-2' />
+							<TradingNumberField control={control} className='not-data-empty:-my-2' />
 						</FieldSet>
 					)}
 				/>
