@@ -1,0 +1,158 @@
+.popup {
+	/* Height anchored to Base UI measurement */
+	height: var(--drawer-height, auto);
+
+	/* Negatively positioned overflow, that becomes visible during elastic overscroll*/
+	--drawer-bleed-x: 5rem;
+	--drawer-bleed-y: 100lvh;
+
+	/* Scale reduction applied per stacking level*/
+	--stack-step: 0.05;
+	/* How much of nested drawer is visible below the frontmost layer*/
+	--peek: 1rem;
+
+	--stack-progress: clamp(0, var(--drawer-swipe-progress), 1);
+	--stack-peek-offset: max(0px, (var(--nested-drawers) - var(--stack-progress)) * var(--peek));
+	--scale-base: max(0, 1 - var(--nested-drawers) * var(--stack-step));
+	--scale: clamp(0, var(--scale-base) + var(--stack-step) * var(--stack-progress), 1);
+	--shrink: calc(1 - var(--scale));
+
+	/* Transform defined per-direction */
+	transform: var(--drawer-transform);
+	will-change: transform;
+
+	&[data-starting-style],
+	&[data-ending-style] {
+		transform: var(--drawer-closed-transform);
+	}
+
+	/* Scale exit duration to swipe velocity so a fast flick exits quickly */
+	&[data-ending-style],
+	&[data-ending-style][data-swiping],
+	&[data-ending-style][data-nested-drawer-swiping] {
+		transition-duration: calc(var(--drawer-swipe-strength) * var(--tw-duration, 450ms) * 0.88);
+	}
+
+	/* Kill transitions when swiping */
+	&[data-swiping],
+	[data-slot="drawer-portal"]:has(&[data-swiping]) [data-nested-drawer-swiping] {
+		transition-duration: 0ms;
+		user-select: none;
+	}
+}
+
+.popup {
+	/* Vertical drawers */
+
+	&[data-swipe-direction="down"],
+	&[data-swipe-direction="up"] {
+		inset-inline: 0;
+		max-height: calc(85svh + var(--drawer-bleed-y));
+
+		/* Calculates difference between current height and frontmost drawer height */
+		--collapse-delta: calc(
+			var(--drawer-height) -
+			var(--drawer-frontmost-height, var(--drawer-height))
+		);
+
+		--content-height: calc(var(--drawer-height) - var(--drawer-bleed-y));
+		--drawer-transform: translateY(
+				calc(
+					var(--drawer-swipe-movement-y) +
+					var(--dir-sign) *
+					(var(--stack-peek-offset) + var(--shrink) * var(--content-height) - var(--collapse-delta))
+				)
+			)
+			scale(var(--scale));
+
+		--drawer-closed-transform: translate3d(0, calc(-100% * var(--dir-sign)), 0);
+	}
+
+	&[data-swipe-direction="down"] {
+		bottom: 0;
+		margin-top: 6rem;
+		margin-bottom: calc(var(--drawer-bleed-y) * -1);
+		padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--drawer-bleed-y));
+		border-bottom-left-radius: 0;
+		border-bottom-right-radius: 0;
+		transform-origin: 50% calc(100% - var(--drawer-bleed-y));
+
+		--dir-sign: -1;
+	}
+
+	&[data-swipe-direction="up"] {
+		top: 0;
+		margin-bottom: 6rem;
+		margin-top: calc(var(--drawer-bleed-y) * -1);
+		padding-top: calc(env(safe-area-inset-top, 0px) + var(--drawer-bleed-y));
+		border-top-left-radius: 0;
+		border-top-right-radius: 0;
+		transform-origin: 50% var(--drawer-bleed-y);
+
+		--dir-sign: 1;
+	}
+
+	/* Horizontal drawers */
+
+	&[data-swipe-direction="left"],
+	&[data-swipe-direction="right"] {
+		inset-block: 0;
+
+		--width-base: 75%;
+		@media (min-width: 40rem) {
+			--width-base: 24rem;
+		}
+
+		--width: max(0px, var(--width-base));
+		width: calc(var(--width) + var(--drawer-bleed-x));
+
+		--drawer-transform: translateX(
+				calc(
+					var(--drawer-swipe-movement-x) +
+					var(--dir-sign) *
+					(var(--stack-peek-offset) + var(--shrink) * var(--width))
+				)
+			)
+			scale(var(--scale));
+
+		--drawer-closed-transform: translate3d(calc(-100% * var(--dir-sign)), 0, 0);
+	}
+
+	&[data-swipe-direction="left"] {
+		left: 0;
+		margin-left: calc(var(--drawer-bleed-x) * -1);
+		padding-left: calc(env(safe-area-inset-left, 0px) + var(--drawer-bleed-x));
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+		transform-origin: var(--drawer-bleed-x) 50%;
+
+		--dir-sign: 1;
+	}
+
+	&[data-swipe-direction="right"] {
+		right: 0;
+		margin-right: calc(var(--drawer-bleed-x) * -1);
+		padding-right: calc(env(safe-area-inset-right, 0px) + var(--drawer-bleed-x));
+		border-top-right-radius: 0;
+		border-bottom-right-radius: 0;
+		transform-origin: calc(100% - var(--drawer-bleed-x)) 50%;
+
+		--dir-sign: -1;
+	}
+}
+
+.popup {
+	/* Overlay pseudo-element (dims nested drawer content) */
+	&::after {
+		content: "";
+		pointer-events: none;
+		position: absolute;
+		inset: 0;
+		background-color: transparent;
+		transition: background-color 450ms cubic-bezier(0.32, 0.72, 0, 1);
+	}
+
+	&[data-nested-drawer-open]::after {
+		background-color: rgb(0 0 0 / 0.05);
+	}
+}
