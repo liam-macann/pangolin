@@ -18,10 +18,7 @@ export function FeedbackSubmenu({ name, email }: { name: string; email: string }
 
 	return (
 		<DropdownMenuSub>
-			<DropdownMenuSubTrigger>
-				<ChatCircleDotsIcon />
-				Feedback
-			</DropdownMenuSubTrigger>
+			<DropdownMenuSubTrigger>Feedback</DropdownMenuSubTrigger>
 			<DropdownMenuSubContent
 				keepMounted
 				className='flex flex-col gap-1'

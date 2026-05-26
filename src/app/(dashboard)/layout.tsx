@@ -60,17 +60,11 @@ async function AccountMenuContent() {
 							</span>
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							render={
-								<Link href='/settings'>
-									<SlidersHorizontalIcon />
-									Settings
-								</Link>
-							}
-						/>
+						<DropdownMenuItem render={<Link href='/settings'>Settings</Link>} />
 						<FeedbackSubmenu name={session.user.name} email={session.user.email} />
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
+							variant='destructive'
 							onClick={async () => {
 								'use server';
 								await signOut({ headers: await headers() });
