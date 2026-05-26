@@ -44,7 +44,7 @@ export async function fetchInvoices(
 				},
 				with: {
 					status: { columns: { id: false } },
-					clientData: { columns: { name: true, clientId: true } },
+					clientData: { columns: { name: true, organization: true, clientId: true } },
 					config: {
 						columns: {
 							timezone: true,

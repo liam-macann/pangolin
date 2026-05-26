@@ -241,7 +241,7 @@ function BillTo({ control }: { control: Control<z.input<typeof schema>> }) {
 
 	const items = (clientsData || []).map(client => ({
 		value: client.data.scdId,
-		label: client.data.name,
+		label: client.data.name || client.data.organization,
 	}));
 
 	return (

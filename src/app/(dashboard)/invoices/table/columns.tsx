@@ -67,18 +67,18 @@ export const columns: ColumnDef<Invoice>[] = [
 		size: 150,
 	},
 	{
-		accessorFn: row => row.clientData.name,
+		accessorFn: row => row.clientData.name || row.clientData.organization,
 		accessorKey: 'clientData.name',
 		id: 'name',
 		header: ({ column }) => <ToggleHeader column={column} title='Name' />,
 		minSize: 140,
 		size: 200,
 		maxSize: 400,
-		cell: ({ row }) => {
+		cell: ({ row, getValue }) => {
 			const locale = useContext(LocaleContext);
 			return (
 				<div className='grid gap-1 py-1'>
-					<div className='truncate'>{row.original.clientData.name}</div>
+					<div className='truncate'>{getValue('clientData.name')}</div>
 
 					<span className='text-muted-foreground text-xs group-data-void/row:text-muted-foreground/50 md:hidden'>
 						{formatDateToLocal(
