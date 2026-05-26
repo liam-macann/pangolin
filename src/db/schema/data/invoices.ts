@@ -175,9 +175,9 @@ export const invoiceItems = snakeCase.table(
 			.references(() => invoices.id, { onDelete: 'cascade' }),
 
 		/** Invoice entry label */
-		label: varchar({ length: 60 }).notNull(),
+		label: text().notNull(),
 		/** Optional information to describe the item */
-		note: varchar({ length: 60 }),
+		note: text(),
 
 		quantity: numeric({ precision: 8, scale: 2, mode: 'number' }).notNull(),
 		/** Unit by which quantity is measured. Unitless quantities are valid (eg. 3 hours; 6; 1 item) */
