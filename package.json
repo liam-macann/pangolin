@@ -85,6 +85,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.8",
+		"@faker-js/faker": "^10.4.0",
 		"@hookform/devtools": "^4.4.0",
 		"@svgr/webpack": "^8.1.0",
 		"@types/bcrypt": "^5.0.2",
