@@ -190,7 +190,7 @@ function InvoiceItemsInput({
 						key={item.id}
 						id={item.id}
 						className={cn(
-							'grid grid-cols-[1rem_2fr_1.1fr_1fr_2.25rem] py-3',
+							'grid grid-cols-[1rem_2fr_1.1fr_1fr_2.25rem] py-2',
 							'border-border border-y border-t-transparent border-dotted',
 							'group-not-first/sortable-item:group-[[style*="--dnd-translate"]]/sortable-item:group-not-[[style*="--dnd-translate:_0px_0px_0"]]/sortable-item:border-t-border',
 						)}
