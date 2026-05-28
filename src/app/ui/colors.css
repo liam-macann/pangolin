@@ -17,9 +17,8 @@
 	--accent: var(--color-gray-a-3);
 	--accent-foreground: var(--secondary-foreground);
 	--destructive: var(--color-red-11); /** Used for destructive text */
-	--destructive-background: var(
-		--color-red-11
-	); /** Used for destructive background (eg. buttons) */
+	--destructive-background: var(--color-red-9); /** Used for destructive background (eg. buttons) */
+	--destructive-foreground: white; /** Used for text on  destructive background */
 	--border: var(--color-gray-a-6);
 	--input: var(
 		--border
@@ -46,7 +45,7 @@
 		--card: var(--color-gray-2);
 		--primary: var(--color-gray-10);
 		--primary-foreground: white;
-		--destructive-background: var(--color-red-8);
+
 		--chart-1: oklch(0.488 0.243 264.376);
 		--chart-2: oklch(0.696 0.17 162.48);
 		--chart-3: oklch(0.769 0.188 70.08);
@@ -85,6 +84,7 @@
 	--color-accent-foreground: var(--accent-foreground);
 	--color-destructive: var(--destructive);
 	--color-destructive-background: var(--destructive-background);
+	--color-destructive-foreground: var(--destructive-foreground);
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
