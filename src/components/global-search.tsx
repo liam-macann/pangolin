@@ -6,12 +6,13 @@ import {
 	MagnifyingGlassIcon,
 	UserCircleIcon,
 } from '@phosphor-icons/react';
+import { useCommandState } from 'cmdk';
 import { useRouter } from 'next/navigation';
-import { type ComponentProps, useState } from 'react';
+import { type ComponentProps, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { toast } from 'sonner';
 
-import { useClients, useConfig, useInvoices, useKeyPress } from '@/lib/hooks';
+import { useClients, useConfig, useInvoices, useKeyPress, usePrevious } from '@/lib/hooks';
 import { formatCurrency, pluralize } from '@/lib/utils';
 
 import { Button } from '@/ui/button';
@@ -75,6 +76,12 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 	const config = useConfig();
 
 	const router = useRouter();
+	const listRef = useRef<HTMLDivElement>(null);
+
+	const search = useCommandState(state => state.search);
+	const prevSearch = usePrevious(search);
+
+	if (search !== prevSearch) listRef.current?.scrollTo({ top: 0 });
 
 	if (config.isLoading || clients.isLoading)
 		return (
@@ -94,7 +101,7 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 	const { locale } = config.data;
 
 	return (
-		<CommandList>
+		<CommandList ref={listRef}>
 			<CommandEmpty>No results found.</CommandEmpty>
 			{!!clients.data?.length && (
 				<CommandGroup heading='Clients'>
