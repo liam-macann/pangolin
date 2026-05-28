@@ -100,6 +100,7 @@ export default function UserAvatar({
 }: React.ComponentProps<typeof AvatarPrimitive.Root> & { image: string | null }) {
 	return (
 		<Avatar className={cn('!bg-gray-4', className)} {...props}>
+			{/* Append URL as search param to bust cache */}
 			{image && <AvatarImage src={`/api/avatar?user=${image}`} />}
 			<AvatarFallback>
 				<UserIcon className='size-1/2' />
