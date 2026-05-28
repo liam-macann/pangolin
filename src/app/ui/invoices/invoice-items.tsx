@@ -381,7 +381,7 @@ function SortableActions({
 					</Button>
 				}
 			/>
-			<DropdownMenuContent side='right' sideOffset={12}>
+			<DropdownMenuContent side='right' sideOffset={8}>
 				{config.taxRegistration && config.taxes.length > 0 && (
 					<>
 						<DropdownMenuGroup>
