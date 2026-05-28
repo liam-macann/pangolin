@@ -121,7 +121,11 @@ export async function crypto(uuid: string) {
 					// Input is a Map
 					if (input instanceof Map) {
 						const entries = Array.from(input.entries()).map(
-							async ([key, value]) => [await walker(key), await walker(value)] as const,
+							async ([key, value]) =>
+								[
+									key instanceof Promise ? key : await walker(key),
+									value instanceof Promise ? value : await walker(value),
+								] as const,
 						);
 
 						return new Map(await Promise.all(entries));
@@ -131,7 +135,8 @@ export async function crypto(uuid: string) {
 					return Object.fromEntries(
 						await Promise.all(
 							Object.entries(input).map(
-								async ([key, value]) => [key, await walker(value)] as const,
+								async ([key, value]) =>
+									[key, value instanceof Promise ? value : await walker(value)] as const,
 							),
 						),
 					);

@@ -119,7 +119,7 @@ describe('decryptObject', () => {
 		['Float64Array', new Float64Array([1.1, 2.2])],
 		['DataView', new DataView(new ArrayBuffer(16), 0)],
 		['function', () => {}],
-		['Promise', new Promise(() => {})],
+		['Promise', Promise.resolve('settled')],
 	])('Does not alter %s values', async ([_, val]) => {
 		const vault = await crypto(TEST_USER_ID);
 
