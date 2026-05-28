@@ -88,7 +88,7 @@ function SelectContent({
 					data-slot='select-content'
 					data-align-trigger={alignItemWithTrigger}
 					className={cn(
-						'group/select-popup relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 data-closed:overflow-hidden',
+						'group/select-popup relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-border data-closed:overflow-hidden',
 						'duration-150 ease-out-quint data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-safe:data-[ending-style]:scale-95 motion-safe:data-[starting-style]:scale-95 motion-safe:data-[ending-style]:blur-[2px] motion-safe:data-[starting-style]:blur-[2px]',
 						className,
 					)}

@@ -49,7 +49,7 @@ function DrawerContent({ className, children, ...props }: DrawerPrimitive.Popup.
 						'pointer-events-auto fixed z-50 flex overflow-hidden',
 						'data-[swipe-direction=left]:flex-row-reverse',
 						'data-[swipe-direction=down]:flex-col data-[swipe-direction=up]:flex-col-reverse',
-						'rounded-xl bg-popover text-popover-foreground shadow-xl outline-none ring-1 ring-border',
+						'rounded-xl bg-background text-popover-foreground shadow-xl outline-none ring-1 ring-border **:ring-offset-background',
 						'transition-transform duration-450 ease-[cubic-bezier(0.32,0.72,0,1)]',
 						className,
 					)}

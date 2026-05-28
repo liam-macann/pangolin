@@ -45,7 +45,7 @@ function DropdownMenuContent({
 				<MenuPrimitive.Popup
 					data-slot='dropdown-menu-content'
 					className={cn(
-						'z-50 max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-md bg-popover p-1 text-popover-foreground shadow-md outline-none ring-1 ring-foreground/10 data-closed:overflow-hidden',
+						'z-50 max-h-(--available-height) w-(--anchor-width) min-w-32 origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-md bg-popover p-1 text-popover-foreground shadow-md outline-none ring-1 ring-border **:ring-offset-popover data-closed:overflow-hidden',
 						'duration-150 ease-out-quint data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-safe:data-[ending-style]:scale-95 motion-safe:data-[starting-style]:scale-95 motion-safe:data-[ending-style]:blur-[2px] motion-safe:data-[starting-style]:blur-[2px]',
 						className,
 					)}
@@ -142,7 +142,7 @@ function DropdownMenuSubContent({
 		<DropdownMenuContent
 			data-slot='dropdown-menu-sub-content'
 			className={cn(
-				'w-auto min-w-[96px] rounded-md bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-100',
+				'w-auto min-w-[96px] rounded-md bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-border duration-100',
 				className,
 			)}
 			align={align}
@@ -174,7 +174,10 @@ export function DropdownMenuSubContentTextarea({
 					onKeyDown?.(e);
 				}}
 				placeholder={label}
-				className={cn('!ring-0 !border-border inset-shadow-xs w-48 shadow-none', className)}
+				className={cn(
+					'!ring-0 !border-border inset-shadow-xs w-48 rounded-sm shadow-none dark:bg-card',
+					className,
+				)}
 				autoFocus
 				{...props}
 			/>

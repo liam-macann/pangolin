@@ -230,7 +230,7 @@ export function SortableActions({
 		<DropdownMenu>
 			<DropdownMenuTrigger
 				render={
-					<Button size='icon' className='bg-background' variant='outline'>
+					<Button size='icon' variant='outline'>
 						<DotsThreeIcon />
 						<span className='sr-only'>{title}</span>
 					</Button>

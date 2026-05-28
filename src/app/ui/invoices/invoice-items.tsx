@@ -197,8 +197,8 @@ function InvoiceItemsInput({
 					>
 						<SortableHandle className='-translate-x-1' />
 
-						{/* Occlude tax badge on drag overlap */}
-						<div className='pointer-events-none absolute inset-0 -inset-x-3 -z-10 bg-background drop-shadow-none dark:bg-popover' />
+						{/* Outdented to occlude tax badge on drag overlap */}
+						<div className='pointer-events-none absolute inset-0 -inset-x-3 -z-10 bg-background drop-shadow-none' />
 
 						<Controller
 							control={control}
