@@ -46,6 +46,21 @@
 							{
 								"group": ["@/components/ui/**"],
 								"message": "Prefer using @/ui alias directly."
+							},
+
+							{
+								"group": ["@uidotdev/usehooks"],
+								"message": "Prefer importing from @/lib/hooks"
+							},
+
+							{
+								"group": ["usehooks-ts"],
+								"message": "Prefer importing from @/lib/hooks"
+							},
+
+							{
+								"group": ["@/ui/dialog"],
+								"message": "You may want to use @/ui/responsive-dialog"
 							}
 						]
 					}

@@ -24,15 +24,6 @@ import { Alert, AlertTitle } from '@/ui/alert';
 import { Button } from '@/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/ui/collapsible';
 import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from '@/ui/dialog';
-import {
 	Field,
 	FieldError,
 	FieldGroup,
@@ -42,6 +33,15 @@ import {
 	FieldSet,
 } from '@/ui/field';
 import { Input } from '@/ui/input';
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '@/ui/responsive-dialog';
 import { Switch } from '@/ui/switch';
 
 /** Uses local addressEnabled flag to toggle address validation, and drops it after parsing */

@@ -43,8 +43,8 @@ function ScrollArea({
 										to bottom,
 										transparent,
 										rgba(0,0,0,0.32),
-										black ${hasTop ? 'min(30px, var(--scroll-area-overflow-y-start))' : '0px'},
-										black ${hasBottom ? 'calc(100% - min(30px, var(--scroll-area-overflow-y-end, 30px)))' : '100%'},
+										black ${hasTop ? 'min(40px, var(--scroll-area-overflow-y-start))' : '0px'},
+										black ${hasBottom ? 'calc(100% - min(40px, var(--scroll-area-overflow-y-end, 40px)))' : '100%'},
 										rgba(0,0,0,0.32),
 										transparent
 									),
@@ -52,8 +52,8 @@ function ScrollArea({
 										to right,
 										transparent,
 										rgba(0,0,0,0.32),
-										black ${hasLeft ? 'min(30px, var(--scroll-area-overflow-x-start))' : '0px'},
-										black ${hasRight ? 'calc(100% - min(30px, var(--scroll-area-overflow-x-end, 30px)))' : '100%'},
+										black ${hasLeft ? 'min(40px, var(--scroll-area-overflow-x-start))' : '0px'},
+										black ${hasRight ? 'calc(100% - min(40px, var(--scroll-area-overflow-x-end, 40px)))' : '100%'},
 										rgba(0,0,0,0.32),
 										transparent
 									)

@@ -6,6 +6,7 @@ import type * as React from 'react';
 
 import { cn } from '@/lib/utils/index';
 
+// biome-ignore lint/style/noRestrictedImports: This should display as a dialog on mobile
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/ui/dialog';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 

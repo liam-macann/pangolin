@@ -49,7 +49,7 @@ function DrawerContent({ className, children, ...props }: DrawerPrimitive.Popup.
 						'pointer-events-auto fixed z-50 flex overflow-hidden',
 						'data-[swipe-direction=left]:flex-row-reverse',
 						'data-[swipe-direction=down]:flex-col data-[swipe-direction=up]:flex-col-reverse',
-						'rounded-xl bg-popover text-popover-foreground text-sm shadow-xl outline-none ring-1 ring-border',
+						'rounded-xl bg-popover text-popover-foreground shadow-xl outline-none ring-1 ring-border',
 						'transition-transform duration-450 ease-[cubic-bezier(0.32,0.72,0,1)]',
 						className,
 					)}
@@ -69,7 +69,7 @@ function DrawerContent({ className, children, ...props }: DrawerPrimitive.Popup.
 						className='grid min-h-0'
 						render={<ScrollArea fade={{ top: true }} />}
 					>
-						<div className='mx-auto max-w-5xl'>{children}</div>
+						<div className='mx-auto max-w-5xl p-6'>{children}</div>
 					</DrawerPrimitive.Content>
 				</DrawerPrimitive.Popup>
 			</DrawerPrimitive.Viewport>
@@ -82,7 +82,7 @@ function DrawerHeader({ className, ...props }: React.ComponentProps<'div'>) {
 		<div
 			data-slot='drawer-header'
 			className={cn(
-				'flex flex-col gap-0.5 p-4 group-data-[swipe-direction=down]/drawer-content:text-center group-data-[swipe-direction=up]/drawer-content:text-center md:gap-1.5 md:text-left',
+				'mb-10 flex flex-col gap-2 group-data-[swipe-direction=down]/drawer-content:text-center group-data-[swipe-direction=up]/drawer-content:text-center md:gap-1.5 md:text-left',
 				className,
 			)}
 			{...props}
@@ -94,7 +94,7 @@ function DrawerFooter({ className, ...props }: React.ComponentProps<'div'>) {
 	return (
 		<div
 			data-slot='drawer-footer'
-			className={cn('mt-auto flex flex-col gap-2 p-4', className)}
+			className={cn('mt-auto flex flex-col gap-2', className)}
 			{...props}
 		/>
 	);
@@ -104,7 +104,7 @@ function DrawerTitle({ className, ...props }: DrawerPrimitive.Title.Props) {
 	return (
 		<DrawerPrimitive.Title
 			data-slot='drawer-title'
-			className={cn('cn-font-heading font-medium text-foreground', className)}
+			className={cn('font-semibold text-lg leading-none', className)}
 			{...props}
 		/>
 	);

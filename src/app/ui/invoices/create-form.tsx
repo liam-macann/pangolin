@@ -30,16 +30,6 @@ import {
 	ComboboxList,
 } from '@/ui/combobox';
 import {
-	Dialog,
-	DialogClose,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from '@/ui/dialog';
-import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuPortal,
@@ -52,6 +42,16 @@ import {
 } from '@/ui/dropdown-menu';
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/ui/field';
 import { Input } from '@/ui/input';
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from '@/ui/responsive-dialog';
 import { Textarea } from '@/ui/textarea';
 
 import { InvoiceItemsField } from './invoice-items';
