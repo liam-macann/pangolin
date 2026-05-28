@@ -77,6 +77,8 @@ function ComboboxInput({
 						size='icon-xs'
 						variant='ghost'
 						render={<ComboboxTrigger render={<Button variant='ghost' />} />}
+						tabIndex={-1}
+						aria-hidden
 						data-slot='input-group-button'
 						className='group-has-data-[slot=combobox-clear]/input-group:hidden data-pressed:bg-transparent'
 						disabled={disabled}
