@@ -1,4 +1,4 @@
-import { SignOutIcon, SlidersHorizontalIcon } from '@phosphor-icons/react/ssr';
+import { SignOutIcon } from '@phosphor-icons/react/ssr';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';

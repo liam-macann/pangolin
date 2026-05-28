@@ -1,6 +1,5 @@
 import { PlusCircleIcon } from '@phosphor-icons/react/ssr';
 import { type Metadata } from 'next';
-import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
 import { getUserConfig } from '@/lib/data';

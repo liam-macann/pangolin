@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { Button } from '@/ui/button';
 
-import { errorDetails } from './errorDetails';
+import { errorDetails } from './error-details';
 
 const paramsSchema = z.object({
 	error: z.enum(Object.keys(errorDetails)).catch('unknown_error'),

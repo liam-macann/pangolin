@@ -1,6 +1,5 @@
 'use client';
 
-import { ChatCircleDotsIcon } from '@phosphor-icons/react/ssr';
 import * as Sentry from '@sentry/nextjs';
 import { useState } from 'react';
 import { toast } from 'sonner';

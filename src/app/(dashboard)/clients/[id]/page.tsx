@@ -1,7 +1,6 @@
 import { CaretLeftIcon } from '@phosphor-icons/react/ssr';
 import { type Metadata } from 'next';
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
 import { Suspense } from 'react';
 
 import { getUserConfig } from '@/lib/data';

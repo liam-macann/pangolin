@@ -78,7 +78,7 @@ export const columns: ColumnDef<Invoice>[] = [
 			const locale = useContext(LocaleContext);
 			return (
 				<div className='grid gap-1 py-1'>
-					<div className='truncate'>{getValue('clientData.name')}</div>
+					<div className='truncate'>{getValue<string>()}</div>
 
 					<span className='text-muted-foreground text-xs group-data-void/row:text-muted-foreground/50 md:hidden'>
 						{formatDateToLocal(

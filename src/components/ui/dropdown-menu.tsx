@@ -169,7 +169,7 @@ export function DropdownMenuSubContentTextarea({
 				id={id || internalId}
 				onKeyDown={e => {
 					if (e.key !== 'Escape') e.stopPropagation();
-					onKeyDown(e);
+					onKeyDown?.(e);
 				}}
 				placeholder={label}
 				className={cn('!ring-0 !border-border inset-shadow-xs w-48 shadow-none', className)}
