@@ -1,12 +1,17 @@
 'use client';
 
-import { ArrowElbowDownLeftIcon, MagnifyingGlassIcon, UserCircleIcon } from '@phosphor-icons/react';
+import {
+	ArrowElbowDownLeftIcon,
+	BuildingOfficeIcon,
+	MagnifyingGlassIcon,
+	UserCircleIcon,
+} from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
 import { type ComponentProps, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { toast } from 'sonner';
 
-import { useClients, useConfig, useInvoices, useIsAppleDevice, useKeyPress } from '@/lib/hooks';
+import { useClients, useConfig, useInvoices, useKeyPress } from '@/lib/hooks';
 import { formatCurrency, pluralize } from '@/lib/utils';
 
 import { Button } from '@/ui/button';
@@ -91,20 +96,29 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 	return (
 		<CommandList>
 			<CommandEmpty>No results found.</CommandEmpty>
-			{clients.data?.length && (
+			{!!clients.data?.length && (
 				<CommandGroup heading='Clients'>
 					{clients.data?.map(client => (
 						<CommandItem
 							key={client.id}
+							value={client.id}
+							keywords={[client.data.name, client.data.organization].filter(
+								(v): v is string => typeof v === 'string',
+							)}
 							className='*:last:hidden'
 							onSelect={() => {
 								router.push(`/clients/${client.id}`);
 								onOpenChange(false);
 							}}
 						>
-							<UserCircleIcon className='-translate-x-px text-muted-foreground' />
+							{client.data.name ? (
+								<UserCircleIcon className='-translate-x-px text-muted-foreground' />
+							) : (
+								<BuildingOfficeIcon className='text-muted-foreground' />
+							)}
+
 							<div className='flex w-full gap-2'>
-								<span>{client.data.name}</span>
+								<span>{client.data.name || client.data.organization}</span>
 								<span className='grow text-right text-muted-foreground'>
 									{`${client.invoiceCount || 'No'} ${pluralize(client.invoiceCount, 'invoice', 'invoices')}`}
 								</span>
@@ -115,18 +129,24 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 			)}
 
 			{/* Allow invoices to populate after clients appear */}
-			{invoices.data?.length && (
+			{!!invoices.data?.length && (
 				<CommandGroup heading='Invoices'>
 					{invoices.data?.map(invoice => (
 						<CommandItem
 							key={invoice.id}
+							value={invoice.id}
+							keywords={[
+								invoice.clientData.name,
+								invoice.clientData.organization,
+								formatCurrency(invoice.grossTotal, invoice.config.currency, locale),
+							].filter((v): v is string => typeof v === 'string')}
 							className='flex w-full items-baseline gap-2 *:last:hidden'
 							onSelect={() => router.push(`/invoices/${invoice.id}`)}
 						>
 							<span className='font-medium text-xs tabular-nums group-not-data-selected/command-item:text-muted-foreground'>
 								{invoice.reference}
 							</span>
-							<span>{invoice.clientData.name}</span>
+							<span>{invoice.clientData.name || invoice.clientData.organization}</span>
 							<span className='grow text-right text-muted-foreground'>
 								{formatCurrency(invoice.grossTotal, invoice.config.currency, locale)}
 							</span>
