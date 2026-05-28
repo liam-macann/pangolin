@@ -5,6 +5,7 @@ import { type Metadata } from 'next';
 import { Provider } from 'react-wrap-balancer';
 import { SWRConfig } from 'swr';
 
+import { DisableThemeTransitions } from '@/components/disable-theme-transitions';
 import { Toaster } from '@/ui/sonner';
 import { TooltipProvider } from '@/ui/tooltip';
 
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 				<SWRConfig>
 					<MotionConfig reducedMotion='user'>
 						<body className='bg-background font-sans antialiased'>
+							<DisableThemeTransitions />
 							<Provider>
 								{children}
 								<Toaster />
