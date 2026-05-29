@@ -39,6 +39,15 @@ export const invoiceReference = (
 	}
 };
 
+// Mulberry32
+/** Deterministic PRNG (SSR-safe) */
+export function seededRandom(seed: number) {
+	let t = seed + 0x6d2b79f5;
+	t = Math.imul(t ^ (t >>> 15), t | 1);
+	t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+	return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
 // Localisation is irrelevant as we only target English
 const pluralRules = new Intl.PluralRules('en-GB');
 /** Accepts a number, and returns either singular or plural form */
