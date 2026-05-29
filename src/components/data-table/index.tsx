@@ -118,7 +118,10 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		 * getRowAttr={row => ({ 'data-void': row.isVoid })}
 		 * ```
 		 */
-		getRowAttr?: (row: TData) => Omit<
+		getRowAttr?: (
+			row: TData,
+			i: number,
+		) => Omit<
 			DetailedHTMLProps<HTMLAttributes<HTMLTableRowElement>, HTMLTableRowElement> & {
 				[key: `data-${string}`]: string | boolean | number | undefined;
 			},
@@ -132,7 +135,10 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		 * getCellAttr={cell => ({ 'data-void': row.isVoid })}
 		 * ```
 		 */
-		getCellAttr?: (cell: Cell<TData, unknown>) => Omit<
+		getCellAttr?: (
+			cell: Cell<TData, unknown>,
+			i: number,
+		) => Omit<
 			DetailedHTMLProps<HTMLAttributes<HTMLTableCellElement>, HTMLTableCellElement> & {
 				[key: `data-${string}`]: string | boolean | number | undefined;
 			},
@@ -140,88 +146,88 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		>;
 	}
 
-	function Content({ getRowAttr, getCellAttr }: DataTableProps) {
+	function Content({
+		getRowAttr,
+		getCellAttr,
+		className,
+		...props
+	}: DataTableProps & ComponentProps<typeof Table>) {
 		const table = useContext(TableContext);
 		if (table === null) throw new Error('Content must be used within a DataTable.Root');
 
 		return (
-			<div>
-				<div className='overflow-hidden'>
-					<Table>
-						<TableHeader className='border-y-2'>
-							{table.getHeaderGroups().map(headerGroup => (
-								<TableRow key={headerGroup.id}>
-									{headerGroup.headers.map(header => {
-										return (
-											<TableHead
-												style={{
-													width: `${header.getSize()}px`,
-													minWidth: `${header.column.columnDef.minSize}px`,
-													maxWidth: `${header.column.columnDef.maxSize}px`,
-												}}
-												key={header.id}
-												className={header.column.columnDef.meta?.className}
-											>
-												{header.isPlaceholder
-													? null
-													: flexRender(header.column.columnDef.header, header.getContext())}
-											</TableHead>
-										);
-									})}
-								</TableRow>
-							))}
-						</TableHeader>
-						<TableBody>
-							{table.getRowModel().rows?.length ? (
-								table.getRowModel().rows.map(row => (
-									<TableRow
-										key={row.id}
-										data-state={row.getIsSelected() && 'selected'}
-										{...getRowAttr?.(row.original)}
+			<Table className={cn('overflow-hidden', className)} {...props}>
+				<TableHeader>
+					{table.getHeaderGroups().map(headerGroup => (
+						<TableRow key={headerGroup.id}>
+							{headerGroup.headers.map(header => {
+								return (
+									<TableHead
+										style={{
+											width: `${header.getSize()}px`,
+											minWidth: `${header.column.columnDef.minSize}px`,
+											maxWidth: `${header.column.columnDef.maxSize}px`,
+										}}
+										key={header.id}
+										className={header.column.columnDef.meta?.className}
 									>
-										{row.getVisibleCells().map(cell => {
-											const props = getCellAttr?.(cell);
+										{header.isPlaceholder
+											? null
+											: flexRender(header.column.columnDef.header, header.getContext())}
+									</TableHead>
+								);
+							})}
+						</TableRow>
+					))}
+				</TableHeader>
+				<TableBody>
+					{table.getRowModel().rows?.length ? (
+						table.getRowModel().rows.map((row, i) => (
+							<TableRow
+								key={row.id}
+								data-state={row.getIsSelected() && 'selected'}
+								{...getRowAttr?.(row.original, i)}
+							>
+								{row.getVisibleCells().map((cell, i) => {
+									const props = getCellAttr?.(cell, i);
 
-											return (
-												<TableCell
-													key={cell.id}
-													{...props}
-													className={cn(props?.className, cell.column.columnDef.meta?.className)}
-												>
-													{flexRender(cell.column.columnDef.cell, cell.getContext())}
-												</TableCell>
-											);
-										})}
-									</TableRow>
-								))
-							) : (
-								<TableRow>
-									<TableCell
-										colSpan={columns.length}
-										className='py-12 text-center text-base text-muted-foreground'
-									>
-										<div className='flex flex-col items-center gap-3'>
-											<span>No results</span>
-											{(table.getState().globalFilter ||
-												table.getState().columnFilters.length > 0) && (
-												<Button
-													variant='secondary'
-													onClick={() => {
-														table.resetColumnFilters();
-														table.setGlobalFilter('');
-													}}
-												>
-													Clear filters
-												</Button>
-											)}
-										</div>
-									</TableCell>
-								</TableRow>
-							)}
-						</TableBody>
-					</Table>
-				</div>
-			</div>
+									return (
+										<TableCell
+											key={cell.id}
+											{...props}
+											className={cn(props?.className, cell.column.columnDef.meta?.className)}
+										>
+											{flexRender(cell.column.columnDef.cell, cell.getContext())}
+										</TableCell>
+									);
+								})}
+							</TableRow>
+						))
+					) : (
+						<TableRow>
+							<TableCell
+								colSpan={columns.length}
+								className='py-12 text-center text-base text-muted-foreground'
+							>
+								<div className='flex flex-col items-center gap-3'>
+									<span>No results</span>
+									{(table.getState().globalFilter || table.getState().columnFilters.length > 0) && (
+										<Button
+											variant='secondary'
+											onClick={() => {
+												table.resetColumnFilters();
+												table.setGlobalFilter('');
+											}}
+										>
+											Clear filters
+										</Button>
+									)}
+								</div>
+							</TableCell>
+						</TableRow>
+					)}
+				</TableBody>
+			</Table>
 		);
 	}
 

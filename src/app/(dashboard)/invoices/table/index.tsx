@@ -43,25 +43,43 @@ export function createInvoiceTable<TValue>(cols: ColumnDef<Invoice, TValue>[] = 
 		</LocaleContext>
 	);
 
-	const Content = (props: ComponentProps<typeof FactoryDataTable.Content>) => (
+	const Content = ({
+		getRowAttr,
+		getCellAttr,
+		...props
+	}: ComponentProps<typeof FactoryDataTable.Content>) => (
 		<FactoryDataTable.Content
-			getRowAttr={row => ({
-				'data-void': row.status.isVoid || undefined,
-				style: row.status.isVoid
-					? {
-							background: `repeating-linear-gradient(
-                               45deg,
-                               transparent,
-                               transparent 2px,
-                               color-mix(var(--color-gray-3) 50%, transparent) 2px,
-                               color-mix(var(--color-gray-3) 50%, transparent) 4px
-                          )`,
-							backgroundSize: 'calc(4px * sqrt(2))',
-						}
-					: undefined,
-				className: 'data-void:text-foreground/50 group/row align-baseline',
-			})}
-			getCellAttr={() => ({ className: cn('align-baseline') })}
+			getRowAttr={(row, ...args) => {
+				const overrides = getRowAttr?.(row, ...args);
+				return {
+					'data-void': row.status.isVoid || undefined,
+					...overrides,
+
+					className: cn(
+						'group/row align-baseline data-void:text-foreground/50',
+						overrides?.className,
+					),
+
+					style: {
+						backgroundImage: row.status.isVoid
+							? `repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 2px,
+                    color-mix(var(--color-gray-3) 50%, transparent) 2px,
+                    color-mix(var(--color-gray-3) 50%, transparent) 4px
+                )`
+							: '',
+						backgroundSize: row.status.isVoid ? 'calc(4px * sqrt(2))' : '',
+
+						...overrides?.style,
+					},
+				};
+			}}
+			getCellAttr={(...args) => {
+				const overrides = getCellAttr?.(...args);
+				return { ...overrides, className: cn('align-baseline', overrides?.className) };
+			}}
 			{...props}
 		/>
 	);
