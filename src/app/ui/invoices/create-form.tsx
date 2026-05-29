@@ -14,7 +14,8 @@ import { type z } from 'zod';
 import { createInvoice } from '@/lib/actions/invoice';
 import { type getUserConfig } from '@/lib/data';
 import { useClients, useInvoices } from '@/lib/hooks';
-import { cn, formatDateToLocal, type Prettify } from '@/lib/utils';
+import { cn, type Prettify } from '@/lib/utils';
+import { formatDate } from '@/lib/utils/date';
 import { invoice as schema } from '@/lib/validation/invoice';
 
 import { InfoTip } from '@/components/info';
@@ -333,7 +334,7 @@ function IssueDateSubmenu({
 							<span>Date of issue</span>
 							{field.value && (
 								<span className='text-muted-foreground text-xs'>
-									{formatDateToLocal(new TZDate(field.value, timezone), false, locale)}
+									{formatDate(new TZDate(field.value, timezone), { locale })}
 								</span>
 							)}
 							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
@@ -379,7 +380,7 @@ function DueDateSubmenu({
 						<div className='grid'>
 							<span>Due date</span>
 							<span className='text-muted-foreground text-xs'>
-								{formatDateToLocal(new TZDate(field.value, timezone), false, locale)}
+								{formatDate(new TZDate(field.value, timezone), { locale })}
 							</span>
 							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
 						</div>

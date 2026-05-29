@@ -7,7 +7,8 @@ import { type ComponentProps, useContext } from 'react';
 import { useSWRConfig } from 'swr';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
-import { cn, type ElementType, formatCurrency, formatDateToLocal } from '@/lib/utils';
+import { cn, type ElementType, formatCurrency } from '@/lib/utils';
+import { formatDate } from '@/lib/utils/date';
 
 import { ToggleHeader } from '@/components/data-table/column-header';
 
@@ -81,12 +82,10 @@ export const columns: ColumnDef<Invoice>[] = [
 					<div className='truncate'>{getValue<string>()}</div>
 
 					<span className='text-muted-foreground text-xs group-data-void/row:text-muted-foreground/50 md:hidden'>
-						{formatDateToLocal(
-							new TZDate(row.original.issuedAt, row.original.config.timezone),
-							false,
+						{formatDate(new TZDate(row.original.issuedAt, row.original.config.timezone), {
 							locale,
-							{ printCurrentYear: false },
-						)}
+							printCurrentYear: false,
+						})}
 					</span>
 
 					<div className='mt-2 sm:hidden'>
@@ -115,12 +114,10 @@ export const columns: ColumnDef<Invoice>[] = [
 			const locale = useContext(LocaleContext);
 			return (
 				<span className='text-muted-foreground group-data-void/row:text-muted-foreground/50'>
-					{formatDateToLocal(
-						new TZDate(row.original.issuedAt, row.original.config.timezone),
-						false,
+					{formatDate(row.original.issuedAt, row.original.config.timezone, {
 						locale,
-						{ printCurrentYear: false },
-					)}
+						printCurrentYear: false,
+					})}
 				</span>
 			);
 		},

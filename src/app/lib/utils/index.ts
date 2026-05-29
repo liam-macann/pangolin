@@ -1,6 +1,3 @@
-import { TZDate } from '@date-fns/tz';
-import { intlFormat } from 'date-fns';
-
 import { type invoices, type numberingScheme } from '@/db/schema';
 
 import { type ElementType } from './type';
@@ -40,34 +37,6 @@ export const invoiceReference = (
 		default:
 			throw new Error(`Undefined scheme: ${scheme}`);
 	}
-};
-
-export const formatDateToLocal = (
-	date: TZDate,
-	time: boolean,
-	locale: string,
-	options: {
-		/** Whether to include or omit the year when the printed date occurs this year */
-		printCurrentYear?: boolean;
-	} = { printCurrentYear: true },
-) => {
-	const tz = date.timeZone;
-	if (!tz) throw new Error('Timezone is required. Ensure date is a TZDate');
-
-	const isDateThisYear = date.getFullYear() === new TZDate(new Date(), tz).getFullYear();
-
-	return intlFormat(
-		date,
-		{
-			timeZone: tz,
-			day: 'numeric',
-			month: 'short',
-			year: options.printCurrentYear || !isDateThisYear ? 'numeric' : undefined,
-			hour: time ? 'numeric' : undefined,
-			minute: time ? 'numeric' : undefined,
-		},
-		{ locale },
-	);
 };
 
 // Localisation is irrelevant as we only target English

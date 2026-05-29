@@ -2,8 +2,9 @@ import { TZDate } from '@date-fns/tz';
 import { type TDocumentDefinitions } from 'pdfmake/interfaces';
 
 import { type fetchInvoice } from '@/lib/data/invoice';
-import { type ElementType, formatDateToLocal } from '@/lib/utils';
+import { type ElementType } from '@/lib/utils';
 import { formatAddress } from '@/lib/utils/address';
+import { formatDate } from '@/lib/utils/date';
 
 import schemes from '@/src/app/ui/color-schemes';
 
@@ -98,7 +99,7 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 								verticalAlignment: 'bottom',
 							},
 							{
-								text: `Issued ${formatDateToLocal(new TZDate(invoice.issuedAt, invoice.config.timezone), false, invoice.config.locale)}`,
+								text: `Issued ${formatDate(new TZDate(invoice.issuedAt, invoice.config.timezone), { locale: invoice.config.locale })}`,
 								alignment: 'right',
 								verticalAlignment: 'bottom',
 							},
@@ -198,7 +199,7 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 						[
 							{ text: invoice.title || '', bold: true },
 							{
-								text: `Due ${formatDateToLocal(new TZDate(invoice.dueAt, invoice.config.timezone), false, invoice.config.locale)}`,
+								text: `Due ${formatDate(new TZDate(invoice.dueAt, invoice.config.timezone), { locale: invoice.config.locale })}`,
 								alignment: 'right',
 								bold: true,
 							},
