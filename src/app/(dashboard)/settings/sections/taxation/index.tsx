@@ -65,7 +65,7 @@ export function Taxation<T extends Fields>({ control: _control }: { control: Con
 				name='taxes'
 				control={control}
 				render={({ fieldState }) => (
-					<FieldSet className='-mb-4 has-data-[slot="sortable-empty"]:ml-8'>
+					<FieldSet className='-mb-4 has-data-[slot="empty"]:ml-8'>
 						<FieldContent>
 							<FieldLegend className='flex items-center gap-2'>
 								Tax rates

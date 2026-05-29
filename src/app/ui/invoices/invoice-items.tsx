@@ -38,6 +38,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
+import { EmptyDescription } from '@/ui/empty';
 import { Field, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/ui/input-group';
@@ -315,10 +316,10 @@ function InvoiceItemsInput({
 				<FieldError className='mt-3 ml-7 group-data-[empty]/sortable:hidden' errors={[errors]} />
 			)}
 
-			<SortableEmpty className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 max-sm:flex-col'>
+			<SortableEmpty>
 				<div className='flex flex-col gap-1'>
-					<p className='font-medium text-muted-foreground text-sm'>Add an invoice item</p>
-					{errors && <FieldError className='' errors={[errors]} />}
+					<EmptyDescription className='font-medium'>Add an invoice item</EmptyDescription>
+					<FieldError errors={[errors]} />
 				</div>
 				<Button onClick={addItem}>Add Item</Button>
 			</SortableEmpty>

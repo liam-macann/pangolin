@@ -27,6 +27,7 @@ import {
 } from '@/ui/autocomplete';
 import { Button } from '@/ui/button';
 import { DropdownMenuItem } from '@/ui/dropdown-menu';
+import { EmptyDescription } from '@/ui/empty';
 import { Field, FieldError, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 
@@ -53,8 +54,8 @@ export function PaymentDetailsField<T extends FormValues>({
 			items={fields}
 			onReorder={({ initialIndex, index }) => move(initialIndex, index)}
 		>
-			<SortableEmpty className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
-				<p className='font-medium text-muted-foreground text-sm'>No payment details provided</p>
+			<SortableEmpty>
+				<EmptyDescription className='font-medium'>No payment details provided</EmptyDescription>
 				<Button onClick={addLine}>Add Details</Button>
 			</SortableEmpty>
 

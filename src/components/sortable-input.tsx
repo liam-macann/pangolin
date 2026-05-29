@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/ui/dropdown-menu';
 
+import { Empty } from './ui/empty';
+
 type Item = { id: string };
 const ItemsContext = createContext<Item[]>([]);
 
@@ -80,9 +82,12 @@ export function SortableList({
 /** Visible when there are no items in the sortable list */
 export function SortableEmpty({ className, ...props }: React.ComponentProps<'div'>) {
 	return (
-		<div
-			data-slot='sortable-empty'
-			className={cn('group-not-data-[empty]/sortable:hidden', className)}
+		<Empty
+			data-slot='empty'
+			className={cn(
+				'flex flex-row justify-between border p-6 py-7 group-not-data-[empty]/sortable:hidden',
+				className,
+			)}
 			{...props}
 		/>
 	);

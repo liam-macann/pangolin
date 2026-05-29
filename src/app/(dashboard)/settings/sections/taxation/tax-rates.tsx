@@ -29,6 +29,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 import { Button } from '@/ui/button';
 import { DropdownMenuItem } from '@/ui/dropdown-menu';
+import { EmptyDescription } from '@/ui/empty';
 import { Field, FieldError, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
@@ -70,8 +71,8 @@ export function TaxRateField<T extends Fields>({
 				{(tax, i) => <TaxRow key={tax.id} tax={tax} index={i} actions={actions} />}
 			</SortableList>
 
-			<SortableEmpty className='flex items-center justify-between gap-2 rounded-lg border border-dotted p-6 py-7'>
-				<p className='font-medium text-muted-foreground text-sm'>No taxes configured</p>
+			<SortableEmpty>
+				<EmptyDescription className='font-medium'>No taxes configured</EmptyDescription>
 				<Button onClick={addTax}>Add Tax</Button>
 			</SortableEmpty>
 
