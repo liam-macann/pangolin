@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsThreeIcon, WarningIcon } from '@phosphor-icons/react';
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
 import { addDays } from 'date-fns';
-import { type ReactElement, useState } from 'react';
+import { type ComponentProps, type ReactElement, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { type Control, Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -60,6 +60,7 @@ import { InvoiceItemsField } from './invoice-items';
 export function CreateInvoiceDialog({
 	children,
 	config,
+	...props
 }: {
 	children: ReactElement;
 	config: Prettify<
@@ -68,7 +69,7 @@ export function CreateInvoiceDialog({
 			'id' | 'currency' | 'locale' | 'timezone' | 'taxes' | 'taxRegistration'
 		>
 	>;
-}) {
+} & ComponentProps<typeof Dialog>) {
 	const [open, setOpen] = useState(false);
 	const [formVersion, setFormVersion] = useState(0); // Reset counter
 	const { mutate } = useInvoices();
@@ -87,7 +88,7 @@ export function CreateInvoiceDialog({
 	});
 
 	return (
-		<Dialog open={open} onOpenChange={setOpen}>
+		<Dialog open={open} onOpenChange={setOpen} {...props}>
 			<DialogTrigger render={children} />
 
 			<DialogContent>

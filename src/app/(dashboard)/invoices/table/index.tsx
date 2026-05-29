@@ -6,11 +6,13 @@ import { toMerged } from 'es-toolkit';
 import { type ComponentProps, createContext, useContext } from 'react';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
+import { type getUserConfig } from '@/lib/data';
 import { cn, type ElementType } from '@/lib/utils';
 
 import { createDataTable } from '@/components/data-table';
 
 import { columns } from './columns';
+import { usePlaceholderInvoices } from './placeholder-data';
 
 export const LocaleContext = createContext<string>('en-AU');
 export const DEFAULT_SORT: SortingState = [{ id: 'reference', desc: true }];
@@ -110,5 +112,30 @@ export function createInvoiceTable<TValue>(cols: ColumnDef<Invoice, TValue>[] = 
 
 export const DataTable = createInvoiceTable(columns);
 export default DataTable;
+
+type Config = Awaited<ReturnType<typeof getUserConfig>>;
+
+export function PlaceholderTable({ config, count }: { config: Config; count?: number }) {
+	const data = usePlaceholderInvoices(config, count);
+	return (
+		<DataTable.Root data={data} locale={config.locale}>
+			<DataTable.Content
+				inert
+				className='pointer-events-none border-separate border-spacing-0 select-none opacity-40'
+				getRowAttr={(_, i) => ({
+					style: {
+						scale: (0.98 ** i).toFixed(2),
+						opacity: (0.8 ** i).toFixed(2),
+						translate: `0 -${1.1 ** i - 1}rem`,
+						// filter: `blur(${1.06 ** i - 1}px)`,
+					},
+				})}
+			/>
+		</DataTable.Root>
+	);
+}
+
+export const InvoiceTableRoot = DataTable.Root;
+export const InvoiceTableContent = DataTable.Content;
 
 export { columns } from './columns';

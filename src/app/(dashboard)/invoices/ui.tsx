@@ -1,14 +1,29 @@
 'use client';
 
+import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
+import { PlusCircleIcon, ReceiptIcon } from '@phosphor-icons/react';
 import { type SortingState } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
-import { type JSX, useRef, useState } from 'react';
+import { type ComponentProps, useRef, useState } from 'react';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
-import { useInvoices } from '@/lib/hooks';
-import { type ElementType } from '@/lib/utils';
+import { type getUserConfig } from '@/lib/data';
+import { useConfig, useInvoices } from '@/lib/hooks';
+import { cn, type ElementType } from '@/lib/utils';
 
-import InvoiceTable, { DEFAULT_SORT } from './table';
+import { Button } from '@/ui/button';
+import {
+	Empty,
+	EmptyContent,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from '@/ui/empty';
+
+import { CreateInvoiceDialog } from '@/src/app/ui/invoices/create-form';
+
+import InvoiceTable, { DEFAULT_SORT, PlaceholderTable } from './table';
 
 type Invoice = ElementType<InvoiceData>;
 
@@ -43,17 +58,19 @@ function serializeSortParam(sorting: SortingState): string | null {
 	return serialized === buildSortString(DEFAULT_SORT) ? null : serialized;
 }
 
-export default function Table({
-	header,
+export function Table({
 	initial,
-	locale,
+	initialConfig,
 }: {
-	header?: JSX.Element;
 	initial?: Invoice[];
-	locale: string;
+	initialConfig: Awaited<ReturnType<typeof getUserConfig>>;
 }) {
+	'use no memo';
+
+	const { data: config } = useConfig(initialConfig, { suspense: true });
+	const { data: invoices } = useInvoices(initial, { suspense: true });
+
 	const searchParams = useSearchParams();
-	const { data } = useInvoices(initial, { suspense: true });
 
 	// Params are used to set initial state, not as controlled table state.
 	// Allowing Tanstack to control state internally greatly improves performance, compared to reading URL.
@@ -91,8 +108,8 @@ export default function Table({
 	return (
 		<InvoiceTable.Root
 			key={resetCount}
-			data={data}
-			locale={locale}
+			data={invoices}
+			locale={config.locale}
 			initialState={{
 				sorting: parseSortParam(searchParams.get('sort')),
 				pagination: { pageIndex: pageParam > 1 ? pageParam - 1 : 0 },
@@ -103,15 +120,104 @@ export default function Table({
 			onSortingChange={next => updateParams({ sort: serializeSortParam(next) })}
 			onPageIndexChange={index => updateParams({ page: index === 0 ? null : String(index + 1) })}
 		>
+			<TableContent data={invoices} config={config} />
+		</InvoiceTable.Root>
+	);
+}
+
+function TableContent({
+	data,
+	config,
+}: {
+	data: Invoice[];
+	config: Awaited<ReturnType<typeof getUserConfig>>;
+}) {
+	'use no memo';
+
+	return (
+		<>
 			<div className='my-4 mb-6 flex items-center justify-between gap-3 md:mt-8'>
-				{/** biome-ignore lint/complexity/noUselessFragments: Necessary for React to see one child to prevent need for keys */}
-				<>{header}</>
+				<Dialog />
 				<InvoiceTable.Search className='h-10 grow shadow-none' />
 			</div>
-			<InvoiceTable.Content />
-			<div className='flex items-center justify-end gap-2 py-4'>
-				<InvoiceTable.PaginationControls />
+
+			{data.length > 0 ? (
+				<>
+					<InvoiceTable.Content />
+					<div className='flex items-center justify-end gap-2 py-4'>
+						<InvoiceTable.PaginationControls />
+					</div>
+				</>
+			) : (
+				<EmptyState config={config} />
+			)}
+		</>
+	);
+}
+
+const createDialog = DialogPrimitive.createHandle();
+
+function EmptyState({ config }: { config: Awaited<ReturnType<typeof getUserConfig>> }) {
+	return (
+		<>
+			<div className='scrim-b-24 scrim-background max-h-44 overflow-clip'>
+				<PlaceholderTable config={config} />
 			</div>
-		</InvoiceTable.Root>
+
+			<Empty
+				className='relative inset-shadow-sm z-10 border border-solid bg-background py-24'
+				style={{
+					backgroundImage: `
+  					linear-gradient(
+              120deg,
+              var(--color-background) 40%,
+              transparent 90%
+            ),
+            repeating-linear-gradient(
+              45deg,
+              transparent,
+              transparent 2px,
+              color-mix(var(--color-gray-3) 50%, transparent) 2px,
+              color-mix(var(--color-gray-3) 50%, transparent) 4px
+            )`,
+					backgroundSize: 'calc(4px * sqrt(2))',
+				}}
+			>
+				<EmptyHeader>
+					<EmptyMedia variant='icon'>
+						<ReceiptIcon />
+					</EmptyMedia>
+					<EmptyTitle>Your invoices will appear here</EmptyTitle>
+					<EmptyDescription>Create, view, and filter all invoices from this page.</EmptyDescription>
+				</EmptyHeader>
+				<EmptyContent>
+					<Button variant='primary' render={<DialogPrimitive.Trigger handle={createDialog} />}>
+						Create invoice
+					</Button>
+				</EmptyContent>
+			</Empty>
+		</>
+	);
+}
+
+function Dialog() {
+	const { data, isLoading, error } = useConfig();
+
+	function Trigger(props: ComponentProps<typeof Button>) {
+		return (
+			<Button variant='outline' size='lg' {...props}>
+				<PlusCircleIcon />
+				<span className='hidden sm:block'>Create invoice</span>
+			</Button>
+		);
+	}
+
+	return data ? (
+		<CreateInvoiceDialog handle={createDialog} config={data}>
+			<Trigger />
+		</CreateInvoiceDialog>
+	) : (
+		// Does not use loading prop, as we don't want disabled styles
+		<Trigger className={cn(isLoading && 'cursor-progress')} disabled={!!error} />
 	);
 }
