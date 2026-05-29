@@ -136,7 +136,7 @@ function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
 		<ComboboxPrimitive.List
 			data-slot='combobox-list'
 			className={cn(
-				'max-h-[min(calc(--spacing(72)---spacing(9)),calc(var(--available-height)---spacing(9)))] scroll-py-1 overflow-auto overscroll-contain p-1 has-data-[slot="combobox-label"]:pt-0 data-empty:p-0',
+				'max-h-[min(calc(--spacing(67)---spacing(9)),calc(var(--available-height)---spacing(9)))] scroll-py-1 overflow-auto overscroll-contain p-1 has-data-[slot="combobox-label"]:pt-0 data-empty:p-0',
 				className,
 			)}
 			{...props}
@@ -149,7 +149,7 @@ function ComboboxItem({ className, children, ...props }: ComboboxPrimitive.Item.
 		<ComboboxPrimitive.Item
 			data-slot='combobox-item'
 			className={cn(
-				"relative flex w-full cursor-default select-none items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden data-[disabled]:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-[disabled]:opacity-50 not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+				"relative flex w-full cursor-default select-none items-center gap-2 rounded-sm py-1 pr-8 pl-2 text-sm outline-hidden data-[disabled]:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-[disabled]:opacity-50 not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
 				className,
 			)}
 			{...props}
