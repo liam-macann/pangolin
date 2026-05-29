@@ -11,7 +11,7 @@ export async function getCurrencies() {
 	'use cache';
 	cacheLife('max');
 
-	db.query.currencies.findMany({
+	return db.query.currencies.findMany({
 		where: { isActive: { eq: true } },
 		columns: { isActive: false, minorUnit: false },
 		orderBy: { iso: 'asc', name: 'asc' },
@@ -22,7 +22,8 @@ export async function getTimezones() {
 	'use cache';
 	cacheLife('max');
 
-	db.select(getColumns(timezones))
+	return db
+		.select(getColumns(timezones))
 		.from(timezones)
 		.innerJoin(supportedTimezones, eq(timezones.name, supportedTimezones.name));
 }
