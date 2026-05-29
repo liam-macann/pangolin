@@ -25,7 +25,6 @@ const buttonVariants = cva(
 					'aria-expanded:bg-accent/70 aria-expanded:dark:bg-gray-4',
 				],
 				secondary: [
-					'inset-shadow-white/15 not-dark:inset-shadow-xs',
 					'border border-secondary-foreground/2 bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary-2 focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%]',
 					'aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
 				],
