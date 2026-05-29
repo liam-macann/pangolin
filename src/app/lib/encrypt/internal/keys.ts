@@ -2,6 +2,7 @@ import 'server-only';
 
 import { hexToBytes, randomBytes } from '@noble/ciphers/utils.js';
 import { eq } from 'drizzle-orm';
+import { forbidden, unauthorized } from 'next/navigation';
 
 import { type Encrypted } from '@/lib/utils/encrypt';
 import { withRLS } from '@/db';
@@ -60,7 +61,16 @@ function generateWrappedDEK() {
 export async function retrieveDEK(uuid: string) {
 	const key = await withRLS(async (db, session) => {
 		// Explicit about which user DEK is requested
-		if (session?.user.id !== uuid) throw new Error('Unauthorized');
+		if (!session?.user.id) {
+			unauthorized();
+			// This should be unreachable, but is a fallback given authIntercepts are still experimental
+			throw new Error('Unauthorized');
+		}
+
+		if (session?.user.id !== uuid) {
+			forbidden();
+			throw new Error('Forbidden');
+		}
 
 		const insertDEK = async () => {
 			const [res] = await db
