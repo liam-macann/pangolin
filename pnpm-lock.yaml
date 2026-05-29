@@ -173,6 +173,9 @@ importers:
       tailwindcss:
         specifier: 4.1.12
         version: 4.1.12
+      tailwindcss-scrim-gradients:
+        specifier: ^0.4.2
+        version: 0.4.2(tailwindcss@4.1.12)
       tinykeys:
         specifier: ^3.0.0
         version: 3.0.0(patch_hash=6855931e9590b29110de8402432514ff7aa294934a067557e96dc7eb46f365e3)
@@ -5653,6 +5656,11 @@ packages:
 
   tailwind-merge@3.3.1:
     resolution: {integrity: sha512-gBXpgUm/3rp1lMZZrM/w7D8GKqshif0zAymAhbCyIt8KMe+0v9DQ7cdYLR4FHH/cKpdTXb+A/tKKU3eolfsI+g==}
+
+  tailwindcss-scrim-gradients@0.4.2:
+    resolution: {integrity: sha512-ED7so7nOvwbKyikmOgkRNQAvDyYMVxQK6USQvboqN3tF9y28NObiK1YFS1ovC0kZ3kzWcf1LJvAgY/ZdDNosZg==}
+    peerDependencies:
+      tailwindcss: ^3.0.0 || ^4.0.0
 
   tailwindcss@4.1.12:
     resolution: {integrity: sha512-DzFtxOi+7NsFf7DBtI3BJsynR+0Yp6etH+nRPTbpWnS2pZBaSksv/JGctNwSWzbFjp0vxSqknaUylseZqMDGrA==}
@@ -11547,6 +11555,10 @@ snapshots:
   tagged-tag@1.0.0: {}
 
   tailwind-merge@3.3.1: {}
+
+  tailwindcss-scrim-gradients@0.4.2(tailwindcss@4.1.12):
+    dependencies:
+      tailwindcss: 4.1.12
 
   tailwindcss@4.1.12: {}
 
