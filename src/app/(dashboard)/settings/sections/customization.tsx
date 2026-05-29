@@ -63,16 +63,13 @@ export function Customization<T extends Fields>({ control: _control }: { control
 										Existing invoices will not be affected by changes to numbering scheme
 									</InfoTip>
 								</FieldLegend>
-								<FieldDescription>
-									Choose the method used to identify your invoices.
-								</FieldDescription>
 							</FieldContent>
 
 							<RadioGroup
 								{...field}
 								data-invalid={fieldState.invalid}
 								onValueChange={onChange}
-								className='mt-1 flex max-sm:flex-col'
+								className='flex max-sm:flex-col'
 							>
 								<FieldLabel>
 									<Field orientation='vertical' className='h-full justify-between'>

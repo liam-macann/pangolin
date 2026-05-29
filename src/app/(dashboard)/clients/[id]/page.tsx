@@ -55,13 +55,13 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 								<StatCard
 									title={
 										<span className='flex w-full items-center justify-between'>
-											Gross total<InfoTip side='top'>Excludes void and refunded invoices</InfoTip>
+											Revenue<InfoTip side='top'>Excludes void and refunded invoices</InfoTip>
 										</span>
 									}
 								>
 									<div className='my-1 h-[1em] w-24 animate-pulse rounded bg-muted' />
 								</StatCard>
-								<StatCard title='Outstanding (gross)'>
+								<StatCard title='Outstanding'>
 									<div className='my-1 h-[1em] w-24 animate-pulse rounded bg-muted' />
 								</StatCard>
 							</>
@@ -90,7 +90,7 @@ async function SummaryCards({ id }: { id: string }) {
 			<StatCard
 				title={
 					<span className='flex w-full items-center justify-between'>
-						Gross total<InfoTip side='top'>Excludes void and refunded invoices</InfoTip>
+						Revenue<InfoTip side='top'>Excludes void and refunded invoices</InfoTip>
 					</span>
 				}
 				footer={
@@ -108,7 +108,7 @@ async function SummaryCards({ id }: { id: string }) {
 					: '–'}
 			</StatCard>
 			<StatCard
-				title='Outstanding (gross)'
+				title='Outstanding'
 				footer={
 					stats.totals &&
 					stats.totals.length - 1 > 0 && (
