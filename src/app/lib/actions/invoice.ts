@@ -1,7 +1,8 @@
 'use server';
 
 import { type AnyColumn, and, desc, eq, isNull, sql } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { updateTag } from 'next/cache';
+import { unstable_rethrow } from 'next/navigation';
 import { v4 as uuid } from 'uuid';
 import type z from 'zod';
 
@@ -127,43 +128,50 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 					if (values.length > 0) await tx.insert(schema.itemTaxes).values(values);
 				}
 			});
-	})
-		.then(() => revalidatePath('/invoices'))
-		.catch(err => {
-			console.error(err);
-			throw new Error(`Database Error: failed to create invoice`);
-		});
+
+		updateTag(`invoices-${session.user.id}`);
+	}).catch(err => {
+		unstable_rethrow(err);
+		console.error(err);
+		throw new Error(`Database Error: failed to create invoice`);
+	});
 }
 
 export async function updateInvoiceStatus(id: string, status: Enum<typeof schema.statusEnum>) {
-	await withRLS((db, session) =>
-		db
+	await withRLS(async (db, session) => {
+		await db
 			.update(schema.invoiceStatus)
 			.set({ status })
 			.where(
 				and(eq(schema.invoiceStatus.id, id), eq(schema.invoiceStatus.userId, session.user.id)),
-			),
-	);
+			);
+
+		updateTag(`invoices-${session.user.id}`);
+	});
 }
 
 export async function voidInvoice(id: string) {
-	await withRLS((db, session) =>
-		db
+	await withRLS(async (db, session) => {
+		await db
 			.update(schema.invoiceStatus)
 			.set({ isVoid: true })
 			.where(
 				and(eq(schema.invoiceStatus.id, id), eq(schema.invoiceStatus.userId, session.user.id)),
-			),
-	);
+			);
+
+		updateTag(`invoices-${session.user.id}`);
+	});
 }
 
 export async function setInvoiceNotes(id: string, notes: string) {
-	await withRLS((db, session) =>
-		db
+	await withRLS(async (db, session) => {
+		await db
 			.update(schema.invoiceStatus)
 			.set({ notes })
 			.where(
 				and(eq(schema.invoiceStatus.id, id), eq(schema.invoiceStatus.userId, session.user.id)),
-			),
-	);
+			);
+
+		updateTag(`invoices-${session.user.id}`);
+	});
 }

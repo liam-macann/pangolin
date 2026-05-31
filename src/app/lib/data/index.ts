@@ -28,15 +28,6 @@ export async function getTimezones() {
 		.innerJoin(supportedTimezones, eq(timezones.name, supportedTimezones.name));
 }
 
-export async function getUser() {
-	const user = await withRLS(async (db, session) =>
-		db.query.users.findFirst({ where: { id: session.user.id } }),
-	);
-
-	if (!user) notFound();
-	return user;
-}
-
 /** Gets the active configuration for the authenticated user */
 export const getUserConfig = cache(async function getUserConfig() {
 	try {

@@ -14,6 +14,7 @@ import {
 	sumDistinct,
 } from 'drizzle-orm';
 import { QueryBuilder } from 'drizzle-orm/pg-core';
+import { cacheLife, cacheTag } from 'next/cache';
 import { notFound, unstable_rethrow } from 'next/navigation';
 
 import { crypto } from '@/lib/encrypt';
@@ -23,50 +24,56 @@ import { withRLS } from '@/db';
 import { type relations } from '@/db/relations';
 import * as schema from '@/db/schema';
 
-/** Fetch all invoices for authenticated user, including basic relational data */
+import { type Session } from '@/auth';
 
-export async function fetchInvoices(
+import { query } from './helpers';
+
+/** Fetch all invoices for authenticated user, including basic relational data */
+export const fetchInvoices = (
+	filter?: RelationsFilter<typeof relations.invoicesWithSum, typeof relations>,
+	limit?: number,
+) => query(async session => _fetchInvoices(session, filter, limit), 'Failed to fetch invoices');
+
+async function _fetchInvoices(
+	session: Session,
 	filter?: RelationsFilter<typeof relations.invoicesWithSum, typeof relations>,
 	limit?: number,
 ) {
-	try {
-		// Get current config to format historical invoices
-		return await withRLS(async (db, session) =>
-			db.query.invoicesWithSum.findMany({
-				where: {
-					...filter,
-					userId: { eq: session.user.id },
-				},
-				columns: {
-					clientDataId: false,
-					configId: false,
-					userId: false,
-				},
-				with: {
-					status: { columns: { id: false } },
-					clientData: { columns: { name: true, organization: true, clientId: true } },
-					config: {
-						columns: {
-							timezone: true,
-							currency: true,
-							numberingScheme: true,
-						},
+	'use cache';
+	cacheLife('hours');
+	cacheTag(`invoices-${session.user.id}`);
+
+	return withRLS(session, async tx =>
+		tx.query.invoicesWithSum.findMany({
+			where: {
+				...filter,
+				userId: { eq: session.user.id },
+			},
+			columns: {
+				clientDataId: false,
+				configId: false,
+				userId: false,
+			},
+			with: {
+				status: { columns: { id: false } },
+				clientData: { columns: { name: true, organization: true, clientId: true } },
+				config: {
+					columns: {
+						timezone: true,
+						currency: true,
+						numberingScheme: true,
 					},
 				},
-				orderBy: { index: 'desc' },
-				limit,
-			}),
-		).then(res =>
-			res.map(inv => ({
-				...inv,
-				reference: invoiceReference(inv, inv.config.numberingScheme),
-			})),
-		);
-	} catch (error) {
-		unstable_rethrow(error);
-		console.error('Database Error:', error);
-		throw new Error('Failed to fetch invoices');
-	}
+			},
+			orderBy: { index: 'desc' },
+			limit,
+		}),
+	).then(res =>
+		res.map(inv => ({
+			...inv,
+			reference: invoiceReference(inv, inv.config.numberingScheme),
+		})),
+	);
 }
 
 /** Fetch all invoices for a given client. Accepts logical client ID, not SCD ID. */
@@ -183,12 +190,17 @@ const defaultInvoiceFilter = new QueryBuilder()
 	.$with('stats_filter')
 	.as(new QueryBuilder().select().from(schema.invoicesWithSum));
 
+/** Fetch all invoices for authenticated user, including basic relational data */
+export const fetchStats = (filter: typeof defaultInvoiceFilter = defaultInvoiceFilter) =>
+	query(async session => _fetchStats(session, filter), 'Failed to fetch invoice statistics');
+
 /** Outstanding gross totals per currency across all user invoices (excludes voided invoices) */
-export async function fetchStats(
+export async function _fetchStats(
+	session: Session,
 	/** Scope the invoice statistics to a subset */
 	filter: typeof defaultInvoiceFilter = defaultInvoiceFilter,
 ) {
-	return withRLS(async (db, session) => {
+	return withRLS(session, async db => {
 		/** Access all invoices that have not been voided */
 		const validityFilter = db.$with('validity_filter').as(
 			db

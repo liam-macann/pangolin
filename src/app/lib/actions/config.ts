@@ -1,7 +1,7 @@
 'use server';
 
 import { and, eq, isNull, or, type WithSubqueryWithoutSelection } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { updateTag } from 'next/cache';
 import { after } from 'next/server';
 import { v4 as uuid } from 'uuid';
 import type z from 'zod';
@@ -150,13 +150,12 @@ export async function updateUserConfig(input: z.infer<typeof configInput>) {
 		// Useful to ensure consecutive insertions (eg. saving as progressing through form) do not produce redundant rows
 		after(() => Promise.all([cleanupConfigs(session.user.id), cleanupAddresses(session.user.id)]));
 
-		return await db
+		const result = await db
 			.with(...actions)
 			.select()
 			.from(tables.config);
-	}).then(() => {
-		// Revalidate the cache for the invoices page, where the formatting may have changed.
-		revalidatePath('/invoices');
-		revalidatePath('/settings');
+
+		updateTag(`invoices-${session.user.id}`);
+		return result;
 	});
 }

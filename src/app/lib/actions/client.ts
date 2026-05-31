@@ -1,7 +1,7 @@
 'use server';
 
 import { and, eq, isNull, sql } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { updateTag } from 'next/cache';
 import { after } from 'next/server';
 import type z from 'zod/v4';
 
@@ -15,36 +15,42 @@ import { clientData, clients } from '@/db/schema';
 import { invalidateActiveScd } from '@/db/schema/data/_helpers';
 
 export async function updateClientFavorite(clientId: string, status: boolean) {
-	await withRLS((db, session) =>
-		db
+	await withRLS(async (db, session) => {
+		await db
 			.update(clients)
 			.set({ isFavorite: status })
-			.where(and(eq(clients.id, clientId), eq(clients.userId, session.user.id))),
-	);
+			.where(and(eq(clients.id, clientId), eq(clients.userId, session.user.id)));
+
+		updateTag(`clients-${session.user.id}`);
+	});
 }
 
 export async function updateClientDeleted(clientId: string, status: boolean) {
-	await withRLS((db, session) =>
-		db
+	await withRLS(async (db, session) => {
+		await db
 			.update(clients)
 			.set({ isDeleted: status })
-			.where(and(eq(clients.id, clientId), eq(clients.userId, session.user.id))),
-	);
+			.where(and(eq(clients.id, clientId), eq(clients.userId, session.user.id)));
+
+		updateTag(`clients-${session.user.id}`);
+	});
 }
 
 export async function createClient(input: Omit<z.infer<typeof clientDataSchema>, 'clientId'>) {
 	// Validate form using Zod
 	const data = clientDataSchema.omit({ clientId: true }).parse(input);
 
-	await withRLS((db, session) => {
+	await withRLS(async (db, session) => {
 		const newClient = db
 			.$with('create_client')
 			.as(db.insert(clients).values({ userId: session.user.id }).returning({ id: clients.id }));
 
-		return db
+		await db
 			.with(newClient)
 			.insert(clientData)
 			.values({ ...data, clientId: sql`(select id from ${newClient})`, userId: session.user.id });
+
+		updateTag(`clients-${session.user.id}`);
 	});
 }
 
@@ -109,13 +115,12 @@ export async function updateClient(input: z.infer<typeof clientDataSchema>) {
 
 		await db.insert(clientData).values({ ...data, userId: session.user.id, addressId });
 
+		updateTag(`clients-${session.user.id}`);
+		updateTag(`invoices-${session.user.id}`);
+
 		// Useful to ensure consecutive insertions do not produce redundant rows
 		after(() =>
 			Promise.all([cleanupClientData(session.user.id), cleanupAddresses(session.user.id)]),
 		);
-	}).then(async () => {
-		// Revalidate the cache for the invoices page, where the formatting may have changed.
-		revalidatePath('/invoices');
-		revalidatePath(`/clients/${data.clientId}`);
 	});
 }
