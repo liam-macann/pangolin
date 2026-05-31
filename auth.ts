@@ -23,12 +23,11 @@ export const auth = betterAuth({
 	// experimental: { joins: true },
 	baseURL: {
 		allowedHosts: [
+			'localhost:*',
 			process.env.VERCEL_URL,
 			process.env.VERCEL_BRANCH_URL,
 			process.env.VERCEL_PROJECT_PRODUCTION_URL,
-			process.env.NODE_ENV === 'development' && 'localhost:*',
 		].filter((v): v is string => typeof v === 'string'),
-		protocol: process.env.NODE_ENV === 'development' ? 'http' : 'https',
 		fallback: process.env.VERCEL_PROJECT_PRODUCTION_URL,
 	},
 	errorURL: '/auth/error',
