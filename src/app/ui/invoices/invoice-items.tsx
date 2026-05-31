@@ -317,8 +317,8 @@ function InvoiceItemsInput({
 			)}
 
 			<SortableEmpty>
-				<div className='flex flex-col gap-1'>
-					<EmptyDescription className='font-medium'>Add an invoice item</EmptyDescription>
+				<div className='flex flex-col'>
+					<EmptyDescription className='text-left font-medium'>Add an invoice item</EmptyDescription>
 					<FieldError errors={[errors]} />
 				</div>
 				<Button onClick={addItem}>Add Item</Button>

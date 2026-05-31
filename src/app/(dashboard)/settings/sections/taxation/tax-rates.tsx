@@ -72,7 +72,7 @@ export function TaxRateField<T extends Fields>({
 			</SortableList>
 
 			<SortableEmpty>
-				<EmptyDescription className='font-medium'>No taxes configured</EmptyDescription>
+				<EmptyDescription className='text-left font-medium'>No taxes configured</EmptyDescription>
 				<Button onClick={addTax}>Add Tax</Button>
 			</SortableEmpty>
 

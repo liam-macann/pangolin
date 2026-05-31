@@ -55,7 +55,9 @@ export function PaymentDetailsField<T extends FormValues>({
 			onReorder={({ initialIndex, index }) => move(initialIndex, index)}
 		>
 			<SortableEmpty>
-				<EmptyDescription className='font-medium'>No payment details provided</EmptyDescription>
+				<EmptyDescription className='text-left font-medium'>
+					No payment details provided
+				</EmptyDescription>
 				<Button onClick={addLine}>Add Details</Button>
 			</SortableEmpty>
 

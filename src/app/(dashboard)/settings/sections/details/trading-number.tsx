@@ -44,7 +44,9 @@ export function TradingNumberField<T extends FormValues>({
 			onReorder={({ initialIndex, index }) => move(initialIndex, index)}
 		>
 			<SortableEmpty>
-				<EmptyDescription className='font-medium'>No trading number provided</EmptyDescription>
+				<EmptyDescription className='text-left font-medium'>
+					No trading number provided
+				</EmptyDescription>
 				<Button onClick={addLine}>Add Number</Button>
 			</SortableEmpty>
 
