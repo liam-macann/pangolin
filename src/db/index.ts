@@ -32,11 +32,31 @@ export type AuthTransaction = Brand<Transaction, 'AuthTransaction'>;
  * Resolves the Better Auth session from request headers, then wraps your
  * Drizzle calls in a transaction that sets the authenticated user for RLS.
  */
-export const withRLS = async <T>(
+export async function withRLS<T>(
 	callback: (tx: AuthTransaction, session: Session) => Promise<T>,
-): Promise<T> => {
-	const session = await getSession();
-	if (!session) unauthorized();
+): Promise<T>;
+/**
+ * Trusted session variant: skips authentication so is safe to call inside a `use cache` function.
+ *
+ * The caller is responsible for validating the session before passing it.
+ */
+export async function withRLS<T>(
+	session: Session,
+	// Omit session in callback type, to prevent implying the session has been verified
+	callback: (tx: AuthTransaction) => Promise<T>,
+): Promise<T>;
+
+export async function withRLS<T>(
+	...args:
+		| [(tx: AuthTransaction, session: Session) => Promise<T>]
+		| [Session, (tx: AuthTransaction, session: Session) => Promise<T>]
+): Promise<T> {
+	const [session, callback] =
+		args.length === 1
+			? // If session is not provided, fetch session
+				[(await getSession()) ?? unauthorized(), args[0]]
+			: // If session is provided
+				args;
 
 	return db.transaction(async tx => {
 		// Super-users and table owners bypass RLS restrictions.
@@ -50,4 +70,4 @@ export const withRLS = async <T>(
 		// Run the user's query against the isolated session
 		return callback(tx as AuthTransaction, session);
 	});
-};
+}
