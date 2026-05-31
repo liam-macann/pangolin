@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { forbidden } from 'next/navigation';
+import { forbidden, unauthorized } from 'next/navigation';
 
 import { type Encrypted, isEncrypted } from '@/lib/utils/encrypt';
 
@@ -53,13 +53,12 @@ export async function crypto(uuid: string) {
 
 	const auth = async <T>(fn: () => T) => {
 		if (destroyed) throw new Error('DEK has been destroyed');
-		const session = await getSession();
+		const session = (await getSession()) ?? unauthorized();
 
 		// Explicit about which user DEK is requested
 		if (session?.user.id !== uuid) {
 			destroy();
 			forbidden();
-			throw new Error('Unauthorized');
 		}
 
 		return fn();

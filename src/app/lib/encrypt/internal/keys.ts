@@ -61,16 +61,7 @@ function generateWrappedDEK() {
 export async function retrieveDEK(uuid: string) {
 	const key = await withRLS(async (db, session) => {
 		// Explicit about which user DEK is requested
-		if (!session?.user.id) {
-			unauthorized();
-			// This should be unreachable, but is a fallback given authIntercepts are still experimental
-			throw new Error('Unauthorized');
-		}
-
-		if (session?.user.id !== uuid) {
-			forbidden();
-			throw new Error('Forbidden');
-		}
+		if (session?.user.id !== uuid) forbidden();
 
 		const insertDEK = async () => {
 			const [res] = await db
