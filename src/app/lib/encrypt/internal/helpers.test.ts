@@ -1,7 +1,8 @@
 import { describe, expect, expectTypeOf, test } from 'vitest';
 
-import { isEncrypted } from '@/lib/utils/encrypt';
+import { isEncrypted, toHex } from '@/lib/utils/encrypt';
 
+import { header, version } from '../constants';
 import { concatHeader, stripHeader } from './helpers';
 
 describe('concatHeader', () => {
@@ -31,6 +32,14 @@ describe('concatHeader', () => {
 
 		// Checks that data is stable, not that reference is stable
 		expect(ciphertext).toEqual(copy);
+	});
+
+	test('Prepends both header and version bytes', () => {
+		const ciphertext = new Uint8Array([1, 2, 3]);
+		const enc = concatHeader(ciphertext);
+		expect(enc.slice(0, header.length)).toEqual(header);
+		expect(enc.slice(header.length, header.length + version.length)).toEqual(version);
+		expect(enc.slice(header.length + version.length)).toEqual(ciphertext);
 	});
 
 	test('Function is idempotent', () => {
@@ -82,8 +91,20 @@ describe('stripHeader', () => {
 		expect(enc).toEqual(copy);
 	});
 
-	test('Function is idempotent', () => {
-		const inp = concatHeader(new Uint8Array(32));
-		expect(stripHeader(stripHeader(inp))).toEqual(stripHeader(inp));
+	test('Accepts Encrypted<string> (hex form) and strips correctly', () => {
+		const ciphertext = new Uint8Array([1, 2, 3]);
+		const encBytes = concatHeader(ciphertext);
+		const encHex = toHex(encBytes);
+
+		expect(stripHeader(encHex)).toEqual(ciphertext);
+	});
+
+	test.for([
+		new Uint8Array([0x01, 0x02, 0x03]),
+		'cry',
+		'CRY',
+	])('Throws when header is missing', noHeader => {
+		// biome-ignore lint/suspicious/noExplicitAny: intentional bad input in test
+		expect(() => stripHeader(noHeader as any)).toThrow('Missing encryption header');
 	});
 });

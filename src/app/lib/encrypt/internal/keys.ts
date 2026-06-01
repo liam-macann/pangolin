@@ -32,7 +32,9 @@ function withKEK<T>(callback: (KEK: Uint8Array) => T) {
 	return val;
 }
 
-const wrap = (DEK: Uint8Array): Encrypted => withKEK(KEK => concatHeader(chacha(KEK).encrypt(DEK)));
+const wrap = (DEK: Uint8Array): Encrypted<Uint8Array> =>
+	withKEK(KEK => concatHeader(chacha(KEK).encrypt(DEK)));
+
 const unwrap = (DEK: Encrypted): Uint8Array =>
 	withKEK(KEK => chacha(KEK).decrypt(stripHeader(DEK)));
 

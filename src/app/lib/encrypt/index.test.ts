@@ -1,7 +1,7 @@
 import { randomBytes } from '@noble/ciphers/utils.js';
 import { describe, expect, test, vi } from 'vitest';
 
-import { type Encrypted } from '@/lib/utils/encrypt';
+import { type Encrypted, toBytes, toHex } from '@/lib/utils/encrypt';
 
 import { header, version } from './constants';
 import { crypto } from './index';
@@ -13,6 +13,28 @@ vi.mock('./internal/keys', () => ({ retrieveDEK: vi.fn().mockResolvedValue(rando
 vi.mock('@/auth', () => ({
 	getSession: vi.fn(async () => ({ user: { id: TEST_USER_ID } })),
 }));
+
+describe('Encryption generic variants', () => {
+	test('Decrypts Encrypted<Uint8Array> values (byte form)', async () => {
+		const vault = await crypto(TEST_USER_ID);
+		const input = 'byte-form';
+
+		const bytes = toBytes(await vault.encrypt(input));
+		expect(await vault.decrypt(bytes)).toBe(input);
+
+		vault.destroy();
+	});
+
+	test('Decrypts Encrypted<string> values (string form)', async () => {
+		const vault = await crypto(TEST_USER_ID);
+		const input = 'string-form';
+
+		const hex = toHex(await vault.encrypt(input));
+		expect(await vault.decrypt(hex)).toBe(input);
+
+		vault.destroy();
+	});
+});
 
 describe('Encryption round-trip', () => {
 	test.for([
@@ -49,7 +71,7 @@ describe('Encryption round-trip', () => {
 
 	test('Ciphertext starts with the magic header and version number', async () => {
 		const vault = await crypto(TEST_USER_ID);
-		const ciphertext = await vault.encrypt('');
+		const ciphertext = toBytes(await vault.encrypt(''));
 		expect(ciphertext.slice(0, header.length)).toEqual(header); // magic header
 		expect(ciphertext.slice(header.length, header.length + version.length)).toEqual(version); // version
 		vault.destroy();
@@ -91,6 +113,13 @@ describe('decryptObject', () => {
 			},
 		});
 
+		vault.destroy();
+	});
+
+	test('Decrypts Encrypted<Uint8Array> values within an object', async () => {
+		const vault = await crypto(TEST_USER_ID);
+		const obj = { name: toBytes(await vault.encrypt('byte-secret')) };
+		expect(await vault.decryptObject(obj)).toMatchObject({ name: 'byte-secret' });
 		vault.destroy();
 	});
 

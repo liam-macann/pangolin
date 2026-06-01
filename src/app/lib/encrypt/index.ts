@@ -2,7 +2,7 @@ import 'server-only';
 
 import { forbidden, unauthorized } from 'next/navigation';
 
-import { type Encrypted, isEncrypted } from '@/lib/utils/encrypt';
+import { type Encrypted, isEncrypted, toHex } from '@/lib/utils/encrypt';
 
 import { getSession } from '@/auth';
 
@@ -21,20 +21,17 @@ export type { Decrypted };
 /** Encrypts a string using the provided Data Encryption Key (DEK)
  * @internal
  */
-function encrypt(value: string, DEK: Uint8Array): Encrypted {
+function encrypt(value: string, DEK: Uint8Array): Encrypted<string> {
 	const data = encoder.encode(value);
 	const ciphertext = chacha(DEK).encrypt(data);
-
-	return concatHeader(ciphertext);
+	return toHex(concatHeader(ciphertext));
 }
 
-/** Decrypts a Uint8Array using the provided Data Encryption Key (DEK)
+/** Decrypts an Encrypted string using the provided Data Encryption Key (DEK)
  * @internal
  */
 function decrypt(value: Encrypted, DEK: Uint8Array): string {
 	try {
-		if (!isEncrypted(value)) throw new Error('Invalid header, input may not be encrypted');
-
 		const ciphertext = stripHeader(value);
 		const bytestream = chacha(DEK).decrypt(ciphertext);
 		const plaintext = decoder.decode(bytestream);
@@ -64,16 +61,16 @@ export async function crypto(uuid: string) {
 		return fn();
 	};
 
-	function _encrypt(args: string): Promise<Encrypted>;
-	function _encrypt(args: string[]): Promise<Encrypted[]>;
+	function _encrypt(args: string): Promise<Encrypted<string>>;
+	function _encrypt(args: string[]): Promise<Encrypted<string>[]>;
 	async function _encrypt(args: string | string[]) {
 		return auth(() =>
 			Array.isArray(args) ? args.map(arg => encrypt(arg, DEK)) : encrypt(args, DEK),
 		);
 	}
 
-	function _decrypt(args: Encrypted): Promise<string>;
-	function _decrypt(args: Encrypted[]): Promise<string[]>;
+	function _decrypt<T extends string | Uint8Array>(args: Encrypted<T>): Promise<string>;
+	function _decrypt<T extends string | Uint8Array>(args: Encrypted<T>[]): Promise<string[]>;
 	async function _decrypt(args: Encrypted | Encrypted[]) {
 		return auth(() =>
 			Array.isArray(args) ? args.map(arg => decrypt(arg, DEK)) : decrypt(args, DEK),
@@ -90,8 +87,10 @@ export async function crypto(uuid: string) {
 			async function walker(input: unknown): Promise<unknown> {
 				if (input === null || input === undefined || typeof input === 'function') return input;
 
-				// Input is a Uint8Array; decrypt if encrypted
-				if (input instanceof Uint8Array) return isEncrypted(input) ? _decrypt(input) : input;
+				// Input is a Uint8Array or string; decrypt if encrypted
+				if (input instanceof Uint8Array || typeof input === 'string') {
+					return isEncrypted(input) ? _decrypt(input) : input;
+				}
 
 				if (typeof input === 'object') {
 					if (seen.has(input)) return input;

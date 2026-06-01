@@ -2,7 +2,7 @@ import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { concatBytes, managedNonce } from '@noble/ciphers/utils.js';
 
 import { header, version } from '@/lib/encrypt/constants';
-import { type Encrypted, isEncrypted } from '@/lib/utils/encrypt';
+import { type Encrypted, isEncrypted, toBytes } from '@/lib/utils/encrypt';
 
 export const encoder = new TextEncoder();
 export const decoder = new TextDecoder();
@@ -31,12 +31,16 @@ export type Decrypted<T> =
 	T extends object ? { [K in keyof T]: Decrypted<T[K]> } :
 	T;
 
-/** Idempotent header concatenation
+/** Idempotent header and version concatenation
  * @internal */
-export const concatHeader = (ciphertext: Uint8Array): Encrypted =>
-	isEncrypted(ciphertext) ? ciphertext : (concatBytes(header, version, ciphertext) as Encrypted);
+export const concatHeader = (ciphertext: Uint8Array): Encrypted<Uint8Array> =>
+	isEncrypted(ciphertext)
+		? ciphertext
+		: (concatBytes(header, version, ciphertext) as Encrypted<Uint8Array>);
 
-/** Idempotent header removal
+/** Header removal
  * @internal */
-export const stripHeader = (ciphertext: Uint8Array): Uint8Array =>
-	isEncrypted(ciphertext) ? ciphertext.slice(header.length + version.length) : ciphertext;
+export const stripHeader = (ciphertext: Encrypted): Uint8Array => {
+	if (!isEncrypted(ciphertext)) throw new Error('Missing encryption header');
+	return toBytes(ciphertext).subarray(header.length + version.length);
+};
