@@ -2,7 +2,8 @@ import 'server-only';
 
 import { hexToBytes, randomBytes } from '@noble/ciphers/utils.js';
 import { eq } from 'drizzle-orm';
-import { forbidden, unauthorized } from 'next/navigation';
+import { forbidden } from 'next/navigation';
+import { experimental_taintObjectReference } from 'react';
 
 import { type Encrypted } from '@/lib/utils/encrypt';
 import { withRLS } from '@/db';
@@ -26,17 +27,26 @@ import { chacha, concatHeader, stripHeader } from './helpers';
  */
 function withKEK<T>(callback: (KEK: Uint8Array) => T) {
 	const SECRET_KEK = hexToBytes(process.env.DB_ENCRYPTION_SECRET as string);
+	experimental_taintObjectReference('KEK must never be sent to the client.', SECRET_KEK);
 
 	const val = callback(SECRET_KEK);
 	SECRET_KEK.fill(0);
 	return val;
 }
 
-const wrap = (DEK: Uint8Array): Encrypted<Uint8Array> =>
-	withKEK(KEK => concatHeader(chacha(KEK).encrypt(DEK)));
+const wrap = (DEK: Uint8Array): Encrypted<Uint8Array> => {
+	const res = withKEK(KEK => concatHeader(chacha(KEK).encrypt(DEK)));
 
-const unwrap = (DEK: Encrypted): Uint8Array =>
-	withKEK(KEK => chacha(KEK).decrypt(stripHeader(DEK)));
+	experimental_taintObjectReference('DEK must never be sent to the client.', res);
+	return res;
+};
+
+const unwrap = (DEK: Encrypted): Uint8Array => {
+	const res = withKEK(KEK => chacha(KEK).decrypt(stripHeader(DEK)));
+
+	experimental_taintObjectReference('DEK must never be sent to the client.', res);
+	return res;
+};
 
 //
 //
