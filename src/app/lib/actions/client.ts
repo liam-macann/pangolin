@@ -104,7 +104,7 @@ export async function updateClient(input: z.infer<typeof clientDataSchema>) {
 					),
 				)
 				.limit(1)
-				.then(([v]) => v.id),
+				.then(([v]) => v?.id),
 		);
 
 		await db.insert(clientData).values({ ...data, userId: session.user.id, addressId });

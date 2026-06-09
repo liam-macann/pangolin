@@ -85,7 +85,7 @@ export async function updateUserConfig(input: z.infer<typeof configInput>) {
 				.from(tables.config)
 				.where(and(isNull(tables.config.validTo), eq(tables.config.userId, session.user.id)))
 				.limit(1)
-				.then(([v]) => v.id),
+				.then(([v]) => v?.id),
 		);
 
 		// Define as CTEs for transactional behaviour without network round-trips

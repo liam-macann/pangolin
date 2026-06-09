@@ -79,8 +79,8 @@ export function scdTable<TColumnsMap extends Record<string, AnyPgColumnBuilder>>
 export const invalidateActiveScd = <TTable extends SCDTable & { userId: PgUUID; id: PgUUID }>(
 	tx: AuthTransaction,
 	table: TTable,
-	id: string,
-) => tx.execute(sql`SELECT invalidate_active_scd(${getTableName(table)}, ${id})`);
+	id: string | undefined,
+) => id && tx.execute(sql`SELECT invalidate_active_scd(${getTableName(table)}, ${id})`);
 
 //
 //
