@@ -21,6 +21,8 @@ import {
 	createContext,
 	type DetailedHTMLProps,
 	type HTMLAttributes,
+	type KeyboardEvent,
+	type ReactNode,
 	useContext,
 	useState,
 } from 'react';
@@ -50,7 +52,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		onGlobalFilterChange?: (value: string) => void;
 		onSortingChange?: (sorting: SortingState) => void;
 		onPageIndexChange?: (pageIndex: number) => void;
-	} & Pick<TableOptions<TData>, 'initialState' | 'enableSortingRemoval'>;
+	} & Pick<TableOptions<TData>, 'initialState' | 'enableSortingRemoval' | 'onColumnFiltersChange'>;
 
 	function Root({
 		data,
@@ -159,10 +161,16 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		getRowAttr,
 		getCellAttr,
 		className,
+		children,
 		...props
-	}: DataTableProps & ComponentProps<typeof Table>) {
+	}: DataTableProps &
+		Omit<ComponentProps<typeof Table>, 'children'> & {
+			children?: (table: TanstackTable<TData>) => ReactNode;
+		}) {
 		const table = useContext(TableContext);
 		if (table === null) throw new Error('Content must be used within a DataTable.Root');
+
+		if (children) return children(table);
 
 		return (
 			<Table className={cn('overflow-hidden', className)} {...props}>
@@ -288,9 +296,11 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		placeholder,
 		children,
 		value,
+		onKeyDown,
 		...props
-	}: ComponentProps<typeof InputGroup> &
-		Pick<ComponentProps<typeof InputGroupInput>, 'placeholder' | 'value'>) {
+	}: Omit<ComponentProps<typeof InputGroup>, 'onKeyDown'> & {
+		onKeyDown: (e: KeyboardEvent<HTMLInputElement>, table: TanstackTable<TData>) => void;
+	} & Pick<ComponentProps<typeof InputGroupInput>, 'placeholder' | 'value'>) {
 		const table = useContext(TableContext);
 		if (table === null) throw new Error('Search must be used within a DataTable.Root');
 
@@ -307,6 +317,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 						onChange?.(e);
 						table.setGlobalFilter(e.target.value);
 					}}
+					onKeyDown={e => onKeyDown?.(e, table)}
 				/>
 				{children}
 			</InputGroup>
