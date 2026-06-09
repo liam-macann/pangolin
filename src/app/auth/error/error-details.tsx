@@ -68,3 +68,5 @@ export const errorDetails = {
 
 	account_not_linked: errorCodeDetails.unable_to_link_account,
 } satisfies Record<string, ErrorDetails>;
+
+export type ErrorCodes = keyof typeof errorDetails;

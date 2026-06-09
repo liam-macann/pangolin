@@ -1,13 +1,13 @@
 import { CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { type Metadata } from 'next';
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { redirect, unstable_rethrow } from 'next/navigation';
 import { z } from 'zod';
 
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 
 import { signInSocial } from '@/auth';
-import { errorDetails } from '@/src/app/auth/error/error-details';
+import { type ErrorCodes, errorDetails } from '@/src/app/auth/error/error-details';
 
 import { LoginButton } from './ui';
 
@@ -15,39 +15,43 @@ export const metadata: Metadata = {
 	title: 'Login',
 };
 
-const paramsSchema = z.object({
-	callbackUrl: z.url().catch('/invoices'),
-	error: z.enum(Object.keys(errorDetails)).catch('error').default(''),
-});
-
 export default async function LoginPage({
 	searchParams,
 }: {
 	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-	const { callbackUrl, error } = paramsSchema.parse(await searchParams);
+	const { callbackUrl, error } = z
+		.object({
+			callbackUrl: z.url().catch('/invoices'),
+			error: z
+				.enum(Object.keys(errorDetails) as ErrorCodes[])
+				.catch('internal_server_error')
+				.optional(),
+		})
+		.parse(await searchParams);
 
 	async function login() {
 		'use server';
 
-		const response = await signInSocial({
-			headers: await headers(),
-			body: {
-				provider: 'google',
-				callbackURL: callbackUrl,
-				newUserCallbackURL: '/onboarding',
-				errorCallbackURL: '/auth/login',
-			},
-		});
+		try {
+			const response = await signInSocial({
+				headers: await headers(),
+				body: {
+					provider: 'google',
+					callbackURL: callbackUrl,
+					newUserCallbackURL: '/onboarding',
+					errorCallbackURL: '/auth/login',
+				},
+			});
 
-		if (response?.url) redirect(response.url);
+			if (response?.url) redirect(response.url);
+		} catch (err) {
+			unstable_rethrow(err);
+			redirect('/auth/login?error=internal_server_error');
+		}
 	}
 
-	const errorInfo =
-		error &&
-		(error in errorDetails
-			? errorDetails[error as keyof typeof errorDetails]
-			: { message: 'Something went wrong. Please try again later.' });
+	const errorInfo = error && errorDetails[error];
 
 	return (
 		<div>
