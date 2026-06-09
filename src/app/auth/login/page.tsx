@@ -1,12 +1,9 @@
 import { CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { type Metadata } from 'next';
-import { headers } from 'next/headers';
-import { redirect, unstable_rethrow } from 'next/navigation';
 import { z } from 'zod';
 
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 
-import { signInSocial } from '@/auth';
 import { type ErrorCodes, errorDetails } from '@/src/app/auth/error/error-details';
 
 import { LoginButton } from './ui';
@@ -30,27 +27,6 @@ export default async function LoginPage({
 		})
 		.parse(await searchParams);
 
-	async function login() {
-		'use server';
-
-		try {
-			const response = await signInSocial({
-				headers: await headers(),
-				body: {
-					provider: 'google',
-					callbackURL: callbackUrl,
-					newUserCallbackURL: '/onboarding',
-					errorCallbackURL: '/auth/login',
-				},
-			});
-
-			if (response?.url) redirect(response.url);
-		} catch (err) {
-			unstable_rethrow(err);
-			redirect('/auth/login?error=internal_server_error');
-		}
-	}
-
 	const errorInfo = error && errorDetails[error];
 
 	return (
@@ -64,7 +40,7 @@ export default async function LoginPage({
 					</Alert>
 				)}
 
-				<LoginButton variant='primary' action={login} />
+				<LoginButton variant='primary' callbackURL={callbackUrl} />
 			</section>
 			<section className='mt-12'>
 				<h2 className='mb-2 font-semibold text-lg'>What this is</h2>
