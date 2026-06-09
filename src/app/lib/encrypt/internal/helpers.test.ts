@@ -1,8 +1,8 @@
 import { describe, expect, expectTypeOf, test } from 'vitest';
 
+import { header, version } from '@/lib/encrypt/constants';
 import { isEncrypted, toHex } from '@/lib/utils/encrypt';
 
-import { header, version } from '../constants';
 import { concatHeader, stripHeader } from './helpers';
 
 describe('concatHeader', () => {
