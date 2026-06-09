@@ -1,5 +1,6 @@
 'use client';
 
+import { type Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WarningIcon } from '@phosphor-icons/react';
 import { type ReactElement, type ReactNode, useState } from 'react';
@@ -57,7 +58,10 @@ const formSchema = schema
 	.transform(({ addressEnabled, ...data }) => data as z.input<typeof schema>)
 	.pipe(schema);
 
-export function CreateClientDialog({ children }: { children: ReactElement }) {
+export function CreateClientDialog({
+	children,
+	...props
+}: { children: ReactElement } & DialogPrimitive.Root.Props) {
 	const { mutate } = useClients();
 
 	const form = useForm({
@@ -84,6 +88,7 @@ export function CreateClientDialog({ children }: { children: ReactElement }) {
 
 				return promise;
 			}}
+			{...props}
 		>
 			{children}
 		</ClientDialog>
@@ -93,10 +98,11 @@ export function CreateClientDialog({ children }: { children: ReactElement }) {
 export function UpdateClientDialog({
 	children,
 	defaultValues,
+	...props
 }: {
 	children: ReactElement;
 	defaultValues: Omit<z.input<typeof formSchema>, 'addressEnabled'>;
-}) {
+} & DialogPrimitive.Root.Props) {
 	const { mutate: mutateClients } = useClients();
 	const { mutate: mutateClient } = useClient(defaultValues.clientId);
 
@@ -123,6 +129,7 @@ export function UpdateClientDialog({
 
 				return promise;
 			}}
+			{...props}
 		>
 			{children}
 		</ClientDialog>
@@ -150,7 +157,8 @@ function ClientDialog<TForm extends UseFormReturn<z.input<typeof formSchema>, un
 	form,
 	onSubmit,
 	children,
-}: ClientDialog<TForm>) {
+	...props
+}: ClientDialog<TForm> & DialogPrimitive.Root.Props) {
 	const [open, setOpen] = useState(false);
 
 	const { control, reset, handleSubmit } = form;
@@ -160,7 +168,7 @@ function ClientDialog<TForm extends UseFormReturn<z.input<typeof formSchema>, un
 
 	return (
 		<FormProvider {...form}>
-			<Dialog open={open} onOpenChange={setOpen}>
+			<Dialog {...props} open={props.open ?? open} onOpenChange={setOpen}>
 				<DialogTrigger render={children} />
 
 				<DialogContent>
