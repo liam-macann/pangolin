@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 export function proxy(request: NextRequest) {
 	// Cookie eval quicker than accessing headers
-	const sessionCookie = getSessionCookie(request);
+	const sessionCookie = getSessionCookie(request, { cookiePrefix: 'invoicer' });
 
 	// Optimistically redirect users if they are not logged in
 	// Auth checks must still be handled in each page/route
