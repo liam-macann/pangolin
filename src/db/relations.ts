@@ -1,4 +1,9 @@
-import { defineRelations, type ExtractTablesFromSchema, type RelationsBuilder } from 'drizzle-orm';
+import {
+	defineRelations,
+	defineRelationsPart,
+	type ExtractTablesFromSchema,
+	type RelationsBuilder,
+} from 'drizzle-orm';
 
 import * as schema from './schema';
 
@@ -44,27 +49,11 @@ export const relations = defineRelations(schema, r => ({
 	// User Relations
 	// ---------------------------------------------------------
 	users: {
-		accounts: r.many.accounts(),
 		clients: r.many.clients(),
 		invoices: r.many.invoices(),
 		keychain: r.one.keychain({
 			from: r.users.id,
 			to: r.keychain.id,
-		}),
-		sessions: r.many.sessions(),
-	},
-
-	accounts: {
-		user: r.one.users({
-			from: r.accounts.userId,
-			to: r.users.id,
-		}),
-	},
-
-	sessions: {
-		user: r.one.users({
-			from: r.sessions.userId,
-			to: r.users.id,
 		}),
 	},
 
@@ -170,6 +159,31 @@ export const relations = defineRelations(schema, r => ({
 			from: r.configTaxes.taxId,
 			to: r.taxes.id,
 			optional: false,
+		}),
+	},
+}));
+
+export const authRelations = defineRelationsPart(schema, r => ({
+	users: {
+		sessions: r.many.sessions({
+			from: r.users.id,
+			to: r.sessions.userId,
+		}),
+		accounts: r.many.accounts({
+			from: r.users.id,
+			to: r.accounts.userId,
+		}),
+	},
+	sessions: {
+		users: r.one.users({
+			from: r.sessions.userId,
+			to: r.users.id,
+		}),
+	},
+	accounts: {
+		users: r.one.users({
+			from: r.accounts.userId,
+			to: r.users.id,
 		}),
 	},
 }));

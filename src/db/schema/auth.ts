@@ -113,6 +113,7 @@ export const verifications = snakeCase.table(
 	],
 );
 
+// The keychain table stores wrapped encryption keys for each user
 export const keychain = snakeCase.table(
 	'keychain',
 	{

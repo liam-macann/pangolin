@@ -1,26 +1,28 @@
 import 'server-only';
 
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { drizzleAdapter } from '@better-auth/drizzle-adapter/relations-v2';
 import { betterAuth } from 'better-auth/minimal';
 import { nextCookies } from 'better-auth/next-js';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { headers } from 'next/headers';
 import { cache } from 'react';
 
-import * as relations from '@/db/relations';
-import * as schema from '@/db/schema';
+import { authRelations } from '@/db/relations';
+import * as schema from '@/db/schema/auth';
 
 // Use super-user connection string to bypass RLS
-// biome-ignore lint/style/noNonNullAssertion: Connection URL is guaranteed to be defined in production
-const db = drizzle({ connection: process.env.DATABASE_URL! });
+const db = drizzle({
+	connection: process.env.DATABASE_URL as string,
+	relations: authRelations,
+});
 
 export const auth = betterAuth({
 	database: drizzleAdapter(db, {
-		schema: { ...schema, ...relations },
+		schema,
 		provider: 'pg',
 		usePlural: true,
 	}),
-	// experimental: { joins: true },
+	experimental: { joins: true },
 	baseURL: {
 		allowedHosts: [
 			'localhost:*',
