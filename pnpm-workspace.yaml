@@ -1,0 +1,14 @@
+allowBuilds:
+  "@sentry/cli": true
+  bcrypt: true
+  esbuild: true
+  msw: false
+  sharp: true
+
+onlyBuiltDependencies:
+  - bcrypt
+  - sharp
+
+overrides:
+  "@types/react": 19.2.7
+  "@types/react-dom": 19.2.3
