@@ -6,7 +6,7 @@ import type z from 'zod/v4';
 import { create } from 'zustand';
 
 import { updateUserConfig } from '@/lib/actions/config';
-import { config } from '@/lib/validation/config';
+import { configFields as config } from '@/lib/validation/config';
 
 type Config = z.input<typeof config>;
 
@@ -87,7 +87,7 @@ export const taxation = config
 		taxRegistration: true,
 		taxes: true,
 	})
-	.refine(config => !(config.taxRegistration && config.taxes.length === 0), {
+	.refine(c => !(c.taxRegistration && c.taxes.length === 0), {
 		message: 'Taxes must be provided when registered for tax',
 		path: ['taxes'],
 	});

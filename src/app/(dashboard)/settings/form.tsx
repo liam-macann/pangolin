@@ -9,7 +9,7 @@ import { z } from 'zod';
 
 import { updateUserConfig } from '@/lib/actions/config';
 import { type getUserConfig } from '@/lib/data';
-import { config as configSchema } from '@/lib/validation/config';
+import { configFields, config as configSchema } from '@/lib/validation/config';
 
 import { Button } from '@/ui/button';
 import { TextTooltip } from '@/ui/tooltip';
@@ -21,7 +21,7 @@ import { Localization } from './sections/localization';
 import { Taxation } from './sections/taxation';
 
 /** Uses local addressEnabled flag to toggle address validation, and drops it after parsing */
-const formSchema = configSchema
+const formSchema = configFields
 	.omit({ address: true })
 	.extend({ addressEnabled: z.boolean(), address: z.any() })
 	.transform((val): z.input<typeof configSchema> => {

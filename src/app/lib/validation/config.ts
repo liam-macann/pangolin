@@ -53,8 +53,9 @@ export const taxes = z
 	})
 	.max(25, 'You may add up to 25 taxes');
 
-/** Complete insertion record for database configuration, excluding generated fields */
-export const config = createInsertSchema(configSchema, {
+/** Field-level schema for database configuration, excluding generated fields.
+ *  Carries no cross-field refinements, so subsets may be derived with pick()/omit()/extend(). */
+export const configFields = createInsertSchema(configSchema, {
 	tradingName: s => z.string('Required').min(1, 'Required').max(255, 'Too long').pipe(s),
 	paymentDetails: z
 		.array(
@@ -77,9 +78,9 @@ export const config = createInsertSchema(configSchema, {
 		.optional()
 		.transform(value => value || undefined),
 	phone: z
-		.string()
+		.string() // Phone numbers can be alphanumeric, and contain characters (eg. separators, parentheses)
 		.optional()
-		.transform(value => value || undefined), // Phone numbers can be alphanumeric, and contain characters (eg. separators, parentheses)
+		.transform(value => value || undefined),
 	header: z
 		.string()
 		.optional()
@@ -119,8 +120,10 @@ export const config = createInsertSchema(configSchema, {
 		address: address.nullish().transform(value => value || null),
 		/** Minimal insertion record for database configuration, excluding generated fields */
 		taxes: taxes,
-	})
-	.refine(config => !(config.taxRegistration && config.taxes.length === 0), {
-		message: 'Taxes must be provided when registered for tax',
-		path: ['taxes'],
 	});
+
+/** Complete insertion record for database configuration, excluding generated fields */
+export const config = configFields.refine(c => !(c.taxRegistration && c.taxes.length === 0), {
+	message: 'Taxes must be provided when registered for tax',
+	path: ['taxes'],
+});
