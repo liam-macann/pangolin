@@ -3,6 +3,7 @@
 import { ArrowUpRightIcon } from '@phosphor-icons/react';
 import { unstable_rethrow } from 'next/navigation';
 import { type ComponentProps, useState } from 'react';
+import { toast } from 'sonner';
 
 import { signIn } from '@/lib/auth';
 
@@ -31,9 +32,13 @@ export function LoginButton({
 						newUserCallbackURL: '/onboarding',
 						errorCallbackURL: '/auth/login',
 					})
+					.then(res => {
+						if (res.error) throw new Error(res.error.message);
+					})
 					.catch(err => {
 						unstable_rethrow(err);
 						setLoading(false);
+						toast.error('Something went wrong');
 						return err;
 					});
 			}}
