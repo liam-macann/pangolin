@@ -43,6 +43,9 @@ function decrypt(value: Encrypted, DEK: Uint8Array): string {
 	}
 }
 
+/** A crypto vault handles encryption and decryption, retrieving and unwrapping the DEK for a given user */
+export type Vault = Awaited<ReturnType<typeof crypto>>;
+
 /** Retrieves and unwraps the Data Encryption Key (DEK) for an authenticated user */
 export async function crypto(uuid: string) {
 	let destroyed = false;
