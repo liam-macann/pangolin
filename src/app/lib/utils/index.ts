@@ -22,6 +22,13 @@ export const formatNumber = (amount: number, locale: string) => {
 	}).format(amount);
 };
 
+/** Converts a user-facing percentage to its stored fractional rate: 15.5 → 0.155 */
+export const percentToRate = (percent: number) => Math.round(percent * 100) / 10_000;
+
+/** Converts a fractional rate as stored in the database to user-facing percentage: 0.155 → 15.5.
+ * @remarks Rounding to the storage scale avoids floating-point artefacts. */
+export const rateToPercent = (rate: number) => Math.round(rate * 10_000) / 100;
+
 export const invoiceReference = (
 	invoice: Pick<typeof invoices.$inferSelect, 'index' | 'yearIndex' | 'issueYear'>,
 	scheme: ElementType<typeof numberingScheme.enumValues>,

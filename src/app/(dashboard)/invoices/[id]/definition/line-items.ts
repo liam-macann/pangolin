@@ -1,7 +1,7 @@
 import { type TableCell } from 'pdfmake';
 import { type ContentTable } from 'pdfmake/interfaces';
 
-import { formatCurrency, formatNumber, pluralize } from '@/lib/utils';
+import { formatCurrency, formatNumber, pluralize, rateToPercent } from '@/lib/utils';
 import { type Enum } from '@/lib/utils/drizzle';
 import { type unitEnum } from '@/db/schema/data/invoices';
 
@@ -55,7 +55,7 @@ export function lineItemsTable({ config, ...invoice }: InvoicePrintData): Conten
 								{
 									text:
 										item.taxes.length > 0
-											? item.taxes.map(tax => `${tax.name}(${tax.rate * 100}%)`).join(' ')
+											? item.taxes.map(tax => `${tax.name}(${rateToPercent(tax.rate)}%)`).join(' ')
 											: '–',
 									bold: false,
 									verticalAlignment: 'middle',

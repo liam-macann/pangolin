@@ -8,6 +8,7 @@ import type z from 'zod';
 
 import { cleanupAddresses, cleanupConfigs } from '@/lib/actions/utils';
 import { crypto } from '@/lib/encrypt';
+import { percentToRate } from '@/lib/utils';
 import { isAddressEqual } from '@/lib/utils/address';
 import { config as configInput } from '@/lib/validation/config';
 import { withRLS } from '@/db';
@@ -38,7 +39,13 @@ export async function updateUserConfig(input: z.infer<typeof configInput>) {
 					? await vault.encrypt(data.tradingNumber.map(v => `${v.label}: ${v.value}`))
 					: null,
 
-			taxes: data.taxes.map((tax, i) => ({ ...tax, userId: session.user.id, order: i })),
+			// Rates are validated as user-facing percentages; the database stores fractions as NUMERIC
+			taxes: data.taxes.map((tax, i) => ({
+				...tax,
+				rate: percentToRate(tax.rate),
+				userId: session.user.id,
+				order: i,
+			})),
 		};
 
 		const configId = uuid();

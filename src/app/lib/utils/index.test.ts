@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { invoiceReference, pluralize } from '@/lib/utils';
+import { invoiceReference, percentToRate, pluralize, rateToPercent } from '@/lib/utils';
 
 describe('invoiceReference', () => {
 	const base = { index: 5, yearIndex: 3, issueYear: 2025 };
@@ -39,6 +39,29 @@ describe('invoiceReference', () => {
 		test('Does not allow negative indices', () =>
 			expect(() => invoiceReference({ ...base, yearIndex: -1 }, 'annual')).toThrow());
 	});
+});
+
+describe('Rate/percentage conversions', () => {
+	test.for<[rate: number, percent: number]>([
+		[0.155, 15.5],
+		[0.07, 7], // 0.07 * 100 === 7.000000000000001 without rounding
+		[0.0825, 8.25],
+		[0, 0],
+		[-2, -200],
+	])('Converts stored rate %s to %s%', ([rate, percent]) =>
+		expect(rateToPercent(rate)).toBe(percent));
+
+	test.for<[rate: number, percent: number]>([
+		[0.155, 15.5],
+		[0.07, 7], // 0.07 * 100 === 7.000000000000001 without rounding
+		[0.0825, 8.25],
+		[0, 0],
+		[-2, -200],
+	])('Converts stored percent %s to %s%', ([rate, percent]) =>
+		expect(percentToRate(percent)).toBe(rate));
+
+	test.for([15.5, 7, 0.01, 12.34, 200])('Round-trips %s% through database serialisation', percent =>
+		expect(rateToPercent(percentToRate(percent))).toBe(percent));
 });
 
 describe('pluralize', () => {

@@ -15,7 +15,7 @@ import {
 import { type z } from 'zod';
 
 import { type getUserConfig } from '@/lib/data';
-import { cn, formatCurrency, getCurrencySymbol, type Prettify } from '@/lib/utils';
+import { cn, formatCurrency, getCurrencySymbol, type Prettify, rateToPercent } from '@/lib/utils';
 import { type invoice as schema } from '@/lib/validation/invoice';
 import { intlNumber } from '@/lib/zod';
 import { unitEnum } from '@/db/schema';
@@ -413,7 +413,7 @@ function SortableActions({
 													className='justify-between'
 												>
 													{tax.name}
-													<span className='text-muted-foreground'>{tax.rate * 100}%</span>
+													<span className='text-muted-foreground'>{rateToPercent(tax.rate)}%</span>
 												</DropdownMenuCheckboxItem>
 											);
 										})}

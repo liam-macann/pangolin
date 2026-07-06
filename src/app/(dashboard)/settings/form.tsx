@@ -9,6 +9,7 @@ import { z } from 'zod';
 
 import { updateUserConfig } from '@/lib/actions/config';
 import { type getUserConfig } from '@/lib/data';
+import { rateToPercent } from '@/lib/utils';
 import { configFields, config as configSchema } from '@/lib/validation/config';
 
 import { Button } from '@/ui/button';
@@ -45,7 +46,7 @@ const configAdapter = (config: Awaited<ReturnType<typeof getUserConfig>>): FormI
 	numberingScheme: config.numberingScheme,
 	colorScheme: config.colorScheme,
 
-	taxes: config.taxes.map(t => ({ name: t.name, rate: t.rate * 100 })),
+	taxes: config.taxes.map(t => ({ name: t.name, rate: rateToPercent(t.rate) })),
 	paymentDetails: config.paymentDetails || [],
 	tradingName: config.tradingName,
 	email: config.email || '',
@@ -116,14 +117,7 @@ export default function ConfigForm({
 						}
 
 						const { addressEnabled, ...payload } = config;
-						const promise = updateUserConfig({
-							...payload,
-							taxes: config.taxes.map(tax => ({
-								...tax,
-								// Convert the whole number percentage back to a decimal
-								rate: Number(tax.rate) / 100,
-							})),
-						}).then(() => revertToSavepoint(config));
+						const promise = updateUserConfig(payload).then(() => revertToSavepoint(config));
 
 						toast.promise(promise, {
 							loading: 'Updating settings…',
