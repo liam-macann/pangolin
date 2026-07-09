@@ -23,6 +23,10 @@ export async function updateUserConfig(input: z.infer<typeof configInput>) {
 
 		const { taxes, address, ...config } = await serializeConfig(data, vault, session.user.id);
 
+		// Checks if the address has changed from the still-active previous config, and reuses the previous fkey if not.
+		// Must run before invalidating config. The lookup depends on the previous config still being active.
+		const addressId = await getAddressId(db, vault, address, session.user.id);
+
 		// Void previously active config
 		await invalidateActiveScd(
 			db,
@@ -38,12 +42,7 @@ export async function updateUserConfig(input: z.infer<typeof configInput>) {
 		// Insert new config
 		const [insertedConfig] = await db
 			.insert(tables.config)
-			.values({
-				...config,
-				userId: session.user.id,
-				// Either finds a matching address in the DB, or creates a new one. Returns the row pkey.
-				addressId: await getAddressId(db, vault, address, session.user.id),
-			})
+			.values({ ...config, userId: session.user.id, addressId })
 			.returning({ id: tables.config.id });
 
 		vault.destroy();
