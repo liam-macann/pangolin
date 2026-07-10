@@ -6,7 +6,8 @@ import { Suspense } from 'react';
 import { getUserConfig } from '@/lib/data';
 import { fetchClientStats, fetchClients } from '@/lib/data/client';
 import { fetchInvoicesForClient } from '@/lib/data/invoice';
-import { cn, formatCurrency, pluralize } from '@/lib/utils';
+import { cn, pluralize } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/currencies';
 
 import { InfoTip } from '@/components/info';
 import { StatCard } from '@/components/stat-card';

@@ -1,7 +1,7 @@
 import { type TableCell } from 'pdfmake';
 import { type ContentColumns } from 'pdfmake/interfaces';
 
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/currencies';
 
 import schemes from '@/src/app/ui/color-schemes';
 

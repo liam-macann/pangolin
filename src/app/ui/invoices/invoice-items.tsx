@@ -15,7 +15,8 @@ import {
 import { type z } from 'zod';
 
 import { type getUserConfig } from '@/lib/data';
-import { cn, formatCurrency, getCurrencySymbol, type Prettify, rateToPercent } from '@/lib/utils';
+import { cn, type Prettify, rateToPercent } from '@/lib/utils';
+import { formatCurrency, getCurrencySymbol } from '@/lib/utils/currencies';
 import { type invoice as schema } from '@/lib/validation/invoice';
 import { intlNumber } from '@/lib/zod';
 import { unitEnum } from '@/db/schema';

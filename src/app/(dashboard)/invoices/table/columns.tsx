@@ -7,7 +7,8 @@ import { type ComponentProps, useContext } from 'react';
 import { useSWRConfig } from 'swr';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
-import { cn, type ElementType, formatCurrency } from '@/lib/utils';
+import { cn, type ElementType } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/currencies';
 import { formatDate } from '@/lib/utils/date';
 
 import { ToggleHeader } from '@/components/data-table/column-header';

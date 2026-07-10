@@ -4,9 +4,7 @@
 		"node": "24.x"
 	},
 	"scripts": {
-		"prebuild": "tsx ./scripts/generate-static-files.ts",
 		"build": "next build",
-		"predev": "tsx ./scripts/generate-static-files.ts",
 		"dev": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" next dev --turbopack",
 		"start": "next start",
 		"lint": "biome lint",
@@ -52,7 +50,7 @@
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"cmdk": "^1.1.1",
-		"countries-list": "^3.2.2",
+		"countries-list": "3.4.0",
 		"date-fns": "^4.1.0",
 		"dotenv": "^17.2.2",
 		"drizzle-zod": "1.0.0-beta.11-05230d9",

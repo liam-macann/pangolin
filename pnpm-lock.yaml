@@ -94,8 +94,8 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       countries-list:
-        specifier: ^3.2.2
-        version: 3.3.0
+        specifier: 3.4.0
+        version: 3.4.0
       date-fns:
         specifier: ^4.1.0
         version: 4.4.0
@@ -3323,8 +3323,8 @@ packages:
       typescript:
         optional: true
 
-  countries-list@3.3.0:
-    resolution: {integrity: sha512-XRUjS+dcZuNh/fg3+mka3bXgcg4TbQZ1gaK5IJqO6qulerBANl1bmrd20P2dgmPkBpP+5FnejiSF1gd7bgAg+g==}
+  countries-list@3.4.0:
+    resolution: {integrity: sha512-SonKkjlEGUNz/Ugj6akOMUl8/F6EBVbLq/nQbDKhZo60EFyNgsVIgDP521J9pGhywikV514Ct4BueIqiOnvBBA==}
 
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
@@ -8685,7 +8685,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
-  countries-list@3.3.0: {}
+  countries-list@3.4.0: {}
 
   create-require@1.1.1: {}
 

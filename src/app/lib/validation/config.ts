@@ -3,7 +3,7 @@ import { getCountryDataList } from 'countries-list';
 import { createInsertSchema } from 'drizzle-zod';
 import z from 'zod/v4';
 
-import currencies from '@/lib/data/currencies.json';
+import { currencies } from '@/lib/utils/currencies';
 import { intlNumber } from '@/lib/zod';
 import { config as configSchema, taxes as taxesSchema } from '@/db/schema/data';
 

@@ -1,8 +1,8 @@
 import { type Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { matchSorter } from 'match-sorter';
 
-import currencies from '@/lib/data/currencies.json';
 import { cn } from '@/lib/utils';
+import { currencies } from '@/lib/utils/currencies';
 
 import {
 	Combobox,

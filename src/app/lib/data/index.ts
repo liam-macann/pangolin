@@ -7,17 +7,6 @@ import { crypto } from '@/lib/encrypt';
 import { db, withRLS } from '@/db';
 import { supportedTimezones, timezones } from '@/db/schema';
 
-export async function getCurrencies() {
-	'use cache';
-	cacheLife('max');
-
-	return db.query.currencies.findMany({
-		where: { isActive: { eq: true } },
-		columns: { isActive: false, minorUnit: false },
-		orderBy: { iso: 'asc', name: 'asc' },
-	});
-}
-
 export async function getTimezones() {
 	'use cache';
 	cacheLife('max');

@@ -1,7 +1,8 @@
 import { type TableCell } from 'pdfmake';
 import { type ContentTable } from 'pdfmake/interfaces';
 
-import { formatCurrency, formatNumber, pluralize, rateToPercent } from '@/lib/utils';
+import { formatNumber, pluralize, rateToPercent } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/currencies';
 import { type Enum } from '@/lib/utils/drizzle';
 import { type unitEnum } from '@/db/schema/data/invoices';
 

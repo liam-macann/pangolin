@@ -13,7 +13,8 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { toast } from 'sonner';
 
 import { useClients, useConfig, useInvoices, useKeyPress, usePrevious } from '@/lib/hooks';
-import { formatCurrency, pluralize } from '@/lib/utils';
+import { pluralize } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/currencies';
 
 import { Button } from '@/ui/button';
 import {
