@@ -1,7 +1,7 @@
 import { type Column, type SQL, sql } from 'drizzle-orm';
 import { customType, type PgEnum } from 'drizzle-orm/pg-core';
 
-import { type Encrypted, isEncrypted, toHex } from '@/lib/utils/encrypt';
+import { type Encrypted, isEncrypted, toBytes, toHex } from '@/lib/utils/encrypt';
 
 type AnySql = SQL | Column | SQL.Aliased;
 
@@ -82,11 +82,11 @@ export const encrypted = customType<{
 	driverData: Uint8Array | Buffer | string;
 }>({
 	dataType: () => 'bytea',
-	toDriver(value: Encrypted): string {
+	toDriver(value: Encrypted): Buffer {
 		if (!isEncrypted(value)) throw new Error('Value is not encrypted');
 
-		// Convert to Postgres hex format — safe to transport inside SQL param
-		return `\\x${toHex(value)}`;
+		// Buffer necessary to support both Neon driver and PGLite
+		return Buffer.from(toBytes(value));
 	},
 	fromDriver(value): Encrypted<string> {
 		// Conservatively handle DB driver behaviour with union type
