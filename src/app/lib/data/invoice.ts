@@ -11,7 +11,7 @@ import {
 	ne,
 	type RelationsFilter,
 	sql,
-	sumDistinct,
+	sum,
 } from 'drizzle-orm';
 import { QueryBuilder } from 'drizzle-orm/pg-core';
 import { cacheLife, cacheTag } from 'next/cache';
@@ -19,7 +19,7 @@ import { notFound, unstable_rethrow } from 'next/navigation';
 
 import { crypto } from '@/lib/encrypt';
 import { invoiceReference } from '@/lib/utils';
-import { jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
+import { coalesce, jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
 import { type relations } from '@/db/relations';
 import * as schema from '@/db/schema';
@@ -90,7 +90,7 @@ export async function fetchInvoice(id: string) {
 				db
 					.select({
 						contribution:
-							sql`${withFilter(sumDistinct(schema.invoiceItems.netAmount), eq(schema.itemTaxes.taxId, schema.taxes.id))} * ${schema.taxes.rate} * ${schema.config.taxRegistration}::int`
+							sql`${withFilter(sum(schema.invoiceItems.netAmount), eq(schema.itemTaxes.taxId, schema.taxes.id))} * ${schema.taxes.rate} * ${schema.config.taxRegistration}::int`
 								.mapWith(Number)
 								.as('contribution'),
 
@@ -159,7 +159,7 @@ export async function fetchInvoice(id: string) {
 				.with(taxContribution)
 				.select({
 					name: taxContribution.name,
-					contribution: sumDistinct(taxContribution.contribution).mapWith(Number),
+					contribution: coalesce(sum(taxContribution.contribution), 0).mapWith(Number),
 				})
 				.from(taxContribution)
 				.groupBy(taxContribution.name)
@@ -219,18 +219,38 @@ export async function _fetchStats(
 		const totals = db
 			.with(validityFilter)
 			.select({
-				netSum: withFilter(
-					sumDistinct(validityFilter.netTotal).mapWith(Number),
-					ne(validityFilter.status, 'refunded'),
-				).as('net_sum'),
-				grossSum: withFilter(
-					sumDistinct(validityFilter.grossTotal).mapWith(Number),
-					ne(validityFilter.status, 'refunded'),
-				).as('gross_sum'),
-				grossOutstanding: withFilter(
-					sumDistinct(validityFilter.grossTotal).mapWith(Number),
-					eq(validityFilter.status, 'unpaid'),
-				).as('gross_outstanding'),
+				netSum: coalesce(
+					withFilter(
+						sum(validityFilter.netTotal),
+						// Exclude refunded invoices
+						ne(validityFilter.status, 'refunded'),
+					),
+					0,
+				)
+					.mapWith(Number)
+					.as('net_sum'),
+
+				grossSum: coalesce(
+					withFilter(
+						sum(validityFilter.grossTotal),
+						// Exclude refunded invoices
+						ne(validityFilter.status, 'refunded'),
+					),
+					0,
+				)
+					.mapWith(Number)
+					.as('gross_sum'),
+
+				grossOutstanding: coalesce(
+					withFilter(
+						sum(validityFilter.grossTotal),
+						// Include only unpaid invoices
+						eq(validityFilter.status, 'unpaid'),
+					),
+					0,
+				)
+					.mapWith(Number)
+					.as('gross_outstanding'),
 
 				currency: validityFilter.currency,
 				maxCreatedAt: max(validityFilter.createdAt).as('max_created_at'),

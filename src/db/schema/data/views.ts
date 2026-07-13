@@ -1,6 +1,8 @@
 import { eq, getColumns, sql, sum } from 'drizzle-orm';
 import { snakeCase } from 'drizzle-orm/pg-core';
 
+import { coalesce } from '@/lib/utils/drizzle';
+
 // Schema imports
 import { config, taxes } from './config';
 import { invoiceItems, invoices, itemTaxes } from './index';
@@ -42,9 +44,9 @@ export const invoicesWithSum = snakeCase
 				...getColumns(invoices),
 				taxRegistration: config.taxRegistration,
 				currency: config.currency,
-				netTotal: sum(itemsWithTax.netAmount).mapWith(Number).as('net_total'),
+				netTotal: coalesce(sum(itemsWithTax.netAmount), 0).mapWith(Number).as('net_total'),
 				/** @remarks This can safely be used regardless of tax registration. Unregistered taxes will not be applied. */
-				grossTotal: sum(itemsWithTax.grossAmount).mapWith(Number).as('gross_total'),
+				grossTotal: coalesce(sum(itemsWithTax.grossAmount), 0).mapWith(Number).as('gross_total'),
 			})
 			.from(invoices)
 			.innerJoin(config, eq(invoices.configId, config.id))
