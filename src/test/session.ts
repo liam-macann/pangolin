@@ -33,7 +33,7 @@ export function createTestAuth(db: TestTx) {
  */
 export const asUser = base
 	// biome-ignore lint/correctness/noEmptyPattern: Vitest's fixture parser requires literal object-destructuring syntax
-	.extend('client', { scope: 'file' }, async ({}, { onCleanup }) => {
+	.extend('client', { scope: 'worker' }, async ({}, { onCleanup }) => {
 		const client = await createTestDb();
 		onCleanup(async () => await client.$client.close());
 		return client;
