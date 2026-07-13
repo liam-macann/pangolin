@@ -4,8 +4,6 @@ import z from 'zod/v4';
 
 import { cleanupAddresses, cleanupConfigs } from '@/lib/actions/utils';
 import { crypto } from '@/lib/encrypt';
-import { isAddressEqual } from '@/lib/utils/address';
-import { type config as configInput } from '@/lib/validation/config';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
@@ -51,7 +49,6 @@ const testAddress = {
 describe('updateUserConfig', () => {
 	beforeEach(async () => {
 		vi.clearAllMocks();
-		vi.mocked(isAddressEqual).mockReturnValue(false);
 	});
 
 	/** Fetch the active config without processing data */
@@ -129,9 +126,7 @@ describe('updateUserConfig', () => {
 		const { address: firstAddress } = await getUserConfig();
 		assert(firstAddress, 'Address should have been inserted');
 
-		// Simulates the user re-submitting the same address on their next save
-		vi.mocked(isAddressEqual).mockReturnValue(true);
-
+		// The user re-submits the same address on their next save, so the record must be reused
 		await updateUserConfig({ ...baseInput, address });
 
 		expect(await db.select().from(tables.address)).toHaveLength(1);

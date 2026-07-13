@@ -1,17 +1,9 @@
-import { assert, describe, expect, test, vi } from 'vitest';
+import { assert, describe, expect, test } from 'vitest';
 
 import { formatAddress } from '@/lib/utils/address';
 
 import { buildDocDefinition, type InvoicePrintData } from './index';
 import { collectTextNodes, invoiceDataBuilder } from './tests/helpers';
-
-// lib-address uses require() internally which breaks in ESM test environments.
-// formatAddress is only called when an address is non-null; stub it so these tests
-// don't depend on the real formatting library.
-vi.mock('@/lib/utils/address', () => ({
-	formatAddress: vi.fn(() => '1 Test St, Sydney NSW 2000, AU'),
-	fetchAddressMetadata: vi.fn(),
-}));
 
 describe('buildDocDefinition', () => {
 	/** Helper to access the footer, with type narrowed according to implementation */
@@ -117,15 +109,16 @@ describe('buildDocDefinition', () => {
 
 		test('Includes address when defined', () => {
 			const address = {
-				addressLine1: '1 Test St',
+				streetAddress: ['1 Test St'],
 				city: 'Sydney',
-				state: 'NSW',
+				administrativeArea: 'NSW',
 				postalCode: '2000',
-				countryCode: 'AU',
+				country: 'AU',
 			};
 
-			const formattedAddress = '1 Test St, Sydney NSW 2000, AU';
-			vi.mocked(formatAddress).mockReturnValue(formattedAddress);
+			// Formatted with real AU locale metadata; sanity-check it reflects the input
+			const formattedAddress = formatAddress(address);
+			expect(formattedAddress).toContain('1 Test St');
 
 			const collector = (inv: InvoicePrintData) =>
 				collectTextNodes(buildDocDefinition(inv).content);
