@@ -51,7 +51,7 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 			.insert(schema.invoiceYearCount)
 			.values({
 				userId: session.user.id,
-				year: sql`extract(year from ${issuedAt}::date)`,
+				year: sql`extract(year from (${issuedAt})::date)`,
 				count: 1,
 			})
 			.onConflictDoUpdate({

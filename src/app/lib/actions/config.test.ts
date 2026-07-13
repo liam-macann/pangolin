@@ -1,6 +1,5 @@
 import { updateTag } from 'next/cache';
 import { assert, beforeEach, describe, expect, vi } from 'vitest';
-import z from 'zod/v4';
 
 import { cleanupAddresses, cleanupConfigs } from '@/lib/actions/utils';
 import { crypto } from '@/lib/encrypt';
@@ -10,44 +9,12 @@ import * as tables from '@/db/schema';
 import { asUser as test } from '@/src/test/session';
 
 import { updateUserConfig } from './config';
-
-// lib-address (imported transitively by the address schema) fails to load under Vitest
-vi.mock('@/lib/validation/address', () => ({ default: z.unknown() }));
-// Real comparison logic depends on the mocked module above, so control it directly instead
-vi.mock('@/lib/utils/address', () => ({ isAddressEqual: vi.fn(() => false) }));
+import { addressBuilder, configBuilder } from './tests/helpers';
 
 vi.mock('@/lib/actions/utils', () => ({ cleanupConfigs: vi.fn(), cleanupAddresses: vi.fn() }));
 
-const baseInput = {
-	tradingName: 'Acme Pty Ltd',
-	email: undefined,
-	phone: undefined,
-	header: undefined,
-	timezone: 'Australia/Sydney',
-	language: 'en',
-	region: 'AU',
-	currency: 'AUD',
-	taxRegistration: false,
-	paymentDetails: [],
-	tradingNumber: [],
-	numberingScheme: 'sequential',
-	colorScheme: 'blue',
-	address: null,
-	taxes: [],
-} satisfies z.input<typeof configInput>;
-
-const testAddress = {
-	streetAddress: ['123 Main St'],
-	dependentLocality: undefined,
-	city: 'Sydney',
-	administrativeArea: undefined,
-	postalCode: '2000',
-	sortingCode: undefined,
-	country: 'AU',
-} satisfies NonNullable<z.input<typeof configInput>['address']>;
-
 describe('updateUserConfig', () => {
-	beforeEach(async () => {
+	beforeEach(() => {
 		vi.clearAllMocks();
 	});
 
@@ -69,7 +36,7 @@ describe('updateUserConfig', () => {
 		);
 
 	test('Converts percentage to fractional tax rates', async () => {
-		await updateUserConfig({ ...baseInput, taxes: [{ name: 'GST', rate: 15.5 }] });
+		await updateUserConfig(configBuilder({ taxes: [{ name: 'GST', rate: 15.5 }] }));
 		expect(await getUserConfig()).toMatchObject({
 			taxes: [{ name: 'GST', rate: 0.155 }],
 		});
@@ -78,14 +45,15 @@ describe('updateUserConfig', () => {
 	test('Round-trips encrypted scalar and array columns through bytea storage', async ({
 		session,
 	}) => {
-		await updateUserConfig({
-			...baseInput,
-			email: 'billing@acme.example',
-			paymentDetails: [
-				{ label: 'BSB', value: '062-000' },
-				{ label: 'Account', value: '1234 5678' },
-			],
-		});
+		await updateUserConfig(
+			configBuilder({
+				email: 'billing@acme.example',
+				paymentDetails: [
+					{ label: 'BSB', value: '062-000' },
+					{ label: 'Account', value: '1234 5678' },
+				],
+			}),
+		);
 
 		const config = await getUserConfig();
 		assert(config?.email, 'Active config should now exist with an email value');
@@ -104,7 +72,9 @@ describe('updateUserConfig', () => {
 	});
 
 	test('Inserts and associates a new address with config', async ({ session }) => {
-		await updateUserConfig({ ...baseInput, address: testAddress });
+		await updateUserConfig(
+			configBuilder({ address: addressBuilder({ streetAddress: ['123 Main St'] }) }),
+		);
 
 		const config = await getUserConfig();
 
@@ -120,14 +90,14 @@ describe('updateUserConfig', () => {
 	});
 
 	test('Reuses the previous address when unchanged', async ({ db }) => {
-		const address = testAddress;
+		const address = addressBuilder({ streetAddress: ['123 Main St'] });
 
-		await updateUserConfig({ ...baseInput, address });
+		await updateUserConfig(configBuilder({ address }));
 		const { address: firstAddress } = await getUserConfig();
 		assert(firstAddress, 'Address should have been inserted');
 
 		// The user re-submits the same address on their next save, so the record must be reused
-		await updateUserConfig({ ...baseInput, address });
+		await updateUserConfig(configBuilder({ address }));
 
 		expect(await db.select().from(tables.address)).toHaveLength(1);
 
@@ -136,12 +106,12 @@ describe('updateUserConfig', () => {
 	});
 
 	test('Sets addressId to null when no address is provided', async () => {
-		await updateUserConfig({ ...baseInput, address: null });
+		await updateUserConfig(configBuilder({ address: null }));
 		expect((await getUserConfig())?.addressId).toBeNull();
 	});
 
 	test('Skips tax insertion when no taxes are provided', async ({ db }) => {
-		await updateUserConfig({ ...baseInput, taxRegistration: false, taxes: [] });
+		await updateUserConfig(configBuilder({ taxRegistration: false, taxes: [] }));
 
 		const taxes = await db.select().from(tables.taxes);
 		const configTaxes = await db.select().from(tables.configTaxes);
@@ -152,23 +122,55 @@ describe('updateUserConfig', () => {
 
 	test('Rejects when tax registration is set without any taxes', async () => {
 		await expect(
-			updateUserConfig({ ...baseInput, taxRegistration: true, taxes: [] }),
+			updateUserConfig(configBuilder({ taxRegistration: true, taxes: [] })),
 		).rejects.toThrow();
 	});
 
+	test('Trims whitespace from string values', async ({ session }) => {
+		await updateUserConfig(
+			configBuilder({
+				tradingName: '  Acme Pty Ltd  ',
+				email: '  billing@acme.example  ',
+				paymentDetails: [{ label: '  BSB  ', value: '  062-000  ' }],
+				taxes: [{ name: '  GST  ', rate: 10 }],
+			}),
+		);
+
+		const config = await getUserConfig();
+		expect(config).toMatchObject({ tradingName: 'Acme Pty Ltd', taxes: [{ name: 'GST' }] });
+
+		assert(config?.email, 'Active config should now exist with an email value');
+		assert(config.paymentDetails, 'Active config should now exist with payment details');
+
+		const vault = await crypto(session.user.id);
+		try {
+			expect(await vault.decrypt(config.email)).toBe('billing@acme.example');
+			expect(await vault.decrypt(config.paymentDetails)).toEqual(['BSB: 062-000']);
+		} finally {
+			vault.destroy();
+		}
+	});
+
+	test('Empty string email, phone and header are recorded as null', async () => {
+		await updateUserConfig(configBuilder({ email: '', phone: '', header: '' }));
+
+		const config = await getUserConfig();
+		expect(config).toMatchObject({ email: null, phone: null, header: null });
+	});
+
 	test('Empty paymentDetails and tradingNumber array is recorded as null', async () => {
-		await updateUserConfig({ ...baseInput, paymentDetails: [], tradingNumber: [] });
+		await updateUserConfig(configBuilder({ paymentDetails: [], tradingNumber: [] }));
 
 		const config = await getUserConfig();
 		expect(config).toMatchObject({ paymentDetails: null, tradingNumber: null });
 	});
 
 	test('Invalidates the previous config and leaves exactly one active version', async ({ db }) => {
-		await updateUserConfig(baseInput);
+		await updateUserConfig(configBuilder());
 		const firstConfig = await getUserConfig();
 
 		// A second save must invalidate the first
-		await updateUserConfig({ ...baseInput, tradingName: 'Acme Rebrand' });
+		await updateUserConfig(configBuilder({ tradingName: 'Acme Rebrand' }));
 
 		const allConfigs = await db
 			.select({ id: tables.config.id, validTo: tables.config.validTo })
@@ -185,7 +187,7 @@ describe('updateUserConfig', () => {
 	});
 
 	test('Schedules cleanup and invalidates the config cache tag', async ({ session }) => {
-		await updateUserConfig(baseInput);
+		await updateUserConfig(configBuilder());
 
 		expect(cleanupConfigs).toHaveBeenCalledWith(session.user.id);
 		expect(cleanupAddresses).toHaveBeenCalledWith(session.user.id);

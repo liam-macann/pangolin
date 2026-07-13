@@ -9,7 +9,7 @@ import { type TestTx } from './pglite';
 // Allow server-only files to be imported outside of Next.js server context
 vi.mock('server-only', () => ({}));
 
-vi.mock('next/cache', () => ({ updateTag: vi.fn() }));
+vi.mock('next/cache', () => ({ updateTag: vi.fn(), cacheLife: vi.fn() }));
 vi.mock('next/server', () => ({ after: vi.fn((cb: () => unknown) => cb()) }));
 
 // The real DB connection must never run in a test

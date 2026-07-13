@@ -29,11 +29,35 @@ export type AllSameKeys<T extends [object, ...object[]]> = T extends [
 export type OmitUnion<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
 
 /** Deeply partialize an object type */
-export type DeepPartial<T> = T extends object
-	? {
-			[P in keyof T]?: DeepPartial<T[P]>;
-		}
-	: T;
+export type DeepPartial<T> = T extends Date | Set<unknown> | Map<unknown, unknown>
+	? T
+	: T extends object
+		? {
+				[P in keyof T]?: DeepPartial<T[P]>;
+			}
+		: T;
+
+/** Enforce a minimal representation of an object
+ *
+ * @remarks Enforces empty arrays, and uses `null` and `undefined` values when allowed by the type
+ */
+export type Minimized<T> = {
+	[K in keyof T]: null extends T[K]
+		? null
+		: undefined extends T[K]
+			? undefined
+			: T[K] extends unknown[]
+				? []
+				: T[K] extends
+							| Date
+							| Set<unknown>
+							| Map<unknown, unknown>
+							| ((...args: unknown[]) => unknown)
+					? T[K]
+					: T[K] extends object
+						? Minimized<T[K]>
+						: T[K];
+};
 
 declare const __brand: unique symbol;
 /** Simulate nominal typing by specifying a key */

@@ -1,32 +1,14 @@
 import { toMerged } from 'es-toolkit/object';
 import { type Content, type ContentText, type TableCell } from 'pdfmake/interfaces';
 
-import { type DeepPartial, type ElementType } from '@/lib/utils';
+import { type DeepPartial, type ElementType, type Minimized } from '@/lib/utils';
 
 import { type InvoicePrintData } from './../index';
-
-/** Enforce a minimal representation of an object
- *
- * @remarks Enforces empty arrays, and uses `null` and `undefined` values when allowed by the type
- */
-type Minimised<T> = {
-	[K in keyof T]: null extends T[K]
-		? null
-		: undefined extends T[K]
-			? undefined
-			: T[K] extends unknown[]
-				? []
-				: T[K] extends Date | ((...args: unknown[]) => unknown)
-					? T[K]
-					: T[K] extends object
-						? Minimised<T[K]>
-						: T[K];
-};
 
 /** Helper to generate an invoice with optional overrides */
 export const invoiceDataBuilder = (data?: DeepPartial<InvoicePrintData>): InvoicePrintData => {
 	/** A minimally-populated invoice. Merge with data specific to what is being tested. */
-	const base: Minimised<InvoicePrintData> = {
+	const base: Minimized<InvoicePrintData> = {
 		title: null,
 		description: null,
 		createdAt: new Date('2025-01-15T00:00:00.000Z'),
@@ -58,7 +40,7 @@ export const invoiceDataBuilder = (data?: DeepPartial<InvoicePrintData>): Invoic
 		tax: [],
 	};
 
-	const baseItem: Minimised<ElementType<InvoicePrintData['items']>> = {
+	const baseItem: Minimized<ElementType<InvoicePrintData['items']>> = {
 		label: 'Development',
 		note: null,
 		quantity: 10,
@@ -68,12 +50,12 @@ export const invoiceDataBuilder = (data?: DeepPartial<InvoicePrintData>): Invoic
 		taxes: [],
 	};
 
-	const baseItemTaxes: Minimised<ElementType<ElementType<InvoicePrintData['items']>['taxes']>> = {
+	const baseItemTaxes: Minimized<ElementType<ElementType<InvoicePrintData['items']>['taxes']>> = {
 		name: 'GST',
 		rate: 0.1,
 	};
 
-	const baseTax: Minimised<ElementType<InvoicePrintData['tax']>> = {
+	const baseTax: Minimized<ElementType<InvoicePrintData['tax']>> = {
 		name: 'GST',
 		contribution: 100,
 	};

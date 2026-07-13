@@ -35,6 +35,7 @@ export async function updateClientDeleted(clientId: string, status: boolean) {
 	});
 }
 
+/** Creates a new client for the current user */
 export async function createClient(input: Omit<z.infer<typeof clientData>, 'clientId'>) {
 	// Validate form using Zod
 	const data = clientDataFields
@@ -45,7 +46,7 @@ export async function createClient(input: Omit<z.infer<typeof clientData>, 'clie
 		})
 		.parse(input);
 
-	await withRLS(async (db, session) => {
+	return await withRLS(async (db, session) => {
 		const newClient = db
 			.$with('create_client')
 			.as(
@@ -58,7 +59,8 @@ export async function createClient(input: Omit<z.infer<typeof clientData>, 'clie
 		await db
 			.with(newClient)
 			.insert(schema.clientData)
-			.values({ ...data, clientId: sql`(select id from ${newClient})`, userId: session.user.id });
+			.values({ ...data, clientId: sql`(select id from ${newClient})`, userId: session.user.id })
+			.returning({ id: schema.clientData.id });
 
 		updateTag(`clients-${session.user.id}`);
 	});
