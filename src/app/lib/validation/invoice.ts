@@ -5,7 +5,12 @@ import { intlNumber } from '@/lib/zod';
 import * as schema from '@/db/schema/data';
 
 const item = createInsertSchema(schema.invoiceItems, {
-	label: z => z.min(1, 'Please enter a description'),
+	label: z => z.trim().min(1, 'Please enter a description'),
+	note: z
+		.string()
+		.transform(v => v.trim())
+		.transform(v => (v === '' ? undefined : v))
+		.optional(),
 	quantity: s =>
 		intlNumber(
 			z.number().min(0, 'Enter a valid quantity').max(10000, 'Too large'),

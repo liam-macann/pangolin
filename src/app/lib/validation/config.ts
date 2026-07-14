@@ -15,6 +15,7 @@ export const taxes = z
 			name: s =>
 				z
 					.string()
+					.trim()
 					.min(1, 'Please enter a tax label')
 					.min(2, 'Label must be at least 2 characters')
 					.pipe(s),
@@ -56,35 +57,37 @@ export const taxes = z
 /** Field-level schema for database configuration, excluding generated fields.
  *  Carries no cross-field refinements, so subsets may be derived with pick()/omit()/extend(). */
 export const configFields = createInsertSchema(configSchema, {
-	tradingName: s => z.string('Required').min(1, 'Required').max(255, 'Too long').pipe(s),
+	tradingName: s => z.string('Required').trim().min(1, 'Required').max(255, 'Too long').pipe(s),
 	paymentDetails: z
 		.array(
 			z.object({
-				label: z.string('Required').min(1, 'Required').max(255, 'Too long'),
-				value: z.string('Required').min(1, 'Required').max(255, 'Too long'),
+				label: z.string('Required').trim().min(1, 'Required').max(255, 'Too long'),
+				value: z.string('Required').trim().min(1, 'Required').max(255, 'Too long'),
 			}),
 		)
 		.max(10, 'No more than 10 items allowed'),
 	tradingNumber: z
 		.array(
 			z.object({
-				label: z.string('Required').min(1, 'Required').max(255, 'Too long'),
-				value: z.string('Required').min(1, 'Required').max(255, 'Too long'),
+				label: z.string('Required').trim().min(1, 'Required').max(255, 'Too long'),
+				value: z.string('Required').trim().min(1, 'Required').max(255, 'Too long'),
 			}),
 		)
 		.max(15, 'No more than 15 items allowed'),
 	email: z
-		.email('Invalid email')
+		.string()
 		.optional()
-		.transform(value => value || undefined),
+		// Normalise the empty string before validation, so an empty field is cleaned rather than rejected
+		.transform(value => value?.trim() || undefined)
+		.pipe(z.email('Invalid email').optional()),
 	phone: z
 		.string() // Phone numbers can be alphanumeric, and contain characters (eg. separators, parentheses)
 		.optional()
-		.transform(value => value || undefined),
+		.transform(value => value?.trim() || undefined),
 	header: z
 		.string()
 		.optional()
-		.transform(value => value || undefined),
+		.transform(value => value?.trim() || undefined),
 
 	currency: s =>
 		z

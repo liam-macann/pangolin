@@ -167,7 +167,7 @@ export async function setInvoiceNotes(id: string, notes: string) {
 	await withRLS(async (db, session) => {
 		await db
 			.update(schema.invoiceStatus)
-			.set({ notes })
+			.set({ notes: notes.trim() || null })
 			.where(
 				and(eq(schema.invoiceStatus.id, id), eq(schema.invoiceStatus.userId, session.user.id)),
 			);
