@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
 import { assert, beforeEach, describe, expect, vi } from 'vitest';
@@ -27,9 +28,112 @@ beforeEach(async () => {
 	vi.clearAllMocks();
 });
 
+type ClientInput = Parameters<typeof createClient>[0];
+
+/** Wraps the createClient and updateClient actions for use in shared insertion tests */
+const saveClientVia: Record<
+	'createClient' | 'updateClient',
+	(input: ClientInput) => Promise<string>
+> = {
+	async createClient(input: ClientInput) {
+		const existing = await withRLS(db => db.select({ id: tables.clients.id }).from(tables.clients));
+
+		await createClient(input);
+
+		const clients = await withRLS(db => db.select({ id: tables.clients.id }).from(tables.clients));
+		const created = clients.find(client => existing.every(({ id }) => id !== client.id));
+
+		assert(created, 'createClient should have inserted a new logical client');
+		return created.id;
+	},
+
+	async updateClient(input: ClientInput) {
+		// Seed with builder defaults so the input under test is only ever handled by updateClient
+		const clientId = await saveClientVia.createClient(clientBuilder());
+
+		// Isolate mock assertions (cache tags, cleanup) from the seeding call above
+		vi.clearAllMocks();
+
+		await updateClient({ ...input, clientId });
+		return clientId;
+	},
+};
+
+// Applies the same tests to both createClient and updateClient
+describe.for(Object.entries(saveClientVia))('Client insertion behaviour: %s', ([, saveClient]) => {
+	test('Persists submitted fields on the active data row', async () => {
+		const clientId = await saveClient(
+			clientBuilder({ name: 'Alaric Wivell', email: 'a-wivell@acme.example' }),
+		);
+
+		expect(await getActiveClientData(clientId)).toMatchObject({
+			name: 'Alaric Wivell',
+			email: 'a-wivell@acme.example',
+		});
+	});
+
+	test('Empty string name and organization are recorded as null', async () => {
+		const first = await saveClient(clientBuilder({ name: '', organization: 'Acme' }));
+		expect(await getActiveClientData(first)).toMatchObject({ name: null, organization: 'Acme' });
+
+		const second = await saveClient(clientBuilder({ name: 'Alaric Wivell', organization: '' }));
+		expect(await getActiveClientData(second)).toMatchObject({
+			name: 'Alaric Wivell',
+			organization: null,
+		});
+	});
+
+	test('Trims whitespace from string values', async () => {
+		const clientId = await saveClient(
+			clientBuilder({
+				name: '  Alaric Wivell  ',
+				organization: '  Acme  ',
+				email: '  client@acme.example  ',
+			}),
+		);
+
+		expect(await getActiveClientData(clientId)).toMatchObject({
+			name: 'Alaric Wivell',
+			organization: 'Acme',
+			email: 'client@acme.example',
+		});
+	});
+
+	test('Inserts and associates an address', async ({ session }) => {
+		const address = addressBuilder({ streetAddress: ['Unit 4', '129 Main Av'] });
+		const clientId = await saveClient(clientBuilder({ address }));
+
+		const data = await getActiveClientData(clientId);
+		assert(data?.address, 'Client data should have an associated address');
+
+		const vault = await crypto(session.user.id);
+
+		try {
+			const decrypted = await vault.decryptObject(data.address);
+			expect(decrypted.streetAddress).toEqual(['Unit 4', '129 Main Av']);
+		} finally {
+			vault.destroy();
+		}
+	});
+
+	test('Rejects when neither name nor organization is provided', async () => {
+		await expect(saveClient(clientBuilder({ name: null, organization: null }))).rejects.toThrow();
+
+		// Neither of these should throw
+		await saveClient(clientBuilder({ name: 'Name', organization: null }));
+		await saveClient(clientBuilder({ name: null, organization: 'Org' }));
+	});
+
+	test('Invalidates the clients cache tag', async ({ session }) => {
+		await saveClient(clientBuilder());
+		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
+	});
+});
+
+// Tests specific only to createClient
 describe('createClient', () => {
-	test('Inserts a new logical client and associated data', async ({ db, session }) => {
-		await createClient(clientBuilder({ name: 'Alaric Wivell', email: 'a-wivell@acme.example' }));
+	test('Inserts a new logical client row', async ({ db, session }) => {
+		await createClient(clientBuilder());
 
 		const clients = await db.select().from(tables.clients);
 		expect(clients).toHaveLength(1);
@@ -38,47 +142,56 @@ describe('createClient', () => {
 			isFavorite: false,
 			isDeleted: false,
 		});
+	});
+});
 
-		const data = await getActiveClientData(clients[0].id);
-		expect(data).toMatchObject({ name: 'Alaric Wivell', email: 'a-wivell@acme.example' });
+// Tests specific only to updateClient
+describe('updateClient', () => {
+	test('Throws when updating a client that does not exist', async () => {
+		await expect(updateClient({ ...clientBuilder(), clientId: randomUUID() })).rejects.toThrow();
 	});
 
-	test('Empty string name and organization are recorded as null', async ({ db }) => {
-		await createClient(clientBuilder({ name: '', organization: 'Acme' }));
-		await createClient(clientBuilder({ name: 'Alaric Wivell', organization: '' }));
+	test('Reuses the previous address when unchanged', async ({ db }) => {
+		const address = addressBuilder();
+		const client = await insertTestClient({ address });
 
-		const data = await db.select().from(tables.clientData);
-		expect(data.find(d => d.organization === 'Acme')).toMatchObject({ name: null });
-		expect(data.find(d => d.name === 'Alaric Wivell')).toMatchObject({ organization: null });
+		const first = await getActiveClientData(client.id);
+		assert(first?.address, 'Address should have been inserted');
+
+		// The user re-submits the same address on their next save, so the record must be reused
+		await updateClient({ ...clientBuilder({ address }), clientId: client.id });
+
+		expect(await db.select().from(tables.address)).toHaveLength(1);
+
+		const second = await getActiveClientData(client.id);
+		expect(second?.address?.id).toBe(first.address.id);
 	});
 
-	test('Trims whitespace from string values', async ({ db }) => {
-		await createClient(
-			clientBuilder({
-				name: '  Alaric Wivell  ',
-				organization: '  Acme  ',
-				email: '  client@acme.example  ',
-			}),
-		);
+	test('Invalidates the previous version and leaves exactly one active row', async ({ db }) => {
+		const client = await insertTestClient();
 
-		const [client] = await db.select().from(tables.clients);
-		expect(await getActiveClientData(client.id)).toMatchObject({
-			name: 'Alaric Wivell',
-			organization: 'Acme',
-			email: 'client@acme.example',
-		});
+		await updateClient({ ...clientBuilder({ organization: 'Acme' }), clientId: client.id });
+
+		const allData = await db
+			.select({ id: tables.clientData.id, validTo: tables.clientData.validTo })
+			.from(tables.clientData)
+			.where(eq(tables.clientData.clientId, client.id));
+
+		// createTestClient inserted a row, and then we updated it
+		expect(allData.length).toBe(2);
+		expect(allData.filter(d => d.validTo === null)).toHaveLength(1);
+
+		const activeData = await getActiveClientData(client.id);
+		expect(activeData).toMatchObject({ organization: 'Acme' });
 	});
 
-	test('Rejects when neither name nor organization is provided', async () => {
-		await expect(createClient(clientBuilder({ name: null, organization: null }))).rejects.toThrow();
+	test('Schedules cleanup and invalidates cache tags', async ({ session }) => {
+		const client = await insertTestClient();
 
-		// Neither of these should throw
-		await createClient(clientBuilder({ name: 'Name', organization: null }));
-		await createClient(clientBuilder({ name: null, organization: 'Org' }));
-	});
+		await updateClient({ ...clientBuilder(), clientId: client.id });
 
-	test('Invalidates the clients cache tag', async ({ session }) => {
-		await createClient(clientBuilder());
+		expect(cleanupClientData).toHaveBeenCalledWith(session.user.id);
+		expect(cleanupAddresses).toHaveBeenCalledWith(session.user.id);
 		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
 	});
 });
@@ -126,114 +239,5 @@ describe('updateClientDeleted', () => {
 
 		await updateClientDeleted(client.id, true);
 		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
-	});
-});
-
-describe('updateClient', () => {
-	test('Inserts and associates a new address with client data', async ({ session }) => {
-		const client = await insertTestClient();
-
-		const address = addressBuilder({ streetAddress: ['Unit 4', '129 Main Av'] });
-		await updateClient({ ...clientBuilder({ address }), clientId: client.id });
-
-		const data = await getActiveClientData(client.id);
-		assert(data?.address, 'Client data should have an associated address');
-
-		const vault = await crypto(session.user.id);
-
-		try {
-			const address = await vault.decryptObject(data.address);
-			expect(address.streetAddress).toEqual(['Unit 4', '129 Main Av']);
-		} finally {
-			vault.destroy();
-		}
-	});
-
-	test('Reuses the previous address when unchanged', async ({ db }) => {
-		const client = await insertTestClient();
-		const address = addressBuilder();
-
-		await updateClient({ ...clientBuilder({ address }), clientId: client.id });
-
-		const first = await getActiveClientData(client.id);
-		assert(first?.address, 'Address should have been inserted');
-
-		// The user re-submits the same address on their next save, so the record must be reused
-		await updateClient({ ...clientBuilder({ address }), clientId: client.id });
-
-		expect(await db.select().from(tables.address)).toHaveLength(1);
-
-		const second = await getActiveClientData(client.id);
-		expect(second?.address?.id).toBe(first.address.id);
-	});
-
-	test('Empty string name and organization are recorded as null', async () => {
-		const client = await insertTestClient();
-
-		await updateClient({
-			...clientBuilder({ name: '', organization: 'Acme' }),
-			clientId: client.id,
-		});
-		expect(await getActiveClientData(client.id)).toMatchObject({
-			name: null,
-			organization: 'Acme',
-		});
-
-		await updateClient({
-			...clientBuilder({ name: 'Alaric Wivell', organization: '' }),
-			clientId: client.id,
-		});
-		expect(await getActiveClientData(client.id)).toMatchObject({
-			name: 'Alaric Wivell',
-			organization: null,
-		});
-	});
-
-	test('Trims whitespace from string values', async () => {
-		const client = await insertTestClient();
-
-		await updateClient({
-			...clientBuilder({
-				name: '  Alaric Wivell  ',
-				organization: '  Acme  ',
-				email: '  client@acme.example  ',
-			}),
-			clientId: client.id,
-		});
-
-		expect(await getActiveClientData(client.id)).toMatchObject({
-			name: 'Alaric Wivell',
-			organization: 'Acme',
-			email: 'client@acme.example',
-		});
-	});
-
-	test('Invalidates the previous version and leaves exactly one active row', async ({ db }) => {
-		const client = await insertTestClient();
-
-		await updateClient({ ...clientBuilder({ organization: 'Acme' }), clientId: client.id });
-
-		const allData = await db
-			.select({ id: tables.clientData.id, validTo: tables.clientData.validTo })
-			.from(tables.clientData)
-			.where(eq(tables.clientData.clientId, client.id));
-
-		// createTestClient inserted a row, and then we updated it
-		expect(allData.length).toBe(2);
-		expect(allData.filter(d => d.validTo === null)).toHaveLength(1);
-
-		const activeData = await getActiveClientData(client.id);
-		expect(activeData).toMatchObject({ organization: 'Acme' });
-	});
-
-	test('Schedules cleanup and invalidates cache tags', async ({ session }) => {
-		const client = await insertTestClient();
-
-		await updateClient({ ...clientBuilder(), clientId: client.id });
-
-		expect(cleanupClientData).toHaveBeenCalledWith(session.user.id);
-		expect(cleanupAddresses).toHaveBeenCalledWith(session.user.id);
-		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
-		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
 	});
 });
