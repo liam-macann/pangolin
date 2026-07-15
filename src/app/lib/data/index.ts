@@ -18,7 +18,7 @@ export async function getTimezones() {
 }
 
 /** Gets the active configuration for the authenticated user */
-export const getUserConfig = cache(async function getUserConfig() {
+export const fetchConfig = cache(async function fetchConfig() {
 	try {
 		return await withRLS(async (db, session) => {
 			const res = await db.query.config.findFirst({

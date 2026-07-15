@@ -14,7 +14,7 @@ import {
 } from 'react-hook-form';
 import { type z } from 'zod';
 
-import { type getUserConfig } from '@/lib/data';
+import { type fetchConfig } from '@/lib/data';
 import { cn, type Prettify, rateToPercent } from '@/lib/utils';
 import { formatCurrency, getCurrencySymbol } from '@/lib/utils/currencies';
 import { type invoice as schema } from '@/lib/validation/invoice';
@@ -59,7 +59,7 @@ interface FormValues extends FieldValues {
 }
 
 type Config = Pick<
-	Awaited<ReturnType<typeof getUserConfig>>,
+	Awaited<ReturnType<typeof fetchConfig>>,
 	'currency' | 'locale' | 'taxes' | 'taxRegistration'
 >;
 

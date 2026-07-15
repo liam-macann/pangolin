@@ -1,7 +1,7 @@
 import { unstable_rethrow } from 'next/navigation';
 import { NextResponse } from 'next/server';
 
-import { getUserConfig } from '@/lib/data';
+import { fetchConfig } from '@/lib/data';
 
 import { type ApiResponse, type RouteResponse } from '..';
 
@@ -9,7 +9,7 @@ export type Data = Awaited<ReturnType<typeof getUserConfig>>;
 
 export async function GET(): RouteResponse<Data> {
 	try {
-		const data = await getUserConfig();
+		const data = await fetchConfig();
 
 		const response: ApiResponse<Data> = { success: true, data };
 		return NextResponse.json(response);

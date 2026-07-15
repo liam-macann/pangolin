@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { getUserConfig } from '@/lib/data';
+import { fetchConfig } from '@/lib/data';
 
 import Avatar from '@/ui/avatar';
 import { Button } from '@/ui/button';
@@ -8,7 +8,7 @@ import { Button } from '@/ui/button';
 import ConfigForm from './form';
 
 export default async function Page() {
-	const config = await getUserConfig();
+	const config = await fetchConfig();
 
 	return (
 		<div className='grid-cols-[12rem_auto] gap-x-6 md:grid'>

@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { type ComponentProps, useRef, useState } from 'react';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
-import { type getUserConfig } from '@/lib/data';
+import { type fetchConfig } from '@/lib/data';
 import { useConfig, useInvoices } from '@/lib/hooks';
 import { cn, type ElementType } from '@/lib/utils';
 
@@ -63,7 +63,7 @@ export function Table({
 	initialConfig,
 }: {
 	initial?: Invoice[];
-	initialConfig: Awaited<ReturnType<typeof getUserConfig>>;
+	initialConfig: Awaited<ReturnType<typeof fetchConfig>>;
 }) {
 	'use no memo';
 
@@ -130,7 +130,7 @@ function TableContent({
 	config,
 }: {
 	data: Invoice[];
-	config: Awaited<ReturnType<typeof getUserConfig>>;
+	config: Awaited<ReturnType<typeof fetchConfig>>;
 }) {
 	'use no memo';
 
@@ -157,7 +157,7 @@ function TableContent({
 
 const createDialog = DialogPrimitive.createHandle();
 
-function EmptyState({ config }: { config: Awaited<ReturnType<typeof getUserConfig>> }) {
+function EmptyState({ config }: { config: Awaited<ReturnType<typeof fetchConfig>> }) {
 	return (
 		<>
 			<div className='scrim-b-24 scrim-background max-h-44 overflow-clip'>

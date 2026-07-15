@@ -6,7 +6,7 @@ import { toMerged } from 'es-toolkit';
 import { type ComponentProps, createContext, useContext } from 'react';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
-import { type getUserConfig } from '@/lib/data';
+import { type fetchConfig } from '@/lib/data';
 import { cn, type ElementType } from '@/lib/utils';
 
 import { createDataTable } from '@/components/data-table';
@@ -113,7 +113,7 @@ export function createInvoiceTable<TValue>(cols: ColumnDef<Invoice, TValue>[] = 
 export const DataTable = createInvoiceTable(columns);
 export default DataTable;
 
-type Config = Awaited<ReturnType<typeof getUserConfig>>;
+type Config = Awaited<ReturnType<typeof fetchConfig>>;
 
 export function PlaceholderTable({ config, count }: { config: Config; count?: number }) {
 	const data = usePlaceholderInvoices(config, count);

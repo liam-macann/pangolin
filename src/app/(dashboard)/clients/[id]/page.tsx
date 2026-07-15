@@ -3,7 +3,7 @@ import { type Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
-import { getUserConfig } from '@/lib/data';
+import { fetchConfig } from '@/lib/data';
 import { fetchClientStats, fetchClients } from '@/lib/data/client';
 import { fetchInvoicesForClient } from '@/lib/data/invoice';
 import { cn, pluralize } from '@/lib/utils';
@@ -25,7 +25,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 	const [client, invoices, config] = await Promise.all([
 		fetchClients(id),
 		fetchInvoicesForClient(id, 5),
-		getUserConfig(),
+		fetchConfig(),
 	]);
 
 	return (
@@ -81,7 +81,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 }
 
 async function SummaryCards({ id }: { id: string }) {
-	const [config, stats] = await Promise.all([getUserConfig(), fetchClientStats(id)]);
+	const [config, stats] = await Promise.all([fetchConfig(), fetchClientStats(id)]);
 
 	return (
 		<>

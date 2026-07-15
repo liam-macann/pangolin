@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { type z } from 'zod';
 
 import { createInvoice } from '@/lib/actions/invoice';
-import { type getUserConfig } from '@/lib/data';
+import { type fetchConfig } from '@/lib/data';
 import { useClients, useInvoices } from '@/lib/hooks';
 import { cn, type Prettify } from '@/lib/utils';
 import { formatDate } from '@/lib/utils/date';
@@ -65,7 +65,7 @@ export function CreateInvoiceDialog({
 	children: ReactElement;
 	config: Prettify<
 		Pick<
-			Awaited<ReturnType<typeof getUserConfig>>,
+			Awaited<ReturnType<typeof fetchConfig>>,
 			'id' | 'currency' | 'locale' | 'timezone' | 'taxes' | 'taxRegistration'
 		>
 	>;

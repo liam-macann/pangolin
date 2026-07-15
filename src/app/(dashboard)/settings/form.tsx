@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { updateUserConfig } from '@/lib/actions/config';
-import { type getUserConfig } from '@/lib/data';
+import { type fetchConfig } from '@/lib/data';
 import { rateToPercent } from '@/lib/utils';
 import { configFields, config as configSchema } from '@/lib/validation/config';
 
@@ -36,7 +36,7 @@ const formSchema = configFields
 type FormInput = z.input<typeof formSchema>;
 
 /** Transforms the DB config response into schema input format */
-const configAdapter = (config: Awaited<ReturnType<typeof getUserConfig>>): FormInput => ({
+const configAdapter = (config: Awaited<ReturnType<typeof fetchConfig>>): FormInput => ({
 	// Schema validation is strict. Avoid destructuring to prevent additional keys.
 
 	timezone: config.timezone,
@@ -74,7 +74,7 @@ const configAdapter = (config: Awaited<ReturnType<typeof getUserConfig>>): FormI
 export default function ConfigForm({
 	config,
 }: {
-	config: Awaited<ReturnType<typeof getUserConfig>>;
+	config: Awaited<ReturnType<typeof fetchConfig>>;
 }) {
 	/** Mutable value that records the latest config record known to the client.
 	 *  Updates on successful form submission, and used to reset the form. */

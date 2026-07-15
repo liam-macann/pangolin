@@ -1,6 +1,6 @@
 import { type Metadata } from 'next';
 
-import { getUserConfig } from '@/lib/data';
+import { fetchConfig } from '@/lib/data';
 import { fetchInvoices } from '@/lib/data/invoice';
 
 import { Table } from './ui';
@@ -15,7 +15,7 @@ export default async function Page(_props: {
 		page?: string;
 	}>;
 }) {
-	const [invoices, config] = await Promise.all([fetchInvoices(), getUserConfig()]);
+	const [invoices, config] = await Promise.all([fetchInvoices(), fetchConfig()]);
 
 	return (
 		<div className='w-full'>
