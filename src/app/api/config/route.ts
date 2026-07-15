@@ -1,11 +1,11 @@
 import { unstable_rethrow } from 'next/navigation';
 import { NextResponse } from 'next/server';
 
-import { fetchConfig } from '@/lib/data';
+import { type Config, fetchConfig } from '@/lib/data';
 
 import { type ApiResponse, type RouteResponse } from '..';
 
-export type Data = Awaited<ReturnType<typeof getUserConfig>>;
+export type Data = Config;
 
 export async function GET(): RouteResponse<Data> {
 	try {

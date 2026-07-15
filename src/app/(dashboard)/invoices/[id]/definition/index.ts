@@ -1,7 +1,7 @@
 import { TZDate } from '@date-fns/tz';
 import { type TDocumentDefinitions } from 'pdfmake/interfaces';
 
-import { type fetchInvoice } from '@/lib/data/invoice';
+import { type DetailedInvoice } from '@/lib/data/invoice';
 import { type ElementType } from '@/lib/utils';
 import { formatAddress } from '@/lib/utils/address';
 import { formatDate } from '@/lib/utils/date';
@@ -19,18 +19,16 @@ declare module 'pdfmake/interfaces' {
 	}
 }
 
-type FetchResult = Awaited<ReturnType<typeof fetchInvoice>>;
-
 /** A subset of API invoice data used for printing invoices */
 export type InvoicePrintData = Omit<
-	FetchResult,
+	DetailedInvoice,
 	'id' | 'status' | 'items' | 'issueYear' | 'index' | 'yearIndex'
 > & {
 	// isVoid is the only mutable status that may be accessed
-	status: Pick<FetchResult['status'], 'isVoid'>;
+	status: Pick<DetailedInvoice['status'], 'isVoid'>;
 
 	// Gross amount is not displayed on a per-item basis, but rather deferred to the subtotal table
-	items: Omit<ElementType<FetchResult['items']>, 'grossAmount'>[];
+	items: Omit<ElementType<DetailedInvoice['items']>, 'grossAmount'>[];
 };
 
 export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefinitions {

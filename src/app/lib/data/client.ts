@@ -11,27 +11,29 @@ import * as schema from '@/db/schema';
 
 import { fetchStats } from './invoice';
 
-export interface ClientResult {
+export interface Client {
 	id: string;
 	isFavorite: boolean;
 	isDeleted: boolean;
 	invoiceCount: number;
-	data: {
-		name: string | null;
-		organization: string | null;
-		scdId: string;
-		email: string;
-		notes: string | null;
-		address: Omit<Decrypted<typeof schema.address.$inferSelect>, 'userId' | 'id'> | null;
-		/** Address string formatted according to country metadata.
-		 *
-		 * This is included to avoid a waterfall on the client, as metadata registration is needed to format. */
-		formattedAddress: string | null;
-	};
+	data: ClientData;
 }
 
-export async function fetchClients(): Promise<ClientResult[]>;
-export async function fetchClients(id: string): Promise<ClientResult>;
+export interface ClientData {
+	name: string | null;
+	organization: string | null;
+	scdId: string;
+	email: string;
+	notes: string | null;
+	address: Omit<Decrypted<typeof schema.address.$inferSelect>, 'userId' | 'id'> | null;
+	/** Address string formatted according to country metadata.
+	 *
+	 * This is included to avoid a waterfall on the client, as metadata registration is needed to format. */
+	formattedAddress: string | null;
+}
+
+export async function fetchClients(): Promise<Client[]>;
+export async function fetchClients(id: string): Promise<Client>;
 
 /** Fetch all clients for authenticated user, or a single client if `id` is provided */
 export async function fetchClients(id?: string) {
@@ -80,7 +82,7 @@ export async function fetchClients(id?: string) {
 			const decrypted = await Promise.all(res.map(el => vault.decryptObject(el)));
 			vault.destroy();
 
-			const mapped: ClientResult[] = await Promise.all(
+			const mapped: Client[] = await Promise.all(
 				decrypted.map(async client => {
 					const clientData = client.data?.[0];
 

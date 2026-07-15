@@ -17,8 +17,9 @@ import { QueryBuilder } from 'drizzle-orm/pg-core';
 import { cacheLife, cacheTag } from 'next/cache';
 import { notFound, unstable_rethrow } from 'next/navigation';
 
+import { type Config, fetchConfig } from '@/lib/data';
 import { crypto } from '@/lib/encrypt';
-import { invoiceReference } from '@/lib/utils';
+import { invoiceReference, type Prettify } from '@/lib/utils';
 import { coalesce, jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
 import { type relations } from '@/db/relations';
@@ -26,7 +27,30 @@ import * as schema from '@/db/schema';
 
 import { type Session } from '@/auth';
 
+import { type ClientData } from './client';
 import { query } from './helpers';
+
+export type Invoice = Awaited<ReturnType<typeof fetchInvoices>>[number];
+
+/** A billed line item, joined with the tax rows applied to it */
+export type LineItem = Prettify<
+	Omit<
+		typeof schema.itemsWithTax.$inferSelect,
+		'id' | 'invoiceId' | 'userId' | 'configId' | 'taxRegistration' | 'order'
+	> & {
+		taxes: Pick<typeof schema.taxes.$inferSelect, 'name' | 'rate'>[];
+	}
+>;
+
+/** Superset of {@link Invoice} with relational data */
+export type DetailedInvoice = Omit<Invoice, 'clientData' | 'config'> & {
+	clientData: Pick<ClientData, 'name' | 'organization' | 'address'>;
+	config: Config;
+	items: LineItem[];
+
+	/** Tax contribution across all items, collapsed by tax name */
+	tax: { name: string; contribution: number }[];
+};
 
 /** Fetch all invoices for authenticated user, including basic relational data */
 export const fetchInvoices = (
@@ -53,9 +77,13 @@ async function _fetchInvoices(
 				clientDataId: false,
 				configId: false,
 				userId: false,
+
+				// Included with config data
+				taxRegistration: false,
+				currency: false,
 			},
 			with: {
-				status: { columns: { id: false } },
+				status: { columns: { id: false, userId: false } },
 				clientData: { columns: { name: true, organization: true, clientId: true } },
 				config: {
 					columns: {
@@ -81,7 +109,7 @@ export const fetchInvoicesForClient = (clientId: string, limit?: number) =>
 	fetchInvoices({ clientData: { client: { id: { eq: clientId } } } }, limit);
 
 /** Join relational (incl. item) details with a single invoice record for authenticated user */
-export async function fetchInvoice(id: string) {
+export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 	try {
 		return await withRLS(async (db, session) => {
 			// Get all active taxes, and calculate sum for display in the invoice subtotals
@@ -115,7 +143,6 @@ export async function fetchInvoice(id: string) {
 				where: { userId: { eq: session.user.id }, id: { eq: id } },
 				columns: {
 					clientDataId: false,
-					configId: false,
 					userId: false,
 
 					// Included with config data
@@ -128,16 +155,6 @@ export async function fetchInvoice(id: string) {
 						columns: { name: true, organization: true },
 						with: { address: true },
 					},
-					config: {
-						columns: {
-							validFrom: false,
-							validTo: false,
-							id: false,
-							userId: false,
-							addressId: false,
-						},
-						with: { address: true },
-					},
 					items: {
 						columns: {
 							id: false,
@@ -147,7 +164,7 @@ export async function fetchInvoice(id: string) {
 							taxRegistration: false,
 							order: false,
 						},
-						with: { taxes: { columns: { userId: false, id: false } } },
+						with: { taxes: { columns: { name: true, rate: true } } },
 						orderBy: { order: 'asc' },
 					},
 				},
@@ -167,11 +184,14 @@ export async function fetchInvoice(id: string) {
 
 			if (!res) notFound();
 
+			const { configId, ...invoiceRes } = res;
+			const config = await fetchConfig(configId);
+
 			const vault = await crypto(session.user.id);
-			const inv = {
-				...res,
-				reference: invoiceReference(res, res.config.numberingScheme),
-				config: await vault.decryptObject(res.config),
+			const inv: DetailedInvoice = {
+				...invoiceRes,
+				reference: invoiceReference(res, config.numberingScheme),
+				config,
 				clientData: await vault.decryptObject(res.clientData),
 				tax,
 			};
@@ -195,7 +215,7 @@ export const fetchStats = (filter: typeof defaultInvoiceFilter = defaultInvoiceF
 	query(async session => _fetchStats(session, filter), 'Failed to fetch invoice statistics');
 
 /** Outstanding gross totals per currency across all user invoices (excludes voided invoices) */
-export async function _fetchStats(
+async function _fetchStats(
 	session: Session,
 	/** Scope the invoice statistics to a subset */
 	filter: typeof defaultInvoiceFilter = defaultInvoiceFilter,
