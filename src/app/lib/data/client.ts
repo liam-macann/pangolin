@@ -3,13 +3,12 @@ import { QueryBuilder } from 'drizzle-orm/pg-core';
 import { getRegisteredCountries } from 'lib-address';
 import { notFound, unstable_rethrow } from 'next/navigation';
 
+import { fetchStats } from '@/lib/data/invoice/stats';
 import { crypto, type Decrypted } from '@/lib/encrypt';
 import { fetchAddressMetadata, formatAddress } from '@/lib/utils/address';
 import { coalesce } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
 import * as schema from '@/db/schema';
-
-import { fetchStats } from './invoice';
 
 export interface Client {
 	id: string;

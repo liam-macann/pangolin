@@ -8,12 +8,7 @@ import * as tables from '@/db/schema';
 import { asUser as test } from '@/src/test/session';
 
 import { createInvoice, setInvoiceNotes, updateInvoiceStatus, voidInvoice } from './invoice';
-import {
-	insertTestClient,
-	insertTestConfig,
-	insertTestInvoice,
-	invoiceBuilder,
-} from './tests/helpers';
+import { insertTestInvoice, invoiceBuilder, setUpConfigAndClient } from './tests/helpers';
 
 const getInvoice = (id: string) =>
 	withRLS(async (db, session) =>
@@ -23,23 +18,20 @@ const getInvoice = (id: string) =>
 		}),
 	);
 
-/** Inserts an active config and client, returning the config id and the client data id */
-async function setUpConfigAndClient(configOverrides?: Parameters<typeof insertTestConfig>[0]) {
-	const configId = await insertTestConfig(configOverrides);
-	const client = await insertTestClient();
-
-	return { configId, clientDataId: client.data.scdId };
-}
-
 beforeEach(async () => {
 	vi.clearAllMocks();
 });
 
 describe('createInvoice', () => {
 	test('Inserts an invoice with its items and status', async ({ session }) => {
-		const { clientDataId } = await setUpConfigAndClient();
+		const { client } = await setUpConfigAndClient();
 
-		await createInvoice(invoiceBuilder({ clientDataId }));
+		await createInvoice(
+			invoiceBuilder({
+				clientDataId: client.data.scdId,
+				items: [{ label: 'Consulting services', quantity: 2 }],
+			}),
+		);
 
 		const [invoice] = await withRLS(db => db.select().from(tables.invoices));
 		const record = await getInvoice(invoice.id);
@@ -55,10 +47,10 @@ describe('createInvoice', () => {
 	});
 
 	test('Increments the sequential index across invoices in the same year', async () => {
-		const { clientDataId } = await setUpConfigAndClient();
+		const { client } = await setUpConfigAndClient();
 
-		await createInvoice(invoiceBuilder({ clientDataId }));
-		await createInvoice(invoiceBuilder({ clientDataId }));
+		await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
+		await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
 
 		const invoices = await withRLS(db =>
 			db
@@ -74,18 +66,18 @@ describe('createInvoice', () => {
 	});
 
 	test('Resets the yearly index per issue year while the global index keeps incrementing', async () => {
-		const { clientDataId } = await setUpConfigAndClient();
+		const { client } = await setUpConfigAndClient();
 
 		await createInvoice(
 			invoiceBuilder({
-				clientDataId,
+				clientDataId: client.data.scdId,
 				issuedAt: new Date('2024-12-31T00:00:00Z'),
 				dueAt: new Date('2024-12-31T00:00:00Z'),
 			}),
 		);
 		await createInvoice(
 			invoiceBuilder({
-				clientDataId,
+				clientDataId: client.data.scdId,
 				issuedAt: new Date('2025-01-01T00:00:00Z'),
 				dueAt: new Date('2025-01-01T00:00:00Z'),
 			}),
@@ -105,7 +97,7 @@ describe('createInvoice', () => {
 	});
 
 	test('Links items to taxes when the config is tax-registered', async ({ session }) => {
-		const { configId, clientDataId } = await setUpConfigAndClient({
+		const { configId, client } = await setUpConfigAndClient({
 			taxRegistration: true,
 			taxes: [{ name: 'GST', rate: 10 }],
 		});
@@ -118,7 +110,9 @@ describe('createInvoice', () => {
 				.where(eq(tables.configTaxes.configId, configId)),
 		);
 
-		await createInvoice(invoiceBuilder({ clientDataId, items: [{ taxes: new Set([tax.id]) }] }));
+		await createInvoice(
+			invoiceBuilder({ clientDataId: client.data.scdId, items: [{ taxes: new Set([tax.id]) }] }),
+		);
 
 		const [invoice] = await withRLS(db =>
 			db.select().from(tables.invoices).where(eq(tables.invoices.userId, session.user.id)),
@@ -129,19 +123,19 @@ describe('createInvoice', () => {
 	});
 
 	test('Does not link taxes when the config is not tax-registered', async () => {
-		const { clientDataId } = await setUpConfigAndClient();
-		await createInvoice(invoiceBuilder({ clientDataId }));
+		const { client } = await setUpConfigAndClient();
+		await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
 
 		const itemTaxes = await withRLS(db => db.select().from(tables.itemTaxes));
 		expect(itemTaxes).toHaveLength(0);
 	});
 
 	test('Empty string title, description, notes and item note are recorded as null', async () => {
-		const { clientDataId } = await setUpConfigAndClient();
+		const { client } = await setUpConfigAndClient();
 
 		await createInvoice(
 			invoiceBuilder({
-				clientDataId,
+				clientDataId: client.data.scdId,
 				title: '',
 				description: '',
 				notes: '',
@@ -157,11 +151,11 @@ describe('createInvoice', () => {
 	});
 
 	test('Trims whitespace from string values', async () => {
-		const { clientDataId } = await setUpConfigAndClient();
+		const { client } = await setUpConfigAndClient();
 
 		await createInvoice(
 			invoiceBuilder({
-				clientDataId,
+				clientDataId: client.data.scdId,
 				title: '  Website work  ',
 				description: '  June retainer  ',
 				notes: '  Check hours  ',
@@ -181,36 +175,41 @@ describe('createInvoice', () => {
 	});
 
 	test('Rejects when the invoice has no items', async () => {
-		const { clientDataId } = await setUpConfigAndClient();
-		await expect(createInvoice(invoiceBuilder({ clientDataId, items: [] }))).rejects.toThrow();
+		const { client } = await setUpConfigAndClient();
+		await expect(
+			createInvoice(invoiceBuilder({ clientDataId: client.data.scdId, items: [] })),
+		).rejects.toThrow();
 	});
 
 	test('Rejects when the due date is before the issue date', async () => {
-		const { clientDataId } = await setUpConfigAndClient();
+		const { client } = await setUpConfigAndClient();
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 		await expect(
 			createInvoice(
 				invoiceBuilder({
-					clientDataId,
+					clientDataId: client.data.scdId,
 					issuedAt: new Date('2026-06-15T00:00:00Z'),
 					dueAt: new Date('2026-06-01T00:00:00Z'),
 				}),
 			),
-		).rejects.toThrow();
+		).rejects.toThrow('Database Error: failed to create invoice');
+
+		consoleError.mockRestore();
 	});
 
 	test('Invalidates the invoices cache tag', async ({ session }) => {
-		const { clientDataId } = await setUpConfigAndClient();
+		const { client } = await setUpConfigAndClient();
 
-		await createInvoice(invoiceBuilder({ clientDataId }));
+		await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
 	});
 });
 
 /** Creates a config, client and invoice, returning the invoice id */
 const setUpInvoice = async () => {
-	const { clientDataId } = await setUpConfigAndClient();
-	return insertTestInvoice({ clientDataId });
+	const { client } = await setUpConfigAndClient();
+	return insertTestInvoice({ clientDataId: client.data.scdId });
 };
 
 describe('updateInvoiceStatus', () => {

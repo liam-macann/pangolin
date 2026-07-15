@@ -69,7 +69,7 @@ export const configBuilder = (overrides?: DeepPartial<ConfigInput>): ConfigInput
 export const invoiceItemBuilder = (overrides?: DeepPartial<InvoiceItemInput>): InvoiceItemInput => {
 	const base: Minimized<InvoiceItemInput> = {
 		label: 'Consulting services',
-		quantity: 2,
+		quantity: 1,
 		unitCost: 150,
 		taxes: new Set<string>(),
 	};
@@ -129,6 +129,13 @@ export async function insertTestConfig(overrides?: DeepPartial<ConfigInput>) {
 
 	assert(config, 'Config should have been inserted');
 	return config.id;
+}
+
+/** Sets up an active config and a single client scoped to it */
+export async function setUpConfigAndClient(configOverrides?: DeepPartial<ConfigInput>) {
+	const configId = await insertTestConfig(configOverrides);
+	const client = await insertTestClient();
+	return { configId, client };
 }
 
 /** Creates an invoice via the real action, returning its id */

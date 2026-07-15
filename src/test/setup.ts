@@ -12,6 +12,17 @@ vi.mock('server-only', () => ({}));
 vi.mock('next/cache', () => ({ updateTag: vi.fn(), cacheLife: vi.fn() }));
 vi.mock('next/server', () => ({ after: vi.fn((cb: () => unknown) => cb()) }));
 
+// Keeps the actual implementations, but wraps them so we can assert they were called
+vi.mock(import('next/navigation'), async importOriginal => {
+	const actual = await importOriginal();
+	return {
+		...actual,
+		notFound: vi.fn(actual.notFound),
+		unauthorized: vi.fn(actual.unauthorized),
+		forbidden: vi.fn(actual.forbidden),
+	};
+});
+
 // The real DB connection must never run in a test
 export const testConnection: { current: TestTX | null } = { current: null };
 vi.mock('@/db/connection', () => ({

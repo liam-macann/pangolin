@@ -64,5 +64,8 @@ export const invoice = createInsertSchema(schema.invoices, {
 				.optional(),
 		}).pick({ status: true, notes: true }).shape,
 
-		items: z.array(item).min(1, 'Invoice must contain items'),
+		items: z
+			.array(item)
+			.min(1, 'Invoice must contain items')
+			.max(256, 'No more than 256 items allowed'),
 	});
