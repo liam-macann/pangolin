@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { toMerged } from 'es-toolkit/object';
 import { type Content, type ContentText, type TableCell } from 'pdfmake/interfaces';
 
@@ -20,6 +21,7 @@ export const invoiceDataBuilder = (data?: DeepPartial<InvoicePrintData>): Invoic
 		status: { isVoid: false },
 		clientData: { name: null, organization: null, address: null },
 		config: {
+			id: randomUUID(),
 			tradingName: 'My Business',
 			email: null,
 			phone: null,
@@ -35,6 +37,7 @@ export const invoiceDataBuilder = (data?: DeepPartial<InvoicePrintData>): Invoic
 			tradingNumber: null,
 			address: null,
 			numberingScheme: 'sequential',
+			taxes: [],
 		},
 		items: [],
 		tax: [],

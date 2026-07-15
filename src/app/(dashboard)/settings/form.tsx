@@ -35,6 +35,12 @@ const formSchema = configFields
 
 type FormInput = z.input<typeof formSchema>;
 
+/** Parses a config detail, stored in raw `"label: value"` storage format, into structured form input */
+const parseDetail = (v: string) => {
+	const [label, value] = v.split(/: (.*)/s);
+	return { label, value };
+};
+
 /** Transforms the DB config response into schema input format */
 const configAdapter = (config: Awaited<ReturnType<typeof fetchConfig>>): FormInput => ({
 	// Schema validation is strict. Avoid destructuring to prevent additional keys.
@@ -47,12 +53,12 @@ const configAdapter = (config: Awaited<ReturnType<typeof fetchConfig>>): FormInp
 	colorScheme: config.colorScheme,
 
 	taxes: config.taxes.map(t => ({ name: t.name, rate: rateToPercent(t.rate) })),
-	paymentDetails: config.paymentDetails || [],
+	paymentDetails: config.paymentDetails?.map(parseDetail) || [],
 	tradingName: config.tradingName,
 	email: config.email || '',
 	phone: config.phone || '',
 	header: config.header || '',
-	tradingNumber: config.tradingNumber || [],
+	tradingNumber: config.tradingNumber?.map(parseDetail) || [],
 
 	addressEnabled: !!config.address,
 	// Specifying keys necessary to enforce object shape

@@ -1,13 +1,19 @@
 import Link from 'next/link';
+import { unauthorized } from 'next/navigation';
 
 import { fetchConfig } from '@/lib/data';
 
 import Avatar from '@/ui/avatar';
 import { Button } from '@/ui/button';
 
+import { getSession } from '@/auth';
+
 import ConfigForm from './form';
 
 export default async function Page() {
+	const session = await getSession();
+	if (!session) unauthorized();
+
 	const config = await fetchConfig();
 
 	return (
@@ -49,10 +55,10 @@ export default async function Page() {
 			<section className='mb-12 flex w-full flex-col gap-12'>
 				<div>
 					<div className='flex items-center gap-6 rounded-lg border bg-card p-6 px-8 sm:gap-10'>
-						<Avatar className='size-14' image={config.user.image} />
+						<Avatar className='size-14' image={session.user.image ?? null} />
 						<div className='flex flex-col'>
-							<p className='font-semibold text-lg'>{config.user.name}</p>
-							<p className='text-muted-foreground'>{config.user.email}</p>
+							<p className='font-semibold text-lg'>{session.user.name}</p>
+							<p className='text-muted-foreground'>{session.user.email}</p>
 						</div>
 					</div>
 
