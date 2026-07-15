@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
+import { z } from 'zod';
 
-import { intlNumber } from '@/lib/zod';
+import { arrayBounds, intlNumber, numberBounds } from '@/lib/zod';
 
 describe('intlNumber', () => {
 	const schema = intlNumber();
@@ -76,5 +77,52 @@ describe('intlNumber', () => {
 	test('Returns custom error message', () => {
 		const message = 'Please enter a number';
 		expect(intlNumber(message).safeParse('').error?.issues[0].message).toBe(message);
+	});
+});
+
+describe('numberBounds', () => {
+	test('Reads min/max off a bounded number schema', () => {
+		expect(numberBounds(z.number().min(2).max(5))).toEqual({ minValue: 2, maxValue: 5 });
+		expect(numberBounds(z.number().min(1).max(10).optional().nullable())).toEqual({
+			minValue: 1,
+			maxValue: 10,
+		});
+	});
+
+	test('Defaults missing bounds to ±Infinity', () => {
+		expect(numberBounds(z.number().min(2))).toEqual({ minValue: 2, maxValue: Infinity });
+		expect(numberBounds(z.number().max(2))).toEqual({ minValue: -Infinity, maxValue: 2 });
+	});
+
+	test('Throws when no bounded number is present', () => {
+		expect(() => numberBounds(z.number())).toThrow();
+	});
+});
+
+describe('arrayBounds', () => {
+	test('Reads min/max off a bounded array schema', () => {
+		expect(arrayBounds(z.array(z.string()).min(2).max(5))).toEqual({
+			minLength: 2,
+			maxLength: 5,
+		});
+		expect(arrayBounds(z.array(z.string()).min(1).max(3).optional().nullable())).toEqual({
+			minLength: 1,
+			maxLength: 3,
+		});
+	});
+
+	test('Defaults missing bounds to Infinity (max) and 0 (min)', () => {
+		expect(arrayBounds(z.array(z.string()).min(1))).toEqual({
+			minLength: 1,
+			maxLength: Infinity,
+		});
+		expect(arrayBounds(z.array(z.string()).max(1))).toEqual({
+			minLength: 0,
+			maxLength: 1,
+		});
+	});
+
+	test('Throws when no bounded array is present', () => {
+		expect(() => arrayBounds(z.array(z.string()))).toThrow();
 	});
 });
