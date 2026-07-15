@@ -1,9 +1,10 @@
 import { allLocales, base, en, Faker, faker } from '@faker-js/faker';
 import { type CountryCode } from 'lib-address';
 
-import { type Transaction } from './../../src/db';
-import * as schema from './../../src/db/schema';
-import { type SeedCrypto } from './encrypt.ts';
+import { type Transaction } from '@/db';
+import * as schema from '@/db/schema';
+
+import { type SeedCrypto } from './encrypt';
 
 const isLocaleKey = (key: string): key is keyof typeof allLocales => key in allLocales;
 

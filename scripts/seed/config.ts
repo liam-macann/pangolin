@@ -1,10 +1,11 @@
 import { faker } from '@faker-js/faker';
 
-import { type Transaction } from './../../src/db';
-import * as schema from './../../src/db/schema';
-import { seedAddress } from './address.ts';
-import { type SeedCrypto } from './encrypt.ts';
-import { generateScdIntervals, type ScdVersion } from './utils.ts';
+import { type Transaction } from '@/db';
+import * as schema from '@/db/schema';
+
+import { seedAddress } from './address';
+import { type SeedCrypto } from './encrypt';
+import { generateScdIntervals, type ScdVersion } from './utils';
 
 export async function seedConfig(
 	tx: Transaction,

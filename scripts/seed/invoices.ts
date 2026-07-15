@@ -1,10 +1,11 @@
 import { faker } from '@faker-js/faker';
 import { addDays, format, parseISO, startOfYear } from 'date-fns';
 
-import { type Transaction } from './../../src/db';
-import * as schema from './../../src/db/schema';
-import { type ClientRecord } from './clients.ts';
-import { activeAt, type ScdVersion } from './utils.ts';
+import { type Transaction } from '@/db';
+import * as schema from '@/db/schema';
+
+import { type ClientRecord } from './clients';
+import { activeAt, type ScdVersion } from './utils';
 
 function dateInYear(year: number, index: number, total: number): string {
 	const dayOfYear = Math.max(1, Math.round((index / total) * 364));

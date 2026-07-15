@@ -12,7 +12,7 @@ import { Pool } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { reset } from 'drizzle-seed';
 
-import { relations } from './../src/db/relations.ts';
+import { relations } from '@/db/relations';
 import './../env-config.ts';
 
 export const db = drizzle({
@@ -39,12 +39,12 @@ const {
 	...tables
 } = schema;
 
-import { seedClients } from './seed/clients.ts';
-import { seedConfig } from './seed/config.ts';
-import { seedKeychain } from './seed/encrypt.ts';
-import { seedInvoiceCounters, seedInvoices } from './seed/invoices.ts';
-import { seedTaxes } from './seed/taxes.ts';
-import { seedUser } from './seed/user.ts';
+import { seedClients } from './seed/clients';
+import { seedConfig } from './seed/config';
+import { seedKeychain } from './seed/encrypt';
+import { seedInvoiceCounters, seedInvoices } from './seed/invoices';
+import { seedTaxes } from './seed/taxes';
+import { seedUser } from './seed/user';
 
 // Deterministic seed for reproducible data
 faker.seed(42);
