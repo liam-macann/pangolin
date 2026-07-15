@@ -23,15 +23,17 @@ export const auth = betterAuth({
 		usePlural: true,
 	}),
 	experimental: { joins: true },
-	baseURL: {
-		allowedHosts: [
-			'localhost:*',
-			process.env.VERCEL_URL,
-			process.env.VERCEL_BRANCH_URL,
-			process.env.VERCEL_PROJECT_PRODUCTION_URL,
-		].filter((v): v is string => typeof v === 'string'),
-		fallback: process.env.VERCEL_PROJECT_PRODUCTION_URL,
-	},
+	baseURL:
+		process.env.VERCEL_ENV === 'production' || process.env.VERCEL_ENV === 'preview'
+			? {
+					allowedHosts: [
+						process.env.VERCEL_URL,
+						process.env.VERCEL_BRANCH_URL,
+						process.env.VERCEL_PROJECT_PRODUCTION_URL,
+					].filter((v): v is string => typeof v === 'string'),
+					fallback: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+				}
+			: process.env.BETTER_AUTH_URL,
 	errorURL: '/auth/error',
 	onAPIError: { errorURL: '/auth/error' },
 	socialProviders: {
