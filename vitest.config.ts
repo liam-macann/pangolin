@@ -1,6 +1,6 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 const require = createRequire(import.meta.url);
 const libAddressRoot = path.dirname(require.resolve('lib-address/package.json'));
@@ -17,5 +17,12 @@ export default defineConfig({
 	test: {
 		environment: 'node',
 		setupFiles: ['./src/test/setup.ts'],
+		coverage: {
+			exclude: [
+				...(configDefaults.coverage.exclude ?? []),
+				'src/db/schema/**/*',
+				'src/db/relations.ts',
+			],
+		},
 	},
 });

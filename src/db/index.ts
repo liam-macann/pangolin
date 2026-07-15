@@ -22,7 +22,7 @@ export type AuthTransaction = Brand<Transaction, 'AuthTransaction'>;
  *
  *  Allows nested `withRLS()` calls to reuse the outer scope instead of opening a second connection.
  *
- *  @remarks No savepoint is introduced; the outer `withRLS()` call retains atomicity */
+ *  @remarks No savepoint is introduced when nesting; the outer `withRLS()` call retains atomicity */
 const rlsContext = new AsyncLocalStorage<{ tx: AuthTransaction; session: Session }>();
 
 function openTransaction<T>(

@@ -52,7 +52,6 @@ describe('intlNumber', () => {
 			'2.00,0.800.99',
 			'2,00,0.800,99',
 		])('Rejects when unable to infer decimal separator: %s', input => {
-			console.log(schema.safeParse(input).data);
 			expect(() => schema.parse(input)).toThrow();
 		});
 
