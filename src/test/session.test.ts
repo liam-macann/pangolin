@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { describe, expect } from 'vitest';
 
 import { users } from '@/db/schema/auth';
@@ -12,6 +12,8 @@ describe('asUser fixture rollback', () => {
 	const email = 'rollback-verification-123@example.com';
 
 	test('A: Inserts a row into an existing table', async ({ db }) => {
+		await db.execute(sql`SET LOCAL ROLE neondb_owner`);
+
 		await db.insert(users).values({ name: 'Isolation Test', email });
 
 		const rows = await db.select().from(users).where(eq(users.email, email));
@@ -19,6 +21,8 @@ describe('asUser fixture rollback', () => {
 	});
 
 	test('B: Verifies the previous test was completely rolled back', async ({ db }) => {
+		await db.execute(sql`SET LOCAL ROLE neondb_owner`);
+
 		// The session fixture will insert a user on each test. The previous session should have been rolled back.
 		expect((await db.select().from(users)).length).toBe(1);
 

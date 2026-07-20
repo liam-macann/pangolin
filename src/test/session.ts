@@ -2,15 +2,16 @@ import { randomUUID } from 'node:crypto';
 import { drizzleAdapter } from '@better-auth/drizzle-adapter/relations-v2';
 import { betterAuth } from 'better-auth/minimal';
 import { testUtils } from 'better-auth/plugins';
+import { sql } from 'drizzle-orm';
 import { test as base } from 'vitest';
 
 import * as schema from '@/db/schema/auth';
 
-import { createTestDb, type TestTx } from './pglite';
+import { createTestDB, type TestTX } from './pglite';
 import { sessionStorage, testConnection } from './setup';
 
 /** A test-only Better Auth instance pointed at the disposable PGlite connection */
-export function createTestAuth(db: TestTx) {
+export function createTestAuth(db: TestTX) {
 	return betterAuth({
 		database: drizzleAdapter(db, {
 			schema,
@@ -24,6 +25,23 @@ export function createTestAuth(db: TestTx) {
 	});
 }
 
+/** Creates and logs in a fresh user within the current fixture transaction.
+ *
+ *  @remarks Better Auth writes as neondb_owner in production (a separate, superuser connection), bypassing RLS */
+export async function createTestSession(db: TestTX, auth: ReturnType<typeof createTestAuth>) {
+	const { test: helpers } = await auth.$context;
+
+	await db.execute(sql`SET LOCAL ROLE neondb_owner;`);
+
+	// Better Auth helper does not generate UUID id by default
+	const user = await helpers.saveUser(helpers.createUser({ id: randomUUID() }));
+	const { session } = await helpers.login({ userId: user.id });
+
+	await db.execute(sql`SET LOCAL ROLE authenticated;`);
+
+	return { user, session };
+}
+
 /** Vitest `test()` with fixtures to simulate a user connection with:
  *
  *  - a disposable PGlite database
@@ -34,12 +52,12 @@ export function createTestAuth(db: TestTx) {
 export const asUser = base
 	// biome-ignore lint/correctness/noEmptyPattern: Vitest's fixture parser requires literal object-destructuring syntax
 	.extend('client', { scope: 'worker' }, async ({}, { onCleanup }) => {
-		const client = await createTestDb();
+		const client = await createTestDB();
 		onCleanup(async () => await client.$client.close());
 		return client;
 	})
 
-	.extend<{ db: TestTx }>({
+	.extend<{ db: TestTX }>({
 		db: [
 			async ({ client }, use) => {
 				const ROLLBACK = new Error('rollback');
@@ -62,15 +80,7 @@ export const asUser = base
 	})
 
 	.extend('auth', async ({ db }) => createTestAuth(db))
-	.extend('session', async ({ auth }) => {
-		const { test: helpers } = await auth.$context;
-
-		// Better Auth helper does not generate UUID id by default
-		const user = await helpers.saveUser(helpers.createUser({ id: randomUUID() }));
-
-		const { session } = await helpers.login({ userId: user.id });
-		return { user, session };
-	});
+	.extend('session', async ({ db, auth }) => createTestSession(db, auth));
 
 // This is what lets concurrently-running tests each see their own session.
 asUser.aroundEach(async (runTest, { session }) => {
