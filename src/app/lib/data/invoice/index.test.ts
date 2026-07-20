@@ -19,7 +19,7 @@ import * as tables from '@/db/schema';
 import { createTestSession, asUser as test } from '@/src/test/session';
 import { sessionStorage } from '@/src/test/setup';
 
-import { fetchInvoice } from './index';
+import { fetchInvoice, fetchInvoices, fetchInvoicesForClient } from './index';
 
 type Item = { quantity: number; unitCost: number };
 
@@ -371,5 +371,68 @@ describe('fetchInvoice', () => {
 			const invoice = await fetchInvoice(id);
 			expect(invoice.tax.map(t => t.name)).toEqual(['ZTAX', 'ATAX']);
 		});
+	});
+});
+
+describe('fetchInvoices', () => {
+	test('Lists invoices ordered by index, descending', async () => {
+		const clientDataId = await setUpConfigAndClient();
+		const first = await insertTestInvoice({
+			clientDataId,
+			items: [{ quantity: 1, unitCost: 100 }],
+		});
+		const second = await insertTestInvoice({
+			clientDataId,
+			items: [{ quantity: 1, unitCost: 100 }],
+		});
+
+		const invoices = await fetchInvoices();
+		expect(invoices.map(i => i.id)).toEqual([second, first]);
+	});
+
+	test('Respects the limit parameter', async () => {
+		const clientDataId = await setUpConfigAndClient();
+		await insertTestInvoice({ clientDataId, items: [{ quantity: 1, unitCost: 100 }] });
+		await insertTestInvoice({ clientDataId, items: [{ quantity: 1, unitCost: 100 }] });
+
+		const invoices = await fetchInvoices(undefined, 1);
+		expect(invoices).toHaveLength(1);
+	});
+
+	test('Computes the invoice reference from the numbering scheme', async () => {
+		const clientDataId = await setUpConfigAndClient();
+		await insertTestInvoice({ clientDataId, items: [{ quantity: 1, unitCost: 100 }] });
+
+		const [invoice] = await fetchInvoices();
+		expect(invoice.reference).toBe('INV-001');
+	});
+
+	test('Only returns invoices belonging to the authenticated user', async ({ db, auth }) => {
+		const clientDataId = await setUpConfigAndClient();
+		await insertTestInvoice({ clientDataId, items: [{ quantity: 1, unitCost: 100 }] });
+
+		const otherSession = await createTestSession(db, auth);
+		const otherInvoices = await sessionStorage.run(otherSession, () => fetchInvoices());
+		expect(otherInvoices).toEqual([]);
+	});
+});
+
+describe('fetchInvoicesForClient', () => {
+	test('Scopes invoices to the given client only', async () => {
+		await insertTestConfig();
+		const clientA = await insertTestClient();
+		const clientB = await insertTestClient();
+
+		const invoiceA = await insertTestInvoice({
+			clientDataId: clientA.data.scdId,
+			items: [{ quantity: 1, unitCost: 100 }],
+		});
+		await insertTestInvoice({
+			clientDataId: clientB.data.scdId,
+			items: [{ quantity: 1, unitCost: 50 }],
+		});
+
+		const invoices = await fetchInvoicesForClient(clientA.id);
+		expect(invoices.map(i => i.id)).toEqual([invoiceA]);
 	});
 });

@@ -101,22 +101,10 @@ export const invoiceBuilder = (
 	};
 };
 
-/** Creates a client with active client data via the real action, returning
- * the logical id and the active clientData id */
+/** Creates a client with active client data via the real action, returning the logical id and the active clientData id */
 export async function insertTestClient(overrides?: DeepPartial<ClientInput>) {
-	await createClient(clientBuilder(overrides));
-
-	const [client] = await withRLS(db => db.select({ id: tables.clients.id }).from(tables.clients));
-	assert(client, 'Client should have been inserted');
-
-	const data = await withRLS(db =>
-		db.query.clientData.findFirst({
-			where: { clientId: client.id, validTo: { isNull: true } },
-		}),
-	);
-
-	assert(data, 'Client data should have been inserted');
-	return { id: client.id, data: { scdId: data.id } };
+	const { id, scdId } = await createClient(clientBuilder(overrides));
+	return { id, data: { scdId } };
 }
 
 /** Creates an active config via the real action, returning its id */

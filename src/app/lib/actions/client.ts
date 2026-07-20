@@ -35,7 +35,7 @@ export async function updateClientDeleted(clientId: string, status: boolean) {
 	});
 }
 
-/** Creates a new client for the current user */
+/** Creates a new client for the current user, and returns the logical client id and the created clientData id */
 export async function createClient(input: Omit<z.infer<typeof clientData>, 'clientId'>) {
 	// Validate form using Zod
 	const data = await clientDataFields
@@ -53,9 +53,11 @@ export async function createClient(input: Omit<z.infer<typeof clientData>, 'clie
 			.values({ userId: session.user.id })
 			.returning({ id: schema.clients.id });
 
-		await insertClientData(db, session.user.id, { ...data, clientId: id });
+		const scdId = await insertClientData(db, session.user.id, { ...data, clientId: id });
 
 		updateTag(`clients-${session.user.id}`);
+
+		return { id, scdId };
 	});
 }
 
@@ -107,7 +109,12 @@ async function insertClientData(
 			.then(([v]) => v?.id),
 	);
 
-	await db.insert(schema.clientData).values({ ...data, userId, addressId });
+	const [{ id }] = await db
+		.insert(schema.clientData)
+		.values({ ...data, userId, addressId })
+		.returning({ id: schema.clientData.id });
+
+	return id;
 }
 
 /** Checks the previous clientData to see if the address has changed.
