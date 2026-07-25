@@ -1,7 +1,8 @@
 import { faker } from '@faker-js/faker';
 
-import { type Transaction } from '@/db';
 import * as schema from '@/db/schema';
+
+import { type Transaction } from '@/scripts/db';
 
 import { seedAddress } from './address';
 import { type SeedCrypto } from './encrypt';

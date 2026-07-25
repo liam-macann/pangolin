@@ -1,26 +1,8 @@
-// Polyfill
-import fetch from 'node-fetch';
-import { WebSocket } from 'ws';
-
-// biome-ignore lint/suspicious/noExplicitAny: Necessary for polyfill. Script does not run in production
-globalThis.WebSocket = WebSocket as any;
-// biome-ignore lint/suspicious/noExplicitAny: Necessary for polyfill. Script does not run in production
-globalThis.fetch = fetch as any;
-
 import { faker } from '@faker-js/faker';
-import { Pool } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
 import { reset } from 'drizzle-seed';
 
-import { relations } from '@/db/relations';
-import './../env-config.ts';
-
-export const db = drizzle({
-	client: new Pool({ connectionString: process.env.DATABASE_URL }),
-	relations,
-});
-
 import * as schema from './../src/db/schema';
+import { db } from './db';
 
 // Only pass actual user-data tables to reset — exclude views, reference data, enums, and roles
 const {

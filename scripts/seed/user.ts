@@ -1,7 +1,8 @@
 import { faker } from '@faker-js/faker';
 
-import { type Transaction } from '@/db';
 import * as schema from '@/db/schema';
+
+import { type Transaction } from '@/scripts/db';
 
 export async function seedUser(tx: Transaction) {
 	const userId = faker.string.uuid();

@@ -2,8 +2,9 @@ import { hexToBytes, randomBytes } from '@noble/ciphers/utils.js';
 
 import { chacha, concatHeader, encoder } from '@/lib/encrypt/internal/helpers';
 import { type Encrypted } from '@/lib/utils/encrypt';
-import { type Transaction } from '@/db';
 import * as schema from '@/db/schema';
+
+import { type Transaction } from '@/scripts/db';
 
 function withKEK<T>(callback: (kek: Uint8Array) => T): T {
 	const kek = hexToBytes(process.env.DB_ENCRYPTION_SECRET as string);

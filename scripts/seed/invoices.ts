@@ -1,8 +1,9 @@
 import { faker } from '@faker-js/faker';
 import { addDays, format, parseISO, startOfYear } from 'date-fns';
 
-import { type Transaction } from '@/db';
 import * as schema from '@/db/schema';
+
+import { type Transaction } from '@/scripts/db';
 
 import { type ClientRecord } from './clients';
 import { activeAt, type ScdVersion } from './utils';

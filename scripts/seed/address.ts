@@ -1,8 +1,9 @@
 import { allLocales, base, en, Faker, faker } from '@faker-js/faker';
 import { type CountryCode } from 'lib-address';
 
-import { type Transaction } from '@/db';
 import * as schema from '@/db/schema';
+
+import { type Transaction } from '@/scripts/db';
 
 import { type SeedCrypto } from './encrypt';
 
