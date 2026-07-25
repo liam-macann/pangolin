@@ -61,7 +61,8 @@ export const accounts = snakeCase.table(
 	'account',
 	{
 		id: uuid('id').defaultRandom().primaryKey(),
-		accountId: text('account_id').notNull(),
+		issuer: text('issuer').notNull(),
+		providerAccountId: text('provider_account_id').notNull(),
 		providerId: text('provider_id').notNull(),
 		userId: uuid('user_id')
 			.notNull()

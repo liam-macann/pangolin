@@ -22,7 +22,6 @@ export const auth = betterAuth({
 		provider: 'pg',
 		usePlural: true,
 	}),
-	experimental: { joins: true },
 	baseURL:
 		process.env.VERCEL_ENV === 'production' || process.env.VERCEL_ENV === 'preview'
 			? {
@@ -47,7 +46,7 @@ export const auth = betterAuth({
 		cookiePrefix: 'invoicer',
 		// Safari drops Secure cookies on localhost
 		useSecureCookies: process.env.NODE_ENV === 'production',
-		database: { generateId: false },
+		database: { generateId: false, joins: true },
 	},
 	session: {
 		cookieCache: {
