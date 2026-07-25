@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { type KeyBindingMap, type KeyBindingOptions, tinykeys } from 'tinykeys';
+import { type KeybindingOptions, type KeybindingsMap, tinykeys } from 'tinykeys';
 
 /**
  * Subscribes to key bindings.
@@ -25,7 +25,7 @@ import { type KeyBindingMap, type KeyBindingOptions, tinykeys } from 'tinykeys';
  * @param handler - Associative array of key bindings and their handlers.
  */
 export function useKeyPress(
-	handler: KeyBindingMap,
+	handler: KeybindingsMap,
 	options: KeyPressOptions = { disabled: false },
 ) {
 	useEffect(() => {
@@ -48,7 +48,7 @@ export function useKeyPress(
  * @param timeout - Keybinding sequences will wait this long between key presses before cancelling
  *   (default: 1000).
  */
-interface KeyPressOptions extends KeyBindingOptions {
+interface KeyPressOptions extends KeybindingOptions {
 	target?: Window | HTMLElement;
 	disabled?: boolean;
 }

@@ -299,7 +299,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		onKeyDown,
 		...props
 	}: Omit<ComponentProps<typeof InputGroup>, 'onKeyDown'> & {
-		onKeyDown: (e: KeyboardEvent<HTMLInputElement>, table: TanstackTable<TData>) => void;
+		onKeyDown?: (e: KeyboardEvent<HTMLInputElement>, table: TanstackTable<TData>) => void;
 	} & Pick<ComponentProps<typeof InputGroupInput>, 'placeholder' | 'value'>) {
 		const table = useContext(TableContext);
 		if (table === null) throw new Error('Search must be used within a DataTable.Root');

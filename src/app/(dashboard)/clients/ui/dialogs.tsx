@@ -6,6 +6,7 @@ import { WarningIcon } from '@phosphor-icons/react';
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import {
+	type Control,
 	Controller,
 	FormProvider,
 	type UseFormReturn,
@@ -21,7 +22,7 @@ import { useClient, useClients } from '@/lib/hooks';
 import { transform as addressTransformSchema } from '@/lib/validation/address';
 import { clientData as schema } from '@/lib/validation/client';
 
-import { AddressInput } from '@/components/address-input';
+import { type FormValues as AddressFormValues, AddressInput } from '@/components/address-input';
 import { Alert, AlertTitle } from '@/ui/alert';
 import { Button } from '@/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/ui/collapsible';
@@ -291,7 +292,9 @@ function ClientDialog<TForm extends UseFormReturn<z.input<typeof formSchema>, un
 															control={control}
 															render={({ fieldState }) => (
 																<>
-																	<AddressInput control={control} />
+																	<AddressInput
+																		control={control as unknown as Control<AddressFormValues>}
+																	/>
 																	{fieldState.error && <FieldError errors={[fieldState.error]} />}
 																</>
 															)}

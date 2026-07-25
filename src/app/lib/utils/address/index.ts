@@ -24,7 +24,7 @@ import { type z } from 'zod';
 
 import { transform as structuralSchema } from '@/lib/validation/address';
 
-type Address = z.input<typeof structuralSchema>;
+export type Address = z.input<typeof structuralSchema>;
 
 /** Accepts two unencrypted addresses and returns true if they are equal.
  *

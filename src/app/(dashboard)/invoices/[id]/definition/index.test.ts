@@ -1,6 +1,6 @@
 import { assert, describe, expect, test } from 'vitest';
 
-import { formatAddress } from '@/lib/utils/address';
+import { type Address, formatAddress } from '@/lib/utils/address';
 
 import { buildDocDefinition, type InvoicePrintData } from './index';
 import { collectTextNodes, invoiceDataBuilder } from './tests/helpers';
@@ -108,7 +108,7 @@ describe('buildDocDefinition', () => {
 		});
 
 		test('Includes address when defined', () => {
-			const address = {
+			const address: Address = {
 				streetAddress: ['1 Test St'],
 				city: 'Sydney',
 				administrativeArea: 'NSW',
