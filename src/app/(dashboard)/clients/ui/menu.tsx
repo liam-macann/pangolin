@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { type ComponentProps, type JSX } from 'react';
 import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
@@ -106,6 +107,9 @@ export function OverflowMenu({
 			<DropdownMenuContent {...props}>
 				<DropdownMenuGroup>
 					{children}
+					<DropdownMenuItem render={<Link href={`/invoices?client=${client.id}`} />}>
+						View invoices
+					</DropdownMenuItem>
 					<DropdownMenuItem variant='destructive' onClick={() => setArchived(!client.isDeleted)}>
 						{client.isDeleted ? 'Restore' : 'Archive'}
 					</DropdownMenuItem>

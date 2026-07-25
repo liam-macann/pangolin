@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import z from 'zod/v4';
 
 import { createClient, updateClient } from '@/lib/actions/client';
+import { type Client } from '@/lib/data/client';
 import { useClient, useClients } from '@/lib/hooks';
 import { transform as addressTransformSchema } from '@/lib/validation/address';
 import { clientData as schema } from '@/lib/validation/client';
@@ -101,14 +102,14 @@ export function UpdateClientDialog({
 	...props
 }: {
 	children: ReactElement;
-	defaultValues: Omit<z.input<typeof formSchema>, 'addressEnabled'>;
+	defaultValues: Client;
 } & DialogPrimitive.Root.Props) {
 	const { mutate: mutateClients } = useClients();
-	const { mutate: mutateClient } = useClient(defaultValues.clientId);
+	const { mutate: mutateClient } = useClient(defaultValues.id);
 
 	const form = useForm({
 		resolver: zodResolver(formSchema),
-		defaultValues: { ...defaultValues, addressEnabled: !!defaultValues.address },
+		defaultValues: { ...defaultValues.data, addressEnabled: !!defaultValues.data.address },
 	});
 
 	return (

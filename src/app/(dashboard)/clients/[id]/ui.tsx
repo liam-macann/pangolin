@@ -96,7 +96,7 @@ export function Header({ initialClient }: { initialClient: ClientData }) {
 						</Button>
 					}
 				/>
-				<UpdateClientDialog defaultValues={{ ...client.data, clientId: client.id }}>
+				<UpdateClientDialog defaultValues={client}>
 					<Button variant='outline' aria-label='Edit details' disabled={!!client.isDeleted}>
 						<PencilIcon />
 						<span className='hidden sm:block'>Edit details</span>
