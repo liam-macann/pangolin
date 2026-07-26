@@ -6,6 +6,7 @@ import { type ComponentProps, useId } from 'react';
 import { toast } from 'sonner';
 
 import { setInvoiceNotes, voidInvoice } from '@/lib/actions/invoice';
+import { patchStatus, useMutateInvoice } from '@/lib/hooks';
 
 import {
 	AlertDialog,
@@ -31,12 +32,12 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
 import { Textarea } from '@/ui/textarea';
 
-import { type Invoice, useMutateRow } from './../columns';
+import { type Invoice } from './../columns';
 
 export function OverflowMenu({ row }: { row: Row<Invoice> }) {
 	const invoice = row.original;
 
-	const { mutate } = useMutateRow(row.original.clientData.clientId);
+	const { mutate } = useMutateInvoice(invoice.id);
 
 	return (
 		<AlertDialog>
@@ -89,25 +90,11 @@ export function OverflowMenu({ row }: { row: Row<Invoice> }) {
 						variant='destructive'
 						onClick={() => {
 							mutate(
-								async curr => {
-									await voidInvoice(invoice.id).catch(err => {
-										toast.error('Failed to void invoice');
-										throw err;
-									});
-
-									// Function does not return. On success, use optimistic data.
-									return curr
-										? curr.map(item => (item.id === invoice.id ? { ...item, isVoid: true } : item))
-										: [];
-								},
-								{
-									optimisticData: curr =>
-										curr
-											? curr.map(item =>
-													item.id === invoice.id ? { ...item, isVoid: true } : item,
-												)
-											: [],
-								},
+								voidInvoice(invoice.id).catch(err => {
+									toast.error('Failed to void invoice');
+									throw err;
+								}),
+								{ optimisticData: patchStatus({ isVoid: true }) },
 							);
 						}}
 					>
@@ -121,15 +108,13 @@ export function OverflowMenu({ row }: { row: Row<Invoice> }) {
 
 export function NotesButton({
 	invoiceId,
-	clientId,
 	defaultValue,
 	...props
 }: ComponentProps<typeof PopoverTrigger> & {
 	invoiceId: string;
-	clientId: string;
 	defaultValue?: string;
 }) {
-	const { mutate } = useMutateRow(clientId);
+	const { mutate } = useMutateInvoice(invoiceId);
 
 	const fieldId = useId();
 
@@ -154,23 +139,13 @@ export function NotesButton({
 					onBlur={e => {
 						const value = e.target.value;
 
-						const updatedInvoices = (curr: Invoice[] | undefined) =>
-							curr
-								? curr.map(item => (item.id === invoiceId ? { ...item, notes: value } : item))
-								: [];
-
 						mutate(
-							async current => {
-								await setInvoiceNotes(invoiceId, value).catch(err => {
-									toast.error('Failed to update invoice notes');
-									// Error must rethrow to revert data on failure
-									throw err;
-								});
-
-								// Function does not return. On success, use optimistic data.
-								return updatedInvoices(current);
-							},
-							{ optimisticData: updatedInvoices },
+							setInvoiceNotes(invoiceId, value).catch(err => {
+								toast.error('Failed to update invoice notes');
+								// Error must rethrow to revert data on failure
+								throw err;
+							}),
+							{ optimisticData: patchStatus({ notes: value }) },
 						);
 					}}
 					defaultValue={defaultValue}

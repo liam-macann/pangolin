@@ -4,12 +4,11 @@ import { CheckCircleIcon, XCircleIcon } from '@phosphor-icons/react';
 import { type Row } from '@tanstack/react-table';
 import { cva } from 'class-variance-authority';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
-import { type ComponentProps } from 'react';
+import { type ComponentProps, useState } from 'react';
 import { toast } from 'sonner';
 
-import { type Data as InvoiceData } from '@/api/invoices/route';
 import { updateInvoiceStatus } from '@/lib/actions/invoice';
-import { useAsyncStatus } from '@/lib/hooks';
+import { patchStatus, useAsyncStatus, useMutateInvoice } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 
 import {
@@ -23,7 +22,7 @@ import {
 } from '@/ui/select';
 import { Spinner } from '@/ui/spinner';
 
-import { type Invoice, useMutateRow } from './../columns';
+import { type Invoice } from './../columns';
 
 export const statusVariants = cva('capitalize', {
 	variants: {
@@ -47,10 +46,10 @@ export function StatusSelect({
 	className,
 	...props
 }: { row: Row<Invoice> } & ComponentProps<typeof SelectTrigger>) {
-	const status = row.original.status.status;
-	const id = row.original.id;
+	const invoice = row.original;
+	const status = invoice.status.status;
 
-	const { mutate } = useMutateRow(row.original.clientData.clientId);
+	const { mutate } = useMutateInvoice(invoice.id);
 
 	const [updateStatus, track] = useAsyncStatus({
 		onRejected: () => toast.error('Failed to update invoice status'),
@@ -62,22 +61,11 @@ export function StatusSelect({
 			onValueChange={v => {
 				if (!v) return;
 
-				const updatedInvoices = (curr: InvoiceData | undefined) =>
-					curr
-						? curr.map(item =>
-								item.id === id ? { ...item, status: { ...item.status, status: v } } : item,
-							)
-						: [];
+				// updateInvoiceStatus resolves with void, so the resolved cache value is derived from
+				// the same patch used optimistically rather than the server response.
+				const patch = patchStatus({ status: v });
 
-				mutate(
-					async current => {
-						await track(updateInvoiceStatus(id, v));
-
-						// Function does not return. On success, use optimistic data.
-						return updatedInvoices(current);
-					},
-					{ optimisticData: updatedInvoices },
-				);
+				mutate(track(updateInvoiceStatus(invoice.id, v)), { optimisticData: patch });
 			}}
 		>
 			<SelectTrigger
@@ -117,7 +105,7 @@ export function StatusSelect({
 									<CheckCircleIcon />
 								</motion.div>
 							)}
-							{updateStatus === 'pending' && (
+							{updateStatus === 'loading' && (
 								<motion.div
 									animate='visible'
 									exit='hidden'

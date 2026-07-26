@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { type ComponentProps, type JSX } from 'react';
 import { toast } from 'sonner';
-import { useSWRConfig } from 'swr';
 
 import { type Data as Client } from '@/api/clients/[id]/route';
 import { updateClientDeleted, updateClientFavorite } from '@/lib/actions/client';
+import { useMutateClient } from '@/lib/hooks';
 
 import {
 	DropdownMenu,
@@ -15,29 +15,6 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
-
-/** Mutate client array and individual client simultaneously */
-function useMutateClient(clientId: string) {
-	const { mutate } = useSWRConfig();
-
-	type Data = Client | Promise<Client> | undefined;
-	type Opts = { optimisticData?: Client };
-
-	/** Maps the entire client list, replacing the mutated client with the resolved data */
-	const replace = (curr: Client[] | undefined, resolved: Client | undefined) =>
-		curr?.map(item => (item.id === clientId ? (resolved ?? item) : item)) ?? [];
-
-	const fn = (data?: Data, opts?: Opts) => {
-		mutate<Client>(`/api/clients/${clientId}`, data, opts);
-		mutate<Client[]>(
-			'/api/clients',
-			curr => (data instanceof Promise ? data.then(r => replace(curr, r)) : replace(curr, data)),
-			{ ...opts, optimisticData: curr => replace(curr, opts?.optimisticData) },
-		);
-	};
-
-	return { mutate: fn };
-}
 
 export function useClientActions(client: Client) {
 	const { mutate } = useMutateClient(client.id);

@@ -105,7 +105,6 @@ export function UpdateClientDialog({
 	children: ReactElement;
 	defaultValues: Client;
 } & DialogPrimitive.Root.Props) {
-	const { mutate: mutateClients } = useClients();
 	const { mutate: mutateClient } = useClient(defaultValues.id);
 
 	const form = useForm({
@@ -118,10 +117,7 @@ export function UpdateClientDialog({
 			title='Update client'
 			form={form}
 			onSubmit={async data => {
-				const promise = updateClient(data).then(() => {
-					mutateClient();
-					mutateClients();
-				});
+				const promise = updateClient(data).then(() => void mutateClient());
 
 				toast.promise(promise, {
 					loading: 'Updating client details…',

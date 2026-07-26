@@ -30,6 +30,10 @@ next-env.d.ts
 # reports
 coverage/
 
+# testing
+.vitest-attachments/
+__screenshots__/
+
 # typegen
 tsconfig.tsbuildinfo
 

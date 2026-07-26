@@ -4,7 +4,6 @@
 import { TZDate } from '@date-fns/tz';
 import { type ColumnDef, type Row } from '@tanstack/react-table';
 import { type ComponentProps, useContext } from 'react';
-import { useSWRConfig } from 'swr';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
 import { cn, type ElementType } from '@/lib/utils';
@@ -18,20 +17,6 @@ import { NotesButton, OverflowMenu } from './components/actions';
 import { StatusSelect } from './components/status';
 
 export type Invoice = ElementType<InvoiceData>;
-
-/** Mutate invoices and client invoices simultaneously */
-export function useMutateRow(clientId: string) {
-	const { mutate } = useSWRConfig();
-
-	type Params = Parameters<typeof mutate<InvoiceData>>;
-
-	const fn = (data?: Params[1], opts?: Params[2]) => {
-		mutate<InvoiceData>('/api/invoices', data, opts);
-		mutate<InvoiceData>(`/api/invoices?client=${clientId}`, data, opts);
-	};
-
-	return { mutate: fn };
-}
 
 /** Column definitions for invoices */
 export const columns: ColumnDef<Invoice>[] = [
@@ -60,7 +45,6 @@ export const columns: ColumnDef<Invoice>[] = [
 					<NotesButton
 						className='-mx-1 sm:-translate-y-px'
 						invoiceId={row.original.id}
-						clientId={row.original.clientData.clientId}
 						defaultValue={row.original.status.notes}
 					/>
 				)}

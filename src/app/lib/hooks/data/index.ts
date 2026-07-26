@@ -5,6 +5,8 @@ import _useSWRImmutable from 'swr/immutable';
 
 import { fetcher } from '@/api';
 
+import { useMutateClient } from './mutate';
+
 //
 //
 // SWR helpers
@@ -46,8 +48,28 @@ export const useClients = <C extends Config>(initial?: ClientsData, config?: C) 
 	useSWR('/api/clients', initial, config);
 
 import { type Data as ClientData } from '@/api/clients/[id]/route';
-export const useClient = <C extends Config>(id: string, initial?: ClientData, config?: C) =>
-	useSWR(`/api/clients/${id}`, initial, config);
+export function useClient<C extends Config>(id: string, initial?: ClientData, config?: C) {
+	const swr = useSWR(`/api/clients/${id}`, initial, config);
+	const { mutate } = useMutateClient(id);
+
+	// Getters forward lazily so SWR's per-field dependency tracking on `swr` still applies —
+	// a spread here would read every field eagerly and force a re-render on any change
+	return {
+		get data() {
+			return swr.data;
+		},
+		get error() {
+			return swr.error;
+		},
+		get isLoading() {
+			return swr.isLoading;
+		},
+		get isValidating() {
+			return swr.isValidating;
+		},
+		mutate,
+	};
+}
 
 import { type CountryCode, registerCountry } from 'lib-address';
 

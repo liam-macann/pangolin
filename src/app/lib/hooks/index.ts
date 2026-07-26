@@ -6,5 +6,6 @@ export { usePrevious } from '@uidotdev/usehooks';
 export { useMediaQuery } from 'usehooks-ts';
 
 export * from './data';
+export * from './data/mutate';
 export * from './keyboard';
 export * from './utils';
