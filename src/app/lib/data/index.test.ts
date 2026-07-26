@@ -9,7 +9,7 @@ import {
 } from '@/lib/actions/tests/helpers';
 
 import { createTestSession, asUser as test } from '@/src/test/session';
-import { sessionStorage } from '@/src/test/setup';
+import { sessionStorage } from '@/src/test/setup-server';
 
 import { fetchConfig } from './index';
 

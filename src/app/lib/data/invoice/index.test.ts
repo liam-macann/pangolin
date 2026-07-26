@@ -17,7 +17,7 @@ import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
 import { createTestSession, asUser as test } from '@/src/test/session';
-import { sessionStorage } from '@/src/test/setup';
+import { sessionStorage } from '@/src/test/setup-server';
 
 import { fetchInvoice, fetchInvoices, fetchInvoicesForClient } from './index';
 

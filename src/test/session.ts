@@ -8,7 +8,7 @@ import { test as base } from 'vitest';
 import * as schema from '@/db/schema/auth';
 
 import { createTestDB, type TestTX } from './pglite';
-import { sessionStorage, testConnection } from './setup';
+import { sessionStorage, testConnection } from './setup-server';
 
 /** A test-only Better Auth instance pointed at the disposable PGlite connection */
 export function createTestAuth(db: TestTX) {
