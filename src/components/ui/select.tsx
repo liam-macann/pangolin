@@ -52,6 +52,7 @@ function SelectTrigger({
 		>
 			{children}
 			<SelectPrimitive.Icon
+				data-slot='select-trigger-icon'
 				render={
 					<CaretDownIcon className='pointer-events-none -mr-0.5 size-4 text-inherit opacity-50' />
 				}

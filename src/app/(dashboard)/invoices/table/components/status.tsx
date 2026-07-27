@@ -1,12 +1,15 @@
 'use client';
 
+import { CheckCircleIcon, XCircleIcon } from '@phosphor-icons/react';
 import { type Row } from '@tanstack/react-table';
 import { cva } from 'class-variance-authority';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { type ComponentProps } from 'react';
 import { toast } from 'sonner';
 
 import { type Data as InvoiceData } from '@/api/invoices/route';
 import { updateInvoiceStatus } from '@/lib/actions/invoice';
+import { useAsyncStatus } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 
 import {
@@ -18,6 +21,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@/ui/select';
+import { Spinner } from '@/ui/spinner';
 
 import { type Invoice, useMutateRow } from './../columns';
 
@@ -33,6 +37,11 @@ export const statusVariants = cva('capitalize', {
 	},
 });
 
+const variants = {
+	visible: { opacity: 1, scale: 1 },
+	hidden: { opacity: 0, scale: 0.5 },
+};
+
 export function StatusSelect({
 	row,
 	className,
@@ -42,6 +51,10 @@ export function StatusSelect({
 	const id = row.original.id;
 
 	const { mutate } = useMutateRow(row.original.clientData.clientId);
+
+	const [updateStatus, track] = useAsyncStatus({
+		onRejected: () => toast.error('Failed to update invoice status'),
+	});
 
 	return (
 		<Select
@@ -58,11 +71,7 @@ export function StatusSelect({
 
 				mutate(
 					async current => {
-						await updateInvoiceStatus(id, v).catch(err => {
-							toast.error('Failed to update invoice status');
-							// Error must rethrow to revert data on failure
-							throw err;
-						});
+						await track(updateInvoiceStatus(id, v));
 
 						// Function does not return. On success, use optimistic data.
 						return updatedInvoices(current);
@@ -74,12 +83,55 @@ export function StatusSelect({
 			<SelectTrigger
 				size='sm'
 				className={cn(
-					'!px-2 size-auto h-7 gap-1 rounded-sm group-data-void/row:opacity-50 [&_svg]:-mr-px! [&_svg]:size-3!',
+					'!px-2 relative size-auto h-7 gap-1 rounded-sm group-data-void/row:opacity-50',
 					statusVariants({ variant: status }),
 					className,
 				)}
 				{...props}
 			>
+				<div className='absolute top-1/2 -right-2 flex size-4 translate-x-full -translate-y-1/2 items-center justify-center p-0 text-muted-foreground *:fill-mode-forwards'>
+					<MotionConfig transition={{ duration: 0.12 }}>
+						<AnimatePresence initial={false} mode='wait'>
+							{updateStatus === 'rejected' && (
+								<motion.div
+									animate='visible'
+									exit='hidden'
+									initial='hidden'
+									key='check'
+									variants={variants}
+									// Safari has weird 'settling' issue when transform starts and finishes
+									className='will-change-transform'
+								>
+									<XCircleIcon />
+								</motion.div>
+							)}
+							{updateStatus === 'fulfilled' && (
+								<motion.div
+									animate='visible'
+									exit='hidden'
+									initial='hidden'
+									key='fulfilled'
+									variants={variants}
+									className='will-change-transform'
+								>
+									<CheckCircleIcon />
+								</motion.div>
+							)}
+							{updateStatus === 'pending' && (
+								<motion.div
+									animate='visible'
+									exit='hidden'
+									initial='hidden'
+									key='loading'
+									variants={variants}
+									className='will-change-transform'
+								>
+									<Spinner className='size-full' />
+								</motion.div>
+							)}
+						</AnimatePresence>
+					</MotionConfig>
+				</div>
 				<SelectValue placeholder='Update status…'>{status}</SelectValue>
 			</SelectTrigger>
 			<SelectContent>
