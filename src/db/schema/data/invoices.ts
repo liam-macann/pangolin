@@ -8,7 +8,6 @@ import {
 	integer,
 	type PgTableExtraConfigValue,
 	pgEnum,
-	primaryKey,
 	snakeCase,
 	text,
 	timestamp,
@@ -28,7 +27,7 @@ export const statusEnum = pgEnum('status', ['unpaid', 'paid', 'refunded']);
 export const invoices = snakeCase.table(
 	'invoice',
 	{
-		id: uuid().defaultRandom().primaryKey().notNull(),
+		id: uuid().defaultRandom().primaryKey(),
 		userId: uuid()
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
@@ -164,42 +163,23 @@ export const invoiceStatus = snakeCase.table(
 	],
 );
 
-/** Watermark table: resolves concurrency issues for the global sequential counter */
-export const invoiceCount = snakeCase.table(
-	'invoice_count',
+export const namespaceEnum = pgEnum('namespace', ['invoice']);
+/** Watermark table: resolves concurrency issues for each sequential counter */
+export const sequencer = snakeCase.table(
+	'sequencer',
 	{
-		userId: uuid()
-			.primaryKey()
-			.references(() => users.id, { onDelete: 'cascade' }),
-		count: integer().notNull().default(0),
-
-		/** Logs the when the count was last modified */
-		updatedAt: timestamp({ withTimezone: true, mode: 'date' })
-			.defaultNow()
-			.$onUpdate(() => /* @__PURE__ */ new Date())
-			.notNull(),
-	},
-
-	t => [
-		check('chk_positive_count', sql`${t.count} >= 0`),
-
-		policy({
-			select: authUid(t.userId),
-			insert: authUid(t.userId),
-			update: authUid(t.userId),
-			delete: false,
-		}),
-	],
-);
-
-/** Watermark table: resolves concurrency issues for the per-year sequential counter */
-export const invoiceYearCount = snakeCase.table(
-	'invoice_year_count',
-	{
+		id: uuid().defaultRandom().primaryKey(),
 		userId: uuid()
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
-		year: integer().notNull(),
+
+		/** Document namespace (eg. `invoice` or `quote`) */
+		namespace: namespaceEnum().notNull(),
+
+		/** `null` for global sequencing, or a sequence key (eg `2026` in annual mode) */
+		partition: varchar({ length: 50 }),
+
+		/** @remarks Equivalent to the last committed value, not the next value in the sequence */
 		count: integer().notNull().default(0),
 
 		/** Logs the when the count was last modified */
@@ -210,8 +190,11 @@ export const invoiceYearCount = snakeCase.table(
 	},
 
 	t => [
-		primaryKey({ name: 'invoice_year_count_pkey', columns: [t.userId, t.year] }),
-		check('chk_positive_year_count', sql`${t.count} >= 0`),
+		unique('uq_sequencer_user_series_partition')
+			.on(t.userId, t.namespace, t.partition)
+			.nullsNotDistinct(),
+
+		check('chk_positive_count', sql`${t.count} >= 0`),
 
 		policy({
 			select: authUid(t.userId),

@@ -1,17 +1,16 @@
 'use server';
 
-import { type AnyColumn, and, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
 import { unstable_rethrow } from 'next/navigation';
 import { v4 as uuid } from 'uuid';
 import type z from 'zod';
 
+import { allocateSequence } from '@/lib/sequencer';
 import { type Enum } from '@/lib/utils/drizzle';
 import { invoice as zodSchema } from '@/lib/validation/invoice';
 import { withRLS } from '@/db';
 import * as schema from '@/db/schema';
-
-const increment = (column: AnyColumn, value = 1) => sql`${column} + ${value}`;
 
 export async function createInvoice(input: z.infer<typeof zodSchema>) {
 	// Validate form using Zod
@@ -36,29 +35,15 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 			invoice.issuedAt?.toISOString() ||
 			sql`transaction_timestamp() AT TIME ZONE ${currentConfig.timezone}`;
 
-		// Update global sequence counter
-		const [{ count }] = await tx
-			.insert(schema.invoiceCount)
-			.values({ userId: session.user.id, count: 1 })
-			.onConflictDoUpdate({
-				target: schema.invoiceCount.userId,
-				set: { count: increment(schema.invoiceCount.count) },
-			})
-			.returning({ count: schema.invoiceCount.count });
-
-		// Upsert per-year counter
-		const [{ yearCount }] = await tx
-			.insert(schema.invoiceYearCount)
-			.values({
-				userId: session.user.id,
-				year: sql`extract(year from (${issuedAt})::date)`,
-				count: 1,
-			})
-			.onConflictDoUpdate({
-				target: [schema.invoiceYearCount.userId, schema.invoiceYearCount.year],
-				set: { count: increment(schema.invoiceYearCount.count) },
-			})
-			.returning({ yearCount: schema.invoiceYearCount.count });
+		const count = await allocateSequence(tx, {
+			userId: session.user.id,
+			namespace: 'invoice',
+		});
+		const yearCount = await allocateSequence(tx, {
+			userId: session.user.id,
+			namespace: 'invoice',
+			partition: sql`extract(year from (${issuedAt})::date)::text`,
+		});
 
 		const [insertedInvoice] = await tx
 			.insert(schema.invoices)

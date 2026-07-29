@@ -19,14 +19,18 @@ export async function seedInvoiceCounters(
 	total: number,
 	yearCounts: Record<number, number>,
 ) {
-	await tx.insert(schema.invoiceCount).values({ userId, count: total });
+	await tx.insert(schema.sequencer).values({ userId, count: total, namespace: 'invoice' });
 
-	await tx.insert(schema.invoiceYearCount).values(
-		Object.entries(yearCounts).map(([year, count]) => ({
-			userId,
-			year: Number(year),
-			count,
-		})),
+	await tx.insert(schema.sequencer).values(
+		Object.entries(yearCounts).map(
+			([year, count]) =>
+				({
+					userId,
+					namespace: 'invoice',
+					partition: year,
+					count,
+				}) as const,
+		),
 	);
 }
 

@@ -93,16 +93,9 @@ export const relations = defineRelations(schema, r => ({
 	invoices: invoiceBaseRelations(r, 'invoices'),
 	invoicesWithSum: invoiceBaseRelations(r, 'invoicesWithSum'),
 
-	invoiceCount: {
+	sequencer: {
 		user: r.one.users({
-			from: r.invoiceCount.userId,
-			to: r.users.id,
-		}),
-	},
-
-	invoiceYearCount: {
-		user: r.one.users({
-			from: r.invoiceYearCount.userId,
+			from: r.sequencer.userId,
 			to: r.users.id,
 		}),
 	},
