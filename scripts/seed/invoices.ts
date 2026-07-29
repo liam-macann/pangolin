@@ -40,7 +40,7 @@ export async function seedInvoices(
 ) {
 	const invoiceRows: (typeof schema.invoices.$inferInsert)[] = [];
 	const statusRows: (typeof schema.invoiceStatus.$inferInsert)[] = [];
-	const itemRows: (typeof schema.invoiceItems.$inferInsert)[] = [];
+	const itemRows: (typeof schema.lineItems.$inferInsert)[] = [];
 	const itemTaxRows: (typeof schema.itemTaxes.$inferInsert)[] = [];
 
 	let globalIndex = 1;
@@ -116,6 +116,6 @@ export async function seedInvoices(
 
 	await tx.insert(schema.invoices).values(invoiceRows);
 	await tx.insert(schema.invoiceStatus).values(statusRows);
-	await tx.insert(schema.invoiceItems).values(itemRows);
+	await tx.insert(schema.lineItems).values(itemRows);
 	await tx.insert(schema.itemTaxes).values(itemTaxRows);
 }

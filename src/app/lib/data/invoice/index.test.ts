@@ -225,9 +225,9 @@ describe('fetchInvoice', () => {
 					// This tests that the tax is not added on the DB view level, regardless of the guard in the server action
 
 					const [item] = await db
-						.select({ id: tables.invoiceItems.id })
-						.from(tables.invoiceItems)
-						.where(eq(tables.invoiceItems.invoiceId, invoiceId));
+						.select({ id: tables.lineItems.id })
+						.from(tables.lineItems)
+						.where(eq(tables.lineItems.invoiceId, invoiceId));
 
 					await db
 						.insert(tables.itemTaxes)

@@ -5,7 +5,7 @@ import { coalesce } from '@/lib/utils/drizzle';
 
 // Schema imports
 import { config, taxes } from './config';
-import { invoiceItems, invoices, itemTaxes } from './index';
+import { invoices, itemTaxes, lineItems } from './index';
 
 //
 //
@@ -19,20 +19,20 @@ export const itemsWithTax = snakeCase
 	.as(qb =>
 		qb
 			.select({
-				...getColumns(invoiceItems),
+				...getColumns(lineItems),
 				taxRegistration: config.taxRegistration,
 				/** @remarks This can safely be used regardless of tax registration. Unregistered taxes will not be applied. */
 				grossAmount:
-					sql`((1 + COALESCE(${sum(taxes.rate)} * ${config.taxRegistration}::INT, 0)) * ${invoiceItems.netAmount})::NUMERIC(19, 4)`.as(
+					sql`((1 + COALESCE(${sum(taxes.rate)} * ${config.taxRegistration}::INT, 0)) * ${lineItems.netAmount})::NUMERIC(19, 4)`.as(
 						'gross_amount',
 					),
 			})
-			.from(invoiceItems)
-			.leftJoin(itemTaxes, eq(itemTaxes.itemId, invoiceItems.id))
+			.from(lineItems)
+			.leftJoin(itemTaxes, eq(itemTaxes.itemId, lineItems.id))
 			.leftJoin(taxes, eq(itemTaxes.taxId, taxes.id))
-			.leftJoin(invoices, eq(invoiceItems.invoiceId, invoices.id))
+			.leftJoin(invoices, eq(lineItems.invoiceId, invoices.id))
 			.leftJoin(config, eq(invoices.configId, config.id))
-			.groupBy(invoiceItems.id, config.id),
+			.groupBy(lineItems.id, config.id),
 	);
 
 export const invoicesWithSum = snakeCase

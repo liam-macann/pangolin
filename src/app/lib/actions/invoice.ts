@@ -95,7 +95,7 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 		// Insert items for invoice
 		await tx
 			.with(insertInvoiceStatus)
-			.insert(schema.invoiceItems)
+			.insert(schema.lineItems)
 			.values(
 				itemsWithId.map(i => ({
 					id: i.id,

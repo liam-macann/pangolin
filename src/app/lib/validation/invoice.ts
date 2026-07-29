@@ -4,7 +4,7 @@ import z from 'zod/v4';
 import { intlNumber } from '@/lib/zod';
 import * as schema from '@/db/schema/data';
 
-const item = createInsertSchema(schema.invoiceItems, {
+const item = createInsertSchema(schema.lineItems, {
 	label: z => z.trim().min(1, 'Please enter a description'),
 	note: z
 		.string()

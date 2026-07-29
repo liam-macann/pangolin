@@ -19,8 +19,8 @@ function numericColumnBounds(column: AnyPgColumn<{ dataType: 'number' }>) {
 	return { maxValue: 10 ** (column.precision - scale) - 10 ** -scale };
 }
 
-const quantityBounds = numericColumnBounds(schema.invoiceItems.quantity);
-const unitCostBounds = numericColumnBounds(schema.invoiceItems.unitCost);
+const quantityBounds = numericColumnBounds(schema.lineItems.quantity);
+const unitCostBounds = numericColumnBounds(schema.lineItems.unitCost);
 
 /** Bypasses app-level validation to directly insert a config, a client, and invoice with items */
 async function createTestInvoice({ items }: { items: { quantity: number; unitCost: number }[] }) {
@@ -44,7 +44,7 @@ async function createTestInvoice({ items }: { items: { quantity: number; unitCos
 			.insert(schema.invoiceStatus)
 			.values({ id: invoice.id, userId: session.user.id, status: 'unpaid' });
 
-		await db.insert(schema.invoiceItems).values(
+		await db.insert(schema.lineItems).values(
 			items.map(item => ({
 				id: randomUUID(),
 				invoiceId: invoice.id,

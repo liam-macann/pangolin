@@ -63,7 +63,7 @@ type Config = Pick<
 	'currency' | 'locale' | 'taxes' | 'taxRegistration'
 >;
 
-export function InvoiceItemsField<T extends FormValues>({
+export function LineItemsField<T extends FormValues>({
 	className,
 	control: _control,
 	getValues: _getValues,
@@ -81,7 +81,7 @@ export function InvoiceItemsField<T extends FormValues>({
 	return (
 		<FieldSet className={cn('gap-0', className)}>
 			<FieldLegend className='sr-only'>Items</FieldLegend>
-			<InvoiceItemsInput config={config} control={control} getValues={getValues} />
+			<LineItemsInput config={config} control={control} getValues={getValues} />
 		</FieldSet>
 	);
 }
@@ -148,7 +148,7 @@ function ItemSum({
 	);
 }
 
-function InvoiceItemsInput({
+function LineItemsInput({
 	control,
 	getValues,
 	config,

@@ -103,7 +103,7 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 				db
 					.select({
 						contribution:
-							sql`${withFilter(sum(schema.invoiceItems.netAmount), eq(schema.itemTaxes.taxId, schema.taxes.id))} * ${schema.taxes.rate} * ${schema.config.taxRegistration}::int`
+							sql`${withFilter(sum(schema.lineItems.netAmount), eq(schema.itemTaxes.taxId, schema.taxes.id))} * ${schema.taxes.rate} * ${schema.config.taxRegistration}::int`
 								.mapWith(Number)
 								.as('contribution'),
 
@@ -118,8 +118,8 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 					.innerJoin(schema.config, eq(schema.invoices.configId, schema.config.id))
 					.innerJoin(schema.configTaxes, eq(schema.configTaxes.configId, schema.config.id))
 					.innerJoin(schema.taxes, eq(schema.taxes.id, schema.configTaxes.taxId))
-					.leftJoin(schema.invoiceItems, eq(schema.invoiceItems.invoiceId, schema.invoices.id))
-					.leftJoin(schema.itemTaxes, eq(schema.itemTaxes.itemId, schema.invoiceItems.id))
+					.leftJoin(schema.lineItems, eq(schema.lineItems.invoiceId, schema.invoices.id))
+					.leftJoin(schema.itemTaxes, eq(schema.itemTaxes.itemId, schema.lineItems.id))
 					.groupBy(schema.config.id, schema.taxes.id, schema.configTaxes.order)
 					.orderBy(schema.configTaxes.order),
 			);

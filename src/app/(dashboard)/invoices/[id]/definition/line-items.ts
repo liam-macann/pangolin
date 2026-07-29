@@ -4,7 +4,7 @@ import { type ContentTable } from 'pdfmake/interfaces';
 import { formatNumber, pluralize, rateToPercent } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
 import { type Enum } from '@/lib/utils/drizzle';
-import { type unitEnum } from '@/db/schema/data/invoices';
+import { type unitEnum } from '@/db/schema/data/line-items';
 
 import schemes from '@/src/app/ui/color-schemes';
 

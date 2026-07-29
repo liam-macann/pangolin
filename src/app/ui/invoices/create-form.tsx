@@ -55,7 +55,7 @@ import {
 } from '@/ui/responsive-dialog';
 import { Textarea } from '@/ui/textarea';
 
-import { InvoiceItemsField } from './invoice-items';
+import { LineItemsField } from './line-items';
 
 export function CreateInvoiceDialog({
 	children,
@@ -184,7 +184,7 @@ export function CreateInvoiceDialog({
 						</details>
 						<FieldSeparator className='-mx-6 my-6'>Items</FieldSeparator>
 
-						<InvoiceItemsField
+						<LineItemsField
 							config={config}
 							control={control}
 							getValues={getValues}
