@@ -15,7 +15,7 @@ import { invoices, itemTaxes, lineItems } from './index';
 
 export const itemsWithTax = snakeCase
 	.view('items_with_tax')
-	.with({ securityInvoker: true })
+	.with({ securityInvoker: true, securityBarrier: true })
 	.as(qb =>
 		qb
 			.select({
@@ -37,7 +37,7 @@ export const itemsWithTax = snakeCase
 
 export const invoicesWithSum = snakeCase
 	.view('invoice_with_sum')
-	.with({ securityInvoker: true })
+	.with({ securityInvoker: true, securityBarrier: true })
 	.as(qb =>
 		qb
 			.select({
