@@ -71,6 +71,14 @@
 				}
 			},
 			"nursery": {
+				"noDrizzleDeleteWithoutWhere": {
+					"level": "error",
+					"options": { "drizzleObjectName": ["db", "tx"] }
+				},
+				"noDrizzleUpdateWithoutWhere": {
+					"level": "error",
+					"options": { "drizzleObjectName": ["db", "tx"] }
+				},
 				"useSortedClasses": {
 					"level": "error",
 					"fix": "safe",
@@ -84,7 +92,9 @@
 		"domains": {
 			"next": "recommended",
 			"react": "recommended",
-			"project": "recommended"
+			"project": "recommended",
+			"drizzle": "recommended",
+			"test": "recommended"
 		}
 	},
 	"javascript": {
