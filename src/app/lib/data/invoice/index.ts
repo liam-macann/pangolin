@@ -21,7 +21,7 @@ export type Invoice = Awaited<ReturnType<typeof fetchInvoices>>[number];
 export type LineItem = Prettify<
 	Omit<
 		typeof schema.itemsWithTax.$inferSelect,
-		'id' | 'invoiceId' | 'userId' | 'configId' | 'taxRegistration' | 'order'
+		'id' | 'documentId' | 'userId' | 'configId' | 'taxRegistration' | 'order'
 	> & {
 		taxes: Pick<typeof schema.taxes.$inferSelect, 'name' | 'rate'>[];
 	}
@@ -39,13 +39,13 @@ export type DetailedInvoice = Omit<Invoice, 'clientData' | 'config'> & {
 
 /** Fetch all invoices for authenticated user, including basic relational data */
 export const fetchInvoices = (
-	filter?: RelationsFilter<typeof relations.invoicesWithSum, typeof relations>,
+	filter?: RelationsFilter<typeof relations.documentsWithSum, typeof relations>,
 	limit?: number,
 ) => query(async session => _fetchInvoices(session, filter, limit), 'Failed to fetch invoices');
 
 async function _fetchInvoices(
 	session: Session,
-	filter?: RelationsFilter<typeof relations.invoicesWithSum, typeof relations>,
+	filter?: RelationsFilter<typeof relations.documentsWithSum, typeof relations>,
 	limit?: number,
 ) {
 	'use cache';
@@ -53,28 +53,34 @@ async function _fetchInvoices(
 	cacheTag(`invoices-${session.user.id}`);
 
 	return withRLS(session, async tx =>
-		tx.query.invoicesWithSum.findMany({
+		tx.query.invoices.findMany({
 			where: {
-				...filter,
 				userId: { eq: session.user.id },
+				documentWithSum: filter,
 			},
-			columns: {
-				clientDataId: false,
-				configId: false,
-				userId: false,
-
-				// Included with config data
-				taxRegistration: false,
-				currency: false,
-			},
+			columns: { userId: false },
 			with: {
 				status: { columns: { id: false, userId: false } },
-				clientData: { columns: { name: true, organization: true, clientId: true } },
-				config: {
+				documentWithSum: {
 					columns: {
-						timezone: true,
-						currency: true,
-						numberingScheme: true,
+						id: false,
+						clientDataId: false,
+						configId: false,
+						userId: false,
+
+						// Included with config data
+						taxRegistration: false,
+						currency: false,
+					},
+					with: {
+						clientData: { columns: { name: true, organization: true, clientId: true } },
+						config: {
+							columns: {
+								timezone: true,
+								currency: true,
+								numberingScheme: true,
+							},
+						},
 					},
 				},
 			},
@@ -82,9 +88,10 @@ async function _fetchInvoices(
 			limit,
 		}),
 	).then(res =>
-		res.map(inv => ({
+		res.map(({ documentWithSum, ...inv }) => ({
+			...documentWithSum,
 			...inv,
-			reference: invoiceReference(inv, inv.config.numberingScheme),
+			reference: invoiceReference(inv, documentWithSum.config.numberingScheme),
 		})),
 	);
 }
@@ -115,45 +122,51 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 					})
 					.from(schema.invoices)
 					.where(eq(schema.invoices.id, id))
-					.innerJoin(schema.config, eq(schema.invoices.configId, schema.config.id))
+					.innerJoin(schema.documents, eq(schema.documents.id, schema.invoices.id))
+					.innerJoin(schema.config, eq(schema.documents.configId, schema.config.id))
 					.innerJoin(schema.configTaxes, eq(schema.configTaxes.configId, schema.config.id))
 					.innerJoin(schema.taxes, eq(schema.taxes.id, schema.configTaxes.taxId))
-					.leftJoin(schema.lineItems, eq(schema.lineItems.invoiceId, schema.invoices.id))
+					.leftJoin(schema.lineItems, eq(schema.lineItems.documentId, schema.invoices.id))
 					.leftJoin(schema.itemTaxes, eq(schema.itemTaxes.itemId, schema.lineItems.id))
 					.groupBy(schema.config.id, schema.taxes.id, schema.configTaxes.order)
 					.orderBy(schema.configTaxes.order),
 			);
 
-			const res = await db.query.invoicesWithSum.findFirst({
+			const res = await db.query.invoices.findFirst({
 				where: { userId: { eq: session.user.id }, id: { eq: id } },
-				columns: {
-					clientDataId: false,
-					userId: false,
-
-					// Included with config data
-					taxRegistration: false,
-					currency: false,
-				},
+				columns: { userId: false },
 				with: {
 					status: { columns: { id: false, userId: false } },
-					clientData: {
-						columns: { name: true, organization: true },
-						with: { address: true },
-					},
-					items: {
+					documentWithSum: {
 						columns: {
 							id: false,
-							invoiceId: false,
+							clientDataId: false,
 							userId: false,
-							configId: false,
+
+							// Included with config data
 							taxRegistration: false,
-							order: false,
+							currency: false,
 						},
-						with: { taxes: { columns: { name: true, rate: true } } },
-						orderBy: { order: 'asc' },
+						with: {
+							clientData: {
+								columns: { name: true, organization: true },
+								with: { address: true },
+							},
+							items: {
+								columns: {
+									id: false,
+									documentId: false,
+									userId: false,
+									configId: false,
+									taxRegistration: false,
+									order: false,
+								},
+								with: { taxes: { columns: { name: true, rate: true } } },
+								orderBy: { order: 'asc' },
+							},
+						},
 					},
 				},
-				orderBy: { index: 'desc' },
 			});
 
 			// Collapse tax rows that share the same name
@@ -169,15 +182,19 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 
 			if (!res) notFound();
 
-			const { configId, ...invoiceRes } = res;
+			const {
+				documentWithSum: { configId, ...document },
+				...invoice
+			} = res;
 			const config = await fetchConfig(configId);
 
 			const vault = await crypto(session.user.id);
 			const inv: DetailedInvoice = {
-				...invoiceRes,
-				reference: invoiceReference(res, config.numberingScheme),
+				...document,
+				...invoice,
+				reference: invoiceReference(invoice, config.numberingScheme),
 				config,
-				clientData: await vault.decryptObject(res.clientData),
+				clientData: await vault.decryptObject(document.clientData),
 				tax,
 			};
 			vault.destroy();

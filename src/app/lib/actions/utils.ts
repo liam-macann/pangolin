@@ -25,8 +25,8 @@ export const cleanupConfigs = (userId: string) =>
 				eq(tables.config.userId, userId),
 				isNotNull(tables.config.validTo),
 				notExists(
-					// No invoices reference config row
-					db.select().from(tables.invoices).where(eq(tables.invoices.configId, tables.config.id)),
+					// No documents reference config row
+					db.select().from(tables.documents).where(eq(tables.documents.configId, tables.config.id)),
 				),
 			),
 		),
@@ -43,11 +43,11 @@ export const cleanupClientData = (userId: string) =>
 				eq(tables.clientData.userId, userId),
 				isNotNull(tables.clientData.validTo),
 				notExists(
-					// No invoices reference client data row
+					// No documents reference client data row
 					db
 						.select()
-						.from(tables.invoices)
-						.where(eq(tables.invoices.clientDataId, tables.clientData.id)),
+						.from(tables.documents)
+						.where(eq(tables.documents.clientDataId, tables.clientData.id)),
 				),
 			),
 		),

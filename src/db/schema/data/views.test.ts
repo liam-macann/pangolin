@@ -27,16 +27,24 @@ async function createTestInvoice({ items }: { items: { quantity: number; unitCos
 	const configId = await insertTestConfig();
 
 	return withRLS(async (db, session) => {
-		const [invoice] = await db
-			.insert(schema.invoices)
+		const [document] = await db
+			.insert(schema.documents)
 			.values({
 				userId: session.user.id,
 				clientDataId: (await insertTestClient()).data.scdId,
+				configId,
+			})
+			.returning({ id: schema.documents.id });
+
+		const [invoice] = await db
+			.insert(schema.invoices)
+			.values({
+				id: document.id,
+				userId: session.user.id,
 				issuedAt: new Date().toISOString(),
 				dueAt: new Date().toISOString(),
 				index: 0,
 				yearIndex: 0,
-				configId,
 			})
 			.returning({ id: schema.invoices.id });
 
@@ -47,7 +55,7 @@ async function createTestInvoice({ items }: { items: { quantity: number; unitCos
 		await db.insert(schema.lineItems).values(
 			items.map(item => ({
 				id: randomUUID(),
-				invoiceId: invoice.id,
+				documentId: invoice.id,
 				label: 'Item',
 				quantity: item.quantity,
 				unitCost: item.unitCost,
@@ -70,7 +78,7 @@ describe('Invoice item numeric bounds', () => {
 			db
 				.select({ netAmount: schema.itemsWithTax.netAmount })
 				.from(schema.itemsWithTax)
-				.where(eq(schema.itemsWithTax.invoiceId, invoiceId)),
+				.where(eq(schema.itemsWithTax.documentId, invoiceId)),
 		);
 
 		expect(item.netAmount).toBe(quantityBounds.maxValue * unitCostBounds.maxValue);

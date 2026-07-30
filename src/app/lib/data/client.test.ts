@@ -12,6 +12,8 @@ import {
 	setUpConfigAndClient,
 } from '@/lib/actions/tests/helpers';
 import { formatAddress } from '@/lib/utils/address';
+import { withRLS } from '@/db';
+import * as tables from '@/db/schema';
 
 import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
@@ -108,6 +110,26 @@ describe('fetchClients', () => {
 
 		const fetched = await fetchClients(client.id);
 		expect(fetched.invoiceCount).toBe(2);
+	});
+
+	test('invoiceCount excludes documents that are not invoices', async () => {
+		const { configId, client } = await setUpConfigAndClient();
+
+		await insertTestInvoice({
+			clientDataId: client.data.scdId,
+			items: [{ quantity: 1, unitCost: 100 }],
+		});
+
+		// A floating document has no invoice referencing it, and should not be counted
+		await withRLS(async (db, session) =>
+			db.insert(tables.documents).values({
+				userId: session.user.id,
+				clientDataId: client.data.scdId,
+				configId,
+			}),
+		);
+
+		expect((await fetchClients(client.id)).invoiceCount).toBe(1);
 	});
 });
 

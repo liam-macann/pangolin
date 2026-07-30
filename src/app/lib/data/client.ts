@@ -60,7 +60,8 @@ export async function fetchClients(id?: string) {
 							.select({ count: count(schema.invoices.id) })
 							.from(schema.clientData)
 							.where(eq(schema.clientData.clientId, c.id))
-							.leftJoin(schema.invoices, eq(schema.invoices.clientDataId, schema.clientData.id))}
+							.leftJoin(schema.documents, eq(schema.documents.clientDataId, schema.clientData.id))
+							.leftJoin(schema.invoices, eq(schema.invoices.id, schema.documents.id))}
 						)`.mapWith(Number),
 				},
 				where: {
@@ -123,12 +124,12 @@ export async function fetchClientStats(id: string) {
 		.$with('stats_filter')
 		.as(
 			qb
-				.select(getColumns(schema.invoicesWithSum))
+				.select(getColumns(schema.documentsWithSum))
 				.from(schema.clients)
 				.leftJoin(schema.clientData, eq(schema.clientData.clientId, schema.clients.id))
 				.innerJoin(
-					schema.invoicesWithSum,
-					eq(schema.invoicesWithSum.clientDataId, schema.clientData.id),
+					schema.documentsWithSum,
+					eq(schema.documentsWithSum.clientDataId, schema.clientData.id),
 				)
 				.where(eq(schema.clients.id, id)),
 		);

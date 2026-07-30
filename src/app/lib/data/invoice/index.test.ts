@@ -227,7 +227,7 @@ describe('fetchInvoice', () => {
 					const [item] = await db
 						.select({ id: tables.lineItems.id })
 						.from(tables.lineItems)
-						.where(eq(tables.lineItems.invoiceId, invoiceId));
+						.where(eq(tables.lineItems.documentId, invoiceId));
 
 					await db
 						.insert(tables.itemTaxes)

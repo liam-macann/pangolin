@@ -33,7 +33,7 @@ const item = createInsertSchema(schema.lineItems, {
 		taxes: z.set(z.uuid('Invalid tax: check configuration')),
 	});
 
-export const invoice = createInsertSchema(schema.invoices, {
+export const document = createInsertSchema(schema.documents, {
 	clientDataId: z.uuid({ error: 'Please select a client' }),
 	title: z
 		.string()
@@ -45,27 +45,30 @@ export const invoice = createInsertSchema(schema.invoices, {
 		.transform(v => v?.trim())
 		.transform(v => (v === '' ? undefined : v))
 		.optional(),
-	issuedAt: z.date({ error: 'Please enter an issue date' }).optional(),
-	dueAt: z.date({ error: 'Please enter a due date' }),
 })
 	.pick({
 		clientDataId: true,
 		title: true,
 		description: true,
-		issuedAt: true,
-		dueAt: true,
 	})
 	.extend({
-		...createInsertSchema(schema.invoiceStatus, {
-			notes: z
-				.string()
-				.transform(v => v.trim())
-				.transform(v => (v === '' ? undefined : v))
-				.optional(),
-		}).pick({ status: true, notes: true }).shape,
-
 		items: z
 			.array(item)
 			.min(1, 'Invoice must contain items')
 			.max(256, 'No more than 256 items allowed'),
 	});
+
+export const invoice = document.extend({
+	...createInsertSchema(schema.invoices, {
+		issuedAt: z.date({ error: 'Please enter an issue date' }).optional(),
+		dueAt: z.date({ error: 'Please enter a due date' }),
+	}).pick({ issuedAt: true, dueAt: true }).shape,
+
+	...createInsertSchema(schema.invoiceStatus, {
+		notes: z
+			.string()
+			.transform(v => v.trim())
+			.transform(v => (v === '' ? undefined : v))
+			.optional(),
+	}).pick({ status: true, notes: true }).shape,
+});

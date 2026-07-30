@@ -16,7 +16,7 @@ export const fetchStats = (filter: typeof defaultInvoiceFilter = defaultInvoiceF
 
 export const defaultInvoiceFilter = new QueryBuilder()
 	.$with('stats_filter')
-	.as(new QueryBuilder().select().from(schema.invoicesWithSum));
+	.as(new QueryBuilder().select().from(schema.documentsWithSum));
 
 /** Outstanding gross totals per currency across all user invoices (excludes voided invoices) */
 export async function _fetchStats(

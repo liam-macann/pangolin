@@ -16,16 +16,16 @@ import { users } from '@/db/schema/auth';
 
 import { authUid, policy } from './_helpers';
 import { config, configTaxes, taxes } from './config';
-import { invoices } from './invoices';
+import { documents } from './invoices';
 
 export const unitEnum = pgEnum('unit', ['items', 'hours']);
 export const lineItems = snakeCase.table(
 	'line_item',
 	{
 		id: uuid().defaultRandom().primaryKey(),
-		invoiceId: uuid()
+		documentId: uuid()
 			.notNull()
-			.references(() => invoices.id, { onDelete: 'cascade' }),
+			.references(() => documents.id, { onDelete: 'cascade' }),
 
 		/** Invoice entry label */
 		label: text().notNull(),
@@ -54,19 +54,24 @@ export const lineItems = snakeCase.table(
 			.references(() => config.id),
 	},
 	t => [
-		unique('uq_invoice_item_id_config').on(t.id, t.configId),
+		unique('uq_line_item_id_config').on(t.id, t.configId),
+		unique('uq_line_item_id_user_id').on(t.id, t.userId),
 
-		index('idx_invoice_item_invoice_id').on(t.invoiceId),
-		index('idx_invoice_item_user_id').on(t.userId),
-		index('idx_invoice_item_config_id').on(t.configId),
+		index('idx_line_item_document_id').on(t.documentId),
+		index('idx_line_item_user_id').on(t.userId),
+		index('idx_line_item_config_id').on(t.configId),
 
 		// Ensure this item references the same config as the associated invoice
 		foreignKey({
-			name: 'fk_invoice_item_invoice_config',
-			columns: [t.invoiceId, t.configId],
-			foreignColumns: [invoices.id, invoices.configId],
+			name: 'fk_line_item_document_config',
+			columns: [t.documentId, t.configId],
+			foreignColumns: [documents.id, documents.configId],
 		}),
-
+		foreignKey({
+			name: 'fk_line_item_document_ownership',
+			columns: [t.documentId, t.userId],
+			foreignColumns: [documents.id, documents.userId],
+		}),
 		policy({
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
@@ -111,7 +116,6 @@ export const itemTaxes = snakeCase.table(
 			columns: [t.itemId, t.configId],
 			foreignColumns: [lineItems.id, lineItems.configId],
 		}),
-
 		// Ensure tax is allowed for this configuration
 		foreignKey({
 			name: 'fk_item_tax_config_tax',

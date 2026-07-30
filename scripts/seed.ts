@@ -12,7 +12,7 @@ const {
 	keychain,
 	verifications,
 	itemsWithTax,
-	invoicesWithSum,
+	documentsWithSum,
 	authenticated,
 	statusEnum,
 	unitEnum,

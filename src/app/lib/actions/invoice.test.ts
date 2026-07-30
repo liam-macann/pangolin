@@ -12,10 +12,19 @@ import { insertTestInvoice, invoiceBuilder, setUpConfigAndClient } from './tests
 
 const getInvoice = (id: string) =>
 	withRLS(async (db, session) =>
-		db.query.invoices.findFirst({
-			where: { id, userId: session.user.id },
-			with: { items: { with: { taxes: true } }, status: true },
-		}),
+		db.query.invoices
+			.findFirst({
+				where: { id, userId: session.user.id },
+				with: {
+					document: { with: { items: { with: { taxes: true } } } },
+					status: true,
+				},
+			})
+			.then(res => {
+				if (!res) return res;
+				const { document, ...inv } = res;
+				return { ...document, ...inv };
+			}),
 	);
 
 describe('createInvoice', () => {

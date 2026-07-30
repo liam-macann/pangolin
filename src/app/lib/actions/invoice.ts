@@ -8,32 +8,25 @@ import type z from 'zod';
 
 import { allocateSequence } from '@/lib/sequencer';
 import { type Enum } from '@/lib/utils/drizzle';
-import { invoice as zodSchema } from '@/lib/validation/invoice';
+import { document as documentSchema, invoice as zodSchema } from '@/lib/validation/invoice';
 import { withRLS } from '@/db';
 import * as schema from '@/db/schema';
 
 export async function createInvoice(input: z.infer<typeof zodSchema>) {
 	// Validate form using Zod
-	const { items, notes, status, ...invoice } = zodSchema.parse(input);
+	const { notes, status, ...invoice } = await zodSchema.parseAsync(input);
 
 	return withRLS(async (tx, session) => {
-		// Fetch config first — timezone is needed to determine the current issue year before upserts
-		const [currentConfig] = await tx
-			.select({
-				id: schema.config.id,
-				userId: schema.config.userId,
-				timezone: schema.config.timezone,
-				taxRegistration: schema.config.taxRegistration,
-			})
+		const insertedDocument = await createDocument(input);
+
+		const [{ timezone }] = await tx
+			.select({ timezone: schema.config.timezone })
 			.from(schema.config)
-			.where(and(eq(schema.config.userId, session.user.id), isNull(schema.config.validTo)))
-			.orderBy(desc(schema.config.validFrom))
-			.limit(1);
+			.where(eq(schema.config.id, insertedDocument.configId));
 
 		/** When the invoice is set to be issued — either the supplied date, or the current time */
 		const issuedAt =
-			invoice.issuedAt?.toISOString() ||
-			sql`transaction_timestamp() AT TIME ZONE ${currentConfig.timezone}`;
+			invoice.issuedAt?.toISOString() || sql`transaction_timestamp() AT TIME ZONE ${timezone}`;
 
 		const count = await allocateSequence(tx, {
 			userId: session.user.id,
@@ -45,12 +38,12 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 			partition: sql`extract(year from (${issuedAt})::date)::text`,
 		});
 
+		// Logical invoice table
 		const [insertedInvoice] = await tx
 			.insert(schema.invoices)
 			.values([
 				{
-					...invoice,
-
+					id: insertedDocument.id,
 					userId: session.user.id,
 
 					issuedAt,
@@ -58,33 +51,67 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 
 					index: count,
 					yearIndex: yearCount,
-
-					configId: currentConfig.id,
 				},
 			])
 			.returning({ id: schema.invoices.id });
 
-		// Defined as CTE to prevent network roundtrip
-		const insertInvoiceStatus = tx.$with('insert_invoice_status').as(
-			tx.insert(schema.invoiceStatus).values({
-				id: insertedInvoice.id,
-				userId: session.user.id,
-				status,
-				notes,
-			}),
-		);
+		// Insert invoice status
+		await tx.insert(schema.invoiceStatus).values({
+			id: insertedInvoice.id,
+			userId: session.user.id,
+			status,
+			notes,
+		});
+
+		updateTag(`invoices-${session.user.id}`);
+	}).catch(err => {
+		unstable_rethrow(err);
+		console.error(err);
+		throw new Error(`Database Error: failed to create invoice`);
+	});
+}
+
+async function createDocument(input: z.infer<typeof documentSchema>) {
+	// Validate input using Zod
+	const { items, ...document } = await documentSchema.parseAsync(input);
+
+	return await withRLS(async (tx, session) => {
+		const [currentConfig] = await tx
+			.select({
+				id: schema.config.id,
+				userId: schema.config.userId,
+				taxRegistration: schema.config.taxRegistration,
+			})
+			.from(schema.config)
+			.where(and(eq(schema.config.userId, session.user.id), isNull(schema.config.validTo)))
+			.orderBy(desc(schema.config.validFrom))
+			.limit(1);
+
+		// The document carries the invoice content (client, title, description)
+		const [insertedDocument] = await tx
+			.insert(schema.documents)
+			.values([
+				{
+					...document,
+					userId: session.user.id,
+					configId: currentConfig.id,
+				},
+			])
+			.returning({
+				id: schema.documents.id,
+				configId: schema.documents.configId,
+			});
 
 		// Necessary to have stable ID to link taxes with items
 		const itemsWithId = items.map((item, i) => ({ ...item, id: uuid(), order: i }));
 
 		// Insert items for invoice
 		await tx
-			.with(insertInvoiceStatus)
 			.insert(schema.lineItems)
 			.values(
 				itemsWithId.map(i => ({
 					id: i.id,
-					invoiceId: insertedInvoice.id,
+					documentId: insertedDocument.id,
 
 					label: i.label,
 					note: i.note,
@@ -114,11 +141,7 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 				}
 			});
 
-		updateTag(`invoices-${session.user.id}`);
-	}).catch(err => {
-		unstable_rethrow(err);
-		console.error(err);
-		throw new Error(`Database Error: failed to create invoice`);
+		return insertedDocument;
 	});
 }
 

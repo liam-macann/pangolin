@@ -42,6 +42,7 @@ export async function seedInvoices(
 	taxIds: string[],
 	yearCounts: Record<number, number>,
 ) {
+	const documentRows: (typeof schema.documents.$inferInsert)[] = [];
 	const invoiceRows: (typeof schema.invoices.$inferInsert)[] = [];
 	const statusRows: (typeof schema.invoiceStatus.$inferInsert)[] = [];
 	const itemRows: (typeof schema.lineItems.$inferInsert)[] = [];
@@ -53,7 +54,7 @@ export async function seedInvoices(
 		const y = Number(year);
 
 		for (let yearIndex = 1; yearIndex <= yearTotal; yearIndex++) {
-			const invoiceId = faker.string.uuid();
+			const documentId = faker.string.uuid();
 			const issuedAt = dateInYear(y, yearIndex, yearTotal);
 			const invoiceDate = parseISO(issuedAt);
 			const dueAt = format(
@@ -66,23 +67,28 @@ export async function seedInvoices(
 			const client = faker.helpers.arrayElement(clients);
 			const clientData = activeAt(client.versions, invoiceDate);
 
-			invoiceRows.push({
-				id: invoiceId,
+			documentRows.push({
+				id: documentId,
 				userId,
 				clientDataId: clientData.id,
 				configId: config.id,
-				issuedAt,
-				dueAt,
-				index: globalIndex,
-				yearIndex,
 				description:
 					faker.helpers.maybe(() => faker.lorem.sentences({ min: 1, max: 3 }), {
 						probability: 0.2,
 					}) ?? null,
 			});
 
+			invoiceRows.push({
+				id: documentId,
+				userId,
+				issuedAt,
+				dueAt,
+				index: globalIndex,
+				yearIndex,
+			});
+
 			statusRows.push({
-				id: invoiceId,
+				id: documentId,
 				userId,
 				status: faker.helpers.arrayElement(schema.statusEnum.enumValues),
 				isVoid: faker.datatype.boolean({ probability: 0.1 }),
@@ -94,7 +100,7 @@ export async function seedInvoices(
 
 				itemRows.push({
 					id: itemId,
-					invoiceId,
+					documentId,
 					userId,
 					configId: config.id,
 					label: faker.commerce.productName(),
@@ -118,6 +124,7 @@ export async function seedInvoices(
 		}
 	}
 
+	await tx.insert(schema.documents).values(documentRows);
 	await tx.insert(schema.invoices).values(invoiceRows);
 	await tx.insert(schema.invoiceStatus).values(statusRows);
 	await tx.insert(schema.lineItems).values(itemRows);

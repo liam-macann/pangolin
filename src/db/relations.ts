@@ -9,10 +9,10 @@ import * as schema from './schema';
 
 type Tables = ExtractTablesFromSchema<typeof schema>;
 
-/** Helper function to define base relations for invoices and derived views */
-function invoiceBaseRelations(
+/** Helper function to define base relations for documents and derived views */
+function documentBaseRelations(
 	r: RelationsBuilder<Tables>,
-	tableName: 'invoices' | 'invoicesWithSum',
+	tableName: 'documents' | 'documentsWithSum',
 ) {
 	const table = r[tableName];
 
@@ -34,12 +34,7 @@ function invoiceBaseRelations(
 		}),
 		items: r.many.itemsWithTax({
 			from: table.id,
-			to: r.itemsWithTax.invoiceId,
-		}),
-		status: r.one.invoiceStatus({
-			from: table.id,
-			to: r.invoiceStatus.id,
-			optional: false,
+			to: r.itemsWithTax.documentId,
 		}),
 	};
 }
@@ -50,7 +45,14 @@ export const relations = defineRelations(schema, r => ({
 	// ---------------------------------------------------------
 	users: {
 		clients: r.many.clients(),
-		invoices: r.many.invoices(),
+		documents: r.many.documents({
+			from: r.users.id,
+			to: r.documents.userId,
+		}),
+		invoices: r.many.invoices({
+			from: r.users.id,
+			to: r.invoices.userId,
+		}),
 		keychain: r.one.keychain({
 			from: r.users.id,
 			to: r.keychain.id,
@@ -81,17 +83,41 @@ export const relations = defineRelations(schema, r => ({
 			from: r.clientData.addressId,
 			to: r.address.id,
 		}),
-		invoices: r.many.invoices({
+
+		documents: r.many.documents({
 			from: r.clientData.id,
-			to: r.invoices.clientDataId,
+			to: r.documents.clientDataId,
+		}),
+
+		invoices: r.many.invoices({
+			from: r.clientData.id.through(r.documents.clientDataId),
+			to: r.invoices.id.through(r.documents.id),
 		}),
 	},
 
 	// ---------------------------------------------------------
 	// Invoices
 	// ---------------------------------------------------------
-	invoices: invoiceBaseRelations(r, 'invoices'),
-	invoicesWithSum: invoiceBaseRelations(r, 'invoicesWithSum'),
+	documents: documentBaseRelations(r, 'documents'),
+	documentsWithSum: documentBaseRelations(r, 'documentsWithSum'),
+
+	invoices: {
+		document: r.one.documents({
+			from: r.invoices.id,
+			to: r.documents.id,
+			optional: false,
+		}),
+		documentWithSum: r.one.documentsWithSum({
+			from: r.invoices.id,
+			to: r.documentsWithSum.id,
+			optional: false,
+		}),
+		status: r.one.invoiceStatus({
+			from: r.invoices.id,
+			to: r.invoiceStatus.id,
+			optional: false,
+		}),
+	},
 
 	sequencer: {
 		user: r.one.users({
@@ -124,9 +150,14 @@ export const relations = defineRelations(schema, r => ({
 
 		configTaxes: r.many.configTaxes(),
 
-		invoices: r.many.invoices({
+		documents: r.many.documents({
 			from: r.config.id,
-			to: r.invoices.configId,
+			to: r.documents.configId,
+		}),
+
+		invoices: r.many.invoices({
+			from: r.config.id.through(r.documents.configId),
+			to: r.invoices.id.through(r.documents.id),
 		}),
 	},
 

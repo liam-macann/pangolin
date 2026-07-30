@@ -5,7 +5,7 @@ import { coalesce } from '@/lib/utils/drizzle';
 
 // Schema imports
 import { config, taxes } from './config';
-import { invoices, itemTaxes, lineItems } from './index';
+import { documents, itemTaxes, lineItems } from './index';
 
 //
 //
@@ -30,26 +30,26 @@ export const itemsWithTax = snakeCase
 			.from(lineItems)
 			.leftJoin(itemTaxes, eq(itemTaxes.itemId, lineItems.id))
 			.leftJoin(taxes, eq(itemTaxes.taxId, taxes.id))
-			.leftJoin(invoices, eq(lineItems.invoiceId, invoices.id))
-			.leftJoin(config, eq(invoices.configId, config.id))
+			.leftJoin(documents, eq(lineItems.documentId, documents.id))
+			.leftJoin(config, eq(documents.configId, config.id))
 			.groupBy(lineItems.id, config.id),
 	);
 
-export const invoicesWithSum = snakeCase
-	.view('invoice_with_sum')
+export const documentsWithSum = snakeCase
+	.view('document_with_sum')
 	.with({ securityInvoker: true, securityBarrier: true })
 	.as(qb =>
 		qb
 			.select({
-				...getColumns(invoices),
+				...getColumns(documents),
 				taxRegistration: config.taxRegistration,
 				currency: config.currency,
 				netTotal: coalesce(sum(itemsWithTax.netAmount), 0).mapWith(Number).as('net_total'),
 				/** @remarks This can safely be used regardless of tax registration. Unregistered taxes will not be applied. */
 				grossTotal: coalesce(sum(itemsWithTax.grossAmount), 0).mapWith(Number).as('gross_total'),
 			})
-			.from(invoices)
-			.innerJoin(config, eq(invoices.configId, config.id))
-			.leftJoin(itemsWithTax, eq(itemsWithTax.invoiceId, invoices.id))
-			.groupBy(invoices.id, config.id),
+			.from(documents)
+			.innerJoin(config, eq(documents.configId, config.id))
+			.leftJoin(itemsWithTax, eq(itemsWithTax.documentId, documents.id))
+			.groupBy(documents.id, config.id),
 	);
