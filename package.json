@@ -14,7 +14,7 @@
 		"db:seed": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" node --import tsx --env-file=.env.local ./scripts/seed.ts",
 		"db:view": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" pnpm exec drizzle-kit studio",
 		"db:generate": "drizzle-kit generate",
-		"db:migrate": "drizzle-kit migrate",
+		"db:migrate": "drizzle-kit check && drizzle-kit migrate",
 		"db:sync-currencies": "tsx ./scripts/sync-currencies.ts",
 		"test": "vitest --typecheck",
 		"test:run": "vitest run --typecheck",
