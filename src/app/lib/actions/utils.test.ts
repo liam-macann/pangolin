@@ -18,10 +18,6 @@ vi.mock('next/server', () => ({ after: vi.fn() }));
 
 const testAddress = addressBuilder({ streetAddress: ['123 Main St'] });
 
-beforeEach(async () => {
-	vi.clearAllMocks();
-});
-
 describe('cleanupConfigs', () => {
 	test('Removes an invalidated config not referenced by any invoice', async ({ db, session }) => {
 		await insertTestConfig();

@@ -18,10 +18,6 @@ const getInvoice = (id: string) =>
 		}),
 	);
 
-beforeEach(async () => {
-	vi.clearAllMocks();
-});
-
 describe('createInvoice', () => {
 	test('Inserts an invoice with its items and status', async ({ session }) => {
 		const { client } = await setUpConfigAndClient();

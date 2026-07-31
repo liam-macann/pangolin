@@ -14,10 +14,6 @@ import { addressBuilder, configBuilder } from './tests/helpers';
 vi.mock('@/lib/actions/utils', () => ({ cleanupConfigs: vi.fn(), cleanupAddresses: vi.fn() }));
 
 describe('updateUserConfig', () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-	});
-
 	/** Fetch the active config without processing data */
 	const getUserConfig = () =>
 		withRLS(async (db, session) =>

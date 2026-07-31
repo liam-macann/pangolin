@@ -24,10 +24,6 @@ const getActiveClientData = (clientId: string) =>
 		}),
 	);
 
-beforeEach(async () => {
-	vi.clearAllMocks();
-});
-
 type ClientInput = Parameters<typeof createClient>[0];
 
 /** Wraps the createClient and updateClient actions for use in shared insertion tests */

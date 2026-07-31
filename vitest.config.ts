@@ -32,6 +32,7 @@ export default defineConfig({
 	},
 	test: {
 		setupFiles: ['./src/test/setup.ts'],
+		clearMocks: true,
 		coverage: {
 			exclude: [
 				...(configDefaults.coverage.exclude ?? []),
