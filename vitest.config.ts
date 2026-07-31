@@ -7,6 +7,8 @@ import { configDefaults, defineConfig } from 'vitest/config';
 const require = createRequire(import.meta.url);
 const libAddressRoot = path.dirname(require.resolve('lib-address/package.json'));
 
+const isCoverage = process.argv.includes('--coverage');
+
 export default defineConfig({
 	optimizeDeps: {
 		include: [
@@ -34,10 +36,22 @@ export default defineConfig({
 		setupFiles: ['./src/test/setup.ts'],
 		clearMocks: true,
 		coverage: {
+			include: [
+				...(configDefaults.coverage.include ?? []),
+				'src/app/**/*.ts',
+				'src/app/**/*.tsx',
+
+				'src/db/index.ts',
+				'src/db/schema/data/_helpers.ts',
+
+				'src/components/**/*.tsx',
+			],
 			exclude: [
 				...(configDefaults.coverage.exclude ?? []),
-				'src/db/schema/**/*',
-				'src/db/relations.ts',
+				'src/app/lib/auth.ts',
+				'src/app/ui/fonts.ts',
+				'src/app/ui/color-schemes.ts',
+				'src/components/ui/*.tsx',
 			],
 		},
 		projects: [
@@ -65,7 +79,9 @@ export default defineConfig({
 						enabled: true,
 						headless: true,
 						provider: playwright(),
-						instances: [{ browser: 'chromium' }, { browser: 'firefox' }, { browser: 'webkit' }],
+						instances: isCoverage
+							? [{ browser: 'chromium' }]
+							: [{ browser: 'chromium' }, { browser: 'firefox' }, { browser: 'webkit' }],
 					},
 				},
 			},
