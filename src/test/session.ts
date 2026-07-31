@@ -1,14 +1,24 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { drizzleAdapter } from '@better-auth/drizzle-adapter/relations-v2';
 import { betterAuth } from 'better-auth/minimal';
 import { testUtils } from 'better-auth/plugins';
 import { sql } from 'drizzle-orm';
-import { test as base } from 'vitest';
+import { test as base, vi } from 'vitest';
 
 import * as schema from '@/db/schema/auth';
 
+import { type Session } from '@/auth';
+
 import { createTestDB, type TestTX } from './pglite';
-import { sessionStorage, testConnection } from './setup-server';
+
+export const testConnection: { current: TestTX | null } = { current: null };
+
+/** Stores the current session separately according to each calling async context */
+export const sessionStorage = new AsyncLocalStorage<Session>();
+
+/** Mocked getSession() that accesses test AsyncLocalStorage */
+export const getSession = vi.fn(async () => sessionStorage.getStore() ?? null);
 
 /** A test-only Better Auth instance pointed at the disposable PGlite connection */
 export function createTestAuth(db: TestTX) {
@@ -56,7 +66,6 @@ export const asUser = base
 		onCleanup(async () => await client.$client.close());
 		return client;
 	})
-
 	.extend<{ db: TestTX }>({
 		db: [
 			async ({ client }, use) => {
@@ -78,11 +87,5 @@ export const asUser = base
 			{ auto: true },
 		],
 	})
-
 	.extend('auth', async ({ db }) => createTestAuth(db))
 	.extend('session', async ({ db, auth }) => createTestSession(db, auth));
-
-// This is what lets concurrently-running tests each see their own session.
-asUser.aroundEach(async (runTest, { session }) => {
-	await sessionStorage.run(session, () => runTest());
-});

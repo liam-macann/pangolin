@@ -16,8 +16,7 @@ import { arrayBounds, numberBounds } from '@/lib/zod';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
-import { createTestSession, asUser as test } from '@/test/session';
-import { sessionStorage } from '@/test/setup-server';
+import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { fetchInvoice, fetchInvoices, fetchInvoicesForClient } from './index';
 

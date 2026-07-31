@@ -1,18 +1,20 @@
 import { randomBytes } from '@noble/ciphers/utils.js';
-import { describe, expect, test, vi } from 'vitest';
+import { afterAll, describe, expect, test, vi } from 'vitest';
 
 import { type Encrypted, toBytes, toHex } from '@/lib/utils/encrypt';
 
+import { getSession } from '@/auth';
+
 import { header, version } from './constants';
 import { crypto } from './index';
+import * as keys from './internal/keys';
 
 const TEST_USER_ID = 'user-123';
 
-vi.mock('./internal/keys', () => ({ retrieveDEK: vi.fn().mockResolvedValue(randomBytes(32)) }));
+vi.spyOn(keys, 'retrieveDEK').mockResolvedValue(randomBytes(32));
+vi.mocked(getSession).mockResolvedValue({ user: { id: TEST_USER_ID } } as never);
 
-vi.mock('@/auth', () => ({
-	getSession: vi.fn(async () => ({ user: { id: TEST_USER_ID } })),
-}));
+afterAll(() => vi.resetAllMocks());
 
 describe('Encryption generic variants', () => {
 	test('Decrypts Encrypted<Uint8Array> values (byte form)', async () => {

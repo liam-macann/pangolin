@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, vi } from 'vitest';
+import { after } from 'next/server';
+import { afterAll, describe, expect, vi } from 'vitest';
 
 import * as tables from '@/db/schema';
 
@@ -14,9 +15,11 @@ import {
 } from './tests/helpers';
 import { cleanupAddresses, cleanupClientData, cleanupConfigs } from './utils';
 
-vi.mock('next/server', () => ({ after: vi.fn() }));
-
 const testAddress = addressBuilder({ streetAddress: ['123 Main St'] });
+
+// Prevent seeding calls from running cleanup
+vi.mocked(after).mockImplementation(() => undefined);
+afterAll(() => vi.mocked(after).mockReset());
 
 describe('cleanupConfigs', () => {
 	test('Removes an invalidated config not referenced by any invoice', async ({ db, session }) => {

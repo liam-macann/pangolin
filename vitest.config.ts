@@ -44,8 +44,13 @@ export default defineConfig({
 			{
 				extends: true,
 				test: {
-					name: 'server',
+					name: { label: 'server', color: 'green' },
 					environment: 'node',
+					isolate: false,
+					// Each worker will have to spin up a new DB instance, which adds considerable overhead.
+					// Increased parallelism may make sense with a larger volume of tests.
+					maxWorkers: 2,
+					sequence: { groupOrder: 1 },
 					include: ['src/**/*.test.ts'],
 					globalSetup: ['./src/test/global-setup.ts'],
 					setupFiles: ['./src/test/setup.ts', './src/test/setup-server.ts'],
@@ -55,7 +60,7 @@ export default defineConfig({
 				extends: true,
 				plugins: [react()],
 				test: {
-					name: 'browser',
+					name: { label: 'browser', color: 'yellow' },
 					include: ['src/**/*.test.tsx', 'src/**/*.browser.test.ts'],
 					browser: {
 						enabled: true,

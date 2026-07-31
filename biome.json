@@ -37,6 +37,12 @@
 				"noRestrictedImports": {
 					"level": "error",
 					"options": {
+						"paths": {
+							"better-auth": {
+								"importNames": ["Session"],
+								"message": "Prefer using Session from @/auth"
+							}
+						},
 						"patterns": [
 							{
 								"group": ["../**"],

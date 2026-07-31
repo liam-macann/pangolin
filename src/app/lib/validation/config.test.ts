@@ -1,10 +1,6 @@
-import { describe, expect, test, vi } from 'vitest';
-import z from 'zod/v4';
+import { describe, expect, test } from 'vitest';
 
 import { taxes } from '@/lib/validation/config';
-
-// lib-address (imported by the address schema) fails to load under Vitest (ESM/CJS mismatch)
-vi.mock('./address', () => ({ default: z.unknown() }));
 
 describe('taxes', () => {
 	// Rates are validated as user-facing percentages; conversion to stored

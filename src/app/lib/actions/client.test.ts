@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
 import { assert, beforeEach, describe, expect, vi } from 'vitest';
 
-import { cleanupAddresses, cleanupClientData } from '@/lib/actions/utils';
+import * as actions from '@/lib/actions/utils';
 import { crypto } from '@/lib/encrypt';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
@@ -12,8 +12,6 @@ import { asUser as test } from '@/test/session';
 
 import { createClient, updateClient, updateClientDeleted, updateClientFavorite } from './client';
 import { addressBuilder, clientBuilder, insertTestClient } from './tests/helpers';
-
-vi.mock('@/lib/actions/utils', () => ({ cleanupClientData: vi.fn(), cleanupAddresses: vi.fn() }));
 
 /** Fetch the active clientData row (and associated address) for a given client */
 const getActiveClientData = (clientId: string) =>
@@ -24,6 +22,10 @@ const getActiveClientData = (clientId: string) =>
 		}),
 	);
 
+beforeEach(async () => {
+	vi.spyOn(actions, 'cleanupClientData').mockResolvedValue();
+	vi.spyOn(actions, 'cleanupAddresses').mockResolvedValue();
+});
 type ClientInput = Parameters<typeof createClient>[0];
 
 /** Wraps the createClient and updateClient actions for use in shared insertion tests */
@@ -186,8 +188,8 @@ describe('updateClient', () => {
 
 		await updateClient({ ...clientBuilder(), clientId: client.id });
 
-		expect(cleanupClientData).toHaveBeenCalledWith(session.user.id);
-		expect(cleanupAddresses).toHaveBeenCalledWith(session.user.id);
+		expect(actions.cleanupClientData).toHaveBeenCalledWith(session.user.id);
+		expect(actions.cleanupAddresses).toHaveBeenCalledWith(session.user.id);
 		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
 	});
 });

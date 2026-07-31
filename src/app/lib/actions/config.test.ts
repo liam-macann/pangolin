@@ -1,7 +1,7 @@
 import { updateTag } from 'next/cache';
 import { assert, beforeEach, describe, expect, vi } from 'vitest';
 
-import { cleanupAddresses, cleanupConfigs } from '@/lib/actions/utils';
+import * as actions from '@/lib/actions/utils';
 import { crypto } from '@/lib/encrypt';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
@@ -11,9 +11,12 @@ import { asUser as test } from '@/test/session';
 import { updateUserConfig } from './config';
 import { addressBuilder, configBuilder } from './tests/helpers';
 
-vi.mock('@/lib/actions/utils', () => ({ cleanupConfigs: vi.fn(), cleanupAddresses: vi.fn() }));
-
 describe('updateUserConfig', () => {
+	beforeEach(() => {
+		vi.spyOn(actions, 'cleanupConfigs').mockResolvedValue();
+		vi.spyOn(actions, 'cleanupAddresses').mockResolvedValue();
+	});
+
 	/** Fetch the active config without processing data */
 	const getUserConfig = () =>
 		withRLS(async (db, session) =>
@@ -185,8 +188,8 @@ describe('updateUserConfig', () => {
 	test('Schedules cleanup and invalidates the config cache tag', async ({ session }) => {
 		await updateUserConfig(configBuilder());
 
-		expect(cleanupConfigs).toHaveBeenCalledWith(session.user.id);
-		expect(cleanupAddresses).toHaveBeenCalledWith(session.user.id);
+		expect(actions.cleanupConfigs).toHaveBeenCalledWith(session.user.id);
+		expect(actions.cleanupAddresses).toHaveBeenCalledWith(session.user.id);
 		expect(updateTag).toHaveBeenCalledWith(`config-${session.user.id}`);
 	});
 });
