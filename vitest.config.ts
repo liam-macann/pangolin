@@ -52,7 +52,6 @@ export default defineConfig({
 					maxWorkers: 2,
 					sequence: { groupOrder: 1 },
 					include: ['src/**/*.test.ts'],
-					globalSetup: ['./src/test/global-setup.ts'],
 					setupFiles: ['./src/test/setup.ts', './src/test/setup-server.ts'],
 				},
 			},
