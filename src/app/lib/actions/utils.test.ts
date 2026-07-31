@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, vi } from 'vitest';
 
 import * as tables from '@/db/schema';
 
-import { asUser as test } from '@/src/test/session';
+import { asUser as test } from '@/test/session';
 
 import { updateClient } from './client';
 import {

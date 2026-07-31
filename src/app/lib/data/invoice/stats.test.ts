@@ -11,7 +11,7 @@ import { invoice as invoiceSchema } from '@/lib/validation/invoice';
 import { numberBounds } from '@/lib/zod';
 import type * as tables from '@/db/schema';
 
-import { asUser as test } from '@/src/test/session';
+import { asUser as test } from '@/test/session';
 
 import { fetchStats } from './stats';
 

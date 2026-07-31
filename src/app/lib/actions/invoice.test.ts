@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, vi } from 'vitest';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
-import { asUser as test } from '@/src/test/session';
+import { asUser as test } from '@/test/session';
 
 import { createInvoice, setInvoiceNotes, updateInvoiceStatus, voidInvoice } from './invoice';
 import { insertTestInvoice, invoiceBuilder, setUpConfigAndClient } from './tests/helpers';

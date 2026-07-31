@@ -3,7 +3,7 @@ import { describe, expect } from 'vitest';
 import { currencies as localCurrencies } from '@/lib/utils/currencies';
 import * as tables from '@/db/schema';
 
-import { asUser as test } from '@/src/test/session';
+import { asUser as test } from '@/test/session';
 
 describe('currencies', () => {
 	test('Local currency list matches active currencies in the reference table', async ({ db }) => {

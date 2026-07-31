@@ -3,7 +3,7 @@ import { describe, expect } from 'vitest';
 
 import { users } from '@/db/schema/auth';
 
-import { asUser as test } from '@/src/test/session';
+import { asUser as test } from '@/test/session';
 
 // This is a meta-test to ensure the database isolation functions correctly in the asUser fixtures
 

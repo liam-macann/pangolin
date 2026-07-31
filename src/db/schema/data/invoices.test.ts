@@ -7,7 +7,7 @@ import { insertTestClient, insertTestConfig } from '@/lib/actions/tests/helpers'
 import { withRLS } from '@/db';
 import * as schema from '@/db/schema';
 
-import { asUser as test } from '@/src/test/session';
+import { asUser as test } from '@/test/session';
 
 /** Largest absolute value a Drizzle NUMERIC column can store, read off its own precision and scale */
 function numericColumnBounds(column: AnyPgColumn<{ dataType: 'number' }>) {

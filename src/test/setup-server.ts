@@ -11,7 +11,7 @@ vi.mock('@/db/connection', () => ({
 	get db() {
 		if (!testConnection.current) {
 			throw new Error(
-				'@/db accessed without a test database initialized. Use the `asUser` fixture from @/src/test/session',
+				'@/db accessed without a test database initialized. Use the `asUser` fixture from @/test/session',
 			);
 		}
 		return testConnection.current;

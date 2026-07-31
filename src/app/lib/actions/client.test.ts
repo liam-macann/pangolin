@@ -8,7 +8,7 @@ import { crypto } from '@/lib/encrypt';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
-import { asUser as test } from '@/src/test/session';
+import { asUser as test } from '@/test/session';
 
 import { createClient, updateClient, updateClientDeleted, updateClientFavorite } from './client';
 import { addressBuilder, clientBuilder, insertTestClient } from './tests/helpers';

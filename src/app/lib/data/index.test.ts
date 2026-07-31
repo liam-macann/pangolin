@@ -8,8 +8,8 @@ import {
 	setUpConfigAndClient,
 } from '@/lib/actions/tests/helpers';
 
-import { createTestSession, asUser as test } from '@/src/test/session';
-import { sessionStorage } from '@/src/test/setup-server';
+import { createTestSession, asUser as test } from '@/test/session';
+import { sessionStorage } from '@/test/setup-server';
 
 import { fetchConfig } from './index';
 

@@ -6,7 +6,7 @@ import { crypto } from '@/lib/encrypt';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
-import { asUser as test } from '@/src/test/session';
+import { asUser as test } from '@/test/session';
 
 import { updateUserConfig } from './config';
 import { addressBuilder, configBuilder } from './tests/helpers';

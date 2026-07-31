@@ -7,7 +7,7 @@ import { withRLS } from '@/db';
 import * as schema from '@/db/schema';
 
 import { getSession } from '@/auth';
-import { asUser, createTestSession } from '@/src/test/session';
+import { asUser, createTestSession } from '@/test/session';
 
 describe('withRLS()', () => {
 	test('Single-argument overload calls unauthorized() when there is no session', async () => {

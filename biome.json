@@ -49,6 +49,11 @@
 							},
 
 							{
+								"group": ["@/src/test/**"],
+								"message": "Prefer using @/test alias directly."
+							},
+
+							{
 								"group": ["@uidotdev/usehooks"],
 								"message": "Prefer importing from @/lib/hooks"
 							},

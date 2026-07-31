@@ -13,8 +13,8 @@ import {
 } from '@/lib/actions/tests/helpers';
 import { formatAddress } from '@/lib/utils/address';
 
-import { createTestSession, asUser as test } from '@/src/test/session';
-import { sessionStorage } from '@/src/test/setup-server';
+import { createTestSession, asUser as test } from '@/test/session';
+import { sessionStorage } from '@/test/setup-server';
 
 import { fetchClientStats, fetchClients } from './client';
 
