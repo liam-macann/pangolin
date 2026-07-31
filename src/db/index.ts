@@ -2,7 +2,7 @@ import 'server-only';
 
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { sql } from 'drizzle-orm';
-import { unauthorized } from 'next/navigation';
+import { forbidden, unauthorized } from 'next/navigation';
 
 import { type Brand } from '@/lib/utils';
 
@@ -83,8 +83,7 @@ export async function withRLS<T>(
 			// SET LOCAL settings apply for the rest of the outer scope as well,
 			// so silently proceeding would leave it running as the wrong user once this callback returns.
 
-			if (existing.session.user.id !== session.user.id)
-				throw new Error('withRLS() called with a different user than the enclosing transaction');
+			if (existing.session.user.id !== session.user.id) forbidden();
 
 			return callback(existing.tx);
 		}
