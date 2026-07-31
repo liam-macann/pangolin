@@ -1,6 +1,10 @@
 import { vi } from 'vitest';
 
-import { asUser, getSession, sessionStorage, testConnection } from './session';
+import { asUser, getSession, sessionStorage, testConnection, warmClient } from './session';
+
+// Pays the PGlite worker-instance startup cost here, during file setup,
+// so it isn't misattributed to whichever test happens to run first in this worker
+await warmClient();
 
 // Allow server-only files to be imported outside of Next.js server context
 vi.mock('server-only', () => ({}));

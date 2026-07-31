@@ -14,6 +14,10 @@ import { createTestDB, type TestTX } from './pglite';
 
 export const testConnection: { current: TestTX | null } = { current: null };
 
+/** Memoized worker-scoped PGlite instance, kicked off eagerly during file setup */
+let clientPromise: ReturnType<typeof createTestDB> | undefined;
+export const warmClient = async () => (clientPromise ??= createTestDB());
+
 /** Stores the current session separately according to each calling async context */
 export const sessionStorage = new AsyncLocalStorage<Session>();
 
@@ -62,7 +66,7 @@ export async function createTestSession(db: TestTX, auth: ReturnType<typeof crea
 export const asUser = base
 	// biome-ignore lint/correctness/noEmptyPattern: Vitest's fixture parser requires literal object-destructuring syntax
 	.extend('client', { scope: 'worker' }, async ({}, { onCleanup }) => {
-		const client = await createTestDB();
+		const client = await warmClient();
 		onCleanup(async () => await client.$client.close());
 		return client;
 	})
