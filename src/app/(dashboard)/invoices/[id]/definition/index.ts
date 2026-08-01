@@ -1,15 +1,15 @@
-import { TZDate } from '@date-fns/tz';
-import { type TDocumentDefinitions } from 'pdfmake/interfaces';
+import { type Content, type TDocumentDefinitions } from 'pdfmake/interfaces';
 
 import { type DetailedInvoice } from '@/lib/data/invoice';
 import { type ElementType } from '@/lib/utils';
-import { formatAddress } from '@/lib/utils/address';
-import { formatDate } from '@/lib/utils/date';
 
 import schemes from '@/src/app/ui/color-schemes';
 
+import { addresseeTable } from './addressee';
+import { documentFooter } from './footer';
+import { letterheadTable } from './letterhead';
 import { lineItemsTable } from './line-items';
-import { fontSize, footerHeight, footerMargins, footerStyles, spacing } from './styles';
+import { fontSize, footerHeight, footerStyles, spacing } from './styles';
 import { subtotalTable } from './subtotals';
 
 // DefinitelyTyped package does not have 0.3.4 definitions
@@ -65,47 +65,7 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 			fontFeatures: ['liga', 'ss01', 'ss03', 'ss04', 'ss05'],
 		},
 		pageMargins,
-		footer: (_currentPage, _pageCount) => {
-			return {
-				style: 'footer',
-				margin: [pageMargins[0], 0, pageMargins[2], 0],
-				unbreakable: true,
-				layout: {
-					hLineWidth: () => footerStyles.border,
-					vLineWidth: () => footerStyles.border,
-					paddingBottom: () => footerMargins.marginBottom,
-					paddingLeft: i => (i === 0 ? 0 : spacing(1)),
-					paddingRight: i => (i > 0 ? 0 : spacing(1)),
-				},
-				table: {
-					style: 'footer',
-					widths: ['*', 0, '*'],
-					dontBreakRows: true,
-					body: [
-						[
-							{ stack: footerLeftContent, verticalAlignment: 'bottom' },
-							{
-								stack: [' '],
-								opacity: 0,
-								fontSize: 0.1,
-								margin: [
-									0,
-									pageMargins[3] - footerMargins.marginBottom - footerMargins.safeAreaBottom,
-									0,
-									0,
-								],
-								verticalAlignment: 'bottom',
-							},
-							{
-								text: `Issued ${formatDate(new TZDate(invoice.issuedAt, invoice.config.timezone), { locale: invoice.config.locale })}`,
-								alignment: 'right',
-								verticalAlignment: 'bottom',
-							},
-						],
-					],
-				},
-			};
-		},
+		footer: documentFooter(invoice, pageMargins),
 		...(invoice.status.isVoid
 			? {
 					watermark: {
@@ -119,68 +79,8 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 				}
 			: {}),
 		content: [
-			{
-				style: 'footer',
-				marginTop: -spacing(4),
-				table: {
-					widths: ['60%', '40%'],
-					body: [
-						[
-							'',
-							{
-								alignment: 'right',
-								text: invoice.config.tradingName,
-								bold: true,
-								color: colors.heavy,
-								margin: [0, 0, 0, spacing(4)],
-							},
-						],
-						[
-							{
-								text: invoice.config.header ?? '',
-								marginLeft: spacing(5),
-								marginRight: spacing(5),
-							},
-							{
-								alignment: 'right',
-								stack: [
-									{ stack: invoice.config.tradingNumber || [] },
-
-									invoice.config.email ? { text: invoice.config.email } : [],
-									invoice.config.phone ? { text: invoice.config.phone } : [],
-
-									invoice.config.address
-										? [
-												{
-													text: formatAddress(invoice.config.address),
-													marginTop: spacing(4),
-												},
-											]
-										: [],
-								],
-							},
-						],
-					],
-				},
-				layout: {
-					paddingTop: () => 0,
-					paddingBottom: () => 0,
-					paddingLeft: () => 0,
-					paddingRight: () => 0,
-					hLineWidth: () => 0,
-					vLineWidth: () => 0,
-				},
-			},
-			{
-				text: (() => {
-					const match = title.match(/(.+)(.-.)(.*)/);
-					if (!match) return title;
-					// Add spacing around hyphen without affecting copy/paste
-					return [match[1], { text: match[2], characterSpacing: spacing(0.5) }, match[3]];
-				})(),
-				style: 'heading',
-				margin: [spacing(5), spacing(18), 0, 0],
-			},
+			letterheadTable(invoice),
+			titleHeading(title),
 			invoice.description
 				? {
 						text: invoice.description,
@@ -190,56 +90,7 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 						lineHeight: 1.25,
 					}
 				: '',
-			{
-				table: {
-					widths: ['70%', '30%'],
-					body: [
-						[
-							{ text: invoice.title || '', bold: true },
-							{
-								text: `Due ${formatDate(new TZDate(invoice.dueAt, invoice.config.timezone), { locale: invoice.config.locale })}`,
-								alignment: 'right',
-								bold: true,
-							},
-						],
-						[
-							{
-								stack: [
-									{ text: 'Bill To', bold: true },
-									invoice.clientData.name
-										? [
-												invoice.clientData.organization ? 'Attn: ' : '',
-												invoice.clientData.name,
-											].join('')
-										: [],
-									invoice.clientData.organization || [],
-									invoice.clientData.address
-										? [
-												{
-													text: formatAddress(invoice.clientData.address),
-													marginTop: spacing(2),
-												},
-											]
-										: [],
-								],
-								colSpan: 2,
-							},
-						],
-					],
-				},
-				fontSize: fontSize.base,
-				margin: [0, spacing(8)],
-				layout: {
-					fillColor: colors.gray,
-					paddingTop: i => (i === 0 ? spacing(5) : 0),
-					paddingBottom: () => spacing(5),
-					paddingLeft: () => spacing(5),
-					paddingRight: () => spacing(5),
-					hLineWidth: () => 0,
-					vLineWidth: () => 0,
-				},
-			},
-
+			addresseeTable(invoice),
 			lineItemsTable(invoice),
 			subtotalTable(invoice),
 		],
@@ -255,5 +106,16 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 				color: colors.accent,
 			},
 		},
+	};
+}
+
+/** The invoice reference heading. Adds optical spacing around a hyphen in the reference number, without affecting copy/paste. */
+function titleHeading(title: string): Content {
+	const match = title.match(/(.+)(.-.)(.*)/);
+
+	return {
+		text: match ? [match[1], { text: match[2], characterSpacing: spacing(0.5) }, match[3]] : title,
+		style: 'heading',
+		margin: [spacing(5), spacing(18), 0, 0],
 	};
 }

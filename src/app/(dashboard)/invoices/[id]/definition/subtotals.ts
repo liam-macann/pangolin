@@ -45,7 +45,7 @@ export function subtotalTable({ config, ...invoice }: InvoicePrintData): Content
 								verticalAlignment: 'bottom',
 
 								// Margin before 'Total' line
-								marginBottom: i === invoice.tax.length - 1 ? spacing(1) : 0,
+								marginBottom: i === invoice.tax.length - 1 ? spacing(1.5) : 0,
 							},
 							{
 								text: formatCurrency(tax.contribution, config.currency, config.locale),
@@ -54,7 +54,7 @@ export function subtotalTable({ config, ...invoice }: InvoicePrintData): Content
 								verticalAlignment: 'bottom',
 
 								// Margin before 'Total' line
-								marginBottom: i === invoice.tax.length - 1 ? spacing(1) : 0,
+								marginBottom: i === invoice.tax.length - 1 ? spacing(1.5) : 0,
 							},
 						]),
 						[

@@ -1,5 +1,9 @@
 import { assert, describe, expect, test } from 'vitest';
 
+import { formatCurrency } from '@/lib/utils/currencies';
+import { type Enum } from '@/lib/utils/drizzle';
+import { type unitEnum } from '@/db/schema/data/line-items';
+
 import { lineItemsTable } from './line-items';
 import { cellToContent, collectTextNodes, invoiceDataBuilder, renderText } from './tests/helpers';
 
@@ -122,5 +126,61 @@ describe('lineItemsTable', () => {
 		);
 
 		expect(descCell.stack).toHaveLength(1);
+	});
+
+	describe('Quantity pluralization', () => {
+		test.for<{ qty: number; unit: Enum<typeof unitEnum>; expected: string }>([
+			{ qty: 1, unit: 'hours', expected: '1 hour' },
+			{ qty: 2, unit: 'hours', expected: '2 hours' },
+			{ qty: 1, unit: 'items', expected: '1 item' },
+			{ qty: 3.2, unit: 'items', expected: '3.2 items' },
+		] as const)('$qty unit=$unit renders as $expected', ({ qty, unit, expected }) => {
+			const { table } = lineItemsTable(invoiceDataBuilder({ items: [{ quantity: qty, unit }] }));
+			expect(renderText(table.body[table.headerRows ?? 0][1])).toBe(expected);
+		});
+
+		test('Unit label is omitted when unit is unset', () => {
+			const { table } = lineItemsTable(
+				invoiceDataBuilder({ items: [{ quantity: 5, unit: null }] }),
+			);
+			expect(renderText(table.body[table.headerRows ?? 0][1])).toBe('5');
+		});
+	});
+
+	test('Each and amount cells render the formatted currency values', () => {
+		const invoice = invoiceDataBuilder({
+			config: { taxRegistration: false, currency: 'AUD', locale: 'en-AU' },
+			items: [{ unitCost: 149.9, netAmount: 299.8 }],
+		});
+
+		const { table } = lineItemsTable(invoice);
+		const { currency, locale } = invoice.config;
+		const row = table.body[table.headerRows ?? 0];
+
+		// Each cell is penultimate column in row
+		expect(renderText(row[row.length - 2])).toBe(
+			formatCurrency(invoice.items[0].unitCost, currency, locale),
+		);
+
+		// Amount cell is last column in row
+		expect(renderText(row[row.length - 1])).toBe(
+			formatCurrency(invoice.items[0].netAmount, currency, locale),
+		);
+	});
+
+	test('Header rows have a solid border; body rows switch to dashed', () => {
+		const { table, layout } = lineItemsTable(invoiceDataBuilder({ items: [{}] }));
+		const node = { table };
+
+		assert(
+			typeof layout === 'object' && layout.hLineWidth && layout.hLineStyle,
+			'Expected hLineWidth/hLineStyle callbacks',
+		);
+
+		expect(layout.hLineWidth(1, node)).toBe(1);
+		expect(layout.hLineStyle(1, node)).toBeNull();
+
+		expect(layout.hLineWidth(2, node)).toBe(0.75);
+		expect(layout.hLineStyle(2, node)).toHaveProperty('dash');
 	});
 });

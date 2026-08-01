@@ -1,5 +1,7 @@
 import { assert, describe, expect, test } from 'vitest';
 
+import { formatCurrency } from '@/lib/utils/currencies';
+
 import { type InvoicePrintData } from './index';
 import { subtotalTable } from './subtotals';
 import { invoiceDataBuilder, renderText } from './tests/helpers';
@@ -18,7 +20,7 @@ describe('subtotalTable', () => {
 	};
 
 	// The right column of the subtotal layout holds the figures table
-	const getTable = (invoice: InvoicePrintData) => {
+	const getRightColumn = (invoice: InvoicePrintData) => {
 		const rightColumn = subtotalTable(invoice).columns[1];
 
 		assert(
@@ -26,8 +28,10 @@ describe('subtotalTable', () => {
 			'Expected right column to be a ContentTable',
 		);
 
-		return rightColumn.table.body;
+		return rightColumn;
 	};
+
+	const getTable = (invoice: InvoicePrintData) => getRightColumn(invoice).table.body;
 
 	test('First row is the subtotal row', () => {
 		const table = getTable(invoiceDataBuilder());
@@ -141,5 +145,35 @@ describe('subtotalTable', () => {
 		taxes.forEach((tax, index) => {
 			expect(renderText(disclaimers[index])).toContain(tax);
 		});
+	});
+
+	test('Subtotal, tax, and total cells render the formatted currency amounts', () => {
+		const invoice = invoiceDataBuilder({
+			config: { taxRegistration: false, currency: 'AUD', locale: 'de' },
+			tax: [
+				{ name: 'GST', contribution: 45.5 },
+				{ name: 'LCT', contribution: 0 },
+			],
+			netTotal: 455,
+			grossTotal: 500.5,
+		});
+
+		const table = getTable(invoice);
+		const { currency, locale } = invoice.config;
+
+		// Subtotal cell
+		expect(renderText(table[0][1])).toBe(formatCurrency(invoice.netTotal, currency, locale));
+
+		// Each tax row
+		invoice.tax.forEach((tax, index) => {
+			expect(renderText(table[1 + index][1])).toBe(
+				formatCurrency(tax.contribution, currency, locale),
+			);
+		});
+
+		// Total cell
+		expect(renderText(table[table.length - 1][1])).toBe(
+			formatCurrency(invoice.grossTotal, currency, locale),
+		);
 	});
 });

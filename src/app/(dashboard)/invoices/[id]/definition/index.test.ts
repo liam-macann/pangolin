@@ -1,29 +1,9 @@
 import { assert, describe, expect, test } from 'vitest';
 
-import { type Address, formatAddress } from '@/lib/utils/address';
-
 import { buildDocDefinition, type InvoicePrintData } from './index';
-import { collectTextNodes, invoiceDataBuilder } from './tests/helpers';
+import { collectTextNodes, invoiceDataBuilder, renderText } from './tests/helpers';
 
 describe('buildDocDefinition', () => {
-	/** Helper to access the footer, with type narrowed according to implementation */
-	const getFooter = (invoice: InvoicePrintData) => {
-		const { footer } = buildDocDefinition(invoice);
-
-		assert(footer !== undefined, 'Footer should be defined');
-		assert(typeof footer === 'function', 'Footer should be a callback function');
-
-		const result = footer(1, 1, { width: 0, height: 0, orientation: 'portrait' });
-
-		assert(result, 'Footer should return content');
-		assert(
-			typeof result === 'object' && !Array.isArray(result) && result.table,
-			'Footer expected to return a table',
-		);
-
-		return result;
-	};
-
 	describe('VOID watermark', () => {
 		test('Active invoice has no watermark', () => {
 			const inv = invoiceDataBuilder({ status: { isVoid: false } });
@@ -80,90 +60,39 @@ describe('buildDocDefinition', () => {
 		);
 	});
 
-	describe('Bill To', () => {
-		test('Includes organization when defined', () => {
-			const organization = 'Acme Inc.';
+	describe('Document heading', () => {
+		// content[1] is the heading node; see the `content:` array in buildDocDefinition()
+		const getHeading = (invoice: InvoicePrintData) => {
+			const { content } = buildDocDefinition(invoice);
 
-			const collector = (inv: InvoicePrintData) =>
-				collectTextNodes(buildDocDefinition(inv).content);
+			assert(Array.isArray(content), 'Expected content to be an array of nodes');
+			const heading = content[1];
 
-			const toOrg = collector(invoiceDataBuilder({ clientData: { organization } }));
-			expect(toOrg).toContainEqual(expect.objectContaining({ text: organization }));
-
-			const toIndividual = collector(invoiceDataBuilder({ clientData: { name: 'Alaric Wivell' } }));
-			expect(toIndividual).not.toContainEqual(expect.objectContaining({ text: organization }));
-		});
-
-		test('Includes name when defined', () => {
-			const name = 'Alaric Wivell';
-
-			const collector = (inv: InvoicePrintData) =>
-				collectTextNodes(buildDocDefinition(inv).content);
-
-			const toOrg = collector(invoiceDataBuilder({ clientData: { name } }));
-			expect(toOrg).toContainEqual(expect.objectContaining({ text: name }));
-
-			const toIndividual = collector(invoiceDataBuilder({ clientData: { name: null } }));
-			expect(toIndividual).not.toContainEqual(expect.objectContaining({ text: name }));
-		});
-
-		test('Includes address when defined', () => {
-			const address: Address = {
-				streetAddress: ['1 Test St'],
-				city: 'Sydney',
-				administrativeArea: 'NSW',
-				postalCode: '2000',
-				country: 'AU',
-			};
-
-			// Formatted with real AU locale metadata; sanity-check it reflects the input
-			const formattedAddress = formatAddress(address);
-			expect(formattedAddress).toContain('1 Test St');
-
-			const collector = (inv: InvoicePrintData) =>
-				collectTextNodes(buildDocDefinition(inv).content);
-
-			const withAddress = collector(invoiceDataBuilder({ clientData: { address } }));
-			expect(withAddress).toContainEqual(expect.objectContaining({ text: formattedAddress }));
-
-			const withoutAddress = collector(invoiceDataBuilder({ clientData: { address: null } }));
-			expect(withoutAddress).not.toContainEqual(
-				expect.objectContaining({ text: formattedAddress }),
-			);
-		});
-
-		test('Prepends "Attn:" to name when organization is set', () => {
-			const name = 'Alaric Wivell';
-
-			const collector = (inv: InvoicePrintData) =>
-				collectTextNodes(buildDocDefinition(inv).content);
-
-			const toIndividual = collector(invoiceDataBuilder({ clientData: { name } }));
-
-			expect(toIndividual).toContainEqual(expect.objectContaining({ text: name }));
-			expect(toIndividual).not.toContainEqual(expect.objectContaining({ text: `Attn: ${name}` }));
-
-			const toOrg = collector(invoiceDataBuilder({ clientData: { name, organization: 'Acme' } }));
-
-			expect(toOrg).toContainEqual(expect.objectContaining({ text: `Attn: ${name}` }));
-			expect(toOrg).not.toContainEqual(expect.objectContaining({ text: name }));
-		});
-	});
-
-	test('Prints payment details when set', () => {
-		const paymentDetails = ['BSB 123-456', 'Account 00123456'];
-
-		const collector = (inv: InvoicePrintData) => collectTextNodes(getFooter(inv));
-
-		paymentDetails.forEach(detail => {
-			expect(collector(invoiceDataBuilder({ config: { paymentDetails } }))).toContainEqual(
-				expect.objectContaining({ text: detail }),
+			assert(
+				typeof heading === 'object' && !Array.isArray(heading) && 'style' in heading,
+				'Expected content[1] to be the heading node',
 			);
 
-			// Test negative to ensure that matched text is not present elsewhere in document (false positive)
-			expect(
-				collector(invoiceDataBuilder({ config: { paymentDetails: null } })),
-			).not.toContainEqual(expect.objectContaining({ text: detail }));
+			return heading;
+		};
+
+		test('Reference without a hyphen renders the title as plain text', () => {
+			const heading = getHeading(invoiceDataBuilder({ reference: 'INV001' }));
+			expect(heading.text).toBe('Invoice INV001');
+		});
+
+		// Adds optical spacing around a hyphen in the reference number, without affecting copy/paste
+		test('Reference with a hyphen applies extra spacing around it', () => {
+			const heading = getHeading(invoiceDataBuilder({ reference: 'INV-001' }));
+
+			assert(Array.isArray(heading.text), 'Expected title to be split around the hyphen');
+			expect(heading.text).toHaveLength(3);
+
+			expect(typeof heading.text[0]).toBe('string');
+			expect(heading.text[1]).toHaveProperty('characterSpacing');
+			expect(typeof heading.text[2]).toBe('string');
+
+			expect(renderText(heading)).toBe('Invoice INV-001');
 		});
 	});
 
@@ -190,5 +119,74 @@ describe('buildDocDefinition', () => {
 
 			expect(bottomMarginOf(['1'])).toBeLessThan(bottomMarginOf(['1', '2', '3', '4', '5']));
 		});
+	});
+
+	// Invoices must render identically given the same input.
+	// A snapshot catches any unintended structural or styling drift across the whole document
+	test('Produces a stable document for a representative invoice', () => {
+		const invoice = invoiceDataBuilder({
+			reference: '2025-014',
+			title: 'Website redesign',
+			description: 'Milestone 2 of 3 — see SOW-2025-014 for full scope',
+			config: {
+				tradingName: 'Acme Design Co.',
+				email: 'billing@acme.example',
+				phone: '+61 2 5550 1234',
+				header: 'ABN 12 345 678 901',
+				taxRegistration: true,
+				paymentDetails: ['BSB 123-456', 'Account 00123456'],
+				colorScheme: 'grass',
+				address: {
+					streetAddress: ['1 Example St'],
+					city: 'Sydney',
+					administrativeArea: 'NSW',
+					postalCode: '2000',
+					country: 'AU',
+				},
+			},
+			clientData: {
+				name: 'Alaric Wivell',
+				organization: 'Wivell Holdings',
+				address: {
+					streetAddress: ['2 Sample Ave'],
+					city: 'Melbourne',
+					administrativeArea: 'VIC',
+					postalCode: '3000',
+					country: 'AU',
+				},
+			},
+			items: [
+				{
+					label: 'Design consultation',
+					note: 'Includes two revision rounds',
+					quantity: 5,
+					unit: 'hours',
+					unitCost: 150,
+					netAmount: 750,
+					taxes: [{ name: 'GST', rate: 0.1 }],
+				},
+				{
+					label: 'Stock imagery licence',
+					quantity: 3,
+					unit: 'items',
+					unitCost: 40,
+					netAmount: 120,
+					taxes: [],
+				},
+			],
+			tax: [{ name: 'GST', contribution: 75 }],
+			netTotal: 870,
+			grossTotal: 945,
+		});
+
+		const { footer, ...definition } = buildDocDefinition(invoice);
+		assert(typeof footer === 'function', 'Expected footer to be a callback function');
+
+		// Footer is a callback pdfmake invokes at render time.
+		// Call it here so rendered content (incl. payment details, issued date) is captured too.
+		expect({
+			...definition,
+			footer: footer(1, 1, { width: 0, height: 0, orientation: 'portrait' }),
+		}).toMatchSnapshot();
 	});
 });

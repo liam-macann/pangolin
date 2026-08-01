@@ -1,0 +1,492 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildDocDefinition > Produces a stable document for a representative invoice 1`] = `
+{
+  "content": [
+    {
+      "layout": {
+        "hLineWidth": [Function],
+        "paddingBottom": [Function],
+        "paddingLeft": [Function],
+        "paddingRight": [Function],
+        "paddingTop": [Function],
+        "vLineWidth": [Function],
+      },
+      "marginTop": -12,
+      "style": "footer",
+      "table": {
+        "body": [
+          [
+            "",
+            {
+              "alignment": "right",
+              "bold": true,
+              "color": "#2e995c",
+              "margin": [
+                0,
+                0,
+                0,
+                12,
+              ],
+              "text": "Acme Design Co.",
+            },
+          ],
+          [
+            {
+              "marginLeft": 15,
+              "marginRight": 15,
+              "text": "ABN 12 345 678 901",
+            },
+            {
+              "alignment": "right",
+              "stack": [
+                {
+                  "stack": [],
+                },
+                {
+                  "text": "billing@acme.example",
+                },
+                {
+                  "text": "+61 2 5550 1234",
+                },
+                [
+                  {
+                    "marginTop": 12,
+                    "text": "1 Example St
+SYDNEY NSW 2000
+AUSTRALIA",
+                  },
+                ],
+              ],
+            },
+          ],
+        ],
+        "widths": [
+          "60%",
+          "40%",
+        ],
+      },
+    },
+    {
+      "margin": [
+        15,
+        54,
+        0,
+        0,
+      ],
+      "style": "heading",
+      "text": [
+        "Tax Invoice 202",
+        {
+          "characterSpacing": 1.5,
+          "text": "5-0",
+        },
+        "14",
+      ],
+    },
+    {
+      "fontSize": 11,
+      "lineHeight": 1.25,
+      "margin": [
+        15,
+        9,
+        15,
+        0,
+      ],
+      "style": "body",
+      "text": "Milestone 2 of 3 — see SOW-2025-014 for full scope",
+    },
+    {
+      "fontSize": 10,
+      "layout": {
+        "fillColor": "#f2f9f7",
+        "hLineWidth": [Function],
+        "paddingBottom": [Function],
+        "paddingLeft": [Function],
+        "paddingRight": [Function],
+        "paddingTop": [Function],
+        "vLineWidth": [Function],
+      },
+      "margin": [
+        0,
+        24,
+      ],
+      "table": {
+        "body": [
+          [
+            {
+              "bold": true,
+              "text": "Website redesign",
+            },
+            {
+              "alignment": "right",
+              "bold": true,
+              "text": "Due 15 Feb 2025",
+            },
+          ],
+          [
+            {
+              "colSpan": 2,
+              "stack": [
+                {
+                  "bold": true,
+                  "text": "Bill To",
+                },
+                "Attn: Alaric Wivell",
+                "Wivell Holdings",
+                [
+                  {
+                    "marginTop": 6,
+                    "text": "2 Sample Ave
+MELBOURNE VIC 3000
+AUSTRALIA",
+                  },
+                ],
+              ],
+            },
+          ],
+        ],
+        "widths": [
+          "70%",
+          "30%",
+        ],
+      },
+    },
+    {
+      "alignment": "right",
+      "bold": true,
+      "fontFeatures": [
+        "liga",
+        "ss01",
+        "ss03",
+        "ss04",
+        "ss05",
+        "tnum",
+        "lnum",
+      ],
+      "fontSize": 10,
+      "layout": {
+        "hLineColor": [Function],
+        "hLineStyle": [Function],
+        "hLineWidth": [Function],
+        "paddingBottom": [Function],
+        "paddingLeft": [Function],
+        "paddingRight": [Function],
+        "paddingTop": [Function],
+        "vLineWidth": [Function],
+      },
+      "table": {
+        "body": [
+          [
+            {
+              "alignment": "left",
+              "text": "Description",
+            },
+            "Quantity",
+            "Tax",
+            "Each",
+            "Amount",
+          ],
+          [
+            {
+              "alignment": "left",
+              "fontFeatures": [
+                "liga",
+                "ss01",
+                "ss03",
+                "ss04",
+                "ss05",
+                "pnum",
+              ],
+              "stack": [
+                {
+                  "text": "Design consultation",
+                },
+                {
+                  "bold": false,
+                  "color": "#76ab8d",
+                  "marginTop": 1.5,
+                  "text": "Includes two revision rounds",
+                },
+              ],
+              "verticalAlignment": "middle",
+            },
+            {
+              "bold": false,
+              "fontFeatures": [
+                "liga",
+                "ss01",
+                "ss03",
+                "ss04",
+                "ss05",
+                "pnum",
+              ],
+              "text": "5 hours",
+              "verticalAlignment": "middle",
+            },
+            {
+              "bold": false,
+              "text": "GST(10%)",
+              "verticalAlignment": "middle",
+            },
+            {
+              "bold": false,
+              "text": "$150.00",
+              "verticalAlignment": "middle",
+            },
+            {
+              "margin": [
+                0,
+                12,
+              ],
+              "text": "$750.00",
+              "verticalAlignment": "middle",
+            },
+          ],
+          [
+            {
+              "alignment": "left",
+              "fontFeatures": [
+                "liga",
+                "ss01",
+                "ss03",
+                "ss04",
+                "ss05",
+                "pnum",
+              ],
+              "stack": [
+                {
+                  "text": "Stock imagery licence",
+                },
+              ],
+              "verticalAlignment": "middle",
+            },
+            {
+              "bold": false,
+              "fontFeatures": [
+                "liga",
+                "ss01",
+                "ss03",
+                "ss04",
+                "ss05",
+                "pnum",
+              ],
+              "text": "3 items",
+              "verticalAlignment": "middle",
+            },
+            {
+              "bold": false,
+              "text": "–",
+              "verticalAlignment": "middle",
+            },
+            {
+              "bold": false,
+              "text": "$40.00",
+              "verticalAlignment": "middle",
+            },
+            {
+              "margin": [
+                0,
+                12,
+              ],
+              "text": "$120.00",
+              "verticalAlignment": "middle",
+            },
+          ],
+        ],
+        "dontBreakRows": true,
+        "headerRows": 1,
+        "widths": [
+          "*",
+          70,
+          70,
+          60,
+          70,
+        ],
+      },
+    },
+    {
+      "columnGap": 6,
+      "columns": [
+        {
+          "color": "#76ab8d",
+          "fontSize": 10,
+          "marginLeft": 6,
+          "stack": [],
+        },
+        {
+          "fontFeatures": [
+            "liga",
+            "ss01",
+            "ss03",
+            "ss04",
+            "ss05",
+            "tnum",
+            "lnum",
+          ],
+          "fontSize": 10,
+          "layout": {
+            "hLineColor": [Function],
+            "hLineWidth": [Function],
+            "paddingBottom": [Function],
+            "paddingLeft": [Function],
+            "paddingRight": [Function],
+            "paddingTop": [Function],
+            "vLineWidth": [Function],
+          },
+          "table": {
+            "body": [
+              [
+                {
+                  "text": "Subtotal",
+                  "verticalAlignment": "bottom",
+                },
+                {
+                  "alignment": "right",
+                  "text": "$870.00",
+                  "verticalAlignment": "bottom",
+                },
+              ],
+              [
+                {
+                  "color": "#76ab8d",
+                  "marginBottom": 4.5,
+                  "text": "GST incl.",
+                  "verticalAlignment": "bottom",
+                },
+                {
+                  "alignment": "right",
+                  "color": "#76ab8d",
+                  "marginBottom": 4.5,
+                  "text": "$75.00",
+                  "verticalAlignment": "bottom",
+                },
+              ],
+              [
+                {
+                  "bold": true,
+                  "text": "Total",
+                  "verticalAlignment": "bottom",
+                },
+                {
+                  "alignment": "right",
+                  "bold": true,
+                  "fontSize": 14,
+                  "marginTop": 9,
+                  "text": "$945.00",
+                  "verticalAlignment": "bottom",
+                },
+              ],
+            ],
+            "dontBreakRows": true,
+            "widths": [
+              80,
+              100,
+            ],
+          },
+          "unbreakable": true,
+          "width": "auto",
+        },
+      ],
+      "marginTop": 18,
+    },
+  ],
+  "defaultStyle": {
+    "font": "InstrumentSans",
+    "fontFeatures": [
+      "liga",
+      "ss01",
+      "ss03",
+      "ss04",
+      "ss05",
+    ],
+  },
+  "displayTitle": true,
+  "footer": {
+    "layout": {
+      "hLineWidth": [Function],
+      "paddingBottom": [Function],
+      "paddingLeft": [Function],
+      "paddingRight": [Function],
+      "vLineWidth": [Function],
+    },
+    "margin": [
+      54,
+      0,
+      54,
+      0,
+    ],
+    "style": "footer",
+    "table": {
+      "body": [
+        [
+          {
+            "stack": [
+              "BSB 123-456",
+              "Account 00123456",
+            ],
+            "verticalAlignment": "bottom",
+          },
+          {
+            "fontSize": 0.1,
+            "margin": [
+              0,
+              42.260000000000005,
+              0,
+              0,
+            ],
+            "opacity": 0,
+            "stack": [
+              " ",
+            ],
+            "verticalAlignment": "bottom",
+          },
+          {
+            "alignment": "right",
+            "text": "Issued 15 Jan 2025",
+            "verticalAlignment": "bottom",
+          },
+        ],
+      ],
+      "dontBreakRows": true,
+      "style": "footer",
+      "widths": [
+        "*",
+        0,
+        "*",
+      ],
+    },
+    "unbreakable": true,
+  },
+  "info": {
+    "author": "Acme Design Co.",
+    "creationDate": 2025-01-15T00:00:00.000Z,
+    "creator": "Invoicer",
+    "modDate": 2025-01-15T00:00:00.000Z,
+    "producer": "Invoicer",
+    "title": "Tax Invoice 2025-014",
+  },
+  "pageMargins": [
+    54,
+    54,
+    54,
+    91.68,
+  ],
+  "pageSize": "A4",
+  "styles": {
+    "footer": {
+      "color": "#76ab8d",
+      "fontSize": 11,
+      "lineHeight": 1,
+    },
+    "heading": {
+      "bold": true,
+      "color": "#76ab8d",
+      "fontSize": 14,
+    },
+  },
+  "subset": "PDF/A-3a",
+  "tagged": true,
+  "version": "1.5",
+}
+`;
