@@ -1,13 +1,39 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-UPSTREAM="$(git rev-parse @{u} 2>/dev/null || echo origin/main)"
-CHANGED=$(git diff --name-only "$UPSTREAM"...HEAD)
+ZERO=0000000000000000000000000000000000000000
+REMOTE=${1:-origin}
+ROOT=$(git rev-parse --show-toplevel)
+TMP=$(mktemp -d)
+WT=$TMP/wt
 
-pnpm biome check --changed --since="$UPSTREAM"
+cleanup() {
+  git -C "$ROOT" worktree remove -f "$WT" >/dev/null 2>&1 || true
+  rm -rf "$TMP"
+}
+trap cleanup EXIT
 
-if [ -n "$CHANGED" ]; then
-  echo "$CHANGED" | xargs pnpm vitest related --run
-else
-  echo "No changed files, skipping tests."
-fi
+while read -r ref sha _ remote_sha; do
+  [[ $sha == "$ZERO" || $ref != refs/heads/* ]] && continue
+
+  base=$remote_sha
+  [[ $base == "$ZERO" ]] && base=${PRE_PUSH_BASE:-$REMOTE/main}
+
+  git -C "$ROOT" worktree add -dq "$WT" "$sha"
+  ln -s "$ROOT/node_modules" "$WT/node_modules"
+
+  (
+    cd "$WT"
+
+    ./node_modules/.bin/biome check --no-errors-on-unmatched --files-ignore-unknown=true \
+      --changed --since="$base"
+
+    git diff --name-only -z --diff-filter=ACMRTD "$base"...HEAD -- >"$TMP/files"
+
+    [[ ! -s $TMP/files ]] ||
+      xargs -0 ./node_modules/.bin/vitest related \
+        --run --passWithNoTests -- <"$TMP/files"
+  )
+
+  git -C "$ROOT" worktree remove -f "$WT"
+done
