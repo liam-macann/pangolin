@@ -127,6 +127,7 @@ export const documents = snakeCase.table(
 
 		index('idx_document_client_data_id').on(t.clientDataId),
 		index('idx_document_config_id').on(t.configId),
+		index('idx_document_user_id').on(t.userId),
 
 		// Enforce that client data is owned by the same user as the invoice
 		relationOwnership(t.clientDataId, clientData),

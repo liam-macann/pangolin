@@ -145,6 +145,8 @@ export const config = scdTable(
 
 		index('idx_config_user_id').on(t.userId),
 		index('idx_config_address_id').on(t.addressId),
+		index('idx_config_timezone').on(t.timezone),
+		index('idx_config_currency').on(t.currency),
 
 		check('chk_language_lowercase', sql`${t.language} = lower(${t.language})`),
 		check('chk_region_uppercase', sql`${t.region} = upper(${t.region})`),
