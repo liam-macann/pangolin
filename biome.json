@@ -1,5 +1,21 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
+	"overrides": [
+		{
+			"includes": [
+				"src/app/**/route.ts",
+				"src/app/lib/data/**",
+				"src/app/api/**",
+				"src/app/lib/actions/**",
+				"src/app/auth/**"
+			],
+			"plugins": [
+				"./biome/unstable-rethrow-catch.grit",
+				"./biome/unstable-rethrow-bare-catch.grit",
+				"./biome/unstable-rethrow-dot-catch.grit"
+			]
+		}
+	],
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",

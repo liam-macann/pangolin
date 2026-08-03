@@ -1,0 +1,8 @@
+language js(typescript, jsx)
+
+`try { $try } catch { $body }` as $tryStmt where {
+	$try <: contains `await $_`,
+	$body <: not contains `unstable_rethrow($_)`,
+	$tryStmt <: contains JsCatchClause() as $clause,
+	register_diagnostic(span=$clause, message="This catch block does not call `unstable_rethrow()` to propagate control-flow signals", severity="error")
+}

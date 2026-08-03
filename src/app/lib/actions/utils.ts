@@ -18,6 +18,7 @@ import * as tables from '@/db/schema';
 
 /** Clean up unused configs for a given user, preserving the current configuration */
 export const cleanupConfigs = (userId: string) =>
+	// biome-ignore lint/plugin/unstable-rethrow-dot-catch: intentional non-essential swallow, see comment below
 	withRLS(db =>
 		db.delete(tables.config).where(
 			and(
@@ -35,6 +36,7 @@ export const cleanupConfigs = (userId: string) =>
 
 /** Clean up unused client data for a given user, preserving the current data */
 export const cleanupClientData = (userId: string) =>
+	// biome-ignore lint/plugin/unstable-rethrow-dot-catch: intentional non-essential swallow, see comment below
 	withRLS(db =>
 		db.delete(tables.clientData).where(
 			and(
@@ -55,6 +57,7 @@ export const cleanupClientData = (userId: string) =>
 
 /** Clean up unused addresses for a given user */
 export const cleanupAddresses = (userId: string) =>
+	// biome-ignore lint/plugin/unstable-rethrow-dot-catch: intentional non-essential swallow, see comment below
 	withRLS(db =>
 		db.delete(tables.address).where(
 			and(

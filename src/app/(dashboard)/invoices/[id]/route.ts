@@ -22,7 +22,6 @@ const ALLOWED_PDF_HOSTS = new Set(
 );
 
 pdfmake.setUrlAccessPolicy(url => {
-	// biome-ignore lint/plugin/unstable-rethrow-bare-catch: local URL parsing, no Next.js call in the try block
 	try {
 		const parsed = new URL(url);
 		return parsed.protocol === 'https:' && ALLOWED_PDF_HOSTS.has(parsed.hostname);

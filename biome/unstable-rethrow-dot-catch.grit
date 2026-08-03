@@ -1,0 +1,10 @@
+language js(typescript, jsx)
+
+// GritQL has no type info, so this excludes Zod fallbacks (`z.foo().catch(...)`) by import
+// convention (`z.`) rather than by resolving whether $promise is actually a Promise.
+`$promise.catch($handler)` as $call where {
+	$promise <: not contains `z.$_($args)`,
+	$handler <: not contains `unstable_rethrow($_)`,
+	$handler <: not contains `throw $_`,
+	register_diagnostic(span=$call, message="This .catch() handler does not call `unstable_rethrow()` to propagate control-flow signals", severity="error")
+}
