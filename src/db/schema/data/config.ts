@@ -3,7 +3,6 @@ import {
 	boolean,
 	char,
 	check,
-	foreignKey,
 	index,
 	integer,
 	numeric,
@@ -21,7 +20,7 @@ import { encrypted } from '@/lib/utils/drizzle';
 import { users } from '@/db/schema/auth';
 import { currencies, supportedTimezones } from '@/db/schema/i18n';
 
-import { authUid, policy, scdTable } from './_helpers';
+import { authUid, policy, relationOwnership, scdTable } from './_helpers';
 import { address } from './address';
 
 export const taxes = snakeCase.table(
@@ -145,11 +144,7 @@ export const config = scdTable(
 		check('chk_region_uppercase', sql`${t.region} = upper(${t.region})`),
 
 		// Ensure config and address are owned by the same user
-		foreignKey({
-			name: 'fk_config_address_ownership',
-			columns: [t.addressId, t.userId],
-			foreignColumns: [address.id, address.userId],
-		}),
+		relationOwnership(t.addressId, address),
 
 		policy({
 			select: authUid(t.userId),

@@ -14,7 +14,7 @@ import {
 
 import { users } from '@/db/schema/auth';
 
-import { authUid, policy } from './_helpers';
+import { authUid, policy, relationOwnership } from './_helpers';
 import { config, configTaxes, taxes } from './config';
 import { documents } from './invoices';
 
@@ -67,11 +67,7 @@ export const lineItems = snakeCase.table(
 			columns: [t.documentId, t.configId],
 			foreignColumns: [documents.id, documents.configId],
 		}),
-		foreignKey({
-			name: 'fk_line_item_document_ownership',
-			columns: [t.documentId, t.userId],
-			foreignColumns: [documents.id, documents.userId],
-		}),
+		relationOwnership(t.documentId, documents),
 		policy({
 			select: authUid(t.userId),
 			insert: authUid(t.userId),

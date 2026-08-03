@@ -19,7 +19,7 @@ import {
 
 import { users } from '@/db/schema/auth';
 
-import { authUid, policy } from './_helpers';
+import { authUid, policy, relationOwnership } from './_helpers';
 import { clientData } from './clients';
 import { config } from './config';
 
@@ -61,11 +61,7 @@ export const invoices = snakeCase.table(
 	},
 	(t): PgTableExtraConfigValue[] => [
 		// Ensure the logical invoice belongs to the same user as its document
-		foreignKey({
-			name: 'fk_invoice_document_ownership',
-			columns: [t.id, t.userId],
-			foreignColumns: [documents.id, documents.userId],
-		}),
+		relationOwnership(t.id, documents),
 
 		// Enforce 1:1 relationship between invoice and invoice status
 		// This must be a deferrable foreign key.
@@ -133,18 +129,10 @@ export const documents = snakeCase.table(
 		index('idx_document_config_id').on(t.configId),
 
 		// Enforce that client data is owned by the same user as the invoice
-		foreignKey({
-			name: 'fk_document_client',
-			columns: [t.clientDataId, t.userId],
-			foreignColumns: [clientData.id, clientData.userId],
-		}),
+		relationOwnership(t.clientDataId, clientData),
 
 		// Enforce that config is owned by the same user as the invoice
-		foreignKey({
-			name: 'fk_document_config_ownership',
-			columns: [t.configId, t.userId],
-			foreignColumns: [config.id, config.userId],
-		}),
+		relationOwnership(t.configId, config),
 
 		policy({
 			select: authUid(t.userId),
@@ -182,11 +170,7 @@ export const invoiceStatus = snakeCase.table(
 		index('idx_invoice_status_user_id').on(t.userId),
 
 		// Enforce that status data is owned by the same user as the invoice
-		foreignKey({
-			name: 'fk_invoice_status_invoice',
-			columns: [t.id, t.userId],
-			foreignColumns: [invoices.id, invoices.userId],
-		}),
+		relationOwnership(t.id, invoices),
 
 		policy({
 			select: authUid(t.userId),

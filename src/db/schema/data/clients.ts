@@ -2,7 +2,6 @@ import { isNull, sql } from 'drizzle-orm';
 import {
 	boolean,
 	check,
-	foreignKey,
 	index,
 	snakeCase,
 	text,
@@ -14,7 +13,7 @@ import {
 
 import { users } from '@/db/schema/auth';
 
-import { authUid, policy, scdTable } from './_helpers';
+import { authUid, policy, relationOwnership, scdTable } from './_helpers';
 import { address } from './address';
 
 // Logical client. Data is stored in SCD table.
@@ -82,11 +81,7 @@ export const clientData = scdTable(
 
 		check('chk_name_or_org', sql`${t.name} IS NOT NULL OR ${t.organization} IS NOT NULL`),
 
-		foreignKey({
-			name: 'fk_client_data_ownership',
-			columns: [t.clientId, t.userId],
-			foreignColumns: [clients.id, clients.userId],
-		}),
+		relationOwnership(t.clientId, clients),
 
 		policy({
 			select: authUid(t.userId),

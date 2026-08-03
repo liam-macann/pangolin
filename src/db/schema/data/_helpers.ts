@@ -1,12 +1,22 @@
-import { type Column, getTableName, is, type SQL, sql, type Table } from 'drizzle-orm';
+import {
+	type Column,
+	getColumnTable,
+	getTableName,
+	is,
+	type SQL,
+	sql,
+	type Table,
+} from 'drizzle-orm';
 import {
 	type AnyPgColumn,
 	type AnyPgColumnBuilder,
 	check,
+	foreignKey,
 	type PgBuildExtraConfigColumns,
 	type PgPolicy,
 	type PgPolicyToOption,
 	PgRole,
+	type PgTable,
 	type PgTableExtraConfigValue,
 	type PgUUID,
 	pgPolicy,
@@ -173,3 +183,17 @@ export const policy = ({
 
 export const authUid = (userIdColumn: AnyPgColumn) =>
 	sql`(select current_setting('app.user_id')::uuid = ${userIdColumn})`;
+
+/** Composite FK ensuring a child row matches parent `user_id` */
+export const relationOwnership = (
+	column: AnyPgColumn,
+	parent: PgTable & { id: AnyPgColumn; userId: AnyPgColumn },
+) => {
+	const child = getColumnTable<PgTable & { userId: AnyPgColumn }>(column);
+
+	return foreignKey({
+		name: `fk_${getTableName(child)}_${getTableName(parent)}_ownership`,
+		columns: [column, child.userId],
+		foreignColumns: [parent.id, parent.userId],
+	});
+};
