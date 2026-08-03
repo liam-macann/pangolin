@@ -68,6 +68,7 @@ export const lineItems = snakeCase.table(
 			foreignColumns: [documents.id, documents.configId],
 		}),
 		relationOwnership(t.documentId, documents),
+		relationOwnership(t.configId, config),
 		policy({
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
@@ -118,6 +119,10 @@ export const itemTaxes = snakeCase.table(
 			columns: [t.configId, t.taxId],
 			foreignColumns: [configTaxes.configId, configTaxes.taxId],
 		}),
+
+		relationOwnership(t.itemId, lineItems),
+		relationOwnership(t.taxId, taxes),
+		relationOwnership(t.configId, config),
 
 		policy({
 			select: authUid(t.userId),

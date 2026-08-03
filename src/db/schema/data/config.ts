@@ -37,6 +37,9 @@ export const taxes = snakeCase.table(
 		// Eliminate redundant storage (force application to reuse identical rows)
 		unique('uq_tax_user_name_rate').on(t.userId, t.name, t.rate),
 
+		// Necessary for ownership constraint on configTaxes/itemTaxes
+		unique('uq_tax_user').on(t.id, t.userId),
+
 		policy({
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
@@ -73,6 +76,9 @@ export const configTaxes = snakeCase.table(
 
 		index('idx_config_tax_tax_id').on(t.taxId),
 		index('idx_config_tax_user_id').on(t.userId),
+
+		relationOwnership(t.configId, config),
+		relationOwnership(t.taxId, taxes),
 
 		policy({
 			select: authUid(t.userId),

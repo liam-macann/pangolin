@@ -82,6 +82,7 @@ export const clientData = scdTable(
 		check('chk_name_or_org', sql`${t.name} IS NOT NULL OR ${t.organization} IS NOT NULL`),
 
 		relationOwnership(t.clientId, clients),
+		relationOwnership(t.addressId, address),
 
 		policy({
 			select: authUid(t.userId),
