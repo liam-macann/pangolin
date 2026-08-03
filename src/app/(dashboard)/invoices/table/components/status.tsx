@@ -4,7 +4,7 @@ import { CheckCircleIcon, XCircleIcon } from '@phosphor-icons/react';
 import { type Row } from '@tanstack/react-table';
 import { cva } from 'class-variance-authority';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
-import { type ComponentProps, useState } from 'react';
+import { type ComponentProps } from 'react';
 import { toast } from 'sonner';
 
 import { updateInvoiceStatus } from '@/lib/actions/invoice';

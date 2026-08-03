@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
-import { beforeEach, describe, expect, vi } from 'vitest';
+import { describe, expect, vi } from 'vitest';
 
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';

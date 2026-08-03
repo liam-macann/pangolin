@@ -81,15 +81,15 @@ describe('createMutation', () => {
 	test('Each mutation promise is returned', async () => {
 		// This assertion is necessary as a precondition to the next test
 
-		const useMutation = createMutation<any>(
+		const useMutation = createMutation<{ id: string }>(
 			list(() => '/list'),
 			list(() => '/thing'),
 			detail(() => '/item'),
 		);
 		const { mutate } = renderHook(() => useMutation('a')).result.current;
 
-		const { request, settled } = triggerMutate<any>(mutate);
-		request.resolve(undefined);
+		const { request, settled } = triggerMutate<{ id: string }>(mutate);
+		request.resolve({ id: 'a' });
 
 		expect(await settled).toHaveLength(3);
 	});

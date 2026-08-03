@@ -2,7 +2,7 @@ import { describe, expect } from 'vitest';
 
 import { withRLS } from '@/db';
 
-import { asUser as test } from '@/src/test/session';
+import { asUser as test } from '@/test/session';
 
 import { allocateSequence } from './sequencer';
 
