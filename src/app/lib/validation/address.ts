@@ -45,22 +45,27 @@ export const transform = z.object({
 		.transform(v => v || undefined),
 	dependentLocality: z
 		.string()
+		.trim()
 		.nullish()
 		.transform(v => v || undefined),
 	city: z
 		.string()
+		.trim()
 		.nullish()
 		.transform(v => v || undefined),
 	administrativeArea: z
 		.string()
+		.trim()
 		.nullish()
 		.transform(v => v || undefined),
 	postalCode: z
 		.string()
+		.trim()
 		.nullish()
 		.transform(v => v || undefined),
 	sortingCode: z
 		.string()
+		.trim()
 		.nullish()
 		.transform(v => v || undefined),
 	country: z.enum(validCountryCodes, 'Invalid country or territory'),

@@ -133,6 +133,7 @@ const StreetAddress = ({ disabled }: FieldProps) => {
 											maskImage: `linear-gradient(to top, transparent 2px, black 2px)`,
 										}}
 										autoComplete='street-address'
+										data-testid='address-street'
 										disabled={disabled}
 										id={id}
 										{...field}
@@ -197,6 +198,7 @@ const DependentLocality = ({ metadata, disabled }: FieldProps) => {
 								</AddressContent>
 								<AddressInput
 									autoComplete='address-level3'
+									data-testid='address-dependentLocality'
 									disabled={disabled}
 									id={id}
 									{...field}
@@ -230,6 +232,7 @@ const City = ({ metadata, disabled }: FieldProps) => {
 								</AddressContent>
 								<AddressInput
 									autoComplete='address-level2'
+									data-testid='address-city'
 									disabled={disabled}
 									id={id}
 									{...field}
@@ -276,6 +279,7 @@ const AdministrativeArea = ({ metadata, disabled }: FieldProps) => {
 											metadata={metadata}
 											disabled={disabled}
 											id={id}
+											testId='address-administrativeArea'
 											data-invalid={fieldState.invalid}
 											{...field}
 											onChange={onChange}
@@ -283,6 +287,7 @@ const AdministrativeArea = ({ metadata, disabled }: FieldProps) => {
 									) : (
 										<AddressInput
 											autoComplete='address-level1'
+											data-testid='address-administrativeArea'
 											disabled={disabled}
 											id={id}
 											{...field}
@@ -305,10 +310,11 @@ const AdministrativeAreaCombobox = ({
 	metadata,
 	disabled,
 	id,
+	testId,
 	value,
 	onChange,
 	...props
-}: FieldProps & { id: string } & ControllerRenderProps) => {
+}: FieldProps & { id: string; testId: string } & ControllerRenderProps) => {
 	if (!metadata.sub_regions) throw new Error('Sub keys required for AdministrativeAreaCombobox');
 
 	const items = metadata.sub_regions.map(subregion => ({
@@ -341,7 +347,7 @@ const AdministrativeAreaCombobox = ({
 			<InputGroup data-disabled={disabled} className={inputResetClass}>
 				<ComboboxPrimitive.Input
 					id={id}
-					render={<InputGroupInput disabled={disabled} />}
+					render={<InputGroupInput data-testid={testId} disabled={disabled} />}
 					className={'h-auto p-0'}
 					disabled={disabled}
 					placeholder={`Select ${metadata?.state_name_type || 'area'}…`}
@@ -354,6 +360,7 @@ const AdministrativeAreaCombobox = ({
 						data-slot='input-group-button'
 						className='-my-3 data-pressed:bg-transparent'
 						disabled={disabled}
+						data-testid='address-administrativeArea-trigger'
 					/>
 				</InputGroupAddon>
 			</InputGroup>
@@ -410,6 +417,7 @@ const PostalCode = ({ metadata, disabled }: FieldProps) => {
 										{fieldState.invalid && <AddressError errors={[fieldState.error]} />}
 									</AddressContent>
 									<AddressInput
+										data-testid='address-zip'
 										autoComplete='postal-code'
 										disabled={disabled}
 										id={id}
@@ -445,6 +453,7 @@ const SortingCode = ({ disabled }: FieldProps) => {
 									{fieldState.invalid && <AddressError errors={[fieldState.error]} />}
 								</AddressContent>
 								<AddressInput
+									data-testid='address-sortingCode'
 									disabled={disabled}
 									id={id}
 									{...field}
@@ -492,14 +501,16 @@ export const Country = ({ disabled }: Omit<FieldProps, 'metadata'>) => {
 											<InputGroup className={inputResetClass}>
 												<ComboboxPrimitive.Input
 													id={id}
-													render={<InputGroupInput />}
+													render={<InputGroupInput data-testid='address-country' />}
 													className={'h-auto p-0'}
+													autoComplete='country'
 												/>
 
 												<InputGroupAddon className='p-0' align='inline-end'>
 													<ComboboxTrigger
 														render={<Button size='icon-xs' variant='ghost' />}
 														data-slot='input-group-button'
+														data-testid='address-country-trigger'
 														className='-my-3 data-pressed:bg-transparent'
 													/>
 												</InputGroupAddon>

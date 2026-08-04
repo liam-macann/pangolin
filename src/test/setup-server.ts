@@ -1,3 +1,7 @@
+import { readdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+import { registerCountry } from 'lib-address';
 import { vi } from 'vitest';
 
 import { asUser, getSession, sessionStorage, testConnection, warmClient } from './session';
@@ -5,6 +9,20 @@ import { asUser, getSession, sessionStorage, testConnection, warmClient } from '
 // Pays the PGlite worker-instance startup cost here, during file setup,
 // so it isn't misattributed to whichever test happens to run first in this worker
 await warmClient();
+
+// lib-address tries to eagerly register every country on import, but the registration loop
+// calls CJS require() from ESM, and fails in Vitest
+//
+// This reimplements default server registration behaviour
+const require = createRequire(import.meta.url);
+const countriesDir = path.join(
+	path.dirname(require.resolve('lib-address/package.json')),
+	'countries',
+);
+
+for (const file of readdirSync(countriesDir).filter(file => /^[A-Z]{2}\.json$/.test(file))) {
+	registerCountry(require(path.join(countriesDir, file)));
+}
 
 // Allow server-only files to be imported outside of Next.js server context
 vi.mock('server-only', () => ({}));
