@@ -1,7 +1,7 @@
-import { act, renderHook } from '@testing-library/react';
 import { toMerged } from 'es-toolkit/object';
 import { mutate as globalMutate } from 'swr';
 import { assert, beforeEach, describe, expect, test } from 'vitest';
+import { renderHook } from 'vitest-browser-react';
 
 import { type DeepPartial } from '@/lib/utils';
 
@@ -19,13 +19,9 @@ const seed = <T,>(key: string, value: T) => globalMutate(key, value, false);
 // the optimistic cache state before choosing to resolve or reject it.
 function triggerMutate<T>(mutate: GangedMutator<T>, options?: Parameters<GangedMutator<T>>[1]) {
 	const request = Promise.withResolvers<T>();
-	let settled: ReturnType<typeof mutate> | undefined;
 
 	// Triggering the mutation causes a React state update (the optimistic write)
-	act(() => {
-		settled = mutate(request.promise, options);
-	});
-	assert(settled, 'Expected mutate to return a promise');
+	const settled = mutate(request.promise, options);
 
 	return {
 		/** The underlying promise (in production, the action causing a mutation).
@@ -60,7 +56,7 @@ describe('createMutation', () => {
 				return found ? `/list-b?${found.label}` : undefined;
 			}),
 		);
-		const { mutate } = renderHook(() => useMutation('a')).result.current;
+		const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 
 		// Mutate item 'a', changing its label.
 		const { request, settled } = triggerMutate<Item>(mutate, {
@@ -86,7 +82,7 @@ describe('createMutation', () => {
 			list(() => '/thing'),
 			detail(() => '/item'),
 		);
-		const { mutate } = renderHook(() => useMutation('a')).result.current;
+		const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 
 		const { request, settled } = triggerMutate<{ id: string }>(mutate);
 		request.resolve({ id: 'a' });
@@ -103,7 +99,7 @@ describe('createMutation', () => {
 			// Second key resolver always returns undefined, meaning "no key to mutate here".
 			list(() => undefined),
 		);
-		const { mutate } = renderHook(() => useMutation('a')).result.current;
+		const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 
 		const { request, settled } = triggerMutate<Item>(mutate, {
 			optimisticData: { ...item, flag: true },
@@ -124,7 +120,7 @@ describe('createMutation', () => {
 			detail(id => `/detail/${id}`),
 			list(() => '/list'),
 		);
-		const { mutate } = renderHook(() => useMutation('a')).result.current;
+		const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 
 		await mutate();
 
@@ -141,7 +137,7 @@ describe('createMutation', () => {
 			detail(id => `/detail/${id}`),
 			list(() => '/list'),
 		);
-		const { mutate } = renderHook(() => useMutation('a')).result.current;
+		const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 
 		await mutate(current => {
 			assert(current, 'Expected the matching cached entity to be passed to the data callback');
@@ -159,7 +155,7 @@ describe('createMutation', () => {
 
 			// Set up a mutation hook scoped to the single '/detail/:id' key.
 			const useMutation = createMutation<Item>(detail(id => `/detail/${id}`));
-			const { mutate } = renderHook(() => useMutation('a')).result.current;
+			const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 
 			const { request, settled } = triggerMutate<Item>(mutate, {
 				optimisticData: current => {
@@ -184,7 +180,7 @@ describe('createMutation', () => {
 			await seed('/detail/a', item);
 
 			const useMutation = createMutation<Item>(detail(id => `/detail/${id}`));
-			const { mutate } = renderHook(() => useMutation('a')).result.current;
+			const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 			const optimistic = { ...item, flag: true };
 			const { request, settled } = triggerMutate<Item>(mutate, {
 				optimisticData: optimistic,
@@ -202,7 +198,7 @@ describe('createMutation', () => {
 			await seed('/detail/a', item);
 
 			const useMutation = createMutation<Item>(detail(id => `/detail/${id}`));
-			const { mutate } = renderHook(() => useMutation('a')).result.current;
+			const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 
 			// Act: start a mutation with a static (non-function) optimistic patch.
 			const { request, settled } = triggerMutate<Item>(mutate, {
@@ -222,7 +218,7 @@ describe('createMutation', () => {
 		test('Rejected mutation on an uncached key reverts to undefined', async () => {
 			// No `seed()` call: '/detail/uncached' has no prior cache entry
 			const useMutation = createMutation<Item>(detail(() => '/detail/uncached'));
-			const { mutate } = renderHook(() => useMutation('x')).result.current;
+			const { mutate } = (await renderHook(() => useMutation('x'))).result.current;
 
 			const item = itemBuilder('x', { flag: true });
 			const { request, settled } = triggerMutate<Item>(mutate, { optimisticData: item });
@@ -248,7 +244,7 @@ describe('createMutation', () => {
 				await seed('/detail/a', item);
 
 				const useMutation = createMutation<Item>(detail(id => `/detail/${id}`));
-				const { mutate } = renderHook(() => useMutation('a')).result.current;
+				const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 				const { a, b } = startRace(mutate, item);
 
 				a.request.reject(new Error('Network error'));
@@ -266,7 +262,7 @@ describe('createMutation', () => {
 				await seed('/detail/a', item);
 
 				const useMutation = createMutation<Item>(detail(id => `/detail/${id}`));
-				const { mutate } = renderHook(() => useMutation('a')).result.current;
+				const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 				const { a, b } = startRace(mutate, item);
 
 				b.request.reject(new Error('Network error'));
@@ -290,7 +286,7 @@ describe('createMutation', () => {
 			const useMutation = createMutation<Item>(list(() => '/list'));
 
 			// Call useMutation hook for item A
-			const { mutate } = renderHook(() => useMutation('a')).result.current;
+			const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 			const { request, settled } = triggerMutate<Item>(mutate, {
 				optimisticData: current => {
 					assert(current, 'Expected the matching item to be passed to the patch function');
@@ -316,7 +312,7 @@ describe('createMutation', () => {
 			await seed('/list', [a]);
 
 			const useMutation = createMutation<Item>(list(() => '/list'));
-			const { mutate } = renderHook(() => useMutation('a')).result.current;
+			const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 
 			// Trigger mutation with optimistic patch
 			const { request, settled } = triggerMutate<Item>(mutate, {
@@ -338,15 +334,10 @@ describe('createMutation', () => {
 			await seed('/list', [a]);
 
 			const useMutation = createMutation<Item>(list(() => '/list'));
-			const { mutate } = renderHook(() => useMutation('a')).result.current;
+			const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 			const request = Promise.withResolvers<void>();
 
-			let settled: ReturnType<typeof mutate> | undefined;
-			act(() => {
-				// biome-ignore lint/suspicious/noExplicitAny: We are explicitly testing runtime behaviour for an invalid input
-				settled = mutate(request.promise as any, { optimisticData: { ...a, flag: true } });
-			});
-			assert(settled, 'Expected mutate to return a promise');
+			const settled = mutate(request.promise as any, { optimisticData: { ...a, flag: true } });
 
 			request.resolve();
 			await settled;
@@ -359,8 +350,8 @@ describe('createMutation', () => {
 			await seed('/list', [a, b]);
 
 			const useMutation = createMutation<Item>(list(() => '/list'));
-			const mutateA = renderHook(() => useMutation('a')).result.current.mutate;
-			const mutateB = renderHook(() => useMutation('b')).result.current.mutate;
+			const mutateA = (await renderHook(() => useMutation('a'))).result.current.mutate;
+			const mutateB = (await renderHook(() => useMutation('b'))).result.current.mutate;
 
 			// Start two concurrent, independent optimistic mutations
 			const { request: requestA, settled: settledA } = triggerMutate<Item>(mutateA, {
@@ -391,7 +382,7 @@ describe('createMutation', () => {
 			await seed('/list', [a]);
 
 			const useMutation = createMutation<Item>(list(() => '/list'));
-			const { mutate } = renderHook(() => useMutation('a')).result.current;
+			const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 
 			// Start mutation A, then start mutation B on the same item id before A settles
 			const { request: requestA, settled: settledA } = triggerMutate<Item>(mutate, {
@@ -419,7 +410,7 @@ describe('createMutation', () => {
 		test('Successful mutation on an uncached list key does not discard the resolved data', async () => {
 			// No `seed()` call: '/list-uncached' has no prior cache entry
 			const useMutation = createMutation<Item>(list(() => '/list-uncached'));
-			const { mutate } = renderHook(() => useMutation('a')).result.current;
+			const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 
 			const resolved = itemBuilder('a', { flag: true });
 			const { request, settled } = triggerMutate<Item>(mutate, { optimisticData: resolved });

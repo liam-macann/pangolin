@@ -1,3 +1,5 @@
+/// <reference types="vitest/browser" />
+
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
@@ -7,7 +9,11 @@ import { configDefaults, defineConfig } from 'vitest/config';
 const require = createRequire(import.meta.url);
 const libAddressRoot = path.dirname(require.resolve('lib-address/package.json'));
 
-const isCoverage = process.argv.includes('--coverage');
+const args = process.argv.slice(2);
+
+const isCoverage = args.includes('--coverage');
+const isRun = args.includes('run') || args.includes('--run');
+const isWatch = configDefaults.watch && !isRun;
 
 export default defineConfig({
 	optimizeDeps: {
@@ -26,11 +32,6 @@ export default defineConfig({
 	},
 	resolve: {
 		tsconfigPaths: true,
-		alias: {
-			// lib-address ESM node entry calls CJS require() to load metadata.
-			// This causes issues under Vitest native ESM, so we use the CJS entry instead.
-			'lib-address': path.join(libAddressRoot, 'dist/entry-node.cjs'),
-		},
 	},
 	test: {
 		setupFiles: ['./src/test/setup.ts'],
@@ -57,6 +58,15 @@ export default defineConfig({
 		projects: [
 			{
 				extends: true,
+				resolve: {
+					alias: {
+						// lib-address ESM node entry calls CJS require() to load metadata.
+						// This causes issues under Vitest native ESM, so server tests use its CJS entry.
+						'lib-address$': path.join(libAddressRoot, 'dist/entry-node.cjs'),
+						// Subpath imports
+						'lib-address': libAddressRoot,
+					},
+				},
 				test: {
 					name: { label: 'server', color: 'green' },
 					environment: 'node',
@@ -71,6 +81,12 @@ export default defineConfig({
 			},
 			{
 				extends: true,
+				resolve: {
+					alias: {
+						'lib-address$': path.join(libAddressRoot, 'dist/entry-browser.cjs'),
+						'lib-address': libAddressRoot,
+					},
+				},
 				plugins: [react()],
 				test: {
 					name: { label: 'browser', color: 'yellow' },
@@ -79,9 +95,10 @@ export default defineConfig({
 						enabled: true,
 						headless: true,
 						provider: playwright(),
-						instances: isCoverage
-							? [{ browser: 'chromium' }]
-							: [{ browser: 'chromium' }, { browser: 'firefox' }, { browser: 'webkit' }],
+						instances:
+							isCoverage || isWatch
+								? [{ browser: 'chromium' }]
+								: [{ browser: 'chromium' }, { browser: 'firefox' }, { browser: 'webkit' }],
 					},
 				},
 			},

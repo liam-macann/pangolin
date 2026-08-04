@@ -1,3 +1,5 @@
+import '@/src/app/ui/global.css';
+
 import { bytesToHex, randomBytes } from '@noble/ciphers/utils.js';
 import { vi } from 'vitest';
 
