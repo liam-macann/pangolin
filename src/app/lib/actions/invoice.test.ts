@@ -1,14 +1,20 @@
 import { eq } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
+import * as navigation from 'next/navigation';
 import { describe, expect, vi } from 'vitest';
 
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
-import { asUser as test } from '@/test/session';
+import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { createInvoice, setInvoiceNotes, updateInvoiceStatus, voidInvoice } from './invoice';
-import { insertTestInvoice, invoiceBuilder, setUpConfigAndClient } from './tests/helpers';
+import {
+	insertTestClient,
+	insertTestInvoice,
+	invoiceBuilder,
+	setUpConfigAndClient,
+} from './tests/helpers';
 
 const getInvoice = (id: string) =>
 	withRLS(async (db, session) =>
@@ -209,6 +215,44 @@ describe('createInvoice', () => {
 		await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
 	});
+
+	test('Rejects invoice referencing a client belonging to another user', async ({ db, auth }) => {
+		await setUpConfigAndClient();
+		const other = await createTestSession(db, auth);
+		const otherClient = await sessionStorage.run(other, () => insertTestClient());
+
+		await expect(
+			createInvoice(invoiceBuilder({ clientDataId: otherClient.data.scdId })),
+		).rejects.toThrow();
+		expect(navigation.notFound).toHaveBeenCalled();
+
+		expect(await withRLS(db => db.select().from(tables.documents))).toHaveLength(0);
+	});
+
+	test('Rejects an item tax referencing tax belonging to another user', async ({ db, auth }) => {
+		const { client } = await setUpConfigAndClient({
+			taxRegistration: true,
+			taxes: [{ name: 'GST', rate: 10 }],
+		});
+
+		const other = await createTestSession(db, auth);
+		const otherTax = await sessionStorage.run(other, async () => {
+			await setUpConfigAndClient({ taxRegistration: true, taxes: [{ name: 'VAT', rate: 20 }] });
+			const [tax] = await withRLS(db => db.select({ id: tables.taxes.id }).from(tables.taxes));
+			return tax;
+		});
+
+		await expect(
+			createInvoice(
+				invoiceBuilder({
+					clientDataId: client.data.scdId,
+					items: [{ taxes: new Set([otherTax.id]) }],
+				}),
+			),
+		).rejects.toThrow();
+
+		expect(await withRLS(db => db.select().from(tables.documents))).toHaveLength(0);
+	});
 });
 
 /** Creates a config, client and invoice, returning the invoice id */
@@ -230,6 +274,26 @@ describe('updateInvoiceStatus', () => {
 		expect(status.status).toBe('paid');
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
 	});
+
+	test('Does not mutate an invoice owned by another user', async ({ db, auth }) => {
+		const other = await createTestSession(db, auth);
+		const invoiceId = await sessionStorage.run(other, () => setUpInvoice());
+
+		await updateInvoiceStatus(invoiceId, 'paid');
+
+		const getStatus = () =>
+			sessionStorage.run(other, () =>
+				withRLS(db =>
+					db.select().from(tables.invoiceStatus).where(eq(tables.invoiceStatus.id, invoiceId)),
+				),
+			);
+
+		expect((await getStatus())[0].status).toBe('unpaid');
+
+		// Positive control: the same call succeeds for the owning user
+		await sessionStorage.run(other, () => updateInvoiceStatus(invoiceId, 'paid'));
+		expect((await getStatus())[0].status).toBe('paid');
+	});
 });
 
 describe('voidInvoice', () => {
@@ -245,6 +309,26 @@ describe('voidInvoice', () => {
 
 		expect(status.isVoid).toBe(true);
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
+	});
+
+	test('Does not mutate an invoice owned by another user', async ({ db, auth }) => {
+		const other = await createTestSession(db, auth);
+		const invoiceId = await sessionStorage.run(other, () => setUpInvoice());
+
+		await voidInvoice(invoiceId);
+
+		const getStatus = () =>
+			sessionStorage.run(other, () =>
+				withRLS(db =>
+					db.select().from(tables.invoiceStatus).where(eq(tables.invoiceStatus.id, invoiceId)),
+				),
+			);
+
+		expect((await getStatus())[0].isVoid).toBe(false);
+
+		// Positive control: the same call succeeds for the owning user
+		await sessionStorage.run(other, () => voidInvoice(invoiceId));
+		expect((await getStatus())[0].isVoid).toBe(true);
 	});
 });
 
@@ -287,5 +371,25 @@ describe('setInvoiceNotes', () => {
 			.where(eq(tables.invoiceStatus.id, invoiceId));
 
 		expect(status.notes).toBeNull();
+	});
+
+	test('Does not mutate an invoice owned by another user', async ({ db, auth }) => {
+		const other = await createTestSession(db, auth);
+		const invoiceId = await sessionStorage.run(other, () => setUpInvoice());
+
+		await setInvoiceNotes(invoiceId, 'Hijacked note');
+
+		const getStatus = () =>
+			sessionStorage.run(other, () =>
+				withRLS(db =>
+					db.select().from(tables.invoiceStatus).where(eq(tables.invoiceStatus.id, invoiceId)),
+				),
+			);
+
+		expect((await getStatus())[0].notes).toBeNull();
+
+		// Positive control: the same call succeeds for the owning user
+		await sessionStorage.run(other, () => setInvoiceNotes(invoiceId, 'Follow up next month'));
+		expect((await getStatus())[0].notes).toBe('Follow up next month');
 	});
 });

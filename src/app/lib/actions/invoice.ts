@@ -2,7 +2,7 @@
 
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
-import { unstable_rethrow } from 'next/navigation';
+import { notFound, unstable_rethrow } from 'next/navigation';
 import { v4 as uuid } from 'uuid';
 import type z from 'zod';
 
@@ -76,16 +76,18 @@ async function createDocument(input: z.infer<typeof documentSchema>) {
 	const { items, ...document } = await documentSchema.parseAsync(input);
 
 	return await withRLS(async (tx, session) => {
-		const [currentConfig] = await tx
-			.select({
-				id: schema.config.id,
-				userId: schema.config.userId,
-				taxRegistration: schema.config.taxRegistration,
-			})
-			.from(schema.config)
-			.where(and(eq(schema.config.userId, session.user.id), isNull(schema.config.validTo)))
-			.orderBy(desc(schema.config.validFrom))
-			.limit(1);
+		const currentConfig = await tx.query.config.findFirst({
+			columns: { id: true, taxRegistration: true },
+			where: { validTo: { isNull: true }, userId: session.user.id },
+			orderBy: { validFrom: 'desc' },
+		});
+
+		if (!currentConfig) notFound();
+
+		// Throws notFound() if client does not exist, or is owned by another tenant
+		await tx.query.clientData
+			.findFirst({ where: { id: document.clientDataId, userId: session.user.id } })
+			.then(client => client || notFound());
 
 		// The document carries the invoice content (client, title, description)
 		const [insertedDocument] = await tx

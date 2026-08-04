@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
+import * as navigation from 'next/navigation';
 import { assert, beforeEach, describe, expect, vi } from 'vitest';
 
 import * as actions from '@/lib/actions/utils';
@@ -8,7 +9,7 @@ import { crypto } from '@/lib/encrypt';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
-import { asUser as test } from '@/test/session';
+import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { createClient, updateClient, updateClientDeleted, updateClientFavorite } from './client';
 import { addressBuilder, clientBuilder, insertTestClient } from './tests/helpers';
@@ -147,6 +148,22 @@ describe('createClient', () => {
 describe('updateClient', () => {
 	test('Throws when updating a client that does not exist', async () => {
 		await expect(updateClient({ ...clientBuilder(), clientId: randomUUID() })).rejects.toThrow();
+		expect(navigation.notFound).toHaveBeenCalled();
+	});
+
+	test('Does not mutate a client owned by another user', async ({ db, auth }) => {
+		const other = await createTestSession(db, auth);
+		const otherClient = await sessionStorage.run(other, () =>
+			insertTestClient({ organization: null }),
+		);
+
+		await expect(
+			updateClient({ ...clientBuilder({ organization: 'Hijacked' }), clientId: otherClient.id }),
+		).rejects.toThrow();
+		expect(navigation.notFound).toHaveBeenCalled();
+
+		const otherData = await sessionStorage.run(other, () => getActiveClientData(otherClient.id));
+		expect(otherData).toMatchObject({ organization: null });
 	});
 
 	test('Reuses the previous address when unchanged', async ({ db }) => {
@@ -215,6 +232,27 @@ describe('updateClientFavorite', () => {
 		await updateClientFavorite(client.id, true);
 		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
 	});
+
+	test('Does not mutate a client owned by another user', async ({ db, auth }) => {
+		const other = await createTestSession(db, auth);
+		const otherClient = await sessionStorage.run(other, () => insertTestClient());
+
+		// notFound() rather than forbidden() to avoid leaking resource existence
+		await expect(updateClientFavorite(otherClient.id, true)).rejects.toThrow();
+		expect(navigation.notFound).toHaveBeenCalled();
+
+		const [stillUnfavorited] = await sessionStorage.run(other, () =>
+			withRLS(db => db.select().from(tables.clients).where(eq(tables.clients.id, otherClient.id))),
+		);
+		expect(stillUnfavorited.isFavorite).toBe(false);
+
+		// Positive control: the same call succeeds for the owning user
+		await sessionStorage.run(other, () => updateClientFavorite(otherClient.id, true));
+		const [nowFavorited] = await sessionStorage.run(other, () =>
+			withRLS(db => db.select().from(tables.clients).where(eq(tables.clients.id, otherClient.id))),
+		);
+		expect(nowFavorited.isFavorite).toBe(true);
+	});
 });
 
 describe('updateClientDeleted', () => {
@@ -237,5 +275,26 @@ describe('updateClientDeleted', () => {
 
 		await updateClientDeleted(client.id, true);
 		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
+	});
+
+	test('Does not mutate a client owned by another user', async ({ db, auth }) => {
+		const other = await createTestSession(db, auth);
+		const otherClient = await sessionStorage.run(other, () => insertTestClient());
+
+		// notFound() rather than forbidden() to avoid leaking resource existence
+		await expect(updateClientDeleted(otherClient.id, true)).rejects.toThrow();
+		expect(navigation.notFound).toHaveBeenCalled();
+
+		const [stillPresent] = await sessionStorage.run(other, () =>
+			withRLS(db => db.select().from(tables.clients).where(eq(tables.clients.id, otherClient.id))),
+		);
+		expect(stillPresent.isDeleted).toBe(false);
+
+		// Positive control: the same call succeeds for the owning user
+		await sessionStorage.run(other, () => updateClientDeleted(otherClient.id, true));
+		const [nowDeleted] = await sessionStorage.run(other, () =>
+			withRLS(db => db.select().from(tables.clients).where(eq(tables.clients.id, otherClient.id))),
+		);
+		expect(nowDeleted.isDeleted).toBe(true);
 	});
 });

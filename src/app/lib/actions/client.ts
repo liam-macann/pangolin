@@ -2,6 +2,7 @@
 
 import { and, eq, isNull } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
+import { notFound } from 'next/navigation';
 import { after } from 'next/server';
 import type z from 'zod/v4';
 
@@ -15,10 +16,13 @@ import { invalidateActiveScd } from '@/db/schema/data/_helpers';
 
 export async function updateClientFavorite(clientId: string, status: boolean) {
 	await withRLS(async (db, session) => {
-		await db
+		const [client] = await db
 			.update(schema.clients)
 			.set({ isFavorite: status })
-			.where(and(eq(schema.clients.id, clientId), eq(schema.clients.userId, session.user.id)));
+			.where(and(eq(schema.clients.id, clientId), eq(schema.clients.userId, session.user.id)))
+			.returning({ id: schema.clients.id });
+
+		if (!client) notFound();
 
 		updateTag(`clients-${session.user.id}`);
 	});
@@ -26,10 +30,13 @@ export async function updateClientFavorite(clientId: string, status: boolean) {
 
 export async function updateClientDeleted(clientId: string, status: boolean) {
 	await withRLS(async (db, session) => {
-		await db
+		const [client] = await db
 			.update(schema.clients)
 			.set({ isDeleted: status })
-			.where(and(eq(schema.clients.id, clientId), eq(schema.clients.userId, session.user.id)));
+			.where(and(eq(schema.clients.id, clientId), eq(schema.clients.userId, session.user.id)))
+			.returning({ id: schema.clients.id });
+
+		if (!client) notFound();
 
 		updateTag(`clients-${session.user.id}`);
 	});
@@ -66,6 +73,13 @@ export async function updateClient(input: z.infer<typeof clientData>) {
 	const data = await clientData.parseAsync(input);
 
 	await withRLS(async (db, session) => {
+		const [client] = await db
+			.select({ id: schema.clients.id })
+			.from(schema.clients)
+			.where(and(eq(schema.clients.id, data.clientId), eq(schema.clients.userId, session.user.id)));
+
+		if (!client) notFound();
+
 		await insertClientData(db, session.user.id, data);
 
 		updateTag(`clients-${session.user.id}`);
