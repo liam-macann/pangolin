@@ -1,18 +1,22 @@
 'use client';
 
-import { type JSX, useEffect, useRef, useState } from 'react';
+import { type ComponentProps, useLayoutEffect, useRef, useState } from 'react';
 import 'scrollyfills';
 
 /** Prevents a shrinking element height from affecting scroll position.
  *
  * If the element contents shrink, the parent height will remain unchanged.
  * The parent will invisibly contract after scrolling, when excess height exits the viewport. */
-export function MaintainHeight({ children }: { children: JSX.Element }) {
+export function MaintainHeight({
+	children,
+	style,
+	...rest
+}: ComponentProps<'div'> & { style?: { minHeight?: never } }) {
 	const ref = useRef<HTMLDivElement>(null);
 
 	const [height, setHeight] = useState(0);
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const callback = () => {
 			if (!ref.current) return;
 
@@ -36,7 +40,7 @@ export function MaintainHeight({ children }: { children: JSX.Element }) {
 	}, []);
 
 	return (
-		<div ref={ref} style={{ minHeight: height }}>
+		<div ref={ref} {...rest} style={{ ...style, minHeight: height }}>
 			{children}
 		</div>
 	);
