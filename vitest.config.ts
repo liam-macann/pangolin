@@ -22,6 +22,7 @@ export default defineConfig({
 			'react/jsx-dev-runtime',
 			'react-dom',
 			'react-dom/client',
+			'vitest-browser-react/pure',
 			'swr',
 			'es-toolkit/object',
 			'next/navigation',
@@ -91,6 +92,7 @@ export default defineConfig({
 				test: {
 					name: { label: 'browser', color: 'yellow' },
 					include: ['src/**/*.test.tsx', 'src/**/*.browser.test.ts'],
+					setupFiles: ['./src/test/setup-browser.ts'],
 					browser: {
 						enabled: true,
 						headless: true,
