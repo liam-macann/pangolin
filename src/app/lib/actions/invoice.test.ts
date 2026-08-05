@@ -242,6 +242,8 @@ describe('createInvoice', () => {
 			return tax;
 		});
 
+		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
 		await expect(
 			createInvoice(
 				invoiceBuilder({
@@ -250,6 +252,8 @@ describe('createInvoice', () => {
 				}),
 			),
 		).rejects.toThrow();
+
+		consoleError.mockRestore();
 
 		expect(await withRLS(db => db.select().from(tables.documents))).toHaveLength(0);
 	});
