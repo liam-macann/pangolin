@@ -8,7 +8,7 @@ import { asUser as test } from '@/test/session';
 // This is a meta-test to ensure the database isolation functions correctly in the asUser fixtures
 
 // DO NOT REORDER OR USE .concurrent: Test B strictly relies on the aftermath of Test A
-describe('asUser fixture rollback', () => {
+describe('asUser fixture rollback', { concurrent: false }, () => {
 	const email = 'rollback-verification-123@example.com';
 
 	test('A: Inserts a row into an existing table', async ({ db }) => {
