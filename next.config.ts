@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
 		optimizePackageImports: ['@phosphor-icons/react'],
 		authInterrupts: true,
 		taint: true,
+		lightningCssFeatures: {
+			// Always transpile these features, even if targets support them
+			include: ['light-dark'],
+		},
 	},
 	turbopack: {
 		rules: {

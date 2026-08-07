@@ -16,9 +16,9 @@
 	--muted-foreground: var(--color-gray-11);
 	--accent: var(--color-gray-a-3);
 	--accent-foreground: var(--secondary-foreground);
-	--destructive: var(--color-red-11); /** Used for destructive text */
-	--destructive-background: var(--color-red-9); /** Used for destructive background (eg. buttons) */
-	--destructive-foreground: white; /** Used for text on  destructive background */
+	--destructive: var(--color-red-11); /* Used for destructive text */
+	--destructive-background: var(--color-red-9); /* Used for destructive background (eg. buttons) */
+	--destructive-foreground: white; /* Used for text on  destructive background */
 	--border: var(--color-gray-6);
 	--input: var(
 		--border
@@ -37,6 +37,8 @@
 	--sidebar-accent-foreground: var(--sidebar-primary);
 	--sidebar-border: var(--border);
 	--sidebar-ring: var(--ring);
+
+	color-scheme: light dark;
 }
 
 @variant dark {
@@ -135,16 +137,5 @@
 	*::before,
 	*::after {
 		@apply border-border outline-ring/50 ring-ring ring-offset-background;
-	}
-}
-
-/* CSS custom property based polyfill for light-dark(). See tailwind.config.mts */
-@layer components {
-	:root {
-		@variant dark {
-			color-scheme: dark;
-			--tw-light: ;
-			--tw-dark: initial;
-		}
 	}
 }

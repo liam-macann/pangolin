@@ -67,43 +67,12 @@ const flattenScheme = (
 
 /**
  * Generates a set of single color values to alternate between light and dark schemes
- *
- * {@link https://stackoverflow.com/questions/79739829/how-can-i-safely-introduce-the-use-of-light-dark-without-increasing-the-mini/79739830#79739830 | Creates a light-dark() alternative without sacrificing browser support}
- *
- * @returns
- * ```ts
- * {
- *  sand: { [1-12]: var(--tw-light, VALUE) var(--tw-dark, VALUE) },
- *  slate: { [1-12]: var(--tw-light, VALUE) var(--tw-dark, VALUE) },
- *  […]
- * }
- * ```
- *
- * @remarks
- *
- * In your `global.css`, include:
- * ```css
- * :root {
- *  `@variant dark {
- *    color-scheme: dark;
- *    --tw-light: ;
- *    --tw-dark: initial;
- *  }
- * }
- *
- * Fallback value for editor hints
+ * @remarks Includes a fallback value for editor hints
  */
 const lightDark = () =>
 	flattenScheme(
-		({ values: [light, dark, hint] }) =>
-			`var(--tw-light, ${light}) var(--tw-dark, ${dark}) var(--tw-hint, ${hint})`,
+		({ values: [light, dark, hint] }) => `light-dark(${light}, ${dark}) var(--tw-hint, ${hint})`,
 	);
-
-/** Generates utility classes that reference the `@layer base` CSS variables.
- *
- * Directly providing the color values allows for editor hints. */
-const _referenceColorVariables = () =>
-	flattenScheme(({ label, scale }) => `var(--color-${label}-${scale})`);
 
 const generateColorVariables = (scheme: ColorMap) =>
 	Object.fromEntries(
@@ -123,10 +92,7 @@ export const config: Config = {
 			addBase({
 				':root': {
 					...generateColorVariables(lightDark()),
-					colorScheme: 'light',
 					'--tw-hint': ' ',
-					'--tw-light': 'initial',
-					'--tw-dark': '',
 				},
 			});
 		}),
