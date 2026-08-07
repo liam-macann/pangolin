@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { isPlainObject } from 'es-toolkit';
 import { forbidden, unauthorized } from 'next/navigation';
 
 import { type Encrypted, isEncrypted, toHex } from '@/lib/utils/encrypt';
@@ -80,7 +81,9 @@ export async function crypto(uuid: string) {
 		);
 	}
 
-	const _decryptObject = async <T extends Record<string, unknown> | Map<unknown, unknown>>(
+	const _decryptObject = async <
+		T extends Record<string, unknown> | Map<unknown, unknown> | unknown[],
+	>(
 		input: T,
 	): Promise<Decrypted<T>> =>
 		auth(() => {
@@ -99,21 +102,16 @@ export async function crypto(uuid: string) {
 					if (seen.has(input)) return input;
 					seen.add(input);
 
-					if (
-						input instanceof Date ||
-						input instanceof RegExp ||
-						input instanceof Error ||
-						input instanceof URL ||
-						input instanceof ArrayBuffer ||
-						input instanceof Promise ||
-						// Int32Array, Float64Array, DataView, etc.
-						ArrayBuffer.isView(input)
-					) {
-						return input;
-					}
-
 					// Input is an array
-					if (Array.isArray(input)) return await Promise.all(input.map(walker));
+					if (Array.isArray(input)) {
+						const output = new Array(input.length);
+
+						await Promise.all(
+							input.map(async (value, index) => (output[index] = await walker(value))),
+						);
+
+						return output;
+					}
 
 					// Input is a Set
 					if (input instanceof Set)
@@ -131,6 +129,9 @@ export async function crypto(uuid: string) {
 
 						return new Map(await Promise.all(entries));
 					}
+
+					// Catches Date, RegExp, Error, URL, Buffers, Promise, BigInt, boxed primitives, Blob, etc.
+					if (!isPlainObject(input)) return input;
 
 					// Input is an object
 					return Object.fromEntries(
@@ -160,7 +161,7 @@ export async function crypto(uuid: string) {
 		encrypt: _encrypt,
 		/** Decrypts ciphertext, returning an array of strings */
 		decrypt: _decrypt,
-		/** Walks through an object, decrypting any encrypted values */
+		/** Walks through a array, Map, or plain object; decrypting any encrypted values */
 		decryptObject: _decryptObject,
 		/** Clear the internal DEK from memory */
 		destroy,
