@@ -3,6 +3,7 @@
 	"engines": {
 		"node": "24.x"
 	},
+	"browserslist": ["defaults and fully supports es6-module", "maintained node versions"],
 	"scripts": {
 		"build": "next build",
 		"dev": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" next dev --turbopack",
