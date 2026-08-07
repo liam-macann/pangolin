@@ -25,7 +25,7 @@ import {
 	SortableHandle,
 	SortableItem,
 	SortableList,
-} from '@/components/sortable-input';
+} from '@/components/sortable';
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 import { Button } from '@/ui/button';
 import { DropdownMenuItem } from '@/ui/dropdown-menu';

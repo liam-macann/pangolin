@@ -27,7 +27,7 @@ import {
 	SortableHandle,
 	SortableItem,
 	SortableList,
-} from '@/components/sortable-input';
+} from '@/components/sortable';
 import { Button } from '@/ui/button';
 import {
 	DropdownMenu,

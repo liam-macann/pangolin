@@ -15,7 +15,7 @@ import {
 	SortableHandle,
 	SortableItem,
 	SortableList,
-} from '@/components/sortable-input';
+} from '@/components/sortable';
 import {
 	Autocomplete,
 	AutocompleteEmpty,
