@@ -3,17 +3,28 @@ name: Code quality
 on:
   push:
   pull_request:
+  repository_dispatch:
+    types:
+      - 'vercel.deployment.ready'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+  
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
+      actions: read
       contents: read
+      statuses: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           persist-credentials: false
+          ref: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.git.sha || github.sha }}
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
       - name: Run Biome
