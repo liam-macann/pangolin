@@ -8,6 +8,8 @@ import { configDefaults, defineConfig } from 'vitest/config';
 
 const require = createRequire(import.meta.url);
 const libAddressRoot = path.dirname(require.resolve('lib-address/package.json'));
+const nextReactRoot = path.dirname(require.resolve('next/dist/compiled/react/package.json'));
+const nextReactDomRoot = path.dirname(require.resolve('next/dist/compiled/react-dom/package.json'));
 
 const args = process.argv.slice(2);
 
@@ -86,6 +88,8 @@ export default defineConfig({
 					alias: {
 						'lib-address$': path.join(libAddressRoot, 'dist/entry-browser.cjs'),
 						'lib-address': libAddressRoot,
+						'react-dom': nextReactDomRoot,
+						react: nextReactRoot,
 					},
 				},
 				plugins: [react()],
