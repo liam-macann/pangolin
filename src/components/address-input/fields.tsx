@@ -11,7 +11,7 @@ import {
 } from 'react-hook-form';
 
 import { type AddressMetadata } from '@/lib/hooks';
-import mergeRefs, { cn } from '@/lib/utils';
+import { cn, mergeRefs } from '@/lib/utils';
 
 import { Button } from '@/ui/button';
 import {

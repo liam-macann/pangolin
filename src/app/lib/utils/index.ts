@@ -72,7 +72,7 @@ export function pluralize(count: number, singular: string, plural: string) {
  * @param {(React.Ref<T> | undefined)[]} inputRefs Array of refs
  * @returns {React.Ref<T> | React.RefCallback<T>} Merged refs
  */
-export default function mergeRefs<T>(
+export function mergeRefs<T>(
 	...inputRefs: (React.Ref<T> | undefined)[]
 ): React.Ref<T> | React.RefCallback<T> {
 	const filteredInputRefs = inputRefs.filter(Boolean);
