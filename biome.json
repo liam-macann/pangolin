@@ -161,6 +161,8 @@
 					"options": {
 						"groups": [
 							":BLANK_LINE:",
+							"**/*.css",
+							":BLANK_LINE:",
 							":URL:",
 							":NODE:",
 							":PACKAGE_WITH_PROTOCOL:",
