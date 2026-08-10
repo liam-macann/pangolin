@@ -263,7 +263,7 @@ function ClientDialog<TForm extends UseFormReturn<z.input<typeof formSchema>, un
 											<Collapsible open={enabledValue}>
 												<FieldLegend>
 													<CollapsibleTrigger
-														render={FieldLabel}
+														render={<FieldLabel />}
 														nativeButton={false}
 														tabIndex={-1}
 													>

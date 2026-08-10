@@ -29,7 +29,7 @@ function AlertDialogBackdrop({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Backdrop>) {
 	return (
 		<AlertDialogPrimitive.Backdrop
-			render={DialogBackdrop}
+			render={<DialogBackdrop />}
 			data-slot='alert-dialog-overlay'
 			{...props}
 		/>
@@ -44,7 +44,7 @@ function AlertDialogContent({
 		<AlertDialogPortal>
 			<AlertDialogBackdrop />
 			<AlertDialogPrimitive.Popup
-				render={DialogPopup}
+				render={<DialogPopup />}
 				data-slot='alert-dialog-content'
 				{...props}
 			/>
@@ -77,7 +77,11 @@ function AlertDialogTitle({
 	...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Title>) {
 	return (
-		<AlertDialogPrimitive.Title render={DialogTitle} data-slot='alert-dialog-title' {...props} />
+		<AlertDialogPrimitive.Title
+			render={<DialogTitle />}
+			data-slot='alert-dialog-title'
+			{...props}
+		/>
 	);
 }
 
@@ -87,7 +91,7 @@ function AlertDialogDescription({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Description>) {
 	return (
 		<AlertDialogPrimitive.Description
-			render={DialogDescription}
+			render={<DialogDescription />}
 			data-slot='alert-dialog-description'
 			{...props}
 		/>

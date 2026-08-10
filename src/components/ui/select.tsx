@@ -151,7 +151,7 @@ function SelectClear({ className, children, ...props }: Omit<SelectPrimitive.Ite
 function SelectSeparator({ ...props }: SelectPrimitive.Separator.Props) {
 	return (
 		<SelectPrimitive.Separator
-			render={DropdownMenuSeparator}
+			render={<DropdownMenuSeparator />}
 			data-slot='select-separator'
 			{...props}
 		/>
