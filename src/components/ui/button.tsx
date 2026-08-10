@@ -15,7 +15,7 @@ const buttonVariants = cva(
 		variants: {
 			variant: {
 				primary:
-					'inset-shadow-white/10 inset-shadow-xs border border-black/10 bg-primary text-primary-foreground shadow-xs ring-offset-1 not-disabled:hover:bg-primary/90 focus-visible:ring-2 not-disabled:active:motion-safe:scale-[98%]',
+					'scrim-t-12 scrim-white/10 inset-ring-[0.5px] inset-ring-white/8 inset-shadow-white/10 inset-shadow-xs overflow-hidden border border-black/10 bg-primary text-primary-foreground shadow-xs not-disabled:hover:bg-primary/90 focus-visible:ring-2 not-disabled:active:motion-safe:scale-[98%] dark:border-black/30',
 				destructive:
 					'inset-shadow-white/10 inset-shadow-xs border border-black/10 bg-destructive-background text-white shadow-xs not-disabled:hover:bg-destructive-background/90 focus-visible:ring-destructive/20 not-disabled:active:motion-safe:scale-[98%] dark:focus-visible:ring-destructive/40',
 				outline: [

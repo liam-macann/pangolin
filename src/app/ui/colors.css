@@ -7,8 +7,8 @@
 	--card-foreground: var(--foreground);
 	--popover: var(--card); /* Dropdown menus, etc. */
 	--popover-foreground: var(--foreground);
-	--primary: #047857;
-	--primary-foreground: var(--color-gray-1); /* eg. Ghost button hover text */
+	--primary: oklch(0.51 0.2 169);
+	--primary-foreground: white; /* eg. Ghost button hover text */
 	--secondary: var(--color-gray-3); /* Secondary button treatment */
 	--secondary-2: var(--color-gray-4); /* Secondary button treatment: hover state */
 	--secondary-foreground: var(--foreground);
@@ -46,7 +46,6 @@
 		--background: var(--color-gray-2);
 		--card: var(--color-gray-3);
 		--popover: var(--color-gray-4);
-		--primary-foreground: white;
 		--accent: var(--color-gray-a-3);
 
 		--chart-1: oklch(0.488 0.243 264.376);
