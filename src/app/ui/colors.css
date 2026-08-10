@@ -47,6 +47,7 @@
 		--card: var(--color-gray-3);
 		--popover: var(--color-gray-4);
 		--accent: var(--color-gray-a-3);
+		--destructive-background: var(--color-red-8);
 
 		--chart-1: oklch(0.488 0.243 264.376);
 		--chart-2: oklch(0.696 0.17 162.48);

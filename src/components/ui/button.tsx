@@ -14,14 +14,20 @@ const buttonVariants = cva(
 	{
 		variants: {
 			variant: {
-				primary:
-					'scrim-t-12 scrim-white/10 inset-ring-[0.5px] inset-ring-white/8 inset-shadow-white/10 inset-shadow-xs overflow-hidden border border-black/10 bg-primary text-primary-foreground shadow-xs not-disabled:hover:bg-primary/90 focus-visible:ring-2 not-disabled:active:motion-safe:scale-[98%] dark:border-black/30',
-				destructive:
-					'inset-shadow-white/10 inset-shadow-xs border border-black/10 bg-destructive-background text-white shadow-xs not-disabled:hover:bg-destructive-background/90 focus-visible:ring-destructive/20 not-disabled:active:motion-safe:scale-[98%] dark:focus-visible:ring-destructive/40',
+				primary: [
+					'scrim-t-12 scrim-white/10 overflow-hidden border border-black/10 bg-primary text-primary-foreground shadow-xs dark:border-black/30',
+					'not-disabled:hover:bg-primary/90 focus-visible:ring-2 not-disabled:active:motion-safe:scale-[98%]', // Interaction states
+					'inset-ring-[0.5px] inset-ring-white/8 inset-shadow-white/10 inset-shadow-xs', // Highlight
+				],
+				destructive: [
+					'scrim-t-12 scrim-white/10 overflow-hidden border border-black/10 bg-destructive-background text-white shadow-xs',
+					'not-disabled:hover:bg-destructive-background/90 focus-visible:ring-destructive/20 not-disabled:active:motion-safe:scale-[98%] dark:focus-visible:ring-destructive/40', // Interaction states
+					'inset-ring-[0.5px] inset-ring-white/8 inset-shadow-white/10 inset-shadow-xs', // Highlight
+				],
 				outline: [
-					'border not-disabled:hover:text-accent-foreground focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%]',
+					'border not-disabled:hover:text-accent-foreground focus-visible:border-ring',
 					'bg-background bg-linear-to-b from-80% from-transparent to-black/2 dark:bg-linear-to-t dark:bg-secondary dark:from-15% dark:to-white/1',
-					'not-disabled:hover:bg-accent/70 dark:not-disabled:hover:bg-gray-4',
+					'not-disabled:hover:bg-accent/70 not-disabled:active:motion-safe:scale-[98%] dark:not-disabled:hover:bg-gray-4', // Interaction states
 					'aria-expanded:bg-accent/70 aria-expanded:dark:bg-gray-4',
 				],
 				secondary: [
