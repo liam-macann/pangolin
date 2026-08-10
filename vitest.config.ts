@@ -6,6 +6,8 @@ import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
 import { configDefaults, defineConfig } from 'vitest/config';
 
+import { dragWithAnimation } from './src/test/commands';
+
 const require = createRequire(import.meta.url);
 const libAddressRoot = path.dirname(require.resolve('lib-address/package.json'));
 const nextReactRoot = path.dirname(require.resolve('next/dist/compiled/react/package.json'));
@@ -105,6 +107,7 @@ export default defineConfig({
 							isCoverage || isWatch
 								? [{ browser: 'chromium' }]
 								: [{ browser: 'chromium' }, { browser: 'firefox' }, { browser: 'webkit' }],
+						commands: { dragWithAnimation },
 					},
 				},
 			},
