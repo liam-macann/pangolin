@@ -66,6 +66,11 @@
 							},
 
 							{
+								"group": ["@vitest/browser-playwright/**"],
+								"message": "Do not import directly from Playwright provider. Prefer vitest/browser exports instead."
+							},
+
+							{
 								"group": ["@/components/ui/**"],
 								"message": "Prefer using @/ui alias directly."
 							},
