@@ -1,24 +1,16 @@
 'use client';
 
-import { useEffect } from 'react';
-
 import { Button } from '@/src/components/ui/button';
 
 export default function RootError({
-	error,
-	reset,
+	retry: reset,
 }: {
 	error: Error & { digest?: string };
-	reset: () => void;
+	retry: () => void;
 }) {
-	useEffect(() => {
-		// Optionally log the error to an error reporting service
-		console.error(error);
-	}, [error]);
-
 	return (
 		<main className='flex min-h-screen flex-col items-center justify-center'>
-			<h2 className='mb-4 text-center'>Something went wrong!</h2>
+			<h2 className='mb-4 text-center'>Something went wrong</h2>
 			<Button
 				onClick={
 					// Re-render the invoices route
