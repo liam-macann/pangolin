@@ -13,10 +13,10 @@ describe('allocateSequence', () => {
 		},
 	}) => {
 		await withRLS(async db => {
-			const invA = await allocateSequence(db, { userId, namespace: 'invoice', partition: '26' });
-			const invB = await allocateSequence(db, { userId, namespace: 'invoice', partition: '26' });
+			const invA = await allocateSequence(db, { userId, namespace: 'invoice', partition: '2026' });
+			const invB = await allocateSequence(db, { userId, namespace: 'invoice', partition: '2026' });
 			const invC = await allocateSequence(db, { userId, namespace: 'invoice', partition: null });
-			const invD = await allocateSequence(db, { userId, namespace: 'invoice', partition: '25' });
+			const invD = await allocateSequence(db, { userId, namespace: 'invoice', partition: '2025' });
 
 			expect([invA, invB, invC, invD]).toEqual([1, 2, 1, 1]);
 		});

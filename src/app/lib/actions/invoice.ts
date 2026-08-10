@@ -20,8 +20,8 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 	return withRLS(async (tx, session) => {
 		const insertedDocument = await createDocument(input);
 
-		const [{ timezone }] = await tx
-			.select({ timezone: schema.config.timezone })
+		const [{ timezone, numberingScheme }] = await tx
+			.select({ timezone: schema.config.timezone, numberingScheme: schema.config.numberingScheme })
 			.from(schema.config)
 			.where(eq(schema.config.id, insertedDocument.configId));
 
@@ -29,14 +29,15 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 		const issuedAt =
 			invoice.issuedAt?.toISOString() || sql`transaction_timestamp() AT TIME ZONE ${timezone}`;
 
+		const partition =
+			numberingScheme === 'annual'
+				? sql<string>`extract(year from (${issuedAt})::date)::text`
+				: null;
+
 		const count = await allocateSequence(tx, {
 			userId: session.user.id,
 			namespace: 'invoice',
-		});
-		const yearCount = await allocateSequence(tx, {
-			userId: session.user.id,
-			namespace: 'invoice',
-			partition: sql`extract(year from (${issuedAt})::date)::text`,
+			partition,
 		});
 
 		// Logical invoice table
@@ -50,8 +51,8 @@ export async function createInvoice(input: z.infer<typeof zodSchema>) {
 					issuedAt,
 					dueAt: invoice.dueAt.toISOString(),
 
+					partition,
 					index: count,
-					yearIndex: yearCount,
 				},
 			])
 			.returning({ id: schema.invoices.id });

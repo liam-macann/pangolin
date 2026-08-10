@@ -1,8 +1,9 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
 import * as navigation from 'next/navigation';
 import { describe, expect, vi } from 'vitest';
 
+import { type Enum } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
@@ -34,6 +35,75 @@ const getInvoice = (id: string) =>
 	);
 
 describe('createInvoice', () => {
+	describe('Sequencing', () => {
+		test.for<[Enum<typeof tables.numberingScheme>, string | null]>([
+			['sequential', null],
+			['annual', '2026'],
+		])('Allocates only the active %s counter', async ([scheme, partition], { session }) => {
+			const seed: (typeof tables.sequencer.$inferInsert)[] = [
+				{ userId: session.user.id, namespace: 'invoice', partition: null, count: 1 },
+				{ userId: session.user.id, namespace: 'invoice', partition: '2025', count: 1 },
+				{ userId: session.user.id, namespace: 'invoice', partition: '2026', count: 1 },
+			];
+
+			await withRLS(tx => tx.insert(tables.sequencer).values(seed));
+
+			const { client } = await setUpConfigAndClient({ numberingScheme: scheme });
+			await createInvoice(
+				invoiceBuilder({
+					clientDataId: client.data.scdId,
+					issuedAt: new Date(`${'2026-03-01'}T00:00:00Z`),
+				}),
+			);
+
+			const sequencer = await withRLS(db =>
+				db
+					.select({ partition: tables.sequencer.partition, count: tables.sequencer.count })
+					.from(tables.sequencer)
+					.orderBy(sql`${tables.sequencer.partition} nulls first`),
+			);
+
+			expect(sequencer).toEqual(
+				seed.map(v => ({
+					partition: v.partition,
+					count: v.partition === partition ? 2 : v.count,
+				})),
+			);
+
+			expect(sequencer.length).toBe(3);
+		});
+
+		test('Resets the yearly index per issue year', async () => {
+			const { client } = await setUpConfigAndClient({ numberingScheme: 'annual' });
+
+			await createInvoice(
+				invoiceBuilder({
+					clientDataId: client.data.scdId,
+					issuedAt: new Date('2024-12-31T00:00:00Z'),
+					dueAt: new Date('2024-12-31T00:00:00Z'),
+				}),
+			);
+			await createInvoice(
+				invoiceBuilder({
+					clientDataId: client.data.scdId,
+					issuedAt: new Date('2025-01-01T00:00:00Z'),
+					dueAt: new Date('2025-01-01T00:00:00Z'),
+				}),
+			);
+
+			const invoices = await withRLS(db =>
+				db
+					.select({ partition: tables.invoices.partition, index: tables.invoices.index })
+					.from(tables.invoices),
+			);
+
+			expect(invoices).toEqual([
+				{ partition: '2024', index: 1 },
+				{ partition: '2025', index: 1 },
+			]);
+		});
+	});
+
 	test('Inserts an invoice with its items and status', async ({ session }) => {
 		const { client } = await setUpConfigAndClient();
 
@@ -50,61 +120,10 @@ describe('createInvoice', () => {
 		expect(record).toMatchObject({
 			userId: session.user.id,
 			index: 1,
-			yearIndex: 1,
 			status: { status: 'unpaid', isVoid: false },
 		});
 		expect(record?.items).toHaveLength(1);
 		expect(record?.items[0]).toMatchObject({ label: 'Consulting services', quantity: 2 });
-	});
-
-	test('Increments the sequential index across invoices in the same year', async () => {
-		const { client } = await setUpConfigAndClient();
-
-		await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
-		await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
-
-		const invoices = await withRLS(db =>
-			db
-				.select({ index: tables.invoices.index, yearIndex: tables.invoices.yearIndex })
-				.from(tables.invoices)
-				.orderBy(tables.invoices.index),
-		);
-
-		expect(invoices).toEqual([
-			{ index: 1, yearIndex: 1 },
-			{ index: 2, yearIndex: 2 },
-		]);
-	});
-
-	test('Resets the yearly index per issue year while the global index keeps incrementing', async () => {
-		const { client } = await setUpConfigAndClient();
-
-		await createInvoice(
-			invoiceBuilder({
-				clientDataId: client.data.scdId,
-				issuedAt: new Date('2024-12-31T00:00:00Z'),
-				dueAt: new Date('2024-12-31T00:00:00Z'),
-			}),
-		);
-		await createInvoice(
-			invoiceBuilder({
-				clientDataId: client.data.scdId,
-				issuedAt: new Date('2025-01-01T00:00:00Z'),
-				dueAt: new Date('2025-01-01T00:00:00Z'),
-			}),
-		);
-
-		const invoices = await withRLS(db =>
-			db
-				.select({ index: tables.invoices.index, yearIndex: tables.invoices.yearIndex })
-				.from(tables.invoices)
-				.orderBy(tables.invoices.index),
-		);
-
-		expect(invoices).toEqual([
-			{ index: 1, yearIndex: 1 },
-			{ index: 2, yearIndex: 1 },
-		]);
 	});
 
 	test('Links items to taxes when the config is tax-registered', async ({ session }) => {

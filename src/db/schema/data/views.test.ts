@@ -43,8 +43,8 @@ async function createTestInvoice({ items }: { items: { quantity: number; unitCos
 				userId: session.user.id,
 				issuedAt: new Date().toISOString(),
 				dueAt: new Date().toISOString(),
+				partition: null,
 				index: 0,
-				yearIndex: 0,
 			})
 			.returning({ id: schema.invoices.id });
 

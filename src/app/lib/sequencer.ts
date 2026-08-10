@@ -13,7 +13,10 @@ type Sequence = {
 
 const increment = (column: AnyColumn, value = 1) => sql`${column} + ${value}`;
 
-/** Atomically allocates the next value within a document series and partition */
+/** Atomically allocates the next value within a document series and partition
+ *
+ * @returns The next value to use in an insert
+ */
 export async function allocateSequence(
 	/** This must strictly be a transaction context to ensure gapless sequencing */
 	tx: AuthTransaction,

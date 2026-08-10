@@ -80,17 +80,17 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 		);
 
 		return Array.from({ length: count }, (_, i) => {
-			const index = count - i;
 			const nameIndex = Math.floor(seededRandom(i * 3 + 3) * names.length);
 
 			const issuedAt = new Date(now.getTime() - offsets[i]);
 			const issueYear = issueYears[i];
 			const dueAt = new Date(issuedAt.getTime() + 14 * day);
 
-			const yearIndex = yearIndexes[i];
+			const partition = config.numberingScheme === 'annual' ? String(issueYear) : null;
+			const index = config.numberingScheme === 'annual' ? yearIndexes[i] : count - i;
 
 			return {
-				reference: invoiceReference({ index, yearIndex, issueYear }, config.numberingScheme),
+				reference: invoiceReference({ index, partition }, config.numberingScheme),
 				id: `placeholder-${i}`,
 				createdAt: issuedAt,
 				currency: config.currency,
@@ -98,10 +98,9 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 				title: null,
 				description: null,
 				issuedAt: issuedAt.toISOString().slice(0, 10),
-				issueYear,
 				dueAt: dueAt.toISOString().slice(0, 10),
+				partition,
 				index,
-				yearIndex,
 				netTotal: realisticAmount(config.currency, i * 3 + 2),
 				grossTotal: realisticAmount(config.currency, i * 3 + 2),
 				config,

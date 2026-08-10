@@ -22,7 +22,7 @@ declare module 'pdfmake/interfaces' {
 /** A subset of API invoice data used for printing invoices */
 export type InvoicePrintData = Omit<
 	DetailedInvoice,
-	'id' | 'status' | 'items' | 'issueYear' | 'index' | 'yearIndex'
+	'id' | 'status' | 'items' | 'partition' | 'index'
 > & {
 	// isVoid is the only mutable status that may be accessed
 	status: Pick<DetailedInvoice['status'], 'isVoid'>;

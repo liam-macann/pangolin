@@ -18,17 +18,19 @@ export const percentToRate = (percent: number) => Math.round(percent * 100) / 10
 export const rateToPercent = (rate: number) => Math.round(rate * 10_000) / 100;
 
 export const invoiceReference = (
-	invoice: Pick<typeof invoices.$inferSelect, 'index' | 'yearIndex' | 'issueYear'>,
+	invoice: Pick<typeof invoices.$inferSelect, 'partition' | 'index'>,
 	scheme: ElementType<typeof numberingScheme.enumValues>,
 ) => {
-	if (invoice.index < 0 || invoice.yearIndex < 0)
-		throw new Error('Index and yearIndex must be non-negative');
+	if (invoice.index < 0) throw new Error('Index must be non-negative');
+	const index = invoice.index.toString().padStart(3, '0');
 
 	switch (scheme) {
 		case 'sequential':
-			return `INV-${invoice.index.toString().padStart(3, '0')}`;
+			if (invoice.partition) throw new Error('Invoice with sequential scheme was given partition');
+			return `INV-${index}`;
 		case 'annual':
-			return `${invoice.issueYear}-${invoice.yearIndex.toString().padStart(3, '0')}`;
+			if (!invoice.partition) throw new Error('Invoice with annual scheme is lacking partition');
+			return `${invoice.partition}-${index}`;
 		default:
 			throw new Error(`Undefined scheme: ${scheme}`);
 	}

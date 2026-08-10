@@ -3,41 +3,30 @@ import { describe, expect, test } from 'vitest';
 import { invoiceReference, percentToRate, pluralize, rateToPercent } from '@/lib/utils';
 
 describe('invoiceReference', () => {
-	const base = { index: 5, yearIndex: 3, issueYear: 2025 };
+	test('Does not allow negative indices', () =>
+		expect(() => invoiceReference({ index: -1, partition: null }, 'sequential')).toThrow(
+			'Index must be non-negative',
+		));
+
+	test('Does not truncate indices beyond 3 digits', () => {
+		expect(invoiceReference({ index: 4200, partition: null }, 'sequential')).toBe('INV-4200');
+		expect(invoiceReference({ index: 4200, partition: '2025' }, 'annual')).toBe('2025-4200');
+	});
 
 	describe('Sequential scheme', () => {
-		test('Formats with INV- prefix', () =>
-			expect(invoiceReference(base, 'sequential')).toBe('INV-005'));
-
 		test.for([
 			{ index: 1, expected: 'INV-001' },
 			{ index: 42, expected: 'INV-042' },
-		])('Pads $index → $expected', ({ index, expected }) =>
-			expect(invoiceReference({ ...base, index }, 'sequential')).toBe(expected));
-
-		test('Does not truncate indices beyond 3 digits', () =>
-			expect(invoiceReference({ ...base, index: 4200 }, 'sequential')).toBe('INV-4200'));
-
-		test('Does not allow negative indices', () =>
-			expect(() => invoiceReference({ ...base, index: -1 }, 'sequential')).toThrow());
+		])('Formats: $index → $expected', ({ index, expected }) =>
+			expect(invoiceReference({ index, partition: null }, 'sequential')).toBe(expected));
 	});
 
 	describe('Annual scheme', () => {
-		test('Formats as year-index', () => expect(invoiceReference(base, 'annual')).toBe('2025-003'));
-
 		test.for([
-			{ yearIndex: 1, expected: '2025-001' },
-			{ yearIndex: 42, expected: '2025-042' },
-		])('Pads $yearIndex → $expected', ({ yearIndex, expected }) =>
-			expect(invoiceReference({ ...base, yearIndex }, 'annual')).toBe(expected));
-
-		test('Uses yearIndex, not global index', () => {
-			const val = invoiceReference({ index: 100, yearIndex: 42, issueYear: 2024 }, 'annual');
-			expect(val).toBe('2024-042');
-		});
-
-		test('Does not allow negative indices', () =>
-			expect(() => invoiceReference({ ...base, yearIndex: -1 }, 'annual')).toThrow());
+			{ index: 1, expected: '2025-001' },
+			{ index: 42, expected: '2025-042' },
+		])('Formats: index → $expected', ({ index, expected }) =>
+			expect(invoiceReference({ index, partition: '2025' }, 'annual')).toBe(expected));
 	});
 });
 
