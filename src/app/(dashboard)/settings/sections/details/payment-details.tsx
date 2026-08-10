@@ -61,7 +61,7 @@ export function PaymentDetailsField<T extends FormValues>({
 				<Button onClick={addLine}>Add Details</Button>
 			</SortableEmpty>
 
-			<div className='grid grid-cols-[1.5rem_1fr_2fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
+			<div className='grid grid-cols-[1.5rem_1fr_2fr_2.25rem] gap-2 group-data-empty/sortable:hidden'>
 				<FieldLabel className='col-start-2'>Label</FieldLabel>
 				<FieldLabel>Value</FieldLabel>
 			</div>
@@ -76,7 +76,7 @@ export function PaymentDetailsField<T extends FormValues>({
 				)}
 			</SortableList>
 
-			<div className='mt-2 flex justify-between gap-2 self-end group-data-[empty]/sortable:hidden'>
+			<div className='mt-2 flex justify-between gap-2 self-end group-data-empty/sortable:hidden'>
 				<Button size='sm' onClick={() => remove()} variant='secondary'>
 					Clear
 				</Button>
@@ -107,6 +107,7 @@ function Item({
 			<SortableHandle />
 
 			<Controller
+				shouldUnregister
 				control={control}
 				name={`paymentDetails.${index}.label`}
 				render={({ field, fieldState }) => (
@@ -150,6 +151,7 @@ function Item({
 			/>
 
 			<Controller
+				shouldUnregister
 				control={control}
 				name={`paymentDetails.${index}.value`}
 				render={({ field, fieldState }) => (

@@ -57,7 +57,7 @@ export function TaxRateField<T extends Fields>({
 			items={fields}
 			onReorder={({ initialIndex, index }) => actions.move(initialIndex, index)}
 		>
-			<div className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
+			<div className='grid grid-cols-[1.5rem_1fr_1fr_2.25rem] gap-2 group-data-empty/sortable:hidden'>
 				<FieldLabel className='col-start-2'>Label</FieldLabel>
 				<FieldLabel>
 					Rate
@@ -76,11 +76,7 @@ export function TaxRateField<T extends Fields>({
 				<Button onClick={addTax}>Add Tax</Button>
 			</SortableEmpty>
 
-			<Button
-				size='sm'
-				className='mt-3 self-end group-data-[empty]/sortable:hidden'
-				onClick={addTax}
-			>
+			<Button size='sm' className='mt-3 self-end group-data-empty/sortable:hidden' onClick={addTax}>
 				Add Tax
 			</Button>
 		</Sortable>

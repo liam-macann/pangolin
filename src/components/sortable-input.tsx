@@ -5,10 +5,9 @@ import { RestrictToElement } from '@dnd-kit/dom/modifiers';
 import { type Sortable as SortableType } from '@dnd-kit/dom/sortable';
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable, useSortable } from '@dnd-kit/react/sortable';
-import { SortableContext } from '@dnd-kit/sortable';
 import { DotsSixIcon, DotsThreeIcon } from '@phosphor-icons/react';
 import { AnimatePresence, LayoutGroup, motion, useIsPresent } from 'motion/react';
-import { createContext, type ReactNode, use, useRef } from 'react';
+import { type ComponentProps, createContext, type ReactNode, use, useRef } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -18,7 +17,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/ui/dro
 import { Empty } from './ui/empty';
 
 type Item = { id: string };
-const ItemsContext = createContext<Item[]>([]);
+const SortableContext = createContext<{ items: Item[]; disabled: boolean }>({
+	items: [],
+	disabled: false,
+});
 
 export function Sortable({
 	children,
@@ -26,19 +28,21 @@ export function Sortable({
 	items,
 	onReorder,
 	disabled = false,
+	...props
 }: {
 	children: ReactNode;
 	className?: string;
 	items: Item[];
 	onReorder: (sortable: SortableType) => void;
 	disabled?: boolean;
-}) {
+} & ComponentProps<'div'>) {
 	return (
 		<div
 			className={cn('group/sortable flex flex-col gap-2', className)}
 			data-empty={items.length === 0 || undefined}
 			// Prevent AnimatePresence from triggering when transitioning between empty state
 			key={items.length === 0 ? 'empty' : 'not-empty'}
+			{...props}
 		>
 			<DragDropProvider
 				onDragEnd={event => {
@@ -49,11 +53,9 @@ export function Sortable({
 					if (isSortable(source)) onReorder(source.sortable);
 				}}
 			>
-				<ItemsContext value={items}>
-					<SortableContext items={items} disabled={items.length < 2 || disabled}>
-						{children}
-					</SortableContext>
-				</ItemsContext>
+				<SortableContext value={{ items, disabled: items.length < 2 || disabled }}>
+					{children}
+				</SortableContext>
 			</DragDropProvider>
 		</div>
 	);
@@ -62,15 +64,15 @@ export function Sortable({
 export function SortableList({
 	className,
 	children,
+	...props
 }: {
-	className?: string;
 	// biome-ignore lint/suspicious/noExplicitAny: Not possible to infer the type of the item from the context
 	children: (item: any, index: number) => ReactNode;
-}) {
-	const items = use(ItemsContext);
+} & Omit<ComponentProps<'ul'>, 'children'>) {
+	const { items } = use(SortableContext);
 	return (
 		<LayoutGroup>
-			<ul className={cn('-my-1 group-data-[empty]/sortable:hidden', className)}>
+			<ul className={cn('-my-1 group-data-empty/sortable:hidden', className)} {...props}>
 				<AnimatePresence initial={false}>
 					{items.map((item, i) => children(item, i))}
 				</AnimatePresence>
@@ -85,7 +87,7 @@ export function SortableEmpty({ className, ...props }: React.ComponentProps<'div
 		<Empty
 			data-slot='empty'
 			className={cn(
-				'flex flex-row justify-between border p-6 py-7 group-not-data-[empty]/sortable:hidden',
+				'flex flex-row justify-between border p-6 py-7 group-not-data-empty/sortable:hidden',
 				className,
 			)}
 			{...props}
@@ -115,16 +117,20 @@ export function SortableItem({
 	children,
 	disabled = false,
 	className,
-}: SortableItemProps) {
+	...props
+}: SortableItemProps &
+	Omit<ComponentProps<'li'>, 'onAnimationStart' | 'onDragStart' | 'onDragEnd' | 'onDrag'>) {
 	const ref = useRef<HTMLLIElement>(null);
 
 	const isPresent = useIsPresent();
+	const { disabled: sortableDisabled } = use(SortableContext);
+	const isDisabled = disabled || sortableDisabled;
 
 	const { isDragging, handleRef } = useSortable({
 		id,
 		index,
 		element: ref,
-		disabled,
+		disabled: isDisabled,
 		modifiers: [
 			RestrictToVerticalAxis,
 			RestrictToElement.configure({ element: ref.current?.parentElement }),
@@ -167,16 +173,19 @@ export function SortableItem({
 	};
 
 	return (
-		<SortableItemContext value={{ disabled, sortable: { isDragging, handleRef } }}>
+		<SortableItemContext value={{ disabled: isDisabled, sortable: { isDragging, handleRef } }}>
 			<motion.li
 				className='group/sortable-item'
 				ref={ref}
+				// Without this, role="button" computes its accessible name from content, colliding with nested controls
+				aria-label={`Item ${index + 1}`}
 				variants={outer}
 				initial='hidden'
 				animate='visible'
 				exit='hidden'
 				layout
 				layoutDependency={isPresent}
+				{...props}
 			>
 				<motion.div
 					variants={inner}
@@ -193,7 +202,10 @@ export function SortableItem({
 	);
 }
 
-export function SortableHandle({ className, ...props }: React.ComponentProps<typeof Button>) {
+export function SortableHandle({
+	className,
+	...props
+}: Omit<React.ComponentProps<typeof Button>, 'disabled'>) {
 	const itemContext = use(SortableItemContext);
 	if (!itemContext) throw new Error('SortableHandle must be used within a SortableItem');
 
@@ -213,8 +225,9 @@ export function SortableHandle({ className, ...props }: React.ComponentProps<typ
 				className,
 			)}
 			{...props}
+			disabled={disabled}
 		>
-			<DotsSixIcon className='pointer-none inline-block self-center' />
+			<DotsSixIcon className='pointer-none inline-block self-center fill-inherit' />
 			<span className='sr-only'>Reorder item</span>
 		</Button>
 	);
@@ -235,7 +248,15 @@ export function SortableActions({
 		<DropdownMenu>
 			<DropdownMenuTrigger
 				render={
-					<Button size='icon' variant='outline'>
+					// Without a SortableHandle, the whole <li> is the drag source. We want to avoid triggering drag-activation heuristic.
+
+					// Stopping propagation also stops this event from reaching Base UI (onPointerDown).
+					// Instead of stopping propagation, we mark the native event as already claimed (@dnd-kit/dom `PointerSensor`)
+					<Button
+						size='icon'
+						variant='outline'
+						onPointerDownCapture={e => Object.assign(e.nativeEvent, { sensor: undefined })}
+					>
 						<DotsThreeIcon />
 						<span className='sr-only'>{title}</span>
 					</Button>

@@ -50,7 +50,7 @@ export function TradingNumberField<T extends FormValues>({
 				<Button onClick={addLine}>Add Number</Button>
 			</SortableEmpty>
 
-			<div className='grid grid-cols-[1.5rem_1fr_2fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
+			<div className='grid grid-cols-[1.5rem_1fr_2fr_2.25rem] gap-2 group-data-empty/sortable:hidden'>
 				<FieldLabel className='col-start-2'>Label</FieldLabel>
 				<FieldLabel>Value</FieldLabel>
 			</div>
@@ -65,7 +65,7 @@ export function TradingNumberField<T extends FormValues>({
 				)}
 			</SortableList>
 
-			<div className='mt-2 flex justify-between gap-2 self-end group-data-[empty]/sortable:hidden'>
+			<div className='mt-2 flex justify-between gap-2 self-end group-data-empty/sortable:hidden'>
 				<Button size={'sm'} onClick={addLine}>
 					Add Number
 				</Button>
@@ -90,6 +90,7 @@ function Item({
 			<SortableHandle />
 
 			<Controller
+				shouldUnregister
 				control={control}
 				name={`tradingNumber.${index}.label`}
 				render={({ field, fieldState }) => (
@@ -100,6 +101,7 @@ function Item({
 				)}
 			/>
 			<Controller
+				shouldUnregister
 				control={control}
 				name={`tradingNumber.${index}.value`}
 				render={({ field, fieldState }) => (

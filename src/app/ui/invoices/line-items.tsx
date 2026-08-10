@@ -95,7 +95,7 @@ function ItemSum({
 	config: Config;
 	className?: string;
 }) {
-	const items = useWatch({ name: 'items', control });
+	const items = useWatch({ name: 'items', control }) ?? [];
 
 	/** Records all taxes valid in current configuration */
 	const taxes = new Map(config.taxes.map(tax => [tax.id, tax]));
@@ -178,7 +178,7 @@ function LineItemsInput({
 			onReorder={({ initialIndex, index }) => move(initialIndex, index)}
 			className='gap-1'
 		>
-			<div className='grid grid-cols-[1rem_2fr_1.1fr_1fr_2.25rem] gap-2 group-data-[empty]/sortable:hidden'>
+			<div className='grid grid-cols-[1rem_2fr_1.1fr_1fr_2.25rem] gap-2 group-data-empty/sortable:hidden'>
 				<div className='col-start-2'>
 					<FieldLabel>Description</FieldLabel>
 				</div>
@@ -203,6 +203,7 @@ function LineItemsInput({
 						<div className='pointer-events-none absolute inset-0 -inset-x-3 -z-10 bg-background drop-shadow-none' />
 
 						<Controller
+							shouldUnregister
 							control={control}
 							name={`items.${i}.label`}
 							render={({ field, fieldState }) => (
@@ -215,6 +216,7 @@ function LineItemsInput({
 							)}
 						/>
 						<Controller
+							shouldUnregister
 							control={control}
 							name={`items.${i}.quantity`}
 							render={({ field, fieldState }) => (
@@ -231,6 +233,7 @@ function LineItemsInput({
 
 										<InputGroupAddon align='inline-end'>
 											<Controller
+												shouldUnregister
 												control={control}
 												name={`items.${i}.unit`}
 												render={({ field }) => (
@@ -271,6 +274,7 @@ function LineItemsInput({
 							)}
 						/>
 						<Controller
+							shouldUnregister
 							control={control}
 							name={`items.${i}.unitCost`}
 							render={({ field, fieldState }) => (
@@ -306,7 +310,7 @@ function LineItemsInput({
 				)}
 			</SortableList>
 
-			<div className='relative mt-6 ml-(--sortable-handle-width) flex justify-between gap-8 group-data-[empty]/sortable:hidden'>
+			<div className='relative mt-6 ml-(--sortable-handle-width) flex justify-between gap-8 group-data-empty/sortable:hidden'>
 				<Button onClick={addItem} className='ml-6' size='sm'>
 					Add Item
 				</Button>
@@ -314,7 +318,7 @@ function LineItemsInput({
 			</div>
 
 			{errors && (
-				<FieldError className='mt-3 ml-7 group-data-[empty]/sortable:hidden' errors={[errors]} />
+				<FieldError className='mt-3 ml-7 group-data-empty/sortable:hidden' errors={[errors]} />
 			)}
 
 			<SortableEmpty>
@@ -350,7 +354,9 @@ function SortableActions({
 	SortableProps,
 	'index' | 'control' | 'config' | 'getValues' | 'children'
 >) {
-	const [activeTaxes, setActiveTaxes] = useState(getValues(`items.${index}.taxes`).size);
+	const [activeTaxes, setActiveTaxes] = useState(
+		() => getValues(`items.${index}.taxes`)?.size ?? 0,
+	);
 
 	const state = useFormState({ control, name: `items.${index}.taxes` });
 	const itemErrors = state.errors.items?.[index];
@@ -389,6 +395,7 @@ function SortableActions({
 						<DropdownMenuGroup>
 							<DropdownMenuLabel>Taxes</DropdownMenuLabel>
 							<Controller
+								shouldUnregister
 								control={control}
 								name={`items.${index}.taxes`}
 								render={({ field, fieldState }) => (
