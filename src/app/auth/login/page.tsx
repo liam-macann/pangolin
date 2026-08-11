@@ -1,9 +1,11 @@
 import { CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { type Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 
+import { getSession } from '@/auth';
 import { type ErrorCodes, errorDetails } from '@/src/app/auth/error/error-details';
 
 import { LoginButton } from './ui';
@@ -26,6 +28,9 @@ export default async function LoginPage({
 				.optional(),
 		})
 		.parse(await searchParams);
+
+	const session = await getSession();
+	if (session?.user.id) redirect(callbackUrl);
 
 	const errorInfo = error && errorDetails[error];
 
