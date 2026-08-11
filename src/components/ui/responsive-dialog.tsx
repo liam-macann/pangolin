@@ -1,5 +1,6 @@
 'use client';
 
+import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer';
 import { type ComponentProps, createContext, use } from 'react';
 
 import { useMediaQuery } from '@/lib/hooks';
@@ -23,7 +24,10 @@ function Dialog(
 	);
 }
 
-function DialogTrigger(props: ComponentProps<typeof DialogBase.DialogTrigger>) {
+function DialogTrigger(
+	props: ComponentProps<typeof DialogBase.DialogTrigger> &
+		ComponentProps<typeof DrawerBase.DrawerTrigger>,
+) {
 	const media = use(MediaProvider);
 	return media ? <DialogBase.DialogTrigger {...props} /> : <DrawerBase.DrawerTrigger {...props} />;
 }
@@ -75,7 +79,12 @@ function DialogDescription(props: ComponentProps<typeof DialogBase.DialogDescrip
 	);
 }
 
+// `DrawerBase.Drawer` is a subtype of `DialogBase.Dialog`:
+// handles created here work regardless of which variant renders at a given breakpoint.
+const createDialogHandle = DrawerPrimitive.createHandle;
+
 export {
+	createDialogHandle,
 	Dialog,
 	DialogBackdrop,
 	DialogClose,

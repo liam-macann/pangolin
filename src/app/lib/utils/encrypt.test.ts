@@ -5,13 +5,13 @@ import { header } from '@/lib/encrypt/constants';
 import { type Encrypted, isEncrypted, toBytes, toHex } from '@/lib/utils/encrypt';
 
 describe('isEncrypted', () => {
-	test.for([
-		[...header, 0x01, 0xde, 0xad, 0xbe, 0xef],
-		[...header],
-	])('Returns true for a Uint8Array starting with the magic header (test case %$)', bytea => {
-		const encrypted = new Uint8Array(bytea);
-		expect(isEncrypted(encrypted)).toBe(true);
-	});
+	test.for([[...header, 0x01, 0xde, 0xad, 0xbe, 0xef], [...header]])(
+		'Returns true for a Uint8Array starting with the magic header (test case %$)',
+		bytea => {
+			const encrypted = new Uint8Array(bytea);
+			expect(isEncrypted(encrypted)).toBe(true);
+		},
+	);
 
 	test('Returns false for a Uint8Array without the magic header', () => {
 		const plaintext = new Uint8Array([0x01, 0xde, 0xad, 0xbe, 0xef]);

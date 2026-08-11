@@ -1,12 +1,13 @@
 'use client';
 
+import styles from './drawer.module.css';
+
 import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer';
 import type * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
 import { DialogBackdrop } from './dialog';
-import styles from './drawer.module.css';
 import { ScrollArea } from './scroll-area';
 
 function Drawer({ ...props }: DrawerPrimitive.Root.Props) {

@@ -337,6 +337,7 @@ describe('createMutation', () => {
 			const { mutate } = (await renderHook(() => useMutation('a'))).result.current;
 			const request = Promise.withResolvers<void>();
 
+			// biome-ignore lint/suspicious/noExplicitAny: We are intentionally checking an invalid response
 			const settled = mutate(request.promise as any, { optimisticData: { ...a, flag: true } });
 
 			request.resolve();

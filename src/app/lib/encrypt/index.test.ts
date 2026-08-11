@@ -17,17 +17,16 @@ vi.mocked(getSession).mockResolvedValue({ user: { id: TEST_USER_ID } } as never)
 afterAll(() => vi.resetAllMocks());
 
 describe('Encryption round-trip', () => {
-	test.for([
-		'Hello, World!',
-		'日本語テスト 🔐',
-		'',
-	])('Encrypts a string and decrypts it back to the original: "%s"', async plaintext => {
-		const vault = await crypto(TEST_USER_ID);
-		const ciphertext = await vault.encrypt(plaintext);
-		const result = await vault.decrypt(ciphertext);
-		expect(result).toBe(plaintext);
-		vault.destroy();
-	});
+	test.for(['Hello, World!', '日本語テスト 🔐', ''])(
+		'Encrypts a string and decrypts it back to the original: "%s"',
+		async plaintext => {
+			const vault = await crypto(TEST_USER_ID);
+			const ciphertext = await vault.encrypt(plaintext);
+			const result = await vault.decrypt(ciphertext);
+			expect(result).toBe(plaintext);
+			vault.destroy();
+		},
+	);
 
 	describe('Encryption generic variants', () => {
 		test('Decrypts Encrypted<Uint8Array> values (byte form)', async () => {
@@ -51,17 +50,16 @@ describe('Encryption round-trip', () => {
 		});
 	});
 
-	test.for([
-		['alpha', 'beta', 'gamma'],
-		['日本語テスト 🔐', 'beta', '🫀'],
-		[],
-	])('Encrypts and decrypts an array of strings: ["%s", …]', async inputs => {
-		const vault = await crypto(TEST_USER_ID);
-		const ciphertext = await vault.encrypt(inputs);
-		const result = await vault.decrypt(ciphertext);
-		expect(result).toEqual(inputs);
-		vault.destroy();
-	});
+	test.for([['alpha', 'beta', 'gamma'], ['日本語テスト 🔐', 'beta', '🫀'], []])(
+		'Encrypts and decrypts an array of strings: ["%s", …]',
+		async inputs => {
+			const vault = await crypto(TEST_USER_ID);
+			const ciphertext = await vault.encrypt(inputs);
+			const result = await vault.decrypt(ciphertext);
+			expect(result).toEqual(inputs);
+			vault.destroy();
+		},
+	);
 });
 
 describe('encrypt()', () => {

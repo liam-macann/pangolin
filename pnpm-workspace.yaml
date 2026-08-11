@@ -1,6 +1,7 @@
 allowBuilds:
   "@sentry/cli": true
   bcrypt: true
+  core-js: true
   esbuild: true
   msw: false
   sharp: true

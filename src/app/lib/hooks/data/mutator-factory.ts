@@ -2,15 +2,17 @@
 
 import {
 	type Cache,
-	type KeyedMutator,
+	type MutatorCallback,
 	type MutatorOptions,
 	type ScopedMutator,
 	useSWRConfig,
 } from 'swr';
 
+type MutationResult<T> = T | undefined | ReturnType<() => void>;
+
 /** Mirrors the signature of {@link KeyedMutator}, but simultaneously mutates related keys and returns an array of the results */
 export type GangedMutator<T> = (
-	data?: Parameters<KeyedMutator<T>>[0],
+	data?: T | Promise<MutationResult<T>> | MutatorCallback<T>,
 	opts?: MutatorOptions<T, T | undefined>,
 ) => Promise<PromiseSettledResult<T | undefined>[]>;
 
@@ -25,6 +27,7 @@ function mutateDetail<T extends Identifiable>(
 ) {
 	const [data, opts] = args;
 	const patch = opts?.optimisticData;
+	const resolvedData = data instanceof Promise ? data.then(value => value ?? undefined) : data;
 
 	/** The cache value from just before this optimistic write; restored on rollback */
 	let previous: T | undefined;
@@ -33,7 +36,8 @@ function mutateDetail<T extends Identifiable>(
 
 	const promise = mutate<T, T | undefined>(
 		key,
-		(current: T | undefined) => (typeof data === 'function' ? data(current) : data),
+		(current: T | undefined) =>
+			typeof resolvedData === 'function' ? resolvedData(current) : resolvedData,
 		{
 			...opts,
 			optimisticData: patch
@@ -73,6 +77,7 @@ function mutateListItem<T extends Identifiable>(
 ) {
 	const [data, opts] = args;
 	const patch = opts?.optimisticData;
+	const resolvedData = data instanceof Promise ? data.then(value => value ?? undefined) : data;
 
 	/** The cache item value from just before this optimistic write; restored on rollback */
 	let previous: T | undefined;
@@ -82,7 +87,9 @@ function mutateListItem<T extends Identifiable>(
 
 	const promise = mutate<T[], T | undefined>(
 		key,
-		typeof data === 'function' ? data(items?.find(item => item.id === id)) : data,
+		typeof resolvedData === 'function'
+			? resolvedData(items?.find(item => item.id === id))
+			: resolvedData,
 		{
 			...opts,
 			revalidate: (items: T[] | undefined, key) => {

@@ -19,5 +19,7 @@ const pool = new Pool({
 	port: 5432,
 });
 
+pool.on('error', (err: unknown) => console.error('DB pool error event:', err));
+
 /** @internal */
 export const db = drizzle({ client: pool, relations });

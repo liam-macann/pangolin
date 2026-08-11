@@ -18,7 +18,8 @@ describe('invoiceReference', () => {
 			{ index: 1, expected: 'INV-001' },
 			{ index: 42, expected: 'INV-042' },
 		])('Formats: $index → $expected', ({ index, expected }) =>
-			expect(invoiceReference({ index, partition: null }, 'sequential')).toBe(expected));
+			expect(invoiceReference({ index, partition: null }, 'sequential')).toBe(expected),
+		);
 	});
 
 	describe('Annual scheme', () => {
@@ -26,7 +27,8 @@ describe('invoiceReference', () => {
 			{ index: 1, expected: '2025-001' },
 			{ index: 42, expected: '2025-042' },
 		])('Formats: index → $expected', ({ index, expected }) =>
-			expect(invoiceReference({ index, partition: '2025' }, 'annual')).toBe(expected));
+			expect(invoiceReference({ index, partition: '2025' }, 'annual')).toBe(expected),
+		);
 	});
 });
 
@@ -38,7 +40,8 @@ describe('Rate/percentage conversions', () => {
 		[0, 0],
 		[-2, -200],
 	])('Converts stored rate %s to %s%', ([rate, percent]) =>
-		expect(rateToPercent(rate)).toBe(percent));
+		expect(rateToPercent(rate)).toBe(percent),
+	);
 
 	test.for<[rate: number, percent: number]>([
 		[0.155, 15.5],
@@ -47,18 +50,22 @@ describe('Rate/percentage conversions', () => {
 		[0, 0],
 		[-2, -200],
 	])('Converts stored percent %s to %s%', ([rate, percent]) =>
-		expect(percentToRate(percent)).toBe(rate));
+		expect(percentToRate(percent)).toBe(rate),
+	);
 
 	test.for([15.5, 7, 0.01, 12.34, 200])('Round-trips %s% through database serialisation', percent =>
-		expect(rateToPercent(percentToRate(percent))).toBe(percent));
+		expect(rateToPercent(percentToRate(percent))).toBe(percent),
+	);
 });
 
 describe('pluralize', () => {
 	test('Returns singular for count 1', () => expect(pluralize(1, 'item', 'items')).toBe('item'));
 
 	test.for([0, 2, 100, -100])('Returns plural for count %i', count =>
-		expect(pluralize(count, 'item', 'items')).toBe('items'));
+		expect(pluralize(count, 'item', 'items')).toBe('items'),
+	);
 
 	test.for([1.5, 0.5])('Returns plural for decimal %s', count =>
-		expect(pluralize(count, 'hour', 'hours')).toBe('hours'));
+		expect(pluralize(count, 'hour', 'hours')).toBe('hours'),
+	);
 });

@@ -87,7 +87,7 @@
 		"zustand": "^5.0.14"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.4.8",
+		"@biomejs/biome": "2.5.7",
 		"@electric-sql/pglite": "^0.5.4",
 		"@faker-js/faker": "^10.5.0",
 		"@hookform/devtools": "^4.4.0",

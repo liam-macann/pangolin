@@ -29,21 +29,26 @@ function openTransaction<T>(
 	session: Session,
 	callback: (tx: AuthTransaction, session: Session) => Promise<T>,
 ): Promise<T> {
-	return db.transaction(async tx => {
-		// Super-users and table owners bypass RLS restrictions.
-		// The connection string, used for migrations, is not allowed to set roles.
-		// This causes a loud failure if the wrong connection is used.
-		await tx.execute(sql`SET LOCAL ROLE authenticated`);
+	return db
+		.transaction(async tx => {
+			// Super-users and table owners bypass RLS restrictions.
+			// The connection string, used for migrations, is not allowed to set roles.
+			// This causes a loud failure if the wrong connection is used.
+			await tx.execute(sql`SET LOCAL ROLE authenticated`);
 
-		// Inject the claims into the transaction session context
-		await tx.execute(sql`SELECT set_config('app.user_id', ${session.user.id}, true)`);
+			// Inject the claims into the transaction session context
+			await tx.execute(sql`SELECT set_config('app.user_id', ${session.user.id}, true)`);
 
-		// Brand the transaction type
-		const authTx = tx as AuthTransaction;
+			// Brand the transaction type
+			const authTx = tx as AuthTransaction;
 
-		// Run the user's query against the isolated session
-		return rlsContext.run({ tx: authTx, session }, () => callback(authTx, session));
-	});
+			// Run the user's query against the isolated session
+			return rlsContext.run({ tx: authTx, session }, () => callback(authTx, session));
+		})
+		.catch(err => {
+			console.error('db.transaction() failed:', err?.message, err?.error, err?.error?.stack);
+			throw err;
+		});
 }
 
 /**

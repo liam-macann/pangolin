@@ -25,36 +25,36 @@ describe('intlNumber', () => {
 			'123,,,45,,67.89',
 			'123.45...67,89',
 		])('Strips thousands separators from decimal: %s', input =>
-			expect(schema.parse(input)).toBeCloseTo(1234567.89));
+			expect(schema.parse(input)).toBeCloseTo(1234567.89),
+		);
 
 		test.for<[string, number]>([
 			['3.14', 3.14],
 			['1.5', 1.5],
 		])('Parses period-decimal %s', ([input, expected]) =>
-			expect(schema.parse(input)).toBeCloseTo(expected));
+			expect(schema.parse(input)).toBeCloseTo(expected),
+		);
 
 		test.for<[string, number]>([
 			['3,14', 3.14],
 			['1,5', 1.5],
 		])('Parses comma-decimal %s', ([input, expected]) =>
-			expect(schema.parse(input)).toBeCloseTo(expected));
+			expect(schema.parse(input)).toBeCloseTo(expected),
+		);
 
 		// Multiple separators implies not a decimal separator
-		test.for([
-			'12,345,678',
-			'12.345.678',
-			'12 345 678',
-			"12'345'678",
-		])('Handles separators in integer value: %s', input =>
-			expect(schema.parse(input)).toBe(12345678));
+		test.for(['12,345,678', '12.345.678', '12 345 678', "12'345'678"])(
+			'Handles separators in integer value: %s',
+			input => expect(schema.parse(input)).toBe(12345678),
+		);
 
 		// Mixed ordering of separators
-		test.for([
-			'2.00,0.800.99',
-			'2,00,0.800,99',
-		])('Rejects when unable to infer decimal separator: %s', input => {
-			expect(() => schema.parse(input)).toThrow();
-		});
+		test.for(['2.00,0.800.99', '2,00,0.800,99'])(
+			'Rejects when unable to infer decimal separator: %s',
+			input => {
+				expect(() => schema.parse(input)).toThrow();
+			},
+		);
 
 		test('Handles surrounding whitespace', () => {
 			expect(schema.parse(' 42 ')).toBe(42);
@@ -65,13 +65,15 @@ describe('intlNumber', () => {
 	});
 
 	test.for(['abcd', 'e', '3e'])('Rejects alphanumeric input', input =>
-		expect(() => schema.parse(input)).toThrow());
+		expect(() => schema.parse(input)).toThrow(),
+	);
 
 	test('Rejects empty string', () => expect(() => schema.parse('')).toThrow());
 
 	describe('Number inputs', () => {
 		test.for([42, 3.14, 0, -4398])('Passes through %s unchanged', n =>
-			expect(schema.parse(n)).toBeCloseTo(n));
+			expect(schema.parse(n)).toBeCloseTo(n),
+		);
 	});
 
 	test('Returns custom error message', () => {

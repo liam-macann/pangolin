@@ -28,10 +28,10 @@ export const statusVariants = cva('capitalize', {
 	variants: {
 		variant: {
 			unpaid:
-				'!border-red-6 focus-visible:!border-red-7 dark:focus-visible:!border-red-7/70 !ring-red-6/50 !bg-red-3 dark:!bg-red-10/20 dark:!border-red-6/50 text-red-12',
-			paid: '!border-blue-6 focus-visible:!border-blue-7 dark:focus-visible:!border-blue-7/70 !ring-blue-6/50 !bg-blue-3 dark:!bg-blue-10/20 dark:!border-blue-6/50 text-blue-12',
+				'border-red-6! bg-red-3! text-red-12 ring-red-6/50! focus-visible:border-red-7! dark:border-red-6/50! dark:bg-red-10/20! dark:focus-visible:border-red-7/70!',
+			paid: 'border-blue-6! bg-blue-3! text-blue-12 ring-blue-6/50! focus-visible:border-blue-7! dark:border-blue-6/50! dark:bg-blue-10/20! dark:focus-visible:border-blue-7/70!',
 			refunded:
-				'!border-orange-6 focus-visible:!border-orange-7 dark:focus-visible:!border-orange-7/70 !ring-orange-6/50 !bg-orange-3 dark:!bg-orange-10/20 dark:!border-orange-6/70 text-orange-12',
+				'border-orange-6! bg-orange-3! text-orange-12 ring-orange-6/50! focus-visible:border-orange-7! dark:border-orange-6/70! dark:bg-orange-10/20! dark:focus-visible:border-orange-7/70!',
 		},
 	},
 });
@@ -71,7 +71,7 @@ export function StatusSelect({
 			<SelectTrigger
 				size='sm'
 				className={cn(
-					'!px-2 relative size-auto h-7 gap-1 rounded-sm group-data-void/row:opacity-50',
+					'relative size-auto h-7 gap-1 rounded-sm px-2! group-data-void/row:opacity-50',
 					statusVariants({ variant: status }),
 					className,
 				)}
@@ -105,7 +105,7 @@ export function StatusSelect({
 									<CheckCircleIcon />
 								</motion.div>
 							)}
-							{updateStatus === 'loading' && (
+							{updateStatus === 'pending' && (
 								<motion.div
 									animate='visible'
 									exit='hidden'

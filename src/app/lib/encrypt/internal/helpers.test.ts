@@ -6,23 +6,22 @@ import { isEncrypted, toHex } from '@/lib/utils/encrypt';
 import { concatHeader, stripHeader } from './helpers';
 
 describe('concatHeader', () => {
-	test.for<Uint8Array>([
-		new Uint8Array(32),
-		new Uint8Array(0),
-		new Uint8Array([1, 2, 3, 252]),
-	])('Header is prepended', ciphertext => {
-		// Check that header does not exist in input
-		expect(isEncrypted(ciphertext)).toBe(false);
+	test.for<Uint8Array>([new Uint8Array(32), new Uint8Array(0), new Uint8Array([1, 2, 3, 252])])(
+		'Header is prepended',
+		ciphertext => {
+			// Check that header does not exist in input
+			expect(isEncrypted(ciphertext)).toBe(false);
 
-		const enc = concatHeader(ciphertext);
+			const enc = concatHeader(ciphertext);
 
-		// Check that header exists in output
-		expect(enc).not.toEqual(ciphertext);
-		expect(isEncrypted(enc)).toBe(true);
+			// Check that header exists in output
+			expect(enc).not.toEqual(ciphertext);
+			expect(isEncrypted(enc)).toBe(true);
 
-		// Check that the type is correctly branded
-		expectTypeOf(ciphertext).not.toEqualTypeOf(enc);
-	});
+			// Check that the type is correctly branded
+			expectTypeOf(ciphertext).not.toEqualTypeOf(enc);
+		},
+	);
 
 	test('Input is not mutated', () => {
 		const ciphertext = new Uint8Array(32);
@@ -49,32 +48,31 @@ describe('concatHeader', () => {
 });
 
 describe('stripHeader', () => {
-	test.for<Uint8Array>([
-		new Uint8Array(32),
-		new Uint8Array(0),
-		new Uint8Array([1, 2, 3, 252]),
-	])('Header is removed', ciphertext => {
-		const enc = concatHeader(ciphertext);
+	test.for<Uint8Array>([new Uint8Array(32), new Uint8Array(0), new Uint8Array([1, 2, 3, 252])])(
+		'Header is removed',
+		ciphertext => {
+			const enc = concatHeader(ciphertext);
 
-		// Check that header exists in input
-		expect(enc).not.toEqual(ciphertext);
-		expect(isEncrypted(enc)).toBe(true);
+			// Check that header exists in input
+			expect(enc).not.toEqual(ciphertext);
+			expect(isEncrypted(enc)).toBe(true);
 
-		// Check that the type is correctly branded
-		expectTypeOf(ciphertext).not.toEqualTypeOf(enc);
+			// Check that the type is correctly branded
+			expectTypeOf(ciphertext).not.toEqualTypeOf(enc);
 
-		const res = stripHeader(enc);
+			const res = stripHeader(enc);
 
-		// Check that header does not exist in output
-		expect(isEncrypted(res)).toBe(false);
-		expect(res).not.toEqual(enc);
+			// Check that header does not exist in output
+			expect(isEncrypted(res)).toBe(false);
+			expect(res).not.toEqual(enc);
 
-		// Check that type has been unbranded
-		expectTypeOf(res).toEqualTypeOf(ciphertext);
+			// Check that type has been unbranded
+			expectTypeOf(res).toEqualTypeOf(ciphertext);
 
-		// Check that we have returned to input ciphertext
-		expect(res).toEqual(ciphertext);
-	});
+			// Check that we have returned to input ciphertext
+			expect(res).toEqual(ciphertext);
+		},
+	);
 
 	test('stripHeader is the inverse of concatHeader', () => {
 		const ciphertext = new Uint8Array([1, 2, 3, 4]);
@@ -99,12 +97,11 @@ describe('stripHeader', () => {
 		expect(stripHeader(encHex)).toEqual(ciphertext);
 	});
 
-	test.for([
-		new Uint8Array([0x01, 0x02, 0x03]),
-		'cry',
-		'CRY',
-	])('Throws when header is missing', noHeader => {
-		// biome-ignore lint/suspicious/noExplicitAny: intentional bad input in test
-		expect(() => stripHeader(noHeader as any)).toThrow('Missing encryption header');
-	});
+	test.for([new Uint8Array([0x01, 0x02, 0x03]), 'cry', 'CRY'])(
+		'Throws when header is missing',
+		noHeader => {
+			// biome-ignore lint/suspicious/noExplicitAny: intentional bad input in test
+			expect(() => stripHeader(noHeader as any)).toThrow('Missing encryption header');
+		},
+	);
 });

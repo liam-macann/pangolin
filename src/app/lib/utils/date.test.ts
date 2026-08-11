@@ -8,12 +8,10 @@ describe('isoToTZDate', () => {
 		expectTypeOf(isoToTZDate('2026-01-15', 'UTC')).toEqualTypeOf<TZDate>());
 
 	describe('Set timeZone property of TZDate after transposition', () => {
-		test.for([
-			{ timezone: 'UTC' },
-			{ timezone: 'Asia/Kolkata' },
-			{ timezone: 'America/New_York' },
-		])('Sets .timeZone to $timezone', ({ timezone }) =>
-			expect(isoToTZDate('2026-01-15', timezone).timeZone).toBe(timezone));
+		test.for([{ timezone: 'UTC' }, { timezone: 'Asia/Kolkata' }, { timezone: 'America/New_York' }])(
+			'Sets .timeZone to $timezone',
+			({ timezone }) => expect(isoToTZDate('2026-01-15', timezone).timeZone).toBe(timezone),
+		);
 	});
 
 	describe('Date-only string interpreted as midnight in timezone', () => {
@@ -32,7 +30,8 @@ describe('isoToTZDate', () => {
 				expected: '2026-01-01T00:00:00.000+11:00',
 			},
 		])('$iso in $timezone', ({ iso, timezone, expected }) =>
-			expect(isoToTZDate(iso, timezone).toISOString()).toBe(expected));
+			expect(isoToTZDate(iso, timezone).toISOString()).toBe(expected),
+		);
 
 		test('Same date-only string in different zones produce different instants', () => {
 			const utc = isoToTZDate('2026-01-15', 'UTC');
@@ -54,7 +53,8 @@ describe('isoToTZDate', () => {
 				expected: '2026-01-15T06:30:00.000+00:00',
 			},
 		])('$iso in $timezone → $expected', ({ iso, timezone, expected }) =>
-			expect(isoToTZDate(iso, timezone).toISOString()).toBe(expected));
+			expect(isoToTZDate(iso, timezone).toISOString()).toBe(expected),
+		);
 
 		test('Set timeZone property of TZDate after conversion', () =>
 			expect(isoToTZDate('2026-01-15T00:00:00Z', 'America/New_York').timeZone).toBe(

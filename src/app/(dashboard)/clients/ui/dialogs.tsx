@@ -1,9 +1,8 @@
 'use client';
 
-import { type Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WarningIcon } from '@phosphor-icons/react';
-import { type ReactElement, type ReactNode, useState } from 'react';
+import { type ComponentProps, type ReactElement, type ReactNode, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import {
 	type Control,
@@ -63,7 +62,7 @@ const formSchema = schema
 export function CreateClientDialog({
 	children,
 	...props
-}: { children: ReactElement } & DialogPrimitive.Root.Props) {
+}: { children: ReactElement } & ComponentProps<typeof Dialog>) {
 	const { mutate } = useClients();
 
 	const form = useForm({
@@ -104,7 +103,7 @@ export function UpdateClientDialog({
 }: {
 	children: ReactElement;
 	defaultValues: Client;
-} & DialogPrimitive.Root.Props) {
+} & ComponentProps<typeof Dialog>) {
 	const { mutate: mutateClient } = useClient(defaultValues.id);
 
 	const form = useForm({
@@ -156,7 +155,7 @@ function ClientDialog<TForm extends UseFormReturn<z.input<typeof formSchema>, un
 	onSubmit,
 	children,
 	...props
-}: ClientDialog<TForm> & DialogPrimitive.Root.Props) {
+}: ClientDialog<TForm> & ComponentProps<typeof Dialog>) {
 	const [open, setOpen] = useState(false);
 
 	const { control, reset, handleSubmit } = form;
@@ -303,7 +302,7 @@ function ClientDialog<TForm extends UseFormReturn<z.input<typeof formSchema>, un
 								</FieldSet>
 							</FieldGroup>
 
-							<DialogFooter className='!flex-row-reverse !justify-start mt-6'>
+							<DialogFooter className='justify-start! mt-6 flex-row-reverse!'>
 								<Button variant='primary' type='submit' disabled={isSubmitting}>
 									Submit
 								</Button>

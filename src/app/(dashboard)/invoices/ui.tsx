@@ -20,6 +20,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from '@/ui/empty';
+import { createDialogHandle } from '@/ui/responsive-dialog';
 
 import { CreateInvoiceDialog } from '@/src/app/ui/invoices/create-form';
 
@@ -155,7 +156,7 @@ function TableContent({
 	);
 }
 
-const createDialog = DialogPrimitive.createHandle();
+const createDialog = createDialogHandle();
 
 function EmptyState({ config }: { config: Awaited<ReturnType<typeof fetchConfig>> }) {
 	return (

@@ -1,6 +1,5 @@
 'use client';
 
-import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { UserCirclePlusIcon } from '@phosphor-icons/react';
 import { UserRectangleIcon } from '@phosphor-icons/react/dist/ssr';
 import { type ColumnDef, type ColumnFiltersState } from '@tanstack/react-table';
@@ -27,8 +26,6 @@ import {
 import { CreateClientDialog } from './../ui/dialogs';
 import { Card } from './card';
 
-const createDialog = DialogPrimitive.createHandle();
-
 type Client = ElementType<ClientData>;
 
 export function Clients({ initial }: { initial: Client[] }) {
@@ -39,7 +36,7 @@ export function Clients({ initial }: { initial: Client[] }) {
 		<div className='w-full'>
 			<div className='mb-8 flex w-full items-baseline justify-between'>
 				<h1 className='font-display text-3xl'>Clients</h1>
-				<CreateClientDialog handle={createDialog}>
+				<CreateClientDialog>
 					<Button variant='outline'>
 						<UserCirclePlusIcon />
 						<span className='hidden sm:block'>New client</span>
@@ -199,9 +196,9 @@ function EmptyState() {
 				<EmptyDescription>Create and find your contacts from this page.</EmptyDescription>
 			</EmptyHeader>
 			<EmptyContent>
-				<Button variant='primary' render={<DialogPrimitive.Trigger handle={createDialog} />}>
-					New client
-				</Button>
+				<CreateClientDialog>
+					<Button variant='primary'>New client</Button>
+				</CreateClientDialog>
 			</EmptyContent>
 		</Empty>
 	);

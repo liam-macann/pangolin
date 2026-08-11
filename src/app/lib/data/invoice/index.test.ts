@@ -172,14 +172,14 @@ describe('fetchInvoice', () => {
 			['coinciding rates', { unitCost: 100, rates: [10, 10], expectedGross: 120 }],
 			['fractional rates', { unitCost: 100, rates: [12.5, 7.5], expectedGross: 120 }],
 			['zero-rate tax', { unitCost: 100, rates: [0, 10], expectedGross: 110 }],
-		])('Calculates item gross amount correctly: %s', async ([
-			,
-			{ unitCost, rates, expectedGross },
-		]) => {
-			const invoice = await itemGrossAmount(unitCost, rates);
-			expect(invoice.items[0].grossAmount).toBe(expectedGross);
-			expect(invoice.grossTotal).toBe(expectedGross);
-		});
+		])(
+			'Calculates item gross amount correctly: %s',
+			async ([, { unitCost, rates, expectedGross }]) => {
+				const invoice = await itemGrossAmount(unitCost, rates);
+				expect(invoice.items[0].grossAmount).toBe(expectedGross);
+				expect(invoice.grossTotal).toBe(expectedGross);
+			},
+		);
 
 		const expectedItemGross =
 			unitCostBounds.maxValue * (1 + (taxCountBounds.maxLength * taxRateBounds.maxValue) / 100);
