@@ -8,32 +8,32 @@ TMP=$(mktemp -d)
 WT=$TMP/wt
 
 cleanup() {
-  git -C "$ROOT" worktree remove -f "$WT" >/dev/null 2>&1 || true
-  rm -rf "$TMP"
+    git -C "$ROOT" worktree remove -f "$WT" >/dev/null 2>&1 || true
+    rm -rf "$TMP"
 }
 trap cleanup EXIT
 
 while read -r ref sha _ remote_sha; do
-  [[ $sha == "$ZERO" || $ref != refs/heads/* ]] && continue
+    [[ $sha == "$ZERO" || $ref != refs/heads/* ]] && continue
 
-  base=$remote_sha
-  [[ $base == "$ZERO" ]] && base=${PRE_PUSH_BASE:-$REMOTE/main}
+    base=$remote_sha
+    [[ $base == "$ZERO" ]] && base=${PRE_PUSH_BASE:-$REMOTE/main}
 
-  git -C "$ROOT" worktree add -dq "$WT" "$sha"
-  ln -s "$ROOT/node_modules" "$WT/node_modules"
+    git -C "$ROOT" worktree add -dq "$WT" "$sha"
+    ln -s "$ROOT/node_modules" "$WT/node_modules"
 
-  (
-    cd "$WT"
+    (
+        cd "$WT"
 
-    ./node_modules/.bin/biome check --no-errors-on-unmatched --files-ignore-unknown=true \
-      --changed --since="$base"
+        ./node_modules/.bin/biome check --no-errors-on-unmatched --files-ignore-unknown=true \
+            --changed --since="$base"
 
-    git diff --name-only -z --diff-filter=ACMRTD "$base"...HEAD -- >"$TMP/files"
+        git diff --name-only -z --diff-filter=ACMRTD "$base"...HEAD -- >"$TMP/files"
 
-    [[ ! -s $TMP/files ]] ||
-      xargs -0 ./node_modules/.bin/vitest related \
-        --run --passWithNoTests -- <"$TMP/files"
-  )
+        [[ ! -s $TMP/files ]] ||
+            xargs -0 ./node_modules/.bin/vitest related \
+                --run --passWithNoTests -- <"$TMP/files"
+    )
 
-  git -C "$ROOT" worktree remove -f "$WT"
+    git -C "$ROOT" worktree remove -f "$WT"
 done

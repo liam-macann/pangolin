@@ -1,0 +1,243 @@
+#!/bin/sh
+set -eu
+
+# Guard clauses: branches only, no rebases, no detached HEADs
+[ "${3:-}" = 1 ] || exit 0
+ROOT=$(git rev-parse --show-toplevel) && cd "$ROOT"
+git rev-parse --git-path rebase-merge | grep -q . && [ -d "$(git rev-parse --git-path rebase-merge)" ] && exit 0
+[ -d "$(git rev-parse --git-path rebase-apply)" ] && exit 0
+GIT_BRANCH=$(git symbolic-ref --quiet --short HEAD) || exit 0
+
+START_TIME=$(date +%s)
+NEON_BRANCH="local/$GIT_BRANCH"
+PROFILE_NAME="git-hook"
+NEON="$ROOT/node_modules/.bin/neon"
+
+# --- Cache config -----------------------------------------------------------
+# Max age of a cached password, before discarded and revalidated synchronously.
+# Below this age the cache is always used immediately, with SWR.
+# Override with NEON_CACHE_TTL.
+CACHE_TTL=${NEON_CACHE_TTL:-172800}
+
+GIT_DIR=$(git rev-parse --absolute-git-dir)
+CACHE_DIR="$GIT_DIR/neon-cache"
+
+mkdir -p "$CACHE_DIR"
+chmod 700 "$CACHE_DIR"
+
+SAFE_BRANCH=$(printf '%s' "$GIT_BRANCH" | tr -c 'A-Za-z0-9._-' '_')
+CACHE_FILE="$CACHE_DIR/$SAFE_BRANCH"
+LOCK_DIR="$CACHE_DIR/$SAFE_BRANCH.lock"
+BG_LOG="$CACHE_DIR/$SAFE_BRANCH.bg.log"
+
+ENV_FILE=$([ -f .env ] && echo .env || echo .env.local)
+LOG=$(mktemp)
+trap 'rm -f "$LOG"' EXIT HUP INT TERM
+
+die() {
+    printf '❎ %s\n' "$*" >&2
+    [ ! -s "$LOG" ] || cat "$LOG" >&2
+    exit 1
+}
+info() { printf 'ℹ️ %s\n' "$*"; }
+success() { printf '✅ %s\n' "$*"; }
+
+is_uint() { case $1 in '' | *[!0-9]*) return 1 ;; *) return 0 ;; esac }
+
+# Temporarily disable xtrace around code that handles secret values
+#
+# Nesting-safe: only the outermost trace_off/trace_restore pair records the original state
+TRACE_DEPTH=0
+trace_off() {
+    [ "$TRACE_DEPTH" -gt 0 ] || case $- in *x*) TRACE_WAS_ON=1 ;; *) TRACE_WAS_ON=0 ;; esac
+    TRACE_DEPTH=$((TRACE_DEPTH + 1))
+    set +x
+}
+trace_restore() {
+    TRACE_DEPTH=$((TRACE_DEPTH - 1))
+    [ "$TRACE_DEPTH" -gt 0 ] || {
+        TRACE_DEPTH=0
+        [ "$TRACE_WAS_ON" = 1 ] && set -x || :
+    }
+}
+
+# Helper: search sibling worktrees for a file
+sibling_file() {
+    git worktree list --porcelain | awk -v root="$ROOT" -v file="$1" '
+		/^worktree / { path = substr($0, 10); if (path != root && !f) { cmd="[ -f \""path"/"file"\" ]"; if (system(cmd)==0) { print path"/"file; exit } } }'
+}
+
+# Fresh worktrees don't have node_modules yet, so borrow the Neon CLI
+# from a sibling worktree if necessary.
+if [ ! -x "$NEON" ]; then
+    SIBLING_NEON=$(sibling_file node_modules/.bin/neon)
+    [ -z "$SIBLING_NEON" ] || NEON=$SIBLING_NEON
+fi
+
+[ -x "$NEON" ] || {
+    printf '❎ Local Neon CLI missing – run pnpm install\n' >&2
+    exit 1
+}
+
+seed_file() {
+    target=$1
+    shift
+    [ -f "$target" ] && return 0
+    for name; do
+        seed=$(sibling_file "$name")
+        if [ -n "$seed" ]; then
+            cp "$seed" "$target"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Generic env parser handles quotes & trailing \r
+get_env() { sed -n "s/^$1=//p" "$ENV_FILE" | head -n 1 | sed 's/\r$//; s/^"//; s/"$//; s/^'\''//; s/'\''$//'; }
+
+# Seed files
+seed_file "$ENV_FILE" .env .env.local || cp .env.example "$ENV_FILE" 2>/dev/null || die "No env file to seed from"
+seed_file .neon .neon || die "No linked Neon workspace – run 'pnpm exec neon link'"
+
+PROJECT_ID=${NEON_PROJECT_ID:-$(get_env NEON_PROJECT_ID)}
+[ -n "$PROJECT_ID" ] || die "NEON_PROJECT_ID is missing"
+
+export NEON_PROFILE=$PROFILE_NAME
+
+MANAGED_KEYS='PGPASSWORD_AUTHENTICATED DATABASE_URL DATABASE_URL_UNPOOLED'
+MANAGED_KEYS_RE=$(printf '%s' "$MANAGED_KEYS" | tr ' ' '|')
+
+# Write KEY=VALUE pairs into ENV_FILE, replacing any existing managed lines.
+apply_env() {
+    trace_off
+    tmp=$(mktemp "${ENV_FILE}.tmp.XXXXXX")
+    if {
+        grep -Ev "^($MANAGED_KEYS_RE)=" "$ENV_FILE" 2>/dev/null
+        for kv in "$@"; do printf '%s="%s"\n' "${kv%%=*}" "${kv#*=}"; done
+    } >"$tmp"; then
+        mv "$tmp" "$ENV_FILE"
+    else
+        rm -f "$tmp"
+    fi
+    trace_restore
+}
+
+write_cache() {
+    trace_off
+    tmp=$(mktemp "${CACHE_FILE}.tmp.XXXXXX") # mktemp already creates it 0600
+    printf '%s\n%s\n%s\n%s\n%s\n' \
+        "$NEON_BRANCH" "$(date +%s)" \
+        "$SYNCED_PW" "$SYNCED_DATABASE_URL" "$SYNCED_DATABASE_URL_UNPOOLED" >"$tmp"
+    mv "$tmp" "$CACHE_FILE"
+    trace_restore
+}
+
+# Push the freshly synced values into ENV_FILE and the cache together
+persist_synced() {
+    trace_off
+    apply_env \
+        "PGPASSWORD_AUTHENTICATED=$SYNCED_PW" \
+        "DATABASE_URL=$SYNCED_DATABASE_URL" \
+        "DATABASE_URL_UNPOOLED=$SYNCED_DATABASE_URL_UNPOOLED"
+    write_cache
+    trace_restore
+}
+
+# The actual (network-bound) checkout, branch create, and fetch-password workflow.
+# Writes progress to $LOG and sets on success:
+# SYNCED_PW / SYNCED_DATABASE_URL / SYNCED_DATABASE_URL_UNPOOLED
+sync_neon_branch() {
+    if ! "$NEON" checkout "$NEON_BRANCH" >"$LOG" 2>&1; then
+        if grep -Eiq 'profile.*(not found|does not exist|missing)|no profile' "$LOG"; then
+            info "🔐 Creating Neon profile: $PROFILE_NAME"
+            (
+                unset NEON_PROFILE
+                "$NEON" profile create "$PROFILE_NAME" --mint --project-id="$PROJECT_ID"
+            ) >"$LOG" 2>&1 ||
+                grep -Eiq 'already exists' "$LOG" || die "Couldn't create Neon profile '$PROFILE_NAME'"
+        fi
+
+        if ! "$NEON" checkout "$NEON_BRANCH" >"$LOG" 2>&1; then
+            if grep -Eiq 'branch.*(not found|does not exist|missing)|no branch' "$LOG"; then
+                info "🌱 Creating Neon branch: $NEON_BRANCH"
+                "$NEON" branches create --name "$NEON_BRANCH" --parent "local/main" >"$LOG" 2>&1 || die "neon branches create failed"
+                "$NEON" checkout "$NEON_BRANCH" >"$LOG" 2>&1 || die "Failed: neon checkout $NEON_BRANCH"
+            else
+                die "Failed: neon checkout $NEON_BRANCH"
+            fi
+        fi
+    fi
+
+    # neon checkout writes DATABASE_URL/DATABASE_URL_UNPOOLED into ENV_FILE itself;
+    # PGPASSWORD_AUTHENTICATED needs a separate role-scoped lookup.
+    trace_off
+    AUTH_URI=$("$NEON" connection-string "$NEON_BRANCH" --role-name authenticated 2>"$LOG") || die "Couldn't fetch password"
+    SYNCED_PW=$(printf '%s' "$AUTH_URI" | sed -E 's/.*:\/\/.*:(.*)@.*/\1/' | tr -d '"')
+    [ -n "$SYNCED_PW" ] || die "Couldn't parse password"
+    SYNCED_DATABASE_URL=$(get_env DATABASE_URL)
+    SYNCED_DATABASE_URL_UNPOOLED=$(get_env DATABASE_URL_UNPOOLED)
+    trace_restore
+}
+
+# Kick off sync_neon_branch in a detached background job, so the hook can
+# return immediately.
+#
+# Guarded by a mkdir-based lock (self-healing against stale locks from a killed process)
+# so overlapping checkouts on the same branch don't spawn duplicate revalidations.
+#
+revalidate_in_background() {
+    if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+        lock_pid=$(cat "$LOCK_DIR/pid" 2>/dev/null || :)
+        if [ -n "$lock_pid" ] && kill -0 "$lock_pid" 2>/dev/null; then
+            return 0 # a revalidation is already in flight
+        fi
+        rm -rf "$LOCK_DIR"
+        mkdir "$LOCK_DIR" 2>/dev/null || return 0
+    fi
+    (
+        trap 'rm -rf "$LOCK_DIR" "$LOG"' EXIT HUP INT TERM
+        LOG=$(mktemp)
+        sync_neon_branch && persist_synced
+    ) >"$BG_LOG" 2>&1 </dev/null &
+    echo $! >"$LOCK_DIR/pid"
+}
+
+# --- Cache lookup -------------------------------------------------------
+cached_branch= cached_ts= cached_pw= cached_database_url= cached_database_url_unpooled=
+[ -f "$CACHE_FILE" ] && {
+    read -r cached_branch
+    read -r cached_ts
+    read -r cached_pw
+    read -r cached_database_url
+    read -r cached_database_url_unpooled
+} <"$CACHE_FILE" 2>/dev/null || :
+
+# Trusted only if:
+# - cache is for the branch we're on;
+# - every field parsed non-empty;
+# - and the timestamp is a plain unsigned integer
+cache_is_valid() {
+    [ "$cached_branch" = "$NEON_BRANCH" ] &&
+        is_uint "$cached_ts" &&
+        [ -n "$cached_pw" ] && [ -n "$cached_database_url" ] &&
+        [ -n "$cached_database_url_unpooled" ]
+}
+
+trace_off
+if cache_is_valid && [ "$(($(date +%s) - cached_ts))" -lt "$CACHE_TTL" ]; then
+    apply_env \
+        "PGPASSWORD_AUTHENTICATED=$cached_pw" \
+        "DATABASE_URL=$cached_database_url" \
+        "DATABASE_URL_UNPOOLED=$cached_database_url_unpooled"
+    trace_restore
+    success "Neon branch synced: $NEON_BRANCH (cached, revalidating in background)"
+    revalidate_in_background
+    exit 0
+fi
+trace_restore
+
+# --- Cache missing, mismatched, or past TTL: discard it and sync synchronously
+sync_neon_branch
+persist_synced
+success "Neon branch synced: $NEON_BRANCH ($(($(date +%s) - START_TIME))s)"

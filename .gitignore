@@ -26,6 +26,7 @@ src/env.d.ts
 .next
 .vercel
 next-env.d.ts
+*.tmp
 
 # reports
 coverage/
