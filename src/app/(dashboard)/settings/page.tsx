@@ -10,6 +10,9 @@ import { getSession } from '@/auth';
 
 import ConfigForm from './form';
 
+// instant = false: fully request-time settings page
+export const instant = false;
+
 export default async function Page() {
 	const session = await getSession();
 	if (!session) unauthorized();

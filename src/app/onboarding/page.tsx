@@ -9,6 +9,8 @@ import { type Geo, Wizard } from './ui';
 
 export const metadata: Metadata = { title: 'Welcome' };
 
+export const instant = false;
+
 export default async function Page() {
 	const session = await getSession();
 	if (!session) redirect('/auth/login');

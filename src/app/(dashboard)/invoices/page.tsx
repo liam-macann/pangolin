@@ -9,6 +9,9 @@ export const metadata: Metadata = {
 	title: 'Invoices',
 };
 
+// instant = false: fully request-time invoice table
+export const instant = false;
+
 export default async function Page(_props: {
 	searchParams?: Promise<{
 		query?: string;

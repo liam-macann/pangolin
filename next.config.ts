@@ -5,17 +5,13 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 const isProduction = process.env.NODE_ENV === 'production';
 
 const nextConfig: NextConfig = {
+	cacheComponents: true,
 	reactCompiler: true,
 	poweredByHeader: false,
 	experimental: {
-		useCache: true,
 		optimizePackageImports: ['@phosphor-icons/react'],
 		authInterrupts: true,
 		taint: true,
-		lightningCssFeatures: {
-			// Always transpile these features, even if targets support them
-			include: ['light-dark'],
-		},
 	},
 	turbopack: {
 		rules: {

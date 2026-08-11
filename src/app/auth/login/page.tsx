@@ -1,6 +1,7 @@
 import { CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { type Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import { z } from 'zod';
 
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
@@ -14,38 +15,15 @@ export const metadata: Metadata = {
 	title: 'Login',
 };
 
-export default async function LoginPage({
-	searchParams,
-}: {
-	searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-	const { callbackUrl, error } = z
-		.object({
-			callbackUrl: z.url().catch('/invoices'),
-			error: z
-				.enum(Object.keys(errorDetails) as ErrorCodes[])
-				.catch('internal_server_error')
-				.optional(),
-		})
-		.parse(await searchParams);
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-	const session = await getSession();
-	if (session?.user.id) redirect(callbackUrl);
-
-	const errorInfo = error && errorDetails[error];
-
+export default function LoginPage({ searchParams }: { searchParams: SearchParams }) {
 	return (
 		<div>
 			<section className='space-y-4'>
-				{errorInfo && (
-					<Alert variant='destructive'>
-						<WarningCircleIcon className='text-destructive' />
-						{errorInfo.heading && <AlertTitle>{errorInfo.heading}</AlertTitle>}
-						<AlertDescription>{errorInfo.message}</AlertDescription>
-					</Alert>
-				)}
-
-				<LoginButton variant='primary' callbackURL={callbackUrl} />
+				<Suspense fallback={<LoginButton variant='primary' callbackURL='/invoices' />}>
+					<LoginPanel searchParams={searchParams} />
+				</Suspense>
 			</section>
 			<section className='mt-12'>
 				<h2 className='mb-2 font-semibold text-lg'>What this is</h2>
@@ -87,5 +65,36 @@ export default async function LoginPage({
 				</ul>
 			</section>
 		</div>
+	);
+}
+
+export async function LoginPanel({ searchParams }: { searchParams: SearchParams }) {
+	const { callbackUrl, error } = z
+		.object({
+			callbackUrl: z.url().catch('/invoices'),
+			error: z
+				.enum(Object.keys(errorDetails) as ErrorCodes[])
+				.catch('internal_server_error')
+				.optional(),
+		})
+		.parse(await searchParams);
+
+	const session = await getSession();
+	if (session?.user.id) redirect(callbackUrl);
+
+	const errorInfo = error && errorDetails[error];
+
+	return (
+		<>
+			{errorInfo && (
+				<Alert variant='destructive'>
+					<WarningCircleIcon className='text-destructive' />
+					{errorInfo.heading && <AlertTitle>{errorInfo.heading}</AlertTitle>}
+					<AlertDescription>{errorInfo.message}</AlertDescription>
+				</Alert>
+			)}
+
+			<LoginButton variant='primary' callbackURL={callbackUrl} />
+		</>
 	);
 }

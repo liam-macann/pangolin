@@ -19,6 +19,9 @@ export const metadata: Metadata = {
 	title: 'Clients',
 };
 
+// instant = false: fully request-time client detail
+export const instant = false;
+
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
 
