@@ -47,7 +47,7 @@ export const lineItems = snakeCase.table(
 		// User ID is propagated down to facilitate ownership constraints
 		userId: uuid()
 			.notNull()
-			.references(() => users.id),
+			.references(() => users.id, { onDelete: 'cascade' }),
 		// Config reference is propagated down to facilitate fk constraints on itemTaxes
 		configId: uuid()
 			.notNull()
@@ -94,7 +94,7 @@ export const itemTaxes = snakeCase.table(
 		// User ID is stored down to facilitate ownership constraints
 		userId: uuid()
 			.notNull()
-			.references(() => users.id),
+			.references(() => users.id, { onDelete: 'cascade' }),
 		// Config reference is propagated down to facilitate fk constraints
 		configId: uuid()
 			.notNull()

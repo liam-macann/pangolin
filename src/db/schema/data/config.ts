@@ -66,7 +66,7 @@ export const configTaxes = snakeCase.table(
 
 		userId: uuid()
 			.notNull()
-			.references(() => users.id),
+			.references(() => users.id, { onDelete: 'cascade' }),
 	},
 	t => [
 		primaryKey({ name: 'pk_config_tax', columns: [t.configId, t.taxId] }),

@@ -1,0 +1,4 @@
+ALTER TABLE "line_item" RENAME CONSTRAINT "invoice_item_user_id_user_id_fkey" TO "line_item_user_id_user_id_fkey";--> statement-breakpoint
+ALTER TABLE "config_tax" DROP CONSTRAINT "config_tax_user_id_user_id_fkey", ADD CONSTRAINT "config_tax_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "item_tax" DROP CONSTRAINT "item_tax_user_id_user_id_fkey", ADD CONSTRAINT "item_tax_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "line_item" DROP CONSTRAINT "line_item_user_id_user_id_fkey", ADD CONSTRAINT "line_item_user_id_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE;
