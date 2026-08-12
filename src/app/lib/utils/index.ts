@@ -4,6 +4,10 @@ import { type ElementType } from './type';
 
 export * from './type';
 
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
+
 export const formatNumber = (amount: number, locale: string) => {
 	return new Intl.NumberFormat(locale, {
 		style: 'decimal',

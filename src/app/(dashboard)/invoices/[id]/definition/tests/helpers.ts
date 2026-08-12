@@ -2,12 +2,12 @@ import { randomUUID } from 'node:crypto';
 import { toMerged } from 'es-toolkit/object';
 import { type Content, type ContentText, type TableCell } from 'pdfmake/interfaces';
 
-import { type DeepPartial, type ElementType, type Minimized } from '@/lib/utils';
+import { type ElementType, type Minimized, type PartialDeep } from '@/lib/utils';
 
 import { type InvoicePrintData } from './../index';
 
 /** Helper to generate an invoice with optional overrides */
-export const invoiceDataBuilder = (data?: DeepPartial<InvoicePrintData>): InvoicePrintData => {
+export const invoiceDataBuilder = (data?: PartialDeep<InvoicePrintData>): InvoicePrintData => {
 	/** A minimally-populated invoice. Merge with data specific to what is being tested. */
 	const base: Minimized<InvoicePrintData> = {
 		title: null,

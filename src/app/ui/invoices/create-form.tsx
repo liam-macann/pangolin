@@ -13,7 +13,7 @@ import { type z } from 'zod';
 import { createInvoice } from '@/lib/actions/invoice';
 import { type fetchConfig } from '@/lib/data';
 import { useClients, useInvoices } from '@/lib/hooks';
-import { cn, type Prettify } from '@/lib/utils';
+import { cn, type Simplify } from '@/lib/utils';
 import { formatDate } from '@/lib/utils/date';
 import { invoice as schema } from '@/lib/validation/invoice';
 
@@ -63,7 +63,7 @@ export function CreateInvoiceDialog({
 	...props
 }: {
 	children: ReactElement;
-	config: Prettify<
+	config: Simplify<
 		Pick<
 			Awaited<ReturnType<typeof fetchConfig>>,
 			'id' | 'currency' | 'locale' | 'timezone' | 'taxes' | 'taxRegistration'

@@ -79,6 +79,7 @@
 		"tailwindcss": "^4.3.3",
 		"tailwindcss-scrim-gradients": "^0.4.2",
 		"tinykeys": "^4.0.0",
+		"type-fest": "^5.8.0",
 		"use-debounce": "^10.1.1",
 		"usehooks-ts": "^3.1.1",
 		"uuid": "^13.0.2",

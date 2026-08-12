@@ -15,7 +15,7 @@ import {
 import { type z } from 'zod';
 
 import { type fetchConfig } from '@/lib/data';
-import { cn, type Prettify, rateToPercent } from '@/lib/utils';
+import { cn, rateToPercent, type Simplify } from '@/lib/utils';
 import { formatCurrency, getCurrencySymbol } from '@/lib/utils/currencies';
 import { type invoice as schema } from '@/lib/validation/invoice';
 import { intlNumber } from '@/lib/zod';
@@ -333,7 +333,7 @@ function LineItemsInput({
 }
 
 interface SortableProps {
-	item: Prettify<FieldArrayWithId<FormValues, 'items', 'id'>>;
+	item: Simplify<FieldArrayWithId<FormValues, 'items', 'id'>>;
 	index: number;
 	control: Control<FormValues>;
 	getValues: UseFormGetValues<FormValues>;

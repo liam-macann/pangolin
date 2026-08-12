@@ -3,7 +3,7 @@
 
 import { type AnyAddress, type BaseAddress, type formatAddress, getCountryData } from 'lib-address';
 
-import { type Prettify } from '..';
+import { type Simplify } from '..';
 
 export function formatAddressLib(
 	address: Parameters<typeof formatAddress>[0],
@@ -81,7 +81,7 @@ function convertAbbrStringToObject(value: string) {
 	};
 }
 
-function convertAddressCasing(address: Prettify<AnyAddress & BaseAddress>, upper: string) {
+function convertAddressCasing(address: Simplify<AnyAddress & BaseAddress>, upper: string) {
 	const upperFields = convertAbbrStringToObject(upper);
 
 	return {

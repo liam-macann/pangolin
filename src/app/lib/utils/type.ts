@@ -1,41 +1,9 @@
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
+import { type PartialDeepOptions, type PartialDeep as TypeFestPartialDeep } from 'type-fest';
 
-export type ElementType<T extends Iterable<unknown>> = T extends Iterable<infer E> ? E : never;
-
-/** Improve readability of object types */
-export type Prettify<T> = {
-	[K in keyof T]: T[K];
-} & {};
-
-/**
- * Ensures that all objects in a tuple share the **exact same keys**.
- *
- * @template T - A arbitrary-length tuple of objects `[object, object, …]`
- */
-export type AllSameKeys<T extends [object, ...object[]]> = T extends [
-	infer First extends object,
-	...infer Rest extends object[],
-]
-	? Rest[number] extends First
-		? First extends Rest[number]
-			? T
-			: never
-		: never
-	: never;
-
-/** Omit properties without breaking discriminated unions */
-export type OmitUnion<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
-
-/** Deeply partialize an object type */
-export type DeepPartial<T> = T extends Date | Set<unknown> | Map<unknown, unknown>
-	? T
-	: T extends object
-		? {
-				[P in keyof T]?: DeepPartial<T[P]>;
-			}
-		: T;
+export type PartialDeep<
+	T,
+	C extends PartialDeepOptions = { recurseIntoArrays: true },
+> = TypeFestPartialDeep<T, C>;
 
 /** Enforce a minimal representation of an object
  *
@@ -59,6 +27,9 @@ export type Minimized<T> = {
 						: T[K];
 };
 
-declare const __brand: unique symbol;
-/** Simulate nominal typing by specifying a key */
-export type Brand<T, B> = T & { [__brand]: B };
+export type {
+	DistributedOmit,
+	IterableElement as ElementType,
+	Simplify,
+	Tagged as Brand,
+} from 'type-fest';

@@ -14,7 +14,7 @@ import {
 	TZDate,
 } from 'react-day-picker';
 
-import { cn, type OmitUnion, pluralize } from '@/lib/utils';
+import { cn, type DistributedOmit, pluralize } from '@/lib/utils';
 import { formatDate } from '@/lib/utils/date';
 
 import { Button } from '@/ui/button';
@@ -105,7 +105,7 @@ export function DatePicker({
 
 	disabledDays,
 	...props
-}: OmitUnion<SinglePickerProps, 'locale'> &
+}: DistributedOmit<SinglePickerProps, 'locale'> &
 	RHF<Date> & {
 		timeZone: string;
 		locale: string;
@@ -194,7 +194,7 @@ export function DateRange({
 
 	disabledDays,
 	...props
-}: OmitUnion<RangePickerProps, 'locale'> &
+}: DistributedOmit<RangePickerProps, 'locale'> &
 	RHF<DateRangeType> & {
 		timeZone: string;
 		locale: string;

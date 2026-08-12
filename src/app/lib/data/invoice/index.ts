@@ -5,7 +5,7 @@ import { notFound, unstable_rethrow } from 'next/navigation';
 import { type Config, fetchConfig } from '@/lib/data';
 import { type ClientData } from '@/lib/data/client';
 import { crypto } from '@/lib/encrypt';
-import { invoiceReference, type Prettify } from '@/lib/utils';
+import { invoiceReference, type Simplify } from '@/lib/utils';
 import { coalesce, withFilter } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
 import { type relations } from '@/db/relations';
@@ -18,7 +18,7 @@ import { query } from './../helpers';
 export type Invoice = Awaited<ReturnType<typeof fetchInvoices>>[number];
 
 /** A billed line item, joined with the tax rows applied to it */
-export type LineItem = Prettify<
+export type LineItem = Simplify<
 	Omit<
 		typeof schema.itemsWithTax.$inferSelect,
 		'id' | 'documentId' | 'userId' | 'configId' | 'taxRegistration' | 'order'

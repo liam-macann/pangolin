@@ -6,7 +6,7 @@ import { assert } from 'vitest';
 import { createClient } from '@/lib/actions/client';
 import { updateUserConfig } from '@/lib/actions/config';
 import { createInvoice } from '@/lib/actions/invoice';
-import { type DeepPartial, type ElementType, type Minimized } from '@/lib/utils';
+import { type ElementType, type Minimized, type PartialDeep } from '@/lib/utils';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
@@ -17,7 +17,7 @@ type InvoiceInput = Parameters<typeof createInvoice>[0];
 type InvoiceItemInput = ElementType<InvoiceInput['items']>;
 
 /** Builds an address with optional overrides, merged onto a complete base */
-export const addressBuilder = (overrides?: DeepPartial<AddressInput>): AddressInput => {
+export const addressBuilder = (overrides?: PartialDeep<AddressInput>): AddressInput => {
 	const base: AddressInput = {
 		streetAddress: ['1 Test St'],
 		city: 'Sydney',
@@ -32,7 +32,7 @@ export const addressBuilder = (overrides?: DeepPartial<AddressInput>): AddressIn
 };
 
 /** Builds client data with optional overrides, merged onto a minimal base */
-export const clientBuilder = (overrides?: DeepPartial<ClientInput>): ClientInput => {
+export const clientBuilder = (overrides?: PartialDeep<ClientInput>): ClientInput => {
 	const base: Minimized<Omit<ClientInput, 'name'>> & ({ name: string } | { organization: string }) =
 		{
 			name: 'Alaric Wivell',
@@ -45,7 +45,7 @@ export const clientBuilder = (overrides?: DeepPartial<ClientInput>): ClientInput
 };
 
 /** Builds a config with optional overrides, merged onto a minimal base */
-export const configBuilder = (overrides?: DeepPartial<ConfigInput>): ConfigInput => {
+export const configBuilder = (overrides?: PartialDeep<ConfigInput>): ConfigInput => {
 	const base: Minimized<ConfigInput> = {
 		tradingName: 'Acme Pty Ltd',
 		timezone: 'Australia/Sydney',
@@ -66,7 +66,7 @@ export const configBuilder = (overrides?: DeepPartial<ConfigInput>): ConfigInput
 };
 
 /** Builds an invoice line item with optional overrides, merged onto a minimal base */
-export const invoiceItemBuilder = (overrides?: DeepPartial<InvoiceItemInput>): InvoiceItemInput => {
+export const invoiceItemBuilder = (overrides?: PartialDeep<InvoiceItemInput>): InvoiceItemInput => {
 	const base: Minimized<InvoiceItemInput> = {
 		label: 'Consulting services',
 		quantity: 1,
@@ -79,7 +79,7 @@ export const invoiceItemBuilder = (overrides?: DeepPartial<InvoiceItemInput>): I
 
 /** Builds an invoice with optional overrides, merged onto a minimal base. Required an associated client data id. */
 export const invoiceBuilder = (
-	overrides: DeepPartial<Omit<InvoiceInput, 'clientDataId'>> & Pick<InvoiceInput, 'clientDataId'>,
+	overrides: PartialDeep<Omit<InvoiceInput, 'clientDataId'>> & Pick<InvoiceInput, 'clientDataId'>,
 ): InvoiceInput => {
 	const { clientDataId, items: itemOverrides, ...rest } = overrides;
 
@@ -102,13 +102,13 @@ export const invoiceBuilder = (
 };
 
 /** Creates a client with active client data via the real action, returning the logical id and the active clientData id */
-export async function insertTestClient(overrides?: DeepPartial<ClientInput>) {
+export async function insertTestClient(overrides?: PartialDeep<ClientInput>) {
 	const { id, scdId } = await createClient(clientBuilder(overrides));
 	return { id, data: { scdId } };
 }
 
 /** Creates an active config via the real action, returning its id */
-export async function insertTestConfig(overrides?: DeepPartial<ConfigInput>) {
+export async function insertTestConfig(overrides?: PartialDeep<ConfigInput>) {
 	await updateUserConfig(configBuilder(overrides));
 
 	const [config] = await withRLS(db =>
@@ -120,7 +120,7 @@ export async function insertTestConfig(overrides?: DeepPartial<ConfigInput>) {
 }
 
 /** Sets up an active config and a single client scoped to it */
-export async function setUpConfigAndClient(configOverrides?: DeepPartial<ConfigInput>) {
+export async function setUpConfigAndClient(configOverrides?: PartialDeep<ConfigInput>) {
 	const configId = await insertTestConfig(configOverrides);
 	const client = await insertTestClient();
 	return { configId, client };
@@ -128,7 +128,7 @@ export async function setUpConfigAndClient(configOverrides?: DeepPartial<ConfigI
 
 /** Creates an invoice via the real action, returning its id */
 export async function insertTestInvoice(
-	data: DeepPartial<Omit<InvoiceInput, 'clientDataId'>> & Pick<InvoiceInput, 'clientDataId'>,
+	data: PartialDeep<Omit<InvoiceInput, 'clientDataId'>> & Pick<InvoiceInput, 'clientDataId'>,
 ) {
 	await createInvoice(invoiceBuilder(data));
 

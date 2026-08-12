@@ -4,10 +4,19 @@ import radix from '@radix-ui/colors';
 import { type Config } from 'tailwindcss';
 import plugin from 'tailwindcss/plugin';
 
-import { type AllSameKeys } from '@/lib/utils';
+/**
+ * Ensures that all objects in a tuple are mutually assignable
+ *
+ * @template T - A arbitrary-length tuple of objects `[object, object, …]`
+ */
+export type MutuallyAssignable<T extends [object, ...object[]]> = T[number] extends T[0]
+	? T[0] extends T[number]
+		? T
+		: never
+	: never;
 
 const defineColors = <T extends Record<string, [object, object, object]>>(
-	col: { [K in keyof T]: AllSameKeys<T[K]> },
+	col: { [K in keyof T]: MutuallyAssignable<T[K]> },
 ) => col;
 
 /**

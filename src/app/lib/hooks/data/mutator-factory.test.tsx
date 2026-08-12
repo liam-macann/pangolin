@@ -3,13 +3,13 @@ import { mutate as globalMutate } from 'swr';
 import { assert, beforeEach, describe, expect, test } from 'vitest';
 import { renderHook } from 'vitest-browser-react';
 
-import { type DeepPartial } from '@/lib/utils';
+import { type PartialDeep } from '@/lib/utils';
 
 import { createMutation, detail, type GangedMutator, list } from './mutator-factory';
 
 type Item = { id: string; label: string; flag: boolean };
 
-const itemBuilder = (id: string, overrides?: DeepPartial<Item>): Item =>
+const itemBuilder = (id: string, overrides?: PartialDeep<Item>): Item =>
 	toMerged({ id, label: `item-${id}`, flag: false }, overrides ?? {});
 
 /** Seed a SWR cache key with a value, without triggering revalidation */
