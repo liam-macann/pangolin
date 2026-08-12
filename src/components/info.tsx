@@ -26,7 +26,7 @@ export function InfoTip({
 					<Button
 						variant='ghost'
 						size='icon-xs'
-						className={cn('!border-transparent !ring-0 !bg-transparent', className)}
+						className={cn('border-transparent! bg-transparent! ring-0!', className)}
 					>
 						<InfoIcon className='-m-px size-3.5 cursor-pointer rounded-full text-muted-foreground ring-offset-1 group-focus-visible/info:ring-2' />
 						<span className='sr-only'>Information</span>

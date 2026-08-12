@@ -45,7 +45,7 @@ export function Localization({ geo }: { geo: Geo }) {
 						<TimezoneSelectRoot {...field} onValueChange={v => field.onChange(v?.name)}>
 							<Field
 								orientation='responsive'
-								className='!items-center'
+								className='items-center!'
 								data-invalid={fieldState.invalid}
 							>
 								<FieldContent>
@@ -65,7 +65,7 @@ export function Localization({ geo }: { geo: Geo }) {
 						<RegionSelectRoot {...field} onValueChange={v => field.onChange(v?.iso2)}>
 							<Field
 								orientation='responsive'
-								className='!items-center'
+								className='items-center!'
 								data-invalid={fieldState.invalid}
 							>
 								<FieldContent>
@@ -85,7 +85,7 @@ export function Localization({ geo }: { geo: Geo }) {
 						<CurrencySelectRoot {...field} onValueChange={v => field.onChange(v?.iso)}>
 							<Field
 								orientation='responsive'
-								className='!items-center'
+								className='items-center!'
 								data-invalid={fieldState.invalid}
 							>
 								<FieldContent>

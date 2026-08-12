@@ -30,7 +30,7 @@ function DrawerOverlay({ className, ...props }: DrawerPrimitive.Backdrop.Props) 
 	return (
 		<DialogBackdrop
 			data-slot='drawer-overlay'
-			className={cn('opacity-[calc(.75-var(--drawer-swipe-progress))]', className)}
+			className={cn('opacity-[calc(0.75-var(--drawer-swipe-progress))]', className)}
 			{...props}
 			render={<DrawerPrimitive.Backdrop />}
 		/>

@@ -32,7 +32,7 @@ function DialogBackdrop({
 		<DialogPrimitive.Backdrop
 			data-slot='dialog-overlay'
 			className={cn(
-				'fixed inset-0 z-50 bg-black/50 backdrop-contrast-[90%] duration-200 ease-out-quad data-[ending-style]:pointer-events-none data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 dark:bg-black/80',
+				'fixed inset-0 z-50 bg-black/50 backdrop-contrast-90 duration-200 ease-out-quad data-ending-style:pointer-events-none data-ending-style:opacity-0 data-starting-style:opacity-0 dark:bg-black/80',
 				className,
 			)}
 			{...props}
@@ -65,7 +65,7 @@ function DialogPopup({
 		<DialogPrimitive.Popup
 			data-slot='dialog-content'
 			className={cn(
-				'fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-scroll rounded-lg bg-background p-6 text-foreground shadow-lg ring-border duration-200 ease-out-quart **:ring-offset-background data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-safe:data-[ending-style]:scale-95 motion-safe:data-[starting-style]:scale-95 motion-safe:data-[ending-style]:blur-[2px] motion-safe:data-[starting-style]:blur-[2px] sm:max-w-lg dark:ring-1',
+				'fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-scroll rounded-lg bg-background p-6 text-foreground shadow-lg ring-border duration-200 ease-out-quart **:ring-offset-background data-ending-style:opacity-0 data-starting-style:opacity-0 motion-safe:data-ending-style:scale-95 motion-safe:data-starting-style:scale-95 motion-safe:data-ending-style:blur-[2px] motion-safe:data-starting-style:blur-[2px] sm:max-w-lg dark:ring-1',
 				className,
 			)}
 			{...props}

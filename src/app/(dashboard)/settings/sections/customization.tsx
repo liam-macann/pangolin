@@ -149,7 +149,7 @@ function ColorSwatch({
 				nativeButton={false}
 				render={
 					<RadioGroupItem
-						className='peer !border-black/20 dark:!border-black/10 !rounded-full after:-inset-x-1.5 data-[state="checked"]:outline'
+						className='peer rounded-full! border-black/20! after:-inset-x-1.5 data-[state="checked"]:outline dark:border-black/10!'
 						value={value}
 						aria-label={value}
 						id={id}
@@ -163,7 +163,7 @@ function ColorSwatch({
 			<FieldDescription
 				className={cn(
 					'hidden flex-col items-center text-xs capitalize group-hover:flex',
-					selected && 'group-[:not(:hover)]/color-palette:flex',
+					selected && 'group-not-[&:hover]/color-palette:flex',
 				)}
 				render={
 					<label htmlFor={id}>

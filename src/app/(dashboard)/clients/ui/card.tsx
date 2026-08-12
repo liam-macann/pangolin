@@ -64,7 +64,7 @@ export function Card({
 			<Link
 				href={`clients/${client.id}`}
 				className={cn(
-					'!pt-9 grid size-full grid-rows-[3rem_1lh]',
+					'grid size-full grid-rows-[3rem_1lh] pt-9!',
 					'rounded-md border p-4 outline-none focus-visible:border-ring focus-visible:ring-2',
 					'bg-card',
 					variant === 'secondary' && 'bg-secondary',
@@ -111,7 +111,7 @@ export function Card({
 				variant='ghost'
 				className={cn(
 					'absolute right-3 bottom-3 translate-y-px',
-					client.isFavorite && '!bg-transparent',
+					client.isFavorite && 'bg-transparent!',
 					'text-muted-foreground',
 				)}
 			>

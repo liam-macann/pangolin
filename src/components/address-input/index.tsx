@@ -47,7 +47,7 @@ export function AddressInput<T extends FormValues>({
 		>
 			<ErrorBoundary
 				fallback={
-					<Alert variant='destructive' className='!w-auto m-2'>
+					<Alert variant='destructive' className='m-2 w-auto!'>
 						<WarningIcon />
 						<AlertTitle>
 							Something went wrong! Check your network connection and try again later.

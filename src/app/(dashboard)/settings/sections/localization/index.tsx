@@ -41,7 +41,7 @@ export function Localization<T extends Fields>({ control: _control }: { control:
 					<RegionSelectRoot {...field} onValueChange={v => field.onChange(v?.iso2)}>
 						<Field
 							orientation='responsive'
-							className='!items-center'
+							className='items-center!'
 							data-invalid={fieldState.invalid}
 						>
 							<FieldContent>
@@ -63,7 +63,7 @@ export function Localization<T extends Fields>({ control: _control }: { control:
 					<TimezoneSelectRoot {...field} onValueChange={v => field.onChange(v?.name)}>
 						<Field
 							orientation='responsive'
-							className='!items-center'
+							className='items-center!'
 							data-invalid={fieldState.invalid}
 						>
 							<FieldContent>
@@ -86,7 +86,7 @@ export function Localization<T extends Fields>({ control: _control }: { control:
 					<CurrencySelectRoot {...field} onValueChange={v => field.onChange(v?.iso)}>
 						<Field
 							orientation='responsive'
-							className='!items-center'
+							className='items-center!'
 							data-invalid={fieldState.invalid}
 						>
 							<FieldContent>

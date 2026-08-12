@@ -99,7 +99,7 @@ export default function UserAvatar({
 	...props
 }: React.ComponentProps<typeof AvatarPrimitive.Root> & { image: string | null }) {
 	return (
-		<Avatar className={cn('!bg-gray-4', className)} {...props}>
+		<Avatar className={cn('bg-gray-4!', className)} {...props}>
 			{/* Append URL as search param to bust cache */}
 			{image && <AvatarImage src={`/api/avatar?user=${image}`} />}
 			<AvatarFallback>
@@ -114,7 +114,7 @@ export function AvatarEmpty({
 	...props
 }: React.ComponentProps<typeof AvatarPrimitive.Root>) {
 	return (
-		<Avatar className={cn('!bg-gray-4 size-full', className)} {...props}>
+		<Avatar className={cn('size-full bg-gray-4!', className)} {...props}>
 			<AvatarFallback>
 				<UserIcon className='size-1/2' />
 			</AvatarFallback>

@@ -32,7 +32,7 @@ function NavLink({ link, active }: { link: (typeof links)[number]; active: boole
 			className={clsx(
 				'relative focus:z-10',
 				active
-					? 'after:pointer-events-none after:absolute after:-bottom-2.5 after:left-0 after:block after:h-[2px] after:w-full after:translate-y-full after:bg-accent-foreground'
+					? 'after:pointer-events-none after:absolute after:-bottom-2.5 after:left-0 after:block after:h-0.5 after:w-full after:translate-y-full after:bg-accent-foreground'
 					: 'text-muted-foreground',
 			)}
 			nativeButton={false}

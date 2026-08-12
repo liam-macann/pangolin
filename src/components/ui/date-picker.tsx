@@ -69,7 +69,7 @@ function CalendarPopover({
 					<Button
 						variant='outline'
 						aria-expanded={open}
-						className={cn('!scale-100 min-w-[200px] justify-between', className)}
+						className={cn('min-w-[200px] scale-100! justify-between', className)}
 					>
 						<span className='truncate'>{label || 'Select date…'}</span>
 						<CaretUpDownIcon className='ml-2 h-4 w-4 shrink-0 opacity-50' />

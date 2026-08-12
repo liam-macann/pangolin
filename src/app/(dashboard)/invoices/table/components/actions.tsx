@@ -150,7 +150,7 @@ export function NotesButton({
 					}}
 					defaultValue={defaultValue}
 					placeholder='Your private notes'
-					className='!ring-0 !border-border inset-shadow-xs rounded-sm shadow-none'
+					className='inset-shadow-xs rounded-sm border-border! shadow-none ring-0!'
 				/>
 			</PopoverContent>
 		</Popover>

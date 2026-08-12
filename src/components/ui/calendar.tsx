@@ -94,7 +94,7 @@ function Calendar({
 				),
 				range_start: cn('rounded-l-full', defaultClassNames.range_start),
 				range_middle: cn(
-					'*:before:!rounded-none text-accent-foreground *:before:inset-x-0 *:before:bg-accent',
+					'text-accent-foreground *:before:inset-x-0 *:before:rounded-none! *:before:bg-accent',
 					defaultClassNames.range_middle,
 				),
 				range_end: cn('rounded-r-full', defaultClassNames.range_end),
@@ -168,14 +168,14 @@ function CalendarDayButton({
 			data-range-end={modifiers.range_end}
 			data-range-middle={modifiers.range_middle}
 			className={cn(
-				'!bg-transparent rounded-none font-[430] text-[0.8125rem] transition-none', // Button reset
+				'rounded-none bg-transparent! font-[430] text-[0.8125rem] transition-none', // Button reset
 				'flex aspect-square size-full flex-col gap-1 border-none leading-none', // Sizing
 				'isolate before:absolute before:inset-0.5 before:-z-10 before:rounded-full not-disabled:hover:before:bg-accent', // Hover and selection background
-				'!ring-0 !border-transparent group-data-[focused=true]/day:before:border-ring group-data-[focused=true]/day:before:ring-2', // Focus ring
+				'border-transparent! ring-0! group-data-[focused=true]/day:before:border-ring group-data-[focused=true]/day:before:ring-2', // Focus ring
 
-				'data-[range-end=true]:before:!bg-primary data-[range-start=true]:before:!bg-primary data-[selected-single=true]:before:!bg-primary',
+				'data-[range-end=true]:before:bg-primary! data-[range-start=true]:before:bg-primary! data-[selected-single=true]:before:bg-primary!',
 				'data-[range-end=true]:before:ring-offset-1 data-[range-start=true]:before:ring-offset-1 data-[selected-single=true]:before:ring-offset-1',
-				'data-[range-end=true]:!text-primary-foreground data-[range-start=true]:!text-primary-foreground data-[selected-single=true]:!text-primary-foreground',
+				'data-[range-end=true]:text-primary-foreground! data-[range-start=true]:text-primary-foreground! data-[selected-single=true]:text-primary-foreground!',
 
 				defaultClassNames.day,
 				className,

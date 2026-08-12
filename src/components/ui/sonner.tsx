@@ -8,7 +8,7 @@ import { Spinner } from '@/ui/spinner';
 const Toaster = ({ ...props }: ToasterProps) => {
 	return (
 		<Sonner
-			toastOptions={{ className: 'font-sans !rounded-md' }}
+			toastOptions={{ className: 'font-sans rounded-md!' }}
 			position='bottom-center'
 			className='toaster group'
 			style={

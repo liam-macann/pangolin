@@ -118,8 +118,8 @@ function ComboboxContent({
 					data-slot='combobox-content'
 					data-chips={!!anchor}
 					className={cn(
-						'origin-(--transform-origin) duration-100 ease-out-quint data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-safe:data-[ending-style]:scale-95 motion-safe:data-[starting-style]:scale-95',
-						'group/combobox-content relative max-h-(--available-height) max-h-72 w-(--anchor-width) min-w-36 min-w-[calc(var(--anchor-width)+--spacing(7))] max-w-(--available-width) data-[chips=true]:min-w-(--anchor-width)',
+						'origin-(--transform-origin) duration-100 ease-out-quint data-ending-style:opacity-0 data-starting-style:opacity-0 motion-safe:data-ending-style:scale-95 motion-safe:data-starting-style:scale-95',
+						'group/combobox-content relative max-h-(--available-height) max-h-72 w-(--anchor-width) min-w-36 min-w-[calc(var(--anchor-width)+(--spacing(7)))] max-w-(--available-width) data-[chips=true]:min-w-(--anchor-width)',
 						'overflow-hidden rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-border',
 						'*:data-[slot=input-group]:m-1 *:data-[slot=input-group]:mb-0 *:data-[slot=input-group]:h-8 *:data-[slot=input-group]:border-input/30 *:data-[slot=input-group]:bg-input/30 *:data-[slot=input-group]:shadow-none',
 						className,
@@ -136,7 +136,7 @@ function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
 		<ComboboxPrimitive.List
 			data-slot='combobox-list'
 			className={cn(
-				'max-h-[min(calc(--spacing(67)---spacing(9)),calc(var(--available-height)---spacing(9)))] scroll-py-1 overflow-auto overscroll-contain p-1 has-data-[slot="combobox-label"]:pt-0 data-empty:p-0',
+				'max-h-[min(calc(--spacing(67)-(--spacing(9))),calc(var(--available-height)-(--spacing(9))))] scroll-py-1 overflow-auto overscroll-contain p-1 has-data-[slot="combobox-label"]:pt-0 data-empty:p-0',
 				className,
 			)}
 			{...props}
@@ -149,7 +149,7 @@ function ComboboxItem({ className, children, ...props }: ComboboxPrimitive.Item.
 		<ComboboxPrimitive.Item
 			data-slot='combobox-item'
 			className={cn(
-				"relative flex w-full cursor-default select-none items-center gap-2 rounded-sm py-1 pr-8 pl-2 text-sm outline-hidden data-[disabled]:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-[disabled]:opacity-50 not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+				"relative flex w-full cursor-default select-none items-center gap-2 rounded-sm py-1 pr-8 pl-2 text-sm outline-hidden data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-50 not-data-[variant=destructive]:data-highlighted:**:text-accent-foreground [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
 				className,
 			)}
 			{...props}

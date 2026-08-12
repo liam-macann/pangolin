@@ -54,7 +54,7 @@ function GlobalSearch() {
 				open={open}
 				onOpenChange={setOpen}
 				render={<nav />}
-				className='top-1/4 max-h-[calc(75%---spacing(12))]'
+				className='top-1/4 max-h-[calc(75%-(--spacing(12)))]'
 			>
 				<Command>
 					<CommandInput placeholder='Search for people or invoices…' />

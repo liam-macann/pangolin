@@ -92,7 +92,7 @@ export function ToggleHeader<TData, TValue>({
 			onClick={column.getToggleSortingHandler()}
 			variant='ghost'
 			size='sm'
-			className={cn('!bg-transparent !-mx-2 !px-2 h-7 gap-1', className)}
+			className={cn('-mx-2! h-7 gap-1 bg-transparent! px-2!', className)}
 		>
 			<span>{children || title}</span>
 			{(() => {
@@ -100,7 +100,7 @@ export function ToggleHeader<TData, TValue>({
 					case 'desc':
 						return <CaretDownIcon className='translate-y-[0.5px]' />;
 					case 'asc':
-						return <CaretUpIcon className='translate-y-[1px]' />;
+						return <CaretUpIcon className='translate-y-px' />;
 				}
 			})()}
 		</Button>

@@ -90,7 +90,7 @@ function SelectContent({
 					data-align-trigger={alignItemWithTrigger}
 					className={cn(
 						'group/select-popup relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-y-auto overflow-x-hidden rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-border data-closed:overflow-hidden',
-						'duration-150 ease-out-quint data-[ending-style]:opacity-0 data-[starting-style]:opacity-0 motion-safe:data-[ending-style]:scale-95 motion-safe:data-[starting-style]:scale-95 motion-safe:data-[ending-style]:blur-[2px] motion-safe:data-[starting-style]:blur-[2px]',
+						'duration-150 ease-out-quint data-ending-style:opacity-0 data-starting-style:opacity-0 motion-safe:data-ending-style:scale-95 motion-safe:data-starting-style:scale-95 motion-safe:data-ending-style:blur-[2px] motion-safe:data-starting-style:blur-[2px]',
 						className,
 					)}
 					{...props}
@@ -121,7 +121,7 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
 			className={cn(
 				"relative flex w-full cursor-default select-none items-center gap-2 rounded-sm py-1 pr-8 pl-2 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
 				// Fade items during popup enter/exit to disguise scale-in jitter
-				'transition-none group-data-[ending-style]/select-popup:opacity-50 group-data-[starting-style]/select-popup:opacity-50',
+				'transition-none group-data-ending-style/select-popup:opacity-50 group-data-starting-style/select-popup:opacity-50',
 				className,
 			)}
 			{...props}

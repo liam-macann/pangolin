@@ -50,13 +50,13 @@ export const ConnectForm = ({
 // COMPONENT WRAPPERS
 //
 export const AddressField = ({ className, ...props }: React.ComponentProps<typeof Field>) => (
-	<Field className={cn('!p-3 h-full gap-1', className)} {...props} />
+	<Field className={cn('h-full gap-1 p-3!', className)} {...props} />
 );
 
 export const AddressLabel = ({ className, ...props }: React.ComponentProps<typeof FieldLabel>) => (
 	<FieldLabel
 		className={cn(
-			'group-first/address-line:first:!rounded-tl-md group-first/address-line:last:!rounded-tr-md has-[>[data-slot=field]]:rounded-none',
+			'group-first/address-line:last:rounded-tr-md! group-first/address-line:first:rounded-tl-md! has-[>[data-slot=field]]:rounded-none',
 			'min-w-0',
 			'border-none focus-within:ring-2',
 			className,
@@ -81,7 +81,7 @@ export const AddressError = ({ className, ...props }: React.ComponentProps<typeo
 );
 
 const inputResetClass =
-	'border-none !ring-0 !bg-transparent rounded-none overflow-visible shadow-none p-0 h-auto';
+	'border-none ring-0! bg-transparent! rounded-none overflow-visible shadow-none p-0 h-auto';
 export const AddressInput = ({ className, ...props }: React.ComponentProps<typeof Input>) => (
 	<Input className={cn(inputResetClass, className)} {...props} />
 );
@@ -109,7 +109,7 @@ const StreetAddress = ({ disabled }: FieldProps) => {
 
 						return (
 							<AddressLabel htmlFor={id} className='relative basis-[200%]'>
-								<AddressField className='!pb-0.5' data-invalid={fieldState.invalid}>
+								<AddressField className='pb-0.5!' data-invalid={fieldState.invalid}>
 									<AddressContent>
 										<AddressTitle>Street Address</AddressTitle>
 										{fieldState.invalid && <AddressError errors={[fieldState.error]} />}
@@ -481,7 +481,7 @@ export const Country = ({ disabled }: Omit<FieldProps, 'metadata'>) => {
 						name='address.country'
 						render={({ field, fieldState }) => {
 							return (
-								<AddressLabel htmlFor={id} className='!rounded-b-md focus-within:z-10'>
+								<AddressLabel htmlFor={id} className='rounded-b-md! focus-within:z-10'>
 									<AddressField data-invalid={fieldState.invalid}>
 										<AddressContent>
 											<AddressTitle className='normal-case'>Country or Territory</AddressTitle>

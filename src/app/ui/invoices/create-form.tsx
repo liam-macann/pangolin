@@ -132,7 +132,7 @@ export function CreateInvoiceDialog({
 									<Field orientation='horizontal'>
 										<FieldLabel
 											htmlFor='title'
-											className='!grow-0 mt-4.5 -translate-y-1/2 self-start'
+											className='mt-4.5 grow-0! -translate-y-1/2 self-start'
 										>
 											Title
 										</FieldLabel>
@@ -148,7 +148,7 @@ export function CreateInvoiceDialog({
 							<Button
 								size='sm'
 								variant='ghost'
-								className='!-ml-3 text-muted-foreground'
+								className='-ml-3! text-muted-foreground'
 								nativeButton={false}
 								render={
 									<summary>
@@ -192,7 +192,7 @@ export function CreateInvoiceDialog({
 							className='mb-6'
 						/>
 
-						<DialogFooter className='!flex-row-reverse'>
+						<DialogFooter className='flex-row-reverse!'>
 							<Button variant='primary' type='submit'>
 								Submit
 							</Button>
@@ -252,7 +252,7 @@ function BillTo({ control }: { control: Control<z.input<typeof schema>> }) {
 			control={control}
 			render={({ field, fieldState }) => (
 				<Field orientation='horizontal'>
-					<FieldLabel htmlFor='clientId' className='!grow-0 mt-4.5 -translate-y-1/2 self-start'>
+					<FieldLabel htmlFor='clientId' className='mt-4.5 grow-0! -translate-y-1/2 self-start'>
 						Bill To
 					</FieldLabel>
 					<div className='flex grow flex-col items-end gap-1'>

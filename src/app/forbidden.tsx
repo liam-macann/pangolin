@@ -21,8 +21,8 @@ export default function UnauthorizedPage() {
 						<>
 							<Avatar className='size-14' image={null} />
 							<div className='flex animate-pulse flex-col'>
-								<p className='h-[1lh] w-32 scale-y-80 rounded bg-muted text-lg'></p>
-								<p className='h-[1lh] w-38 scale-y-80 rounded bg-muted'></p>
+								<p className='h-lh w-32 scale-y-80 rounded bg-muted text-lg'></p>
+								<p className='h-lh w-38 scale-y-80 rounded bg-muted'></p>
 							</div>
 						</>
 					}

@@ -56,7 +56,7 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 						<Input
 							id='tradingName'
 							{...field}
-							className='@xl/field-group:!w-96 @md/field-group:!w-72 max-w-full'
+							className='@md/field-group:w-72! @xl/field-group:w-96! max-w-full'
 						/>
 					</Field>
 				)}
@@ -78,7 +78,7 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 						<Input
 							id='email'
 							{...field}
-							className='@xl/field-group:!w-96 @md/field-group:!w-72 max-w-full'
+							className='@md/field-group:w-72! @xl/field-group:w-96! max-w-full'
 							placeholder='Optional'
 						/>
 					</Field>
@@ -101,7 +101,7 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 						<Input
 							id='phone'
 							{...field}
-							className='@xl/field-group:!w-96 @md/field-group:!w-72 max-w-full'
+							className='@md/field-group:w-72! @xl/field-group:w-96! max-w-full'
 							placeholder='Optional'
 						/>
 					</Field>
@@ -124,7 +124,7 @@ export function Details<T extends Fields>({ control: _control }: { control: Cont
 						<Textarea
 							id='header'
 							{...field}
-							className='@xl/field-group:!w-96 @md/field-group:!w-72 max-w-full'
+							className='@md/field-group:w-72! @xl/field-group:w-96! max-w-full'
 							placeholder='Optional'
 						/>
 					</Field>

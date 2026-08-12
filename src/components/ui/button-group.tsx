@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/ui/separator';
 
 const buttonGroupVariants = cva(
-	"*:!scale-100 flex w-fit items-stretch *:focus-visible:relative *:focus-visible:z-10 has-[>[data-slot=button-group]]:gap-2 has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-md [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
+	"flex w-fit items-stretch *:scale-100! *:focus-visible:relative *:focus-visible:z-10 has-[>[data-slot=button-group]]:gap-2 has-[select[aria-hidden=true]:last-child]:[&>[data-slot=select-trigger]:last-of-type]:rounded-r-md [&>[data-slot=select-trigger]:not([class*='w-'])]:w-fit [&>input]:flex-1",
 	{
 		variants: {
 			orientation: {
@@ -69,7 +69,7 @@ function ButtonGroupSeparator({
 			data-slot='button-group-separator'
 			orientation={orientation}
 			className={cn(
-				'!m-0 relative self-stretch bg-input data-horizontal:mx-px data-vertical:my-px data-vertical:h-auto data-horizontal:w-auto',
+				'relative m-0! self-stretch bg-input data-horizontal:mx-px data-vertical:my-px data-vertical:h-auto data-horizontal:w-auto',
 				className,
 			)}
 			{...props}
