@@ -34,9 +34,9 @@ import {
 	type KeyboardEvent,
 	type ReactNode,
 	useContext,
-	useState,
 } from 'react';
 
+import { useControllableState } from '@/lib/hooks/state';
 import { cn } from '@/lib/utils';
 
 import { Button } from '@/ui/button';
@@ -70,18 +70,31 @@ export function createDataTable<TData extends RowData>(
 ) {
 	const TableContext = createContext<ReactTable<DataTableFeatures, TData> | null>(null);
 
-	type PartialTableState = Omit<Partial<TableState<DataTableFeatures>>, 'pagination'> & {
-		pagination?: Partial<PaginationState>;
+	/** State slices managed by DataTable.Root with dedicated change callbacks. */
+	type ManagedTableState = {
+		globalFilter?: string;
+		sorting?: SortingState;
+		pagination?: PaginationState;
 	};
+
+	type UnmanagedTableState = Omit<Partial<TableState<DataTableFeatures>>, keyof ManagedTableState>;
+
+	/** Controlled table state with complete pagination when supplied. */
+	type DataTableState = UnmanagedTableState & ManagedTableState;
+	/** Initial table state (allowing partial pagination defaults) */
+	type DataTableInitialState = UnmanagedTableState &
+		Omit<ManagedTableState, 'pagination'> & {
+			pagination?: Partial<PaginationState>;
+		};
 
 	type DataTableRootProps = {
 		data: TData[];
 		children: React.ReactNode;
-		state?: PartialTableState;
-		initialState?: PartialTableState;
+		state?: DataTableState;
+		initialState?: DataTableInitialState;
 		onGlobalFilterChange?: (value: string) => void;
 		onSortingChange?: (sorting: SortingState) => void;
-		onPageIndexChange?: (pageIndex: number) => void;
+		onPaginationChange?: (pagination: PaginationState) => void;
 	} & Pick<
 		TableOptions<DataTableFeatures, TData>,
 		'enableSortingRemoval' | 'onColumnFiltersChange'
@@ -94,24 +107,30 @@ export function createDataTable<TData extends RowData>(
 		state: stateProp,
 		onGlobalFilterChange,
 		onSortingChange,
-		onPageIndexChange,
+		onPaginationChange,
 		...options
 	}: DataTableRootProps) {
-		const [globalFilterState, setGlobalFilterState] = useState(initialState.globalFilter ?? '');
-		const [sortingState, setSortingState] = useState<SortingState>(initialState.sorting ?? []);
-		/** Pass `Infinity` as `pageSize` to place every row on a single page */
-		const [pageSizeState, setPageSizeState] = useState(initialState.pagination?.pageSize ?? 20);
-		const [pageIndexState, setPageIndexState] = useState(initialState.pagination?.pageIndex ?? 0);
+		const [globalFilter, setGlobalFilter] = useControllableState({
+			value: stateProp?.globalFilter,
+			defaultValue: initialState.globalFilter ?? '',
+			onChange: onGlobalFilterChange,
+		});
 
-		const globalFilter =
-			stateProp?.globalFilter !== undefined ? stateProp.globalFilter : globalFilterState;
-		const sorting = stateProp?.sorting !== undefined ? stateProp.sorting : sortingState;
-		const pageSize =
-			stateProp?.pagination?.pageSize !== undefined ? stateProp.pagination.pageSize : pageSizeState;
-		const pageIndex =
-			stateProp?.pagination?.pageIndex !== undefined
-				? stateProp.pagination.pageIndex
-				: pageIndexState;
+		const [sorting, setSorting] = useControllableState({
+			value: stateProp?.sorting,
+			defaultValue: initialState.sorting ?? [],
+			onChange: onSortingChange,
+		});
+
+		const [pagination, setPagination] = useControllableState({
+			value: stateProp?.pagination,
+			defaultValue: {
+				// Pass `Infinity` as `pageSize` to place every row on a single page
+				pageSize: initialState.pagination?.pageSize ?? 20,
+				pageIndex: initialState.pagination?.pageIndex ?? 0,
+			},
+			onChange: onPaginationChange,
+		});
 
 		const table = useTable({
 			features: dataTableFeatures,
@@ -123,26 +142,18 @@ export function createDataTable<TData extends RowData>(
 			onGlobalFilterChange: val => {
 				table.setColumnFilters([]);
 				table.resetPageIndex();
-				if (stateProp?.globalFilter === undefined) setGlobalFilterState(val);
-				onGlobalFilterChange?.(val);
+				setGlobalFilter(val);
 			},
 
 			onSortingChange: updater => {
-				const next = typeof updater === 'function' ? updater(sorting) : updater;
 				table.resetPageIndex();
-				if (stateProp?.sorting === undefined) setSortingState(next);
-				onSortingChange?.(next);
+				setSorting(updater);
 			},
 
-			onPaginationChange: updater => {
-				const next = typeof updater === 'function' ? updater({ pageSize, pageIndex }) : updater;
-				if (stateProp?.pagination?.pageSize === undefined) setPageSizeState(next.pageSize);
-				if (stateProp?.pagination?.pageIndex === undefined) setPageIndexState(next.pageIndex);
-				onPageIndexChange?.(next.pageIndex);
-			},
+			onPaginationChange: setPagination,
 
 			...options,
-			state: { ...stateProp, globalFilter, sorting, pagination: { pageSize, pageIndex } },
+			state: { ...stateProp, globalFilter, sorting, pagination },
 			initialState: {
 				...initialState,
 				pagination: {

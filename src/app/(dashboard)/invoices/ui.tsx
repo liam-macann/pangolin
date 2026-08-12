@@ -112,12 +112,14 @@ export function Table({
 			initialState={{
 				sorting: parseSortParam(searchParams.get('sort')),
 				pagination: { pageIndex: pageParam > 1 ? pageParam - 1 : 0 },
-				globalFilter: searchParams.get('q'),
+				globalFilter: searchParams.get('q') ?? undefined,
 				...(clientParam && { columnFilters: [{ id: 'clientId', value: clientParam }] }),
 			}}
 			onGlobalFilterChange={q => updateParams({ q, client: null })}
 			onSortingChange={next => updateParams({ sort: serializeSortParam(next) })}
-			onPageIndexChange={index => updateParams({ page: index === 0 ? null : String(index + 1) })}
+			onPaginationChange={({ pageIndex }) =>
+				updateParams({ page: pageIndex === 0 ? null : String(pageIndex + 1) })
+			}
 		>
 			<TableContent data={invoices} config={config} />
 		</InvoiceTable.Root>
