@@ -11,6 +11,7 @@
 		"lint": "biome lint",
 		"format": "biome format --write",
 		"check": "biome check --write",
+		"typecheck": "next typegen && tsc --noEmit",
 		"prepare": "husky",
 		"db:seed": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" node --import tsx --env-file=.env.local ./scripts/seed.ts",
 		"db:view": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" pnpm exec drizzle-kit studio",
