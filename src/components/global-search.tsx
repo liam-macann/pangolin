@@ -10,7 +10,6 @@ import { useCommandState } from 'cmdk';
 import { useRouter } from 'next/navigation';
 import { type ComponentProps, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { toast } from 'sonner';
 
 import { useClients, useConfig, useInvoices, useKeyPress, usePrevious } from '@/lib/hooks';
 import { pluralize } from '@/lib/utils';
@@ -27,6 +26,7 @@ import {
 	CommandList,
 } from '@/ui/command';
 import { Kbd } from '@/ui/kbd';
+import { toast } from '@/ui/toast';
 
 function GlobalSearch() {
 	const [open, setOpen] = useState(false);

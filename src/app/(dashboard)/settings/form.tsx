@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { type CountryCode } from 'lib-address';
 import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { updateUserConfig } from '@/lib/actions/config';
@@ -13,6 +12,7 @@ import { rateToPercent } from '@/lib/utils';
 import { configFields, config as configSchema } from '@/lib/validation/config';
 
 import { Button } from '@/ui/button';
+import { toast } from '@/ui/toast';
 import { TextTooltip } from '@/ui/tooltip';
 
 // Form sections

@@ -3,12 +3,12 @@
 import { ArrowUpRightIcon } from '@phosphor-icons/react';
 import { unstable_rethrow } from 'next/navigation';
 import { type ComponentProps, useState } from 'react';
-import { toast } from 'sonner';
 
 import { signIn } from '@/lib/auth';
 
 import { Button } from '@/ui/button';
 import { Spinner } from '@/ui/spinner';
+import { toast } from '@/ui/toast';
 
 export function LoginButton({
 	callbackURL,

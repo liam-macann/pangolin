@@ -3,7 +3,6 @@
 import { ChatTextIcon, DotsThreeIcon } from '@phosphor-icons/react';
 import { type Row } from '@tanstack/react-table';
 import { type ComponentProps, useId } from 'react';
-import { toast } from 'sonner';
 
 import { setInvoiceNotes, voidInvoice } from '@/lib/actions/invoice';
 import { patchStatus, useMutateInvoice } from '@/lib/hooks';
@@ -31,6 +30,7 @@ import {
 } from '@/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
 import { Textarea } from '@/ui/textarea';
+import { toast } from '@/ui/toast';
 
 import { type Invoice } from './../columns';
 

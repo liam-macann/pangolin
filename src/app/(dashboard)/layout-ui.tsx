@@ -2,7 +2,6 @@
 
 import * as Sentry from '@sentry/nextjs';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 import { Button } from '@/ui/button';
 import {
@@ -11,6 +10,7 @@ import {
 	DropdownMenuSubContentTextarea,
 	DropdownMenuSubTrigger,
 } from '@/ui/dropdown-menu';
+import { toast } from '@/ui/toast';
 
 export function FeedbackSubmenu({ name, email }: { name: string; email: string }) {
 	const [value, setValue] = useState('');

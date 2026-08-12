@@ -8,7 +8,6 @@ import { addDays } from 'date-fns';
 import { type ComponentProps, type ReactElement, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { type Control, Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { type z } from 'zod';
 
 import { createInvoice } from '@/lib/actions/invoice';
@@ -54,6 +53,7 @@ import {
 	DialogTrigger,
 } from '@/ui/responsive-dialog';
 import { Textarea } from '@/ui/textarea';
+import { toast } from '@/ui/toast';
 
 import { LineItemsField } from './line-items';
 

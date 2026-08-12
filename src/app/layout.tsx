@@ -6,7 +6,7 @@ import { Provider } from 'react-wrap-balancer';
 import { SWRConfig } from 'swr';
 
 import { DisableThemeTransitions } from '@/components/disable-theme-transitions';
-import { Toaster } from '@/ui/sonner';
+import { Toaster } from '@/ui/toast';
 import { TooltipProvider } from '@/ui/tooltip';
 
 import { InstrumentSans } from '@/src/app/ui/fonts';
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 							<DisableThemeTransitions />
 							<Provider>
 								{children}
-								<Toaster />
+								<Toaster timeout={4000} />
 							</Provider>
 						</body>
 					</MotionConfig>

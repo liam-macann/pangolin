@@ -12,7 +12,6 @@ import {
 	useForm,
 	useFormState,
 } from 'react-hook-form';
-import { toast } from 'sonner';
 import z from 'zod/v4';
 
 import { createClient, updateClient } from '@/lib/actions/client';
@@ -45,6 +44,7 @@ import {
 	DialogTrigger,
 } from '@/ui/responsive-dialog';
 import { Switch } from '@/ui/switch';
+import { toast } from '@/ui/toast';
 
 /** Uses local addressEnabled flag to toggle address validation, and drops it after parsing */
 const formSchema = schema

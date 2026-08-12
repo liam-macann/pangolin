@@ -1,12 +1,13 @@
 'use client';
 
 import { redirect } from 'next/navigation';
-import { toast } from 'sonner';
 import type z from 'zod/v4';
 import { create } from 'zustand';
 
 import { updateUserConfig } from '@/lib/actions/config';
 import { configFields as config } from '@/lib/validation/config';
+
+import { toast } from '@/ui/toast';
 
 type Config = z.input<typeof config>;
 
@@ -58,9 +59,9 @@ export const useOnboardingStore = create<OnboardingStore>((set, get) => ({
 		await toast
 			.promise(updateUserConfig(data), {
 				loading: 'Getting ready for you...',
+				success: 'Getting ready for you...',
 				error: 'Something went wrong. Please double-check your information and try again.',
 			})
-			.unwrap()
 			.then(
 				() => redirect('/dashboard'),
 				// API error

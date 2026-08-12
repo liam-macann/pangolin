@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { type ComponentProps, type JSX } from 'react';
-import { toast } from 'sonner';
 
 import { type Data as Client } from '@/api/clients/[id]/route';
 import { updateClientDeleted, updateClientFavorite } from '@/lib/actions/client';
@@ -15,6 +14,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
+import { toast } from '@/ui/toast';
 
 export function useClientActions(client: Client) {
 	const { mutate } = useMutateClient(client.id);
@@ -38,15 +38,20 @@ export function useClientActions(client: Client) {
 		const mutation = { ...client, isDeleted: v };
 
 		const toastId = `archive-${client.id}`;
-		toast.loading(`${v ? 'Archiving' : 'Restoring'} client…`, { id: toastId, action: undefined });
+		toast.loading({
+			title: `${v ? 'Archiving' : 'Restoring'} client…`,
+			id: toastId,
+			actionProps: undefined,
+		});
 
 		const promise = updateClientDeleted(id, v)
 			.then(() =>
-				toast.success(`${client.data.name} ${v ? 'archived' : 'restored'}`, {
+				toast.success({
+					title: `${client.data.name} ${v ? 'archived' : 'restored'}`,
 					id: toastId,
-					action: v
+					actionProps: v
 						? {
-								label: 'Undo',
+								children: 'Undo',
 								onClick: e => {
 									e.preventDefault();
 									setArchived(!v);
@@ -56,7 +61,7 @@ export function useClientActions(client: Client) {
 				}),
 			)
 			.catch(err => {
-				toast.error('Failed to archive client. Please try again later.', { id: toastId });
+				toast.error({ title: 'Failed to archive client. Please try again later.', id: toastId });
 				throw err;
 			});
 

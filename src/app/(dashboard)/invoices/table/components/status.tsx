@@ -5,7 +5,6 @@ import { type Row } from '@tanstack/react-table';
 import { cva } from 'class-variance-authority';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { type ComponentProps } from 'react';
-import { toast } from 'sonner';
 
 import { updateInvoiceStatus } from '@/lib/actions/invoice';
 import { patchStatus, useAsyncStatus, useMutateInvoice } from '@/lib/hooks';
@@ -21,6 +20,7 @@ import {
 	SelectValue,
 } from '@/ui/select';
 import { Spinner } from '@/ui/spinner';
+import { toast } from '@/ui/toast';
 
 import { type Invoice } from './../columns';
 
