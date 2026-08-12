@@ -37,7 +37,7 @@ describe('Sortable', () => {
 		const target = screen.getByRole('button', { name: 'Reorder item' }).nth(1);
 		await commands.dragWithAnimation(handle.selector, target.selector);
 
-		expect(onReorder).toHaveBeenCalledTimes(1);
+		await expect.poll(() => onReorder).toHaveBeenCalledTimes(1);
 		expect(onReorder).toHaveBeenCalledWith(expect.objectContaining({ initialIndex: 0, index: 1 }));
 	});
 });

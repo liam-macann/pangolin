@@ -157,9 +157,11 @@ describe('AddressInput', () => {
 
 		await userEvent.click(country);
 		await userEvent.fill(country, 'Canada');
-		await userEvent.click(screen.getByRole('option', { name: 'Canada' }));
+		const option = screen.getByRole('option', { name: 'Canada' });
+		await expect.element(option).toBeVisible();
+		await userEvent.click(option);
 
-		expect(useAddressMetadata.mock.lastCall?.[0]).toBe('CA');
+		await expect.poll(() => useAddressMetadata.mock.lastCall?.[0]).toBe('CA');
 
 		await expect.element(country).toHaveValue('Canada');
 		await expect
@@ -205,7 +207,9 @@ describe('AddressInput', () => {
 
 			await userEvent.click(country);
 			await userEvent.fill(country, 'United States');
-			await userEvent.click(screen.getByRole('option', { name: 'United States' }));
+			const option = screen.getByRole('option', { name: 'United States' });
+			await expect.element(option).toBeVisible();
+			await userEvent.click(option);
 
 			expect(useAddressMetadata.mock.lastCall?.[0]).toBe(testCountries.withSubregion);
 			await expect.element(getAddressField(screen, 'administrativeArea')).toHaveValue('');

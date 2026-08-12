@@ -39,6 +39,7 @@ export default defineConfig({
 		tsconfigPaths: true,
 	},
 	test: {
+		silent: 'passed-only',
 		setupFiles: ['./src/test/setup.ts'],
 		clearMocks: true,
 		coverage: {

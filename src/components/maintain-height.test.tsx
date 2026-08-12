@@ -21,6 +21,20 @@ const renderMaintainHeight = async (
 	return { ...result, root: root as HTMLElement };
 };
 
+const setInitialViewport = async (width: number, height: number) => {
+	// page.viewport() resolves before browser actually dispatches the `resize` event
+	// Without waiting for it here, that event can arrive at an unpredictable later point
+	const resized = new Promise<void>(resolve => {
+		window.addEventListener('resize', () => resolve(), { once: true });
+	});
+
+	await page.viewport(width, height);
+
+	// If the viewport is already the requested size (eg. from prior test)
+	// then exit after timeout
+	await Promise.race([resized, new Promise(resolve => setTimeout(resolve, 100))]);
+};
+
 const mockViewport = async ({
 	top,
 	height,
@@ -89,7 +103,7 @@ describe.for([
 	['scrollend', async (top: number) => window.scrollTo(0, top), SCROLLEND_SHRINK_POSITION],
 ] as const)('%s event', ([, triggerEvent, shrinkTarget]) => {
 	test('Expands the minimum height to match taller content', async () => {
-		await page.viewport(VIEWPORT_WIDTH, 300);
+		await setInitialViewport(VIEWPORT_WIDTH, 300);
 
 		const { root, rerender } = await renderMaintainHeight(<div style={{ height: 100 }} />, {
 			marginBottom: 400,
@@ -110,7 +124,7 @@ describe.for([
 	});
 
 	test('Shrinks the minimum height when excess height exits the viewport', async () => {
-		await page.viewport(VIEWPORT_WIDTH, 800);
+		await setInitialViewport(VIEWPORT_WIDTH, 800);
 
 		const { root, rerender } = await renderMaintainHeight(<div style={{ height: 400 }} />, {
 			marginBottom: 400,

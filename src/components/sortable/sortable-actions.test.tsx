@@ -33,7 +33,14 @@ describe('SortableActions', () => {
 			</Sortable>,
 		);
 
-		await screen.getByRole('button', { name: 'Actions' }).first().click();
+		const trigger = screen.getByRole('button', { name: 'Actions' }).first();
+
+		await expect
+			.poll(async () => {
+				await userEvent.click(trigger);
+				return trigger.element().getAttribute('aria-expanded');
+			})
+			.toBe('true');
 
 		await expect
 			.element(screen.getByRole('button', { name: 'Delete "First item"' }))
