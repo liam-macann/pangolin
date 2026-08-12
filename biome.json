@@ -61,35 +61,33 @@
 						},
 						"patterns": [
 							{
+								"group": ["**/index", "!**/./index", "!**/../index"],
+								"message": "Import from the parent directory, not the index file."
+							},
+							{
 								"group": ["../**"],
 								"message": "Do not use relative parent imports. Use defined TS aliases (e.g., @/components/*) instead."
 							},
-
 							{
 								"group": ["@vitest/browser-playwright/**"],
 								"message": "Do not import directly from Playwright provider. Prefer vitest/browser exports instead."
 							},
-
 							{
 								"group": ["@/components/ui/**"],
 								"message": "Prefer using @/ui alias directly."
 							},
-
 							{
 								"group": ["@/src/test/**"],
 								"message": "Prefer using @/test alias directly."
 							},
-
 							{
 								"group": ["@uidotdev/usehooks"],
 								"message": "Prefer importing from @/lib/hooks"
 							},
-
 							{
 								"group": ["usehooks-ts"],
 								"message": "Prefer importing from @/lib/hooks"
 							},
-
 							{
 								"group": ["@/ui/dialog"],
 								"message": "You may want to use @/ui/responsive-dialog"

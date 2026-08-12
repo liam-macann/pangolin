@@ -4,7 +4,7 @@ import { Avatar as AvatarPrimitive } from '@base-ui/react/avatar';
 import { UserIcon } from '@phosphor-icons/react';
 import type * as React from 'react';
 
-import { cn } from '@/lib/utils/index';
+import { cn } from '@/lib/utils';
 
 function Avatar({
 	className,

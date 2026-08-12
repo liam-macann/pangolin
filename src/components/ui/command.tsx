@@ -4,7 +4,7 @@ import { CheckIcon, MagnifyingGlassIcon } from '@phosphor-icons/react';
 import { Command as CommandPrimitive } from 'cmdk';
 import type * as React from 'react';
 
-import { cn } from '@/lib/utils/index';
+import { cn } from '@/lib/utils';
 
 // biome-ignore lint/style/noRestrictedImports: This should display as a dialog on mobile
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/ui/dialog';
