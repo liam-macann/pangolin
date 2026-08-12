@@ -1,6 +1,6 @@
 import { getTimeZones } from '@vvo/tzdb';
 import { getCountryDataList } from 'countries-list';
-import { createInsertSchema } from 'drizzle-zod';
+import { createInsertSchema } from 'drizzle-orm/zod';
 import z from 'zod/v4';
 
 import { currencies } from '@/lib/utils/currencies';
