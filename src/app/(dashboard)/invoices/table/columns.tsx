@@ -1,4 +1,3 @@
-'use no memo';
 'use client';
 
 import { TZDate } from '@date-fns/tz';
@@ -10,6 +9,7 @@ import { cn, type ElementType } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
 import { formatDate } from '@/lib/utils/date';
 
+import { type DataTableFeatures } from '@/components/data-table';
 import { ToggleHeader } from '@/components/data-table/column-header';
 
 import { LocaleContext } from '.';
@@ -19,11 +19,11 @@ import { StatusSelect } from './components/status';
 export type Invoice = ElementType<InvoiceData>;
 
 /** Column definitions for invoices */
-export const columns: ColumnDef<Invoice>[] = [
+export const columns: ColumnDef<DataTableFeatures, Invoice>[] = [
 	{
 		accessorKey: 'reference',
 		// Numeric sorting faster than alphanumeric, and works across all numbering schemes
-		sortingFn: (a, b) => {
+		sortFn: (a, b) => {
 			const iA = a.original.index;
 			const iB = b.original.index;
 			return iA > iB ? 1 : iA < iB ? -1 : 0;
@@ -106,7 +106,7 @@ export const columns: ColumnDef<Invoice>[] = [
 				</span>
 			);
 		},
-		sortingFn: 'datetime',
+		sortFn: 'datetime',
 		size: 150,
 	},
 	{
@@ -117,7 +117,7 @@ export const columns: ColumnDef<Invoice>[] = [
 			</div>
 		),
 		cell: ({ row }) => <FormatPrice className='text-right' row={row} />,
-		sortingFn: (a, b) => {
+		sortFn: (a, b) => {
 			const iA = a.original.grossTotal;
 			const iB = b.original.grossTotal;
 			return iA > iB ? 1 : iA < iB ? -1 : 0;
@@ -143,7 +143,11 @@ export const columns: ColumnDef<Invoice>[] = [
 	},
 ];
 
-function FormatPrice({ row, className, ...props }: { row: Row<Invoice> } & ComponentProps<'div'>) {
+function FormatPrice({
+	row,
+	className,
+	...props
+}: { row: Row<DataTableFeatures, Invoice> } & ComponentProps<'div'>) {
 	const locale = useContext(LocaleContext);
 	const scribbleSize = '6rem';
 

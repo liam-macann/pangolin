@@ -1,4 +1,3 @@
-'use no memo';
 'use client';
 
 import { type ColumnDef, type SortingState } from '@tanstack/react-table';
@@ -9,7 +8,7 @@ import { type Data as InvoiceData } from '@/api/invoices/route';
 import { type fetchConfig } from '@/lib/data';
 import { cn, type ElementType } from '@/lib/utils';
 
-import { createDataTable } from '@/components/data-table';
+import { createDataTable, type DataTableFeatures } from '@/components/data-table';
 
 import { columns } from './columns';
 import { usePlaceholderInvoices } from './placeholder-data';
@@ -20,7 +19,7 @@ export const DEFAULT_SORT: SortingState = [{ id: 'reference', desc: true }];
 type Invoice = ElementType<InvoiceData>;
 
 /** Component factory that returns preconfigured defaults for Invoice data. Useful if omitting columns from the exported definition. */
-export function createInvoiceTable<TValue>(cols: ColumnDef<Invoice, TValue>[] = columns) {
+export function createInvoiceTable(cols: ColumnDef<DataTableFeatures, Invoice>[] = columns) {
 	const FactoryDataTable = createDataTable(cols);
 
 	const Root = ({
@@ -90,7 +89,7 @@ export function createInvoiceTable<TValue>(cols: ColumnDef<Invoice, TValue>[] = 
 		const table = useContext(FactoryDataTable.Context);
 		if (!table) throw new Error('Search must be used within a DataTable.Root');
 
-		const clientFilter = table.getState().columnFilters.find(f => f.id === 'clientId');
+		const clientFilter = table.state.columnFilters.find(f => f.id === 'clientId');
 		const clientId = clientFilter ? String(clientFilter.value) : null;
 
 		const clientName = clientId

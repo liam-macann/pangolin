@@ -1,20 +1,30 @@
-'use no memo';
 'use client';
 
 import { CaretLeftIcon, CaretRightIcon, MagnifyingGlassIcon } from '@phosphor-icons/react';
 import {
 	type Cell,
 	type ColumnDef,
-	flexRender,
-	getCoreRowModel,
-	getFilteredRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
+	columnFilteringFeature,
+	columnSizingFeature,
+	columnVisibilityFeature,
+	createFilteredRowModel,
+	createPaginatedRowModel,
+	createSortedRowModel,
+	filterFn_equals,
+	globalFilteringFeature,
+	metaHelper,
+	type PaginationState,
+	type ReactTable,
+	type RowData,
+	rowPaginationFeature,
+	rowSortingFeature,
 	type SortingState,
+	sortFn_datetime,
+	sortFn_text,
 	type TableOptions,
 	type TableState,
-	type Table as TanstackTable,
-	useReactTable,
+	tableFeatures,
+	useTable,
 } from '@tanstack/react-table';
 import {
 	type ComponentProps,
@@ -34,31 +44,53 @@ import { ButtonGroup } from '@/ui/button-group';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
 
-declare module '@tanstack/react-table' {
-	interface ColumnMeta<TData, TValue> {
-		className?: string;
-	}
-}
+export const dataTableFeatures = tableFeatures({
+	columnFilteringFeature,
+	globalFilteringFeature,
+	rowSortingFeature,
+	rowPaginationFeature,
+	columnVisibilityFeature,
+	columnSizingFeature,
+
+	filteredRowModel: createFilteredRowModel(),
+	sortedRowModel: createSortedRowModel(),
+	paginatedRowModel: createPaginatedRowModel(),
+
+	filterFns: { equals: filterFn_equals },
+	sortFns: { datetime: sortFn_datetime, text: sortFn_text },
+
+	columnMeta: metaHelper<{ className?: string }>(),
+});
+
+export type DataTableFeatures = typeof dataTableFeatures;
 
 /** Component factory, to create a typed data table */
-export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>[]) {
-	const TableContext = createContext<TanstackTable<TData> | null>(null);
+export function createDataTable<TData extends RowData>(
+	columns: ColumnDef<DataTableFeatures, TData>[],
+) {
+	const TableContext = createContext<ReactTable<DataTableFeatures, TData> | null>(null);
+
+	type PartialTableState = Omit<Partial<TableState<DataTableFeatures>>, 'pagination'> & {
+		pagination?: Partial<PaginationState>;
+	};
 
 	type DataTableRootProps = {
 		data: TData[];
 		children: React.ReactNode;
-		pagination?: number | false;
-		state?: Partial<TableState>;
+		state?: PartialTableState;
+		initialState?: PartialTableState;
 		onGlobalFilterChange?: (value: string) => void;
 		onSortingChange?: (sorting: SortingState) => void;
 		onPageIndexChange?: (pageIndex: number) => void;
-	} & Pick<TableOptions<TData>, 'initialState' | 'enableSortingRemoval' | 'onColumnFiltersChange'>;
+	} & Pick<
+		TableOptions<DataTableFeatures, TData>,
+		'enableSortingRemoval' | 'onColumnFiltersChange'
+	>;
 
 	function Root({
 		data,
 		initialState = {},
 		children,
-		pagination = 20,
 		state: stateProp,
 		onGlobalFilterChange,
 		onSortingChange,
@@ -67,26 +99,24 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 	}: DataTableRootProps) {
 		const [globalFilterState, setGlobalFilterState] = useState(initialState.globalFilter ?? '');
 		const [sortingState, setSortingState] = useState<SortingState>(initialState.sorting ?? []);
-
-		const pageSize = typeof pagination === 'number' ? pagination : 20;
+		/** Pass `Infinity` as `pageSize` to place every row on a single page */
+		const [pageSizeState, setPageSizeState] = useState(initialState.pagination?.pageSize ?? 20);
 		const [pageIndexState, setPageIndexState] = useState(initialState.pagination?.pageIndex ?? 0);
 
 		const globalFilter =
 			stateProp?.globalFilter !== undefined ? stateProp.globalFilter : globalFilterState;
 		const sorting = stateProp?.sorting !== undefined ? stateProp.sorting : sortingState;
+		const pageSize =
+			stateProp?.pagination?.pageSize !== undefined ? stateProp.pagination.pageSize : pageSizeState;
 		const pageIndex =
 			stateProp?.pagination?.pageIndex !== undefined
 				? stateProp.pagination.pageIndex
 				: pageIndexState;
 
-		const table = useReactTable({
+		const table = useTable({
+			features: dataTableFeatures,
 			data,
 			columns,
-
-			getCoreRowModel: getCoreRowModel(),
-			getFilteredRowModel: getFilteredRowModel(),
-			getSortedRowModel: getSortedRowModel(),
-			...(pagination !== false && { getPaginationRowModel: getPaginationRowModel() }),
 
 			/** Prevent page reset on data revalidation */
 			autoResetPageIndex: false,
@@ -106,6 +136,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 
 			onPaginationChange: updater => {
 				const next = typeof updater === 'function' ? updater({ pageSize, pageIndex }) : updater;
+				if (stateProp?.pagination?.pageSize === undefined) setPageSizeState(next.pageSize);
 				if (stateProp?.pagination?.pageIndex === undefined) setPageIndexState(next.pageIndex);
 				onPageIndexChange?.(next.pageIndex);
 			},
@@ -114,7 +145,10 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 			state: { ...stateProp, globalFilter, sorting, pagination: { pageSize, pageIndex } },
 			initialState: {
 				...initialState,
-				pagination: { ...initialState.pagination, pageSize },
+				pagination: {
+					pageIndex: initialState.pagination?.pageIndex ?? 0,
+					pageSize: initialState.pagination?.pageSize ?? 20,
+				},
 			},
 		});
 
@@ -147,7 +181,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		 * ```
 		 */
 		getCellAttr?: (
-			cell: Cell<TData, unknown>,
+			cell: Cell<DataTableFeatures, TData, unknown>,
 			i: number,
 		) => Omit<
 			DetailedHTMLProps<HTMLAttributes<HTMLTableCellElement>, HTMLTableCellElement> & {
@@ -165,7 +199,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		...props
 	}: DataTableProps &
 		Omit<ComponentProps<typeof Table>, 'children'> & {
-			children?: (table: TanstackTable<TData>) => ReactNode;
+			children?: (table: ReactTable<DataTableFeatures, TData>) => ReactNode;
 		}) {
 		const table = useContext(TableContext);
 		if (table === null) throw new Error('Content must be used within a DataTable.Root');
@@ -188,9 +222,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 										key={header.id}
 										className={header.column.columnDef.meta?.className}
 									>
-										{header.isPlaceholder
-											? null
-											: flexRender(header.column.columnDef.header, header.getContext())}
+										{header.isPlaceholder ? null : <table.FlexRender header={header} />}
 									</TableHead>
 								);
 							})}
@@ -202,7 +234,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 						table.getRowModel().rows.map((row, i) => (
 							<TableRow
 								key={row.id}
-								data-state={row.getIsSelected() && 'selected'}
+								// data-state={row.getIsSelected() && 'selected'}
 								{...getRowAttr?.(row.original, i)}
 							>
 								{row.getVisibleCells().map((cell, i) => {
@@ -214,7 +246,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 											{...props}
 											className={cn(props?.className, cell.column.columnDef.meta?.className)}
 										>
-											{flexRender(cell.column.columnDef.cell, cell.getContext())}
+											<table.FlexRender cell={cell} />
 										</TableCell>
 									);
 								})}
@@ -228,7 +260,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 							>
 								<div className='flex flex-col items-center gap-3'>
 									<span>No results</span>
-									{(table.getState().globalFilter || table.getState().columnFilters.length > 0) && (
+									{(table.state.globalFilter || table.state.columnFilters.length > 0) && (
 										<Button
 											variant='secondary'
 											onClick={() => {
@@ -275,7 +307,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 						className='bg-secondary px-2 font-medium text-muted-foreground text-sm tabular-nums'
 						onClick={() => table.resetPageIndex(true)}
 					>
-						{table.getState().pagination.pageIndex + 1}
+						{table.state.pagination.pageIndex + 1}
 					</Button>
 					<Button
 						variant='secondary'
@@ -299,7 +331,10 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 		onKeyDown,
 		...props
 	}: Omit<ComponentProps<typeof InputGroup>, 'onKeyDown'> & {
-		onKeyDown?: (e: KeyboardEvent<HTMLInputElement>, table: TanstackTable<TData>) => void;
+		onKeyDown?: (
+			e: KeyboardEvent<HTMLInputElement>,
+			table: ReactTable<DataTableFeatures, TData>,
+		) => void;
 	} & Pick<ComponentProps<typeof InputGroupInput>, 'placeholder' | 'value'>) {
 		const table = useContext(TableContext);
 		if (table === null) throw new Error('Search must be used within a DataTable.Root');
@@ -312,7 +347,7 @@ export function createDataTable<TData, TValue>(columns: ColumnDef<TData, TValue>
 				<InputGroupInput
 					aria-label='Search'
 					placeholder={placeholder ?? 'Search…'}
-					value={value ?? table.getState().globalFilter}
+					value={value ?? table.state.globalFilter}
 					onChange={e => {
 						onChange?.(e);
 						table.setGlobalFilter(e.target.value);

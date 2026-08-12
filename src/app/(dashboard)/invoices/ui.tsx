@@ -66,8 +66,6 @@ export function Table({
 	initial?: Invoice[];
 	initialConfig: Awaited<ReturnType<typeof fetchConfig>>;
 }) {
-	'use no memo';
-
 	const { data: config } = useConfig(initialConfig, { suspense: true });
 	const { data: invoices } = useInvoices(initial, { suspense: true });
 
@@ -133,8 +131,6 @@ function TableContent({
 	data: Invoice[];
 	config: Awaited<ReturnType<typeof fetchConfig>>;
 }) {
-	'use no memo';
-
 	return (
 		<>
 			<div className='my-4 mb-6 flex items-center justify-between gap-3 md:mt-8'>

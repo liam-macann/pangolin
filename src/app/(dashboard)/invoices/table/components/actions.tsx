@@ -7,6 +7,7 @@ import { type ComponentProps, useId } from 'react';
 import { setInvoiceNotes, voidInvoice } from '@/lib/actions/invoice';
 import { patchStatus, useMutateInvoice } from '@/lib/hooks';
 
+import { type DataTableFeatures } from '@/components/data-table';
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -34,7 +35,7 @@ import { toast } from '@/ui/toast';
 
 import { type Invoice } from './../columns';
 
-export function OverflowMenu({ row }: { row: Row<Invoice> }) {
+export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) {
 	const invoice = row.original;
 
 	const { mutate } = useMutateInvoice(invoice.id);

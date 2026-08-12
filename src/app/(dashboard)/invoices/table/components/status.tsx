@@ -10,6 +10,7 @@ import { updateInvoiceStatus } from '@/lib/actions/invoice';
 import { patchStatus, useAsyncStatus, useMutateInvoice } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 
+import { type DataTableFeatures } from '@/components/data-table';
 import {
 	Select,
 	SelectContent,
@@ -45,7 +46,7 @@ export function StatusSelect({
 	row,
 	className,
 	...props
-}: { row: Row<Invoice> } & ComponentProps<typeof SelectTrigger>) {
+}: { row: Row<DataTableFeatures, Invoice> } & ComponentProps<typeof SelectTrigger>) {
 	const invoice = row.original;
 	const status = invoice.status.status;
 

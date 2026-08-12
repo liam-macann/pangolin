@@ -1,4 +1,3 @@
-'use no memo';
 'use client';
 
 import {
@@ -7,11 +6,12 @@ import {
 	CaretUpIcon,
 	EyeSlashIcon,
 } from '@phosphor-icons/react/ssr';
-import { type Column } from '@tanstack/react-table';
+import { type Column, type RowData } from '@tanstack/react-table';
 import { type ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
 
+import { type DataTableFeatures } from '@/components/data-table';
 import { Button } from '@/ui/button';
 import {
 	DropdownMenu,
@@ -21,12 +21,13 @@ import {
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
 
-interface DataTableColumnHeaderProps<TData, TValue> extends React.HTMLAttributes<HTMLDivElement> {
-	column: Column<TData, TValue>;
+interface DataTableColumnHeaderProps<TData extends RowData, TValue>
+	extends React.HTMLAttributes<HTMLDivElement> {
+	column: Column<DataTableFeatures, TData, TValue>;
 	title: string;
 }
 
-export function DropdownHeader<TData, TValue>({
+export function DropdownHeader<TData extends RowData, TValue>({
 	column,
 	title,
 	className,
@@ -72,7 +73,7 @@ export function DropdownHeader<TData, TValue>({
 	);
 }
 
-export function ToggleHeader<TData, TValue>({
+export function ToggleHeader<TData extends RowData, TValue>({
 	column,
 	title,
 	className,

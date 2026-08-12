@@ -40,7 +40,11 @@ export function Table({
 
 	return (
 		<>
-			<DataTable.Root pagination={false} data={invoices.slice(0, limit)} {...props}>
+			<DataTable.Root
+				initialState={{ pagination: { pageSize: limit } }}
+				data={invoices.slice(0, limit)}
+				{...props}
+			>
 				<DataTable.Content />
 			</DataTable.Root>
 

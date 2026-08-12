@@ -11,7 +11,7 @@ import { type Data as ClientData } from '@/api/clients/route';
 import { useClients } from '@/lib/hooks';
 import { cn, type ElementType } from '@/lib/utils';
 
-import { createDataTable } from '@/components/data-table';
+import { createDataTable, type DataTableFeatures } from '@/components/data-table';
 import { MaintainHeight } from '@/components/maintain-height';
 import { Button } from '@/ui/button';
 import {
@@ -69,7 +69,7 @@ export function Clients({ initial }: { initial: Client[] }) {
 	);
 }
 
-const columns: ColumnDef<Client>[] = [
+const columns: ColumnDef<DataTableFeatures, Client>[] = [
 	{
 		accessorKey: 'isFavorite',
 		id: 'isFavorite',
@@ -96,8 +96,6 @@ const columns: ColumnDef<Client>[] = [
 const ClientTable = createDataTable(columns);
 
 function Table({ data }: { data: Client[] }) {
-	'use no memo';
-
 	const router = useRouter();
 
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
@@ -109,7 +107,7 @@ function Table({ data }: { data: Client[] }) {
 	return (
 		<ClientTable.Root
 			data={data}
-			pagination={40}
+			initialState={{ pagination: { pageSize: 40 } }}
 			state={{
 				columnFilters,
 			}}
@@ -143,7 +141,7 @@ function Table({ data }: { data: Client[] }) {
 											className={cn(
 												i === 0 &&
 													isFiltering &&
-													table.getState().globalFilter !== '' &&
+													table.state.globalFilter !== '' &&
 													'[&>a]:border-ring [&>a]:ring-2',
 											)}
 											style={{ zIndex: table.getRowCount() - i }}
