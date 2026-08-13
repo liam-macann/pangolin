@@ -9,7 +9,7 @@ import type z from 'zod/v4';
 import { cleanupAddresses, cleanupClientData } from '@/lib/actions/utils';
 import { crypto } from '@/lib/encrypt';
 import { isAddressEqual } from '@/lib/utils/address';
-import { clientData, clientDataFields } from '@/lib/validation/client';
+import { clientData, clientDataCreate } from '@/lib/validation/client';
 import { type AuthTransaction, withRLS } from '@/db';
 import * as schema from '@/db/schema';
 import { invalidateActiveScd } from '@/db/schema/data/_helpers';
@@ -43,15 +43,9 @@ export async function updateClientDeleted(clientId: string, status: boolean) {
 }
 
 /** Creates a new client for the current user, and returns the logical client id and the created clientData id */
-export async function createClient(input: Omit<z.infer<typeof clientData>, 'clientId'>) {
+export async function createClient(input: z.infer<typeof clientDataCreate>) {
 	// Validate form using Zod
-	const data = await clientDataFields
-		.omit({ clientId: true })
-		.refine(c => c.name || c.organization, {
-			message: 'Name or organisation must be present',
-			path: ['name'],
-		})
-		.parseAsync(input);
+	const data = await clientDataCreate.parseAsync(input);
 
 	return await withRLS(async (db, session) => {
 		// Inserts a new logical client

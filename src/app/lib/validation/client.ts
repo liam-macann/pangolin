@@ -21,8 +21,14 @@ export const clientDataFields = createInsertSchema(clientDataSchema, {
 		address: addressSchema.nullable(),
 	});
 
+const refinement = <T extends z.ZodObject>(fields: T) =>
+	fields.refine(c => c?.name || c?.organization, {
+		message: 'Name or organisation must be present',
+		path: ['name'],
+	});
+
 /** Complete insertion record for client data, excluding generated fields */
-export const clientData = clientDataFields.refine(c => c.name || c.organization, {
-	message: 'Name or organisation must be present',
-	path: ['name'],
-});
+export const clientData = refinement(clientDataFields);
+
+/** Insertion record for a brand new client, whose logical client id is assigned server-side */
+export const clientDataCreate = refinement(clientDataFields.omit({ clientId: true }));

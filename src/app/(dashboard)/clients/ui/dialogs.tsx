@@ -18,7 +18,7 @@ import { createClient, updateClient } from '@/lib/actions/client';
 import { type Client } from '@/lib/data/client';
 import { useClient, useClients } from '@/lib/hooks';
 import { transform as addressTransformSchema } from '@/lib/validation/address';
-import { clientData as schema } from '@/lib/validation/client';
+import { clientDataCreate as createSchema, clientData as schema } from '@/lib/validation/client';
 
 import { type FormValues as AddressFormValues, AddressInput } from '@/components/address-input';
 import { Alert, AlertTitle } from '@/ui/alert';
@@ -59,6 +59,18 @@ const formSchema = schema
 	.transform(({ addressEnabled, ...data }) => data as z.input<typeof schema>)
 	.pipe(schema);
 
+const createFormSchema = createSchema
+	.safeExtend({
+		address: addressTransformSchema.nullable(),
+		addressEnabled: z.boolean(),
+	})
+	.transform(data => {
+		if (!data.addressEnabled) return { ...data, address: null };
+		return data;
+	})
+	.transform(({ addressEnabled, ...data }) => data as z.input<typeof createSchema>)
+	.pipe(createSchema);
+
 export function CreateClientDialog({
 	children,
 	...props
@@ -66,10 +78,11 @@ export function CreateClientDialog({
 	const { mutate } = useClients();
 
 	const form = useForm({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(createFormSchema),
 		defaultValues: {
 			name: '',
 			email: '',
+			address: null,
 			addressEnabled: false,
 		},
 	});
@@ -148,8 +161,8 @@ type ClientDialog<TForm> = {
 };
 
 /** Generic client dialog, reused for creation and updates */
-// biome-ignore lint/suspicious/noExplicitAny: Return type need not be known within this component. Types are inferred for callback props.
-function ClientDialog<TForm extends UseFormReturn<z.input<typeof formSchema>, unknown, any>>({
+// biome-ignore lint/suspicious/noExplicitAny: Field values differ between create and update forms (create omits clientId)
+function ClientDialog<TForm extends UseFormReturn<any, unknown, any>>({
 	title,
 	form,
 	onSubmit,
