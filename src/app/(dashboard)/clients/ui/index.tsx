@@ -11,7 +11,7 @@ import { type Data as ClientData } from '@/api/clients/route';
 import { useClients } from '@/lib/hooks';
 import { cn, type ElementType } from '@/lib/utils';
 
-import { createDataTable, type DataTableFeatures } from '@/components/data-table';
+import { type DataTableFeatures, useDataTable } from '@/components/data-table';
 import { MaintainHeight } from '@/components/maintain-height';
 import { Button } from '@/ui/button';
 import {
@@ -93,8 +93,6 @@ const columns: ColumnDef<DataTableFeatures, Client>[] = [
 	},
 ];
 
-const ClientTable = createDataTable(columns);
-
 function Table({ data }: { data: Client[] }) {
 	const router = useRouter();
 
@@ -103,24 +101,24 @@ function Table({ data }: { data: Client[] }) {
 	]);
 
 	const [isFiltering, setIsFiltering] = useState(false);
+	const table = useDataTable({
+		data,
+		columns,
+		initialState: { pagination: { pageSize: 40 } },
+		state: { columnFilters },
+		onGlobalFilterChange: val => {
+			setColumnFilters(val === '' ? [{ id: 'isFavorite', value: false }] : []);
+		},
+		onColumnFiltersChange: setColumnFilters,
+	});
 
 	return (
-		<ClientTable.Root
-			data={data}
-			initialState={{ pagination: { pageSize: 40 } }}
-			state={{
-				columnFilters,
-			}}
-			onGlobalFilterChange={val => {
-				setColumnFilters(val === '' ? [{ id: 'isFavorite', value: false }] : []);
-			}}
-			onColumnFiltersChange={setColumnFilters}
-		>
-			<ClientTable.Search
+		<table.AppTable>
+			<table.Search
 				className='mb-6 grow rounded-full shadow-none'
 				aria-label='Search'
 				placeholder='Search clients…'
-				onKeyDown={(e, table) => {
+				onKeyDown={e => {
 					if (e.key === 'Enter' && e.currentTarget.value !== '') {
 						const id = table.getRowModel().rows[0]?.original?.id;
 						if (id) router.push(`/clients/${id}`);
@@ -131,37 +129,33 @@ function Table({ data }: { data: Client[] }) {
 			/>
 
 			{data.length > 0 ? (
-				<ClientTable.Content>
-					{table =>
-						table.getRowModel().rows.length ? (
-							<section className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
-								<AnimatePresence mode='popLayout' initial={false}>
-									{table.getRowModel().rows.map((client, i) => (
-										<Card
-											className={cn(
-												i === 0 &&
-													isFiltering &&
-													table.state.globalFilter !== '' &&
-													'[&>a]:border-ring [&>a]:ring-2',
-											)}
-											style={{ zIndex: table.getRowCount() - i }}
-											key={client.original.id}
-											client={client.original}
-										/>
-									))}
-								</AnimatePresence>
-							</section>
-						) : (
-							<div className='py-6 text-center text-muted-foreground'>No results</div>
-						)
-					}
-				</ClientTable.Content>
+				table.getRowModel().rows.length ? (
+					<section className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
+						<AnimatePresence mode='popLayout' initial={false}>
+							{table.getRowModel().rows.map((client, i) => (
+								<Card
+									className={cn(
+										i === 0 &&
+											isFiltering &&
+											table.state.globalFilter !== '' &&
+											'[&>a]:border-ring [&>a]:ring-2',
+									)}
+									style={{ zIndex: table.getRowCount() - i }}
+									key={client.original.id}
+									client={client.original}
+								/>
+							))}
+						</AnimatePresence>
+					</section>
+				) : (
+					<div className='py-6 text-center text-muted-foreground'>No results</div>
+				)
 			) : (
 				<EmptyState />
 			)}
 
-			<ClientTable.PaginationControls />
-		</ClientTable.Root>
+			<table.PaginationControls />
+		</table.AppTable>
 	);
 }
 

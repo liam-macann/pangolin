@@ -24,7 +24,14 @@ import { createDialogHandle } from '@/ui/responsive-dialog';
 
 import { CreateInvoiceDialog } from '@/src/app/ui/invoices/create-form';
 
-import InvoiceTable, { DEFAULT_SORT, PlaceholderTable } from './table';
+import {
+	DEFAULT_SORT,
+	InvoiceTableContent,
+	LocaleContext,
+	PlaceholderTable,
+	type UseInvoiceTableOptions,
+	useInvoiceTable,
+} from './table';
 
 type Invoice = ElementType<InvoiceData>;
 
@@ -105,10 +112,11 @@ export function Table({
 	}
 
 	return (
-		<InvoiceTable.Root
+		<InvoiceTable
 			key={resetCount}
 			data={invoices}
 			locale={config.locale}
+			config={config}
 			initialState={{
 				sorting: parseSortParam(searchParams.get('sort')),
 				pagination: { pageIndex: pageParam > 1 ? pageParam - 1 : 0 },
@@ -120,31 +128,62 @@ export function Table({
 			onPaginationChange={({ pageIndex }) =>
 				updateParams({ page: pageIndex === 0 ? null : String(pageIndex + 1) })
 			}
-		>
-			<TableContent data={invoices} config={config} />
-		</InvoiceTable.Root>
+		/>
+	);
+}
+
+function InvoiceTable({
+	data,
+	locale,
+	config,
+	...options
+}: UseInvoiceTableOptions & {
+	locale: string;
+	config: Awaited<ReturnType<typeof fetchConfig>>;
+}) {
+	const table = useInvoiceTable({ data, ...options });
+
+	return (
+		<LocaleContext value={locale}>
+			<table.AppTable>
+				<TableContent table={table} data={data} config={config} />
+			</table.AppTable>
+		</LocaleContext>
 	);
 }
 
 function TableContent({
+	table,
 	data,
 	config,
 }: {
-	data: Invoice[];
+	table: ReturnType<typeof useInvoiceTable>;
+	data: readonly Invoice[];
 	config: Awaited<ReturnType<typeof fetchConfig>>;
 }) {
+	const clientFilter = table.state.columnFilters.find(filter => filter.id === 'clientId');
+	const clientId = clientFilter ? String(clientFilter.value) : null;
+	const clientName = clientId
+		? (table.getCoreRowModel().rows.find(row => row.original.clientData.clientId === clientId)
+				?.original.clientData.name ?? clientId)
+		: null;
+
 	return (
 		<>
 			<div className='my-4 mb-6 flex items-center justify-between gap-3 md:mt-8'>
 				<Dialog />
-				<InvoiceTable.Search className='h-10 grow shadow-none' />
+				<table.Search
+					className='h-10 grow shadow-none'
+					value={clientName ?? undefined}
+					placeholder='Search invoices…'
+				/>
 			</div>
 
 			{data.length > 0 ? (
 				<>
-					<InvoiceTable.Content />
+					<InvoiceTableContent table={table} />
 					<div className='flex items-center justify-end gap-2 py-4'>
-						<InvoiceTable.PaginationControls />
+						<table.PaginationControls />
 					</div>
 				</>
 			) : (

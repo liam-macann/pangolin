@@ -16,16 +16,14 @@ import { pluralize } from '@/lib/utils';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 
-import { createInvoiceTable } from './../../invoices/table';
+import { InvoiceTableContent, LocaleContext, useInvoiceTable } from './../../invoices/table';
 import { UpdateClientDialog } from './../ui/dialogs';
 import { OverflowMenu } from './../ui/menu';
-
-const DataTable = createInvoiceTable();
 
 export function Table({
 	initialClient,
 	initialInvoices,
-	...props
+	locale,
 }: {
 	initialClient: ClientData;
 	initialInvoices: InvoiceData;
@@ -37,16 +35,18 @@ export function Table({
 	});
 
 	const limit = 5;
+	const table = useInvoiceTable({
+		initialState: { pagination: { pageSize: limit } },
+		data: invoices.slice(0, limit),
+	});
 
 	return (
 		<>
-			<DataTable.Root
-				initialState={{ pagination: { pageSize: limit } }}
-				data={invoices.slice(0, limit)}
-				{...props}
-			>
-				<DataTable.Content />
-			</DataTable.Root>
+			<LocaleContext value={locale}>
+				<table.AppTable>
+					<InvoiceTableContent table={table} />
+				</table.AppTable>
+			</LocaleContext>
 
 			{client.invoiceCount > Math.min(invoices.length, limit) && (
 				<Link
