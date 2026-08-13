@@ -40,4 +40,30 @@ describe('Sortable', () => {
 		await expect.poll(() => onReorder).toHaveBeenCalledTimes(1);
 		expect(onReorder).toHaveBeenCalledWith(expect.objectContaining({ initialIndex: 0, index: 1 }));
 	});
+
+	test('Does not call onReorder when dragging leaves the item unchanged', async () => {
+		const sample: Item[] = [
+			{ id: 'first', label: 'First item' },
+			{ id: 'second', label: 'Second item' },
+		];
+		const onReorder = vi.fn();
+
+		const screen = await render(
+			<Sortable items={sample} onReorder={onReorder}>
+				<SortableList>
+					{(item: Item, index) => (
+						<SortableItem key={item.id} id={item.id} index={index} disabled={index === 1}>
+							<SortableHandle />
+							<span>{item.label}</span>
+						</SortableItem>
+					)}
+				</SortableList>
+			</Sortable>,
+		);
+
+		const handles = screen.getByRole('button', { name: 'Reorder item' });
+		await commands.dragWithAnimation(handles.first().selector, handles.nth(1).selector);
+
+		expect(onReorder).not.toHaveBeenCalled();
+	});
 });

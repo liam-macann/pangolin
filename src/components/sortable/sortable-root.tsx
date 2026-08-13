@@ -1,6 +1,6 @@
 'use client';
 
-import { type Sortable as SortableType } from '@dnd-kit/dom/sortable';
+import { type UniqueIdentifier } from '@dnd-kit/abstract';
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable } from '@dnd-kit/react/sortable';
 import { type ComponentProps, type ReactNode } from 'react';
@@ -8,6 +8,13 @@ import { type ComponentProps, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 import { type Item, SortableContext } from './context';
+
+export type ReorderEvent = {
+	initialIndex: number;
+	index: number;
+	initialGroup: UniqueIdentifier | undefined;
+	group: UniqueIdentifier | undefined;
+};
 
 export function Sortable({
 	children,
@@ -20,7 +27,7 @@ export function Sortable({
 	children: ReactNode;
 	className?: string;
 	items: Item[];
-	onReorder: (sortable: SortableType) => void;
+	onReorder: (sortable: ReorderEvent) => void;
 	disabled?: boolean;
 } & ComponentProps<'div'>) {
 	return (
@@ -37,7 +44,20 @@ export function Sortable({
 					const { source } = operation;
 
 					if (canceled) return;
-					if (isSortable(source)) onReorder(source.sortable);
+					if (!isSortable(source)) return;
+
+					const { sortable } = source;
+					const indexChanged = sortable.initialIndex !== sortable.index;
+					const groupChanged = sortable.initialGroup !== sortable.group;
+
+					if (!(indexChanged || groupChanged)) return;
+
+					onReorder({
+						initialIndex: sortable.initialIndex,
+						index: sortable.index,
+						initialGroup: sortable.initialGroup,
+						group: sortable.group,
+					});
 				}}
 			>
 				<SortableContext value={{ items, disabled: items.length < 2 || disabled }}>
