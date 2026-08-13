@@ -56,7 +56,7 @@ async function _fetchInvoices(
 		tx.query.invoices.findMany({
 			where: {
 				userId: { eq: session.user.id },
-				documentWithSum: filter,
+				...(filter !== undefined ? { documentWithSum: filter } : {}),
 			},
 			columns: { userId: false },
 			with: {
