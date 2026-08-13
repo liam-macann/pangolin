@@ -224,7 +224,6 @@ function LineItemsInput({
 									<InputGroup>
 										<InputGroupInput
 											type='number'
-											min={0}
 											inputMode='decimal'
 											placeholder='2'
 											onKeyDown={e => ['e', 'E', '+', '-'].includes(e.key) && e.preventDefault()}
