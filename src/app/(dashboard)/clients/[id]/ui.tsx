@@ -35,10 +35,13 @@ export function Table({
 	});
 
 	const limit = 5;
-	const table = useInvoiceTable({
-		initialState: { pagination: { pageSize: limit } },
-		data: invoices.slice(0, limit),
-	});
+	const table = useInvoiceTable(
+		{
+			initialState: { pagination: { pageSize: limit } },
+			data: invoices.slice(0, limit),
+		},
+		() => null,
+	);
 
 	return (
 		<>

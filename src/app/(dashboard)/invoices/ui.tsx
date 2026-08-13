@@ -141,26 +141,14 @@ function InvoiceTable({
 	locale: string;
 	config: Awaited<ReturnType<typeof fetchConfig>>;
 }) {
-	const table = useInvoiceTable({ data, ...options });
+	const table = useInvoiceTable({ data, ...options }, state => ({
+		columnFilters: state.columnFilters,
+	}));
 
-	return (
-		<LocaleContext value={locale}>
-			<table.AppTable>
-				<TableContent table={table} data={data} config={config} />
-			</table.AppTable>
-		</LocaleContext>
-	);
-}
+	/** Uses controlled data length to determine empty state, not filtered table view */
+	const isEmpty = data.length === 0;
 
-function TableContent({
-	table,
-	data,
-	config,
-}: {
-	table: ReturnType<typeof useInvoiceTable>;
-	data: readonly Invoice[];
-	config: Awaited<ReturnType<typeof fetchConfig>>;
-}) {
+	// The table allows you to filter by client UUID, although not exposed in the table UI
 	const clientFilter = table.state.columnFilters.find(filter => filter.id === 'clientId');
 	const clientId = clientFilter ? String(clientFilter.value) : null;
 	const clientName = clientId
@@ -169,27 +157,29 @@ function TableContent({
 		: null;
 
 	return (
-		<>
-			<div className='my-4 mb-6 flex items-center justify-between gap-3 md:mt-8'>
-				<Dialog />
-				<table.Search
-					className='h-10 grow shadow-none'
-					value={clientName ?? undefined}
-					placeholder='Search invoices…'
-				/>
-			</div>
+		<LocaleContext value={locale}>
+			<table.AppTable>
+				<div className='my-4 mb-6 flex items-center justify-between gap-3 md:mt-8'>
+					<Dialog />
+					<table.Search
+						className='h-10 grow shadow-none'
+						value={clientName ?? undefined}
+						placeholder='Search invoices…'
+					/>
+				</div>
 
-			{data.length > 0 ? (
-				<>
-					<InvoiceTableContent table={table} />
-					<div className='flex items-center justify-end gap-2 py-4'>
-						<table.PaginationControls />
-					</div>
-				</>
-			) : (
-				<EmptyState config={config} />
-			)}
-		</>
+				{!isEmpty ? (
+					<>
+						<InvoiceTableContent table={table} />
+						<div className='flex items-center justify-end gap-2 py-4'>
+							<table.PaginationControls />
+						</div>
+					</>
+				) : (
+					<EmptyState config={config} />
+				)}
+			</table.AppTable>
+		</LocaleContext>
 	);
 }
 

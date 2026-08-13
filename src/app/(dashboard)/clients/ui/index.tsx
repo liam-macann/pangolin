@@ -2,7 +2,7 @@
 
 import { UserCirclePlusIcon } from '@phosphor-icons/react';
 import { UserRectangleIcon } from '@phosphor-icons/react/dist/ssr';
-import { type ColumnDef, type ColumnFiltersState } from '@tanstack/react-table';
+import { type ColumnDef, type ColumnFiltersState, type TableState } from '@tanstack/react-table';
 import { AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -101,16 +101,19 @@ function Table({ data }: { data: Client[] }) {
 	]);
 
 	const [isFiltering, setIsFiltering] = useState(false);
-	const table = useDataTable({
-		data,
-		columns,
-		initialState: { pagination: { pageSize: 40 } },
-		state: { columnFilters },
-		onGlobalFilterChange: val => {
-			setColumnFilters(val === '' ? [{ id: 'isFavorite', value: false }] : []);
+	const table = useDataTable(
+		{
+			data,
+			columns,
+			initialState: { pagination: { pageSize: 40 } },
+			state: { columnFilters },
+			onGlobalFilterChange: val => {
+				setColumnFilters(val === '' ? [{ id: 'isFavorite', value: false }] : []);
+			},
+			onColumnFiltersChange: setColumnFilters,
 		},
-		onColumnFiltersChange: setColumnFilters,
-	});
+		() => null,
+	);
 
 	return (
 		<table.AppTable>
@@ -129,27 +132,38 @@ function Table({ data }: { data: Client[] }) {
 			/>
 
 			{data.length > 0 ? (
-				table.getRowModel().rows.length ? (
-					<section className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
-						<AnimatePresence mode='popLayout' initial={false}>
-							{table.getRowModel().rows.map((client, i) => (
-								<Card
-									className={cn(
-										i === 0 &&
-											isFiltering &&
-											table.state.globalFilter !== '' &&
-											'[&>a]:border-ring [&>a]:ring-2',
-									)}
-									style={{ zIndex: table.getRowCount() - i }}
-									key={client.original.id}
-									client={client.original}
-								/>
-							))}
-						</AnimatePresence>
-					</section>
-				) : (
-					<div className='py-6 text-center text-muted-foreground'>No results</div>
-				)
+				<table.Content
+					selector={(state: TableState<DataTableFeatures>) => ({
+						columnFilters: state.columnFilters,
+						globalFilter: state.globalFilter,
+						pagination: state.pagination,
+						sorting: state.sorting,
+					})}
+				>
+					{(table, { globalFilter }) =>
+						table.getRowModel().rows.length ? (
+							<section className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
+								<AnimatePresence mode='popLayout' initial={false}>
+									{table.getRowModel().rows.map((client, i) => (
+										<Card
+											className={cn(
+												i === 0 &&
+													isFiltering &&
+													globalFilter !== '' &&
+													'[&>a]:border-ring [&>a]:ring-2',
+											)}
+											style={{ zIndex: table.getRowCount() - i }}
+											key={client.original.id}
+											client={client.original}
+										/>
+									))}
+								</AnimatePresence>
+							</section>
+						) : (
+							<div className='py-6 text-center text-muted-foreground'>No results</div>
+						)
+					}
+				</table.Content>
 			) : (
 				<EmptyState />
 			)}

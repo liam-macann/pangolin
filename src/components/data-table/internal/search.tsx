@@ -19,21 +19,25 @@ export function DataTableSearch({
 	const table = useInternalTableContext();
 
 	return (
-		<InputGroup {...props}>
-			<InputGroupAddon>
-				<MagnifyingGlassIcon />
-			</InputGroupAddon>
-			<InputGroupInput
-				aria-label='Search'
-				placeholder={placeholder ?? 'Search…'}
-				value={value ?? table.state.globalFilter}
-				onChange={event => {
-					onChange?.(event);
-					table.setGlobalFilter(event.target.value);
-				}}
-				onKeyDown={onKeyDown}
-			/>
-			{children}
-		</InputGroup>
+		<table.Subscribe source={table.atoms.globalFilter}>
+			{globalFilter => (
+				<InputGroup {...props}>
+					<InputGroupAddon>
+						<MagnifyingGlassIcon />
+					</InputGroupAddon>
+					<InputGroupInput
+						aria-label='Search'
+						placeholder={placeholder ?? 'Search…'}
+						value={value ?? globalFilter}
+						onChange={event => {
+							onChange?.(event);
+							table.setGlobalFilter(event.target.value);
+						}}
+						onKeyDown={onKeyDown}
+					/>
+					{children}
+				</InputGroup>
+			)}
+		</table.Subscribe>
 	);
 }

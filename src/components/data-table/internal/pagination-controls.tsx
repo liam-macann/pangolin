@@ -14,36 +14,46 @@ export function DataTablePaginationControls({
 }: DataTablePaginationControlsProps) {
 	const table = useInternalTableContext();
 
-	if (conditional && table.getPageCount() <= 1) return null;
-
 	return (
-		<ButtonGroup>
-			<Button
-				variant='secondary'
-				size='icon-sm'
-				onClick={() => table.previousPage()}
-				disabled={!table.getCanPreviousPage()}
-			>
-				<span className='sr-only'>Previous</span>
-				<CaretLeftIcon />
-			</Button>
-			<Button
-				variant='secondary'
-				size='sm'
-				className='bg-secondary px-2 font-medium text-muted-foreground text-sm tabular-nums'
-				onClick={() => table.resetPageIndex(true)}
-			>
-				{table.state.pagination.pageIndex + 1}
-			</Button>
-			<Button
-				variant='secondary'
-				size='icon-sm'
-				onClick={() => table.nextPage()}
-				disabled={!table.getCanNextPage()}
-			>
-				<span className='sr-only'>Next</span>
-				<CaretRightIcon />
-			</Button>
-		</ButtonGroup>
+		<table.Subscribe
+			selector={state => ({
+				columnFilters: state.columnFilters,
+				globalFilter: state.globalFilter,
+				pagination: state.pagination,
+			})}
+		>
+			{({ pagination }) =>
+				conditional && table.getPageCount() <= 1 ? null : (
+					<ButtonGroup>
+						<Button
+							variant='secondary'
+							size='icon-sm'
+							onClick={() => table.previousPage()}
+							disabled={!table.getCanPreviousPage()}
+						>
+							<span className='sr-only'>Previous</span>
+							<CaretLeftIcon />
+						</Button>
+						<Button
+							variant='secondary'
+							size='sm'
+							className='bg-secondary px-2 font-medium text-muted-foreground text-sm tabular-nums'
+							onClick={() => table.resetPageIndex(true)}
+						>
+							{pagination.pageIndex + 1}
+						</Button>
+						<Button
+							variant='secondary'
+							size='icon-sm'
+							onClick={() => table.nextPage()}
+							disabled={!table.getCanNextPage()}
+						>
+							<span className='sr-only'>Next</span>
+							<CaretRightIcon />
+						</Button>
+					</ButtonGroup>
+				)
+			}
+		</table.Subscribe>
 	);
 }

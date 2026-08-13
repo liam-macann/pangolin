@@ -1,6 +1,6 @@
 'use client';
 
-import { type ColumnDef, type SortingState } from '@tanstack/react-table';
+import { type ColumnDef, type SortingState, type TableState } from '@tanstack/react-table';
 import { toMerged } from 'es-toolkit';
 import { createContext, useMemo } from 'react';
 
@@ -28,12 +28,15 @@ export type UseInvoiceTableOptions = Omit<DataTableOptions<Invoice>, 'columns'> 
 };
 
 /** Creates a table instance with preconfigured defaults for Invoice data */
-export function useInvoiceTable({
-	data,
-	columns: invoiceColumns = columns,
-	initialState = {},
-	...options
-}: UseInvoiceTableOptions) {
+export function useInvoiceTable<TSelected = TableState<DataTableFeatures>>(
+	{
+		data,
+		columns: invoiceColumns = columns,
+		initialState = {},
+		...options
+	}: UseInvoiceTableOptions,
+	selector?: (state: TableState<DataTableFeatures>) => TSelected,
+) {
 	const tableData = useMemo(
 		() =>
 			data.map(invoice => ({
@@ -43,16 +46,19 @@ export function useInvoiceTable({
 		[data],
 	);
 
-	return useDataTable({
-		data: tableData,
-		columns: invoiceColumns,
-		enableSortingRemoval: false,
-		initialState: toMerged(
-			{ sorting: DEFAULT_SORT, columnVisibility: { clientId: false } },
-			initialState,
-		),
-		...options,
-	});
+	return useDataTable(
+		{
+			data: tableData,
+			columns: invoiceColumns,
+			enableSortingRemoval: false,
+			initialState: toMerged(
+				{ sorting: DEFAULT_SORT, columnVisibility: { clientId: false } },
+				initialState,
+			),
+			...options,
+		},
+		selector,
+	);
 }
 
 type InvoiceTable = ReturnType<typeof useInvoiceTable>;
@@ -62,9 +68,9 @@ export function InvoiceTableContent({
 	getRowAttr,
 	getCellAttr,
 	...props
-}: DataTableContentProps<Invoice> & { table: InvoiceTable }) {
+}: DataTableContentProps<Invoice> & { table: Pick<InvoiceTable, 'Content'> }) {
 	return (
-		<table.Content<Invoice>
+		<table.Content
 			getRowAttr={(row, ...args) => {
 				const overrides = getRowAttr?.(row, ...args);
 				return {
@@ -105,7 +111,7 @@ type Config = Awaited<ReturnType<typeof fetchConfig>>;
 
 export function PlaceholderTable({ config, count }: { config: Config; count?: number }) {
 	const data = usePlaceholderInvoices(config, count);
-	const table = useInvoiceTable({ data });
+	const table = useInvoiceTable({ data }, () => null);
 
 	return (
 		<LocaleContext value={config.locale}>
