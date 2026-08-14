@@ -1,4 +1,4 @@
-import { asc, eq, min, type RelationsFilter, sql, sum } from 'drizzle-orm';
+import { and, asc, count, eq, min, type RelationsFilter, sql, sum } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
 import { notFound, unstable_rethrow } from 'next/navigation';
 
@@ -99,6 +99,32 @@ async function _fetchInvoices(
 /** Fetch all invoices for a given client. Accepts logical client ID, not SCD ID. */
 export const fetchInvoicesForClient = (clientId: string, limit?: number) =>
 	fetchInvoices({ clientData: { client: { id: { eq: clientId } } } }, limit);
+
+/** Count invoices for the authenticated user, optionally filtered by client */
+export const countInvoices = (clientId?: string) =>
+	query(session => _countInvoices(session, clientId), 'Failed to count invoices');
+
+async function _countInvoices(session: Session, clientId?: string) {
+	'use cache';
+	cacheLife('hours');
+	cacheTag(`invoices-${session.user.id}`);
+
+	return withRLS(session, async tx => {
+		const [row] = await tx
+			.select({ count: count() })
+			.from(schema.invoices)
+			.innerJoin(schema.documents, eq(schema.documents.id, schema.invoices.id))
+			.innerJoin(schema.clientData, eq(schema.clientData.id, schema.documents.clientDataId))
+			.where(
+				and(
+					eq(schema.invoices.userId, session.user.id),
+					clientId ? eq(schema.clientData.clientId, clientId) : undefined,
+				),
+			);
+
+		return row?.count ?? 0;
+	});
+}
 
 /** Join relational (incl. item) details with a single invoice record for authenticated user */
 export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
