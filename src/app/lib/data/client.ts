@@ -117,6 +117,26 @@ export async function fetchClients(id?: string) {
 	}
 }
 
+/** Count non-deleted clients for the authenticated user */
+export async function countClients(): Promise<number> {
+	try {
+		return await withRLS(async (db, session) => {
+			const [row] = await db
+				.select({ count: count() })
+				.from(schema.clients)
+				.where(
+					and(eq(schema.clients.userId, session.user.id), eq(schema.clients.isDeleted, false)),
+				);
+
+			return row?.count ?? 0;
+		});
+	} catch (error) {
+		unstable_rethrow(error);
+		console.error('Database Error:', error);
+		throw new Error('Failed to count clients.');
+	}
+}
+
 export async function fetchClientStats(id: string) {
 	const qb = new QueryBuilder();
 
