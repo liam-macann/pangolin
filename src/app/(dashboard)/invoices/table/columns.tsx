@@ -4,8 +4,8 @@ import { TZDate } from '@date-fns/tz';
 import { type ColumnDef, type Row } from '@tanstack/react-table';
 import { type ComponentProps, useContext } from 'react';
 
-import { type Data as InvoiceData } from '@/api/invoices/route';
-import { cn, type ElementType } from '@/lib/utils';
+import { type Invoice } from '@/lib/data/invoice';
+import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
 import { formatDate } from '@/lib/utils/date';
 
@@ -16,7 +16,7 @@ import { LocaleContext } from '.';
 import { NotesButton, OverflowMenu } from './components/actions';
 import { StatusSelect } from './components/status';
 
-export type Invoice = ElementType<InvoiceData>;
+export type { Invoice };
 
 /** Column definitions for invoices */
 export const columns: ColumnDef<DataTableFeatures, Invoice>[] = [

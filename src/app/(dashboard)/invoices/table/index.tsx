@@ -4,9 +4,9 @@ import { type ColumnDef, type SortingState, type TableState } from '@tanstack/re
 import { toMerged } from 'es-toolkit';
 import { createContext, useMemo } from 'react';
 
-import { type Data as InvoiceData } from '@/api/invoices/route';
 import { type fetchConfig } from '@/lib/data';
-import { cn, type ElementType } from '@/lib/utils';
+import { type Invoice } from '@/lib/data/invoice';
+import { cn } from '@/lib/utils';
 
 import {
 	type DataTableContentProps,
@@ -20,8 +20,6 @@ import { usePlaceholderInvoices } from './placeholder-data';
 
 export const LocaleContext = createContext<string>('en-AU');
 export const DEFAULT_SORT: SortingState = [{ id: 'reference', desc: true }];
-
-type Invoice = ElementType<InvoiceData>;
 
 export type UseInvoiceTableOptions = Omit<DataTableOptions<Invoice>, 'columns'> & {
 	columns?: ColumnDef<DataTableFeatures, Invoice>[];

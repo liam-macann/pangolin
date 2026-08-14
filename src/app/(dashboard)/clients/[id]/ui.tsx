@@ -8,8 +8,8 @@ import {
 } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
 
-import { type Data as ClientData } from '@/api/clients/[id]/route';
-import { type Data as InvoiceData } from '@/api/invoices/route';
+import { type Client } from '@/lib/data/client';
+import { type Invoice } from '@/lib/data/invoice';
 import { useClient, useClientInvoices } from '@/lib/hooks';
 import { pluralize } from '@/lib/utils';
 
@@ -25,8 +25,8 @@ export function Table({
 	initialInvoices,
 	locale,
 }: {
-	initialClient: ClientData;
-	initialInvoices: InvoiceData;
+	initialClient: Client;
+	initialInvoices: Invoice[];
 	locale: string;
 }) {
 	const { data: client } = useClient(initialClient.id, initialClient, { suspense: true });
@@ -64,7 +64,7 @@ export function Table({
 	);
 }
 
-export function Header({ initialClient }: { initialClient: ClientData }) {
+export function Header({ initialClient }: { initialClient: Client }) {
 	const { data: client } = useClient(initialClient.id, initialClient, { suspense: true });
 
 	return (

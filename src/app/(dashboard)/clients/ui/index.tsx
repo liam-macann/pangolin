@@ -7,9 +7,9 @@ import { AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { type Data as ClientData } from '@/api/clients/route';
+import { type Client } from '@/lib/data/client';
 import { useClients } from '@/lib/hooks';
-import { cn, type ElementType } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 import { type DataTableFeatures, useDataTable } from '@/components/data-table';
 import { MaintainHeight } from '@/components/maintain-height';
@@ -25,8 +25,6 @@ import {
 
 import { CreateClientDialog } from './../ui/dialogs';
 import { Card } from './card';
-
-type Client = ElementType<ClientData>;
 
 export function Clients({ initial }: { initial: Client[] }) {
 	const { data } = useClients(initial, { suspense: true });

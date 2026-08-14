@@ -4,13 +4,11 @@ import { BuildingOfficeIcon, DotsThreeIcon, StarIcon } from '@phosphor-icons/rea
 import { type HTMLMotionProps, motion } from 'motion/react';
 import Link from 'next/link';
 
-import { type Data as ClientData } from '@/api/clients/route';
-import { cn, type ElementType, pluralize } from '@/lib/utils';
+import { type Client } from '@/lib/data/client';
+import { cn, pluralize } from '@/lib/utils';
 
 import { Button } from '@/ui/button';
 import { Toggle } from '@/ui/toggle';
-
-type Client = ElementType<ClientData>;
 
 import { OverflowMenu, useClientActions } from './menu';
 export function Card({

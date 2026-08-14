@@ -6,10 +6,10 @@ import { type SortingState } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
 import { type ComponentProps, useRef, useState } from 'react';
 
-import { type Data as InvoiceData } from '@/api/invoices/route';
 import { type fetchConfig } from '@/lib/data';
+import { type Invoice } from '@/lib/data/invoice';
 import { useConfig, useInvoices } from '@/lib/hooks';
-import { cn, type ElementType } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 import { Button } from '@/ui/button';
 import {
@@ -32,8 +32,6 @@ import {
 	type UseInvoiceTableOptions,
 	useInvoiceTable,
 } from './table';
-
-type Invoice = ElementType<InvoiceData>;
 
 function parseSortParam(sort: string | null): SortingState | undefined {
 	if (!sort) return;

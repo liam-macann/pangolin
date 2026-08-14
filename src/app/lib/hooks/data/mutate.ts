@@ -1,12 +1,11 @@
 'use client';
 
-import { type Data as Client } from '@/api/clients/[id]/route';
-import { type Data as InvoiceArray } from '@/api/invoices/route';
-import { type ElementType } from '@/lib/utils';
+import { type Client } from '@/lib/data/client';
+import { type Invoice } from '@/lib/data/invoice';
 
 import { createMutation, detail, list } from './mutator-factory';
 
-type Invoice = ElementType<InvoiceArray>;
+type InvoiceArray = Invoice[];
 
 //
 // Mutation Hooks
