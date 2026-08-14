@@ -32,10 +32,15 @@ export interface ClientData {
 }
 
 export async function fetchClients(): Promise<Client[]>;
+export async function fetchClients(opts: { limit?: number; offset?: number }): Promise<Client[]>;
 export async function fetchClients(id: string): Promise<Client>;
 
-/** Fetch all clients for authenticated user, or a single client if `id` is provided */
-export async function fetchClients(id?: string) {
+/** Fetch all clients for authenticated user, or a single client if `id` is provided.
+ * @remarks Define `{ limit, offset }` to paginate the list form */
+export async function fetchClients(arg?: string | { limit?: number; offset?: number }) {
+	const id = typeof arg === 'string' ? arg : undefined;
+	const { limit, offset } = typeof arg === 'string' ? {} : (arg ?? {});
+
 	try {
 		return await withRLS(async (db, session) => {
 			const res = await db.query.clients.findMany({
@@ -76,6 +81,8 @@ export async function fetchClients(id?: string) {
 						.where(and(eq(schema.clientData.clientId, c.id), isNull(schema.clientData.validTo)))
 						.limit(1)}
 				)`,
+				limit,
+				offset,
 			});
 
 			const vault = await crypto(session.user.id);

@@ -41,12 +41,18 @@ export type DetailedInvoice = Omit<Invoice, 'clientData' | 'config'> & {
 export const fetchInvoices = (
 	filter?: RelationsFilter<typeof relations.documentsWithSum, typeof relations>,
 	limit?: number,
-) => query(async session => _fetchInvoices(session, filter, limit), 'Failed to fetch invoices');
+	offset?: number,
+) =>
+	query(
+		async session => _fetchInvoices(session, filter, limit, offset),
+		'Failed to fetch invoices',
+	);
 
 async function _fetchInvoices(
 	session: Session,
 	filter?: RelationsFilter<typeof relations.documentsWithSum, typeof relations>,
 	limit?: number,
+	offset?: number,
 ) {
 	'use cache';
 	cacheLife('hours');
@@ -86,6 +92,7 @@ async function _fetchInvoices(
 			},
 			orderBy: { index: 'desc' },
 			limit,
+			offset,
 		}),
 	).then(res =>
 		res.map(({ documentWithSum, ...inv }) => ({
