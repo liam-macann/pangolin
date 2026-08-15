@@ -1,3 +1,4 @@
+import { useCreateAtom } from '@tanstack/react-store';
 import {
 	createTableHook,
 	type PaginationState,
@@ -5,8 +6,6 @@ import {
 	type SortingState,
 	type TableState,
 } from '@tanstack/react-table';
-
-import { useControllableState } from '@/lib/hooks/state';
 
 import { DataTableContent, type DataTableContentComponent } from './internal/content';
 import { cellContext, headerContext, tableContext } from './internal/context';
@@ -30,11 +29,8 @@ const { createAppColumnHelper, useAppTable, useTableContext } = createTableHook(
 	autoResetPageIndex: false,
 });
 
-/** Controlled table state with complete pagination when supplied. */
-type DataTableState = Partial<TableState<DataTableFeatures>>;
-
 /** Initial table state (allowing partial pagination defaults) */
-type DataTableInitialState = Omit<DataTableState, 'pagination'> & {
+type DataTableInitialState = Omit<Partial<TableState<DataTableFeatures>>, 'pagination'> & {
 	pagination?: Partial<PaginationState>;
 };
 
@@ -49,24 +45,20 @@ type DataTable<TData extends RowData, TSelected> = Omit<
 
 export type DataTableOptions<TData extends RowData> = Omit<
 	AppTableOptions<TData>,
-	| 'initialState'
-	| 'key'
-	| 'onGlobalFilterChange'
-	| 'onPaginationChange'
-	| 'onSortingChange'
-	| 'state'
+	'initialState' | 'key' | 'onGlobalFilterChange' | 'onPaginationChange' | 'onSortingChange'
 > & {
-	state?: DataTableState;
 	initialState?: DataTableInitialState;
+	/** Called with the resolved global filter, after column filters are cleared and the table resets to page one. */
 	onGlobalFilterChange?: (value: string) => void;
+	/** Called with the resolved sort, after the table resets to page one. */
 	onSortingChange?: (sorting: SortingState) => void;
+	/** Called with the resolved pagination state. */
 	onPaginationChange?: (pagination: PaginationState) => void;
 };
 
 export function useDataTable<TData extends RowData, TSelected = TableState<DataTableFeatures>>(
 	{
 		initialState = {},
-		state: stateProp,
 		onGlobalFilterChange,
 		onSortingChange,
 		onPaginationChange,
@@ -74,44 +66,24 @@ export function useDataTable<TData extends RowData, TSelected = TableState<DataT
 	}: DataTableOptions<TData>,
 	selector?: (state: TableState<DataTableFeatures>) => TSelected,
 ): DataTable<TData, TSelected> {
-	const [globalFilter, setGlobalFilter] = useControllableState({
-		value: stateProp?.globalFilter,
-		defaultValue: initialState.globalFilter ?? '',
-		onChange: onGlobalFilterChange,
-	});
-
-	const [sorting, setSorting] = useControllableState({
-		value: stateProp?.sorting,
-		defaultValue: initialState.sorting ?? [],
-		onChange: onSortingChange,
-	});
-
-	const [pagination, setPagination] = useControllableState({
-		value: stateProp?.pagination,
-		defaultValue: {
-			// Pass `Infinity` as `pageSize` to place every row on a single page
-			pageSize: initialState.pagination?.pageSize ?? 20,
-			pageIndex: initialState.pagination?.pageIndex ?? 0,
-		},
-		onChange: onPaginationChange,
+	// Own these slices via atoms rather than React state:
+	// writing to an atom only re-renders subscribers
+	const globalFilterAtom = useCreateAtom(initialState.globalFilter ?? '');
+	const sortingAtom = useCreateAtom<SortingState>(initialState.sorting ?? []);
+	const paginationAtom = useCreateAtom<PaginationState>({
+		pageIndex: initialState.pagination?.pageIndex ?? 0,
+		pageSize: initialState.pagination?.pageSize ?? 20,
 	});
 
 	const table = useAppTable(
 		{
 			...options,
-			onGlobalFilterChange: value => {
-				table.setColumnFilters([]);
-				table.resetPageIndex();
-				setGlobalFilter(value);
+			atoms: {
+				...options.atoms,
+				globalFilter: globalFilterAtom,
+				sorting: sortingAtom,
+				pagination: paginationAtom,
 			},
-
-			onSortingChange: updater => {
-				table.resetPageIndex();
-				setSorting(updater);
-			},
-
-			onPaginationChange: setPagination,
-			state: { ...stateProp, globalFilter, sorting, pagination },
 			initialState: {
 				...initialState,
 				// Pagination is defined here so that resets revert to these values
@@ -119,6 +91,30 @@ export function useDataTable<TData extends RowData, TSelected = TableState<DataT
 					pageIndex: initialState.pagination?.pageIndex ?? 0,
 					pageSize: initialState.pagination?.pageSize ?? 20,
 				},
+			},
+
+			onGlobalFilterChange: updater => {
+				const next = typeof updater === 'function' ? updater(globalFilterAtom.get()) : updater;
+
+				table.setColumnFilters([]);
+				paginationAtom.set(previous => ({ ...previous, pageIndex: 0 }));
+				globalFilterAtom.set(next);
+				onGlobalFilterChange?.(next);
+			},
+
+			onSortingChange: updater => {
+				const next = typeof updater === 'function' ? updater(sortingAtom.get()) : updater;
+
+				paginationAtom.set(previous => ({ ...previous, pageIndex: 0 }));
+				sortingAtom.set(next);
+				onSortingChange?.(next);
+			},
+
+			onPaginationChange: updater => {
+				const next = typeof updater === 'function' ? updater(paginationAtom.get()) : updater;
+
+				paginationAtom.set(next);
+				onPaginationChange?.(next);
 			},
 		},
 		selector,
