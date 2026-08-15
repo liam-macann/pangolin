@@ -11,7 +11,7 @@ import { intlFormat, parseISO } from 'date-fns';
 export const isoToTZDate = (iso: string, timezone: string): TZDate =>
 	parseISO(iso, { in: tz(timezone) });
 
-type FormatDateOptions = {
+export type FormatDateOptions = {
 	locale: string;
 
 	/** Whether to include or omit the year when the printed date occurs this year */

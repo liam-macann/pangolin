@@ -11,6 +11,7 @@ import { formatDate } from '@/lib/utils/date';
 
 import { type DataTableFeatures } from '@/components/data-table';
 import { ToggleHeader } from '@/components/data-table/column-header';
+import { Datetime } from '@/components/datetime';
 
 import { LocaleContext } from '.';
 import { NotesButton, OverflowMenu } from './components/actions';
@@ -66,12 +67,12 @@ export const columns: ColumnDef<DataTableFeatures, Invoice>[] = [
 				<div className='grid gap-1 py-1'>
 					<div className='truncate'>{getValue<string>()}</div>
 
-					<span className='text-muted-foreground text-xs group-data-void/row:text-muted-foreground/50 md:hidden'>
-						{formatDate(new TZDate(row.original.issuedAt, row.original.config.timezone), {
-							locale,
-							printCurrentYear: false,
-						})}
-					</span>
+					<Datetime
+						date={new TZDate(row.original.issuedAt, row.original.config.timezone)}
+						locale={locale}
+						options={{ printCurrentYear: false }}
+						className='text-muted-foreground text-xs group-data-void/row:text-muted-foreground/50 md:hidden'
+					/>
 
 					<div className='mt-2 sm:hidden'>
 						<StatusSelect row={row} />
@@ -98,12 +99,12 @@ export const columns: ColumnDef<DataTableFeatures, Invoice>[] = [
 		cell: ({ row }) => {
 			const locale = useContext(LocaleContext);
 			return (
-				<span className='text-muted-foreground group-data-void/row:text-muted-foreground/50'>
-					{formatDate(row.original.issuedAt, row.original.config.timezone, {
-						locale,
-						printCurrentYear: false,
-					})}
-				</span>
+				<Datetime
+					date={new TZDate(row.original.issuedAt, row.original.config.timezone)}
+					locale={locale}
+					options={{ printCurrentYear: false }}
+					className='text-muted-foreground group-data-void/row:text-muted-foreground/50'
+				/>
 			);
 		},
 		sortFn: 'datetime',
