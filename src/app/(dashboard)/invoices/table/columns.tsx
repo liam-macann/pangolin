@@ -1,7 +1,7 @@
 'use client';
 
 import { TZDate } from '@date-fns/tz';
-import { type ColumnDef, type Row } from '@tanstack/react-table';
+import { type Row } from '@tanstack/react-table';
 import { type ComponentProps, useContext } from 'react';
 
 import { type Invoice } from '@/lib/data/invoice';
@@ -9,9 +9,8 @@ import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
 import { formatDate } from '@/lib/utils/date';
 
-import { type DataTableFeatures } from '@/components/data-table';
+import { createDataTableColumnHelper, type DataTableFeatures } from '@/components/data-table';
 import { ToggleHeader } from '@/components/data-table/column-header';
-import { Datetime } from '@/components/datetime';
 
 import { LocaleContext } from '.';
 import { NotesButton, OverflowMenu } from './components/actions';
@@ -19,10 +18,11 @@ import { StatusSelect } from './components/status';
 
 export type { Invoice };
 
+const columnHelper = createDataTableColumnHelper<Invoice>();
+
 /** Column definitions for invoices */
-export const columns: ColumnDef<DataTableFeatures, Invoice>[] = [
-	{
-		accessorKey: 'reference',
+export const columns = columnHelper.columns([
+	columnHelper.accessor('reference', {
 		// Numeric sorting faster than alphanumeric, and works across all numbering schemes
 		sortFn: (a, b) => {
 			const iA = a.original.index;
@@ -52,10 +52,8 @@ export const columns: ColumnDef<DataTableFeatures, Invoice>[] = [
 			</div>
 		),
 		size: 150,
-	},
-	{
-		accessorFn: row => row.clientData.name || row.clientData.organization,
-		accessorKey: 'clientData.name',
+	}),
+	columnHelper.accessor(row => row.clientData.name || row.clientData.organization, {
 		id: 'name',
 		header: ({ column }) => <ToggleHeader column={column} title='Name' />,
 		minSize: 140,
@@ -65,14 +63,14 @@ export const columns: ColumnDef<DataTableFeatures, Invoice>[] = [
 			const locale = useContext(LocaleContext);
 			return (
 				<div className='grid gap-1 py-1'>
-					<div className='truncate'>{getValue<string>()}</div>
+					<div className='truncate'>{getValue()}</div>
 
-					<Datetime
-						date={new TZDate(row.original.issuedAt, row.original.config.timezone)}
-						locale={locale}
-						options={{ printCurrentYear: false }}
-						className='text-muted-foreground text-xs group-data-void/row:text-muted-foreground/50 md:hidden'
-					/>
+					<span className='text-muted-foreground text-xs group-data-void/row:text-muted-foreground/50 md:hidden'>
+						{formatDate(new TZDate(row.original.issuedAt, row.original.config.timezone), {
+							locale,
+							printCurrentYear: false,
+						})}
+					</span>
 
 					<div className='mt-2 sm:hidden'>
 						<StatusSelect row={row} />
@@ -80,10 +78,8 @@ export const columns: ColumnDef<DataTableFeatures, Invoice>[] = [
 				</div>
 			);
 		},
-	},
-	{
-		accessorFn: row => row.status.status,
-		accessorKey: 'status.status',
+	}),
+	columnHelper.accessor(row => row.status.status, {
 		id: 'status',
 		header: ({ column }) => <ToggleHeader column={column} title='Status' />,
 		meta: { className: 'max-sm:hidden' },
@@ -91,27 +87,25 @@ export const columns: ColumnDef<DataTableFeatures, Invoice>[] = [
 		minSize: 100,
 		size: 170,
 		maxSize: 200,
-	},
-	{
-		accessorKey: 'issuedAt',
+	}),
+	columnHelper.accessor('issuedAt', {
 		header: ({ column }) => <ToggleHeader column={column} title='Date' />,
 		meta: { className: 'max-md:hidden' },
 		cell: ({ row }) => {
 			const locale = useContext(LocaleContext);
 			return (
-				<Datetime
-					date={new TZDate(row.original.issuedAt, row.original.config.timezone)}
-					locale={locale}
-					options={{ printCurrentYear: false }}
-					className='text-muted-foreground group-data-void/row:text-muted-foreground/50'
-				/>
+				<span className='text-muted-foreground group-data-void/row:text-muted-foreground/50'>
+					{formatDate(row.original.issuedAt, row.original.config.timezone, {
+						locale,
+						printCurrentYear: false,
+					})}
+				</span>
 			);
 		},
 		sortFn: 'datetime',
 		size: 150,
-	},
-	{
-		accessorKey: 'grossTotal',
+	}),
+	columnHelper.accessor('grossTotal', {
 		header: ({ column }) => (
 			<div className='text-right'>
 				<ToggleHeader column={column} title='Amount' />
@@ -124,16 +118,15 @@ export const columns: ColumnDef<DataTableFeatures, Invoice>[] = [
 			return iA > iB ? 1 : iA < iB ? -1 : 0;
 		},
 		size: 150,
-	},
-	{
+	}),
+	columnHelper.accessor(row => row.clientData.clientId, {
 		id: 'clientId',
-		accessorFn: row => row.clientData.clientId,
 		filterFn: 'equals',
 		enableSorting: false,
 		header: () => null,
 		cell: () => null,
-	},
-	{
+	}),
+	columnHelper.display({
 		id: 'actions',
 		cell: ({ row }) => (
 			<div className='-m-2 ml-0 flex translate-y-0.5 justify-end'>
@@ -141,8 +134,8 @@ export const columns: ColumnDef<DataTableFeatures, Invoice>[] = [
 			</div>
 		),
 		size: 64,
-	},
-];
+	}),
+]);
 
 function FormatPrice({
 	row,

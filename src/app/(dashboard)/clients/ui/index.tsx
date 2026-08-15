@@ -2,7 +2,7 @@
 
 import { UserCirclePlusIcon } from '@phosphor-icons/react';
 import { UserRectangleIcon } from '@phosphor-icons/react/dist/ssr';
-import { type ColumnDef, type ColumnFiltersState, type TableState } from '@tanstack/react-table';
+import { type ColumnFiltersState, type TableState } from '@tanstack/react-table';
 import { AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -11,7 +11,11 @@ import { type Client } from '@/lib/data/client';
 import { useClients } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 
-import { type DataTableFeatures, useDataTable } from '@/components/data-table';
+import {
+	createDataTableColumnHelper,
+	type DataTableFeatures,
+	useDataTable,
+} from '@/components/data-table';
 import { MaintainHeight } from '@/components/maintain-height';
 import { Button } from '@/ui/button';
 import {
@@ -67,29 +71,25 @@ export function Clients({ initial }: { initial: Client[] }) {
 	);
 }
 
-const columns: ColumnDef<DataTableFeatures, Client>[] = [
-	{
-		accessorKey: 'isFavorite',
+const columnHelper = createDataTableColumnHelper<Client>();
+const columns = columnHelper.columns([
+	columnHelper.accessor('isFavorite', {
 		id: 'isFavorite',
-		filterFn: (row, columnId, filterValue) => row.getValue(columnId) === filterValue,
-	},
-	{
-		accessorKey: 'data.name',
+		filterFn: 'equals',
+	}),
+	columnHelper.accessor('data.name', {
 		header: 'Name',
-	},
-	{
-		accessorKey: 'data.organization',
+	}),
+	columnHelper.accessor('data.organization', {
 		header: 'Organisation',
-	},
-	{
-		accessorKey: 'data.email',
+	}),
+	columnHelper.accessor('data.email', {
 		header: 'Email',
-	},
-	{
-		accessorKey: 'invoiceCount',
+	}),
+	columnHelper.accessor('invoiceCount', {
 		header: 'Invoices',
-	},
-];
+	}),
+]);
 
 function Table({ data }: { data: Client[] }) {
 	const router = useRouter();

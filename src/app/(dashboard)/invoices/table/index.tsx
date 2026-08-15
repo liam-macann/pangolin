@@ -1,6 +1,6 @@
 'use client';
 
-import { type ColumnDef, type SortingState, type TableState } from '@tanstack/react-table';
+import { type SortingState, type TableState } from '@tanstack/react-table';
 import { toMerged } from 'es-toolkit';
 import { createContext, useMemo } from 'react';
 
@@ -22,7 +22,7 @@ export const LocaleContext = createContext<string>('en-AU');
 export const DEFAULT_SORT: SortingState = [{ id: 'reference', desc: true }];
 
 export type UseInvoiceTableOptions = Omit<DataTableOptions<Invoice>, 'columns'> & {
-	columns?: ColumnDef<DataTableFeatures, Invoice>[];
+	columns?: DataTableOptions<Invoice>['columns'];
 };
 
 /** Creates a table instance with preconfigured defaults for Invoice data */
