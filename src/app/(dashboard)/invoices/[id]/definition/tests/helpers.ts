@@ -12,7 +12,7 @@ export const invoiceDataBuilder = (data?: PartialDeep<InvoicePrintData>): Invoic
 	const base: Minimized<InvoicePrintData> = {
 		title: null,
 		description: null,
-		createdAt: new Date('2025-01-15T00:00:00.000Z'),
+		createdAt: '2025-01-15T00:00:00.000Z',
 		issuedAt: '2025-01-15',
 		dueAt: '2025-02-15',
 		reference: 'INV-001',

@@ -1,11 +1,12 @@
 'use client';
 
 import { WarningCircleIcon, WarningIcon } from '@phosphor-icons/react/ssr';
-import { type CountryCode, isValidCountryCode } from 'lib-address';
+import { isValidCountryCode } from 'lib-address';
 import { ErrorBoundary } from 'react-error-boundary';
 import { type Control, useWatch } from 'react-hook-form';
 import type z from 'zod';
 
+import { type Address } from '@/api/dto/address';
 import { useAddressMetadata } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type schema from '@/lib/validation/address';
@@ -66,13 +67,7 @@ export function AddressInput<T extends FormValues>({
 }
 
 /** Takes an ISO2 string and renders localised address input */
-function LocaleForm({
-	region,
-	disabled,
-}: {
-	region: Exclude<CountryCode, 'ZZ'>;
-	disabled?: boolean;
-}) {
+function LocaleForm({ region, disabled }: { region: Address['country']; disabled?: boolean }) {
 	if (!isValidCountryCode(region)) throw new Error(`Invalid country code: ${region}`);
 
 	// Fetch region from cache or Google Address Metadata API

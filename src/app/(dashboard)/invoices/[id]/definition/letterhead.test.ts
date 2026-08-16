@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
-import { type Address, formatAddress } from '@/lib/utils/address';
+import { type Address } from '@/api/dto/address';
+import { formatAddress } from '@/lib/utils/address';
 
 import { type InvoicePrintData } from './index';
 import { letterheadTable } from './letterhead';
@@ -52,9 +53,11 @@ describe('letterheadTable', () => {
 	test('Includes address when defined', () => {
 		const address: Address = {
 			streetAddress: ['1 Test St'],
+			dependentLocality: null,
 			city: 'Sydney',
 			administrativeArea: 'NSW',
 			postalCode: '2000',
+			sortingCode: null,
 			country: 'AU',
 		};
 

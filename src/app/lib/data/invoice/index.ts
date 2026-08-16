@@ -2,7 +2,9 @@ import { and, asc, count, eq, min, type RelationsFilter, sql, sum } from 'drizzl
 import { cacheLife, cacheTag } from 'next/cache';
 import { notFound, unstable_rethrow } from 'next/navigation';
 
-import { type Config, fetchConfig } from '@/lib/data';
+import { type Config } from '@/api/dto/config';
+import { type Invoice } from '@/api/dto/invoice';
+import { fetchConfig } from '@/lib/data';
 import { type ClientData } from '@/lib/data/client';
 import { crypto } from '@/lib/encrypt';
 import { invoiceReference, type Simplify } from '@/lib/utils';
@@ -14,8 +16,6 @@ import * as schema from '@/db/schema';
 import { type Session } from '@/auth';
 
 import { query } from './../helpers';
-
-export type Invoice = Awaited<ReturnType<typeof fetchInvoices>>[number];
 
 /** A billed line item, joined with the tax rows applied to it */
 export type LineItem = Simplify<
@@ -47,7 +47,7 @@ async function _fetchInvoices(
 	session: Session,
 	filter?: RelationsFilter<typeof relations.documentsWithSum, typeof relations>,
 	opts?: { limit?: number; offset?: number },
-) {
+): Promise<Invoice[]> {
 	'use cache';
 	cacheLife('hours');
 	cacheTag(`invoices-${session.user.id}`);
@@ -92,6 +92,7 @@ async function _fetchInvoices(
 		res.map(({ documentWithSum, ...inv }) => ({
 			...documentWithSum,
 			...inv,
+			createdAt: documentWithSum.createdAt.toISOString(),
 			reference: invoiceReference(inv, documentWithSum.config.numberingScheme),
 		})),
 	);
@@ -219,6 +220,7 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 			const inv: DetailedInvoice = {
 				...document,
 				...invoice,
+				createdAt: document.createdAt.toISOString(),
 				reference: invoiceReference(invoice, config.numberingScheme),
 				config,
 				clientData: await vault.decryptObject(document.clientData),

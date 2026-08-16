@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { type ComponentProps, type JSX } from 'react';
 
+import { type Client } from '@/api/dto/client';
 import { updateClientDeleted, updateClientFavorite } from '@/lib/actions/client';
-import { type Client } from '@/lib/data/client';
 import { useMutateClient } from '@/lib/hooks';
 
 import {

@@ -3,6 +3,7 @@ import { cacheLife } from 'next/cache';
 import { notFound, unstable_rethrow } from 'next/navigation';
 import { cache } from 'react';
 
+import { type Config } from '@/api/dto/config';
 import { crypto } from '@/lib/encrypt';
 import { db, withRLS } from '@/db';
 import { type relations } from '@/db/relations';
@@ -18,14 +19,12 @@ export async function getTimezones() {
 		.innerJoin(supportedTimezones, eq(timezones.name, supportedTimezones.name));
 }
 
-export type Config = Awaited<ReturnType<typeof fetchConfig>>;
-
 /** Fetches a config record
  *
  * - `fetchConfig()` → the active configuration
  * - `fetchConfig(id)` → a specific (possibly historical) version
  */
-export const fetchConfig = cache(async function fetchConfig(id?: string) {
+export const fetchConfig = cache(async function fetchConfig(id?: string): Promise<Config> {
 	try {
 		const filter: RelationsFilter<typeof relations.config, typeof relations> = id
 			? { id: { eq: id } }

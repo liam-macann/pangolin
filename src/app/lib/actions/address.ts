@@ -1,12 +1,9 @@
 'use server';
 
-import {
-	type CountryCode,
-	type getCountryData,
-	isValidCountryCode,
-	registerCountry,
-} from 'lib-address';
+import { type getCountryData, isValidCountryCode, registerCountry } from 'lib-address';
 import { cacheLife } from 'next/cache';
+
+import { type Address, type AddressMetadata } from '@/api/dto/address';
 
 type Input = ReturnType<typeof getCountryData>;
 
@@ -18,15 +15,13 @@ type ReplaceUnderscore<S extends string> = S extends `${infer Head}_${infer Tail
 const replaceUnderscore = <T extends string>(value: T): ReplaceUnderscore<T> =>
 	(value || '').replaceAll('_', ' ') as ReplaceUnderscore<T>;
 
-export type AddressData = Awaited<ReturnType<typeof _getAddressMetadata>>;
-
 /** Server action that returns transformed address metadata
  *
  * This may be accessed from the client or server, but uses a POST request and so does
  * not support client-side caching. A `fetch()` call to the API route is recommended.
  * @internal
  */
-export async function _getAddressMetadata(country: CountryCode) {
+export async function _getAddressMetadata(country: Address['country']): Promise<AddressMetadata> {
 	'use cache';
 	cacheLife('max');
 
@@ -38,6 +33,7 @@ export async function _getAddressMetadata(country: CountryCode) {
 
 	const transformed = {
 		...data,
+		key: country,
 		/** What the locality is referred to as locally */
 		locality_name_type: replaceUnderscore(data.locality_name_type),
 		/** What the dependent locality is referred to as locally */

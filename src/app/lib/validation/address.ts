@@ -1,7 +1,6 @@
 import { getCountryDataList } from 'countries-list';
 import {
 	AddressValidationError,
-	type CountryCode,
 	CountryMissingError,
 	getCountryFields,
 	getCountrySubdivisions,
@@ -17,10 +16,11 @@ import {
 } from 'lib-address';
 import z from 'zod';
 
+import { type Address } from '@/api/dto/address';
 import { fetchAddressMetadata } from '@/lib/utils/address';
 
 // Typing ensures that allowed countries match the expected type of lib-address (both independently reference ISO2 codes)
-const validCountryCodes: Exclude<CountryCode, 'ZZ'>[] = getCountryDataList().map(c => c.iso2);
+const validCountryCodes: Address['country'][] = getCountryDataList().map(c => c.iso2);
 
 /** Performs locale-unaware structural validation */
 export const transform = z.object({

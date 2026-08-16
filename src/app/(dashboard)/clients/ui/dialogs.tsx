@@ -14,9 +14,10 @@ import {
 } from 'react-hook-form';
 import z from 'zod/v4';
 
+import { type Client } from '@/api/dto/client';
 import { createClient, updateClient } from '@/lib/actions/client';
-import { type Client } from '@/lib/data/client';
 import { useClient, useClients } from '@/lib/hooks';
+import { dropNull } from '@/lib/utils';
 import { transform as addressTransformSchema } from '@/lib/validation/address';
 import { clientDataCreate as createSchema, clientData as schema } from '@/lib/validation/client';
 
@@ -119,9 +120,16 @@ export function UpdateClientDialog({
 } & ComponentProps<typeof Dialog>) {
 	const { mutate: mutateClient } = useClient(defaultValues.id);
 
+	const { address, ...data } = defaultValues.data;
+
 	const form = useForm({
 		resolver: zodResolver(formSchema),
-		defaultValues: { ...defaultValues.data, addressEnabled: !!defaultValues.data.address },
+		defaultValues: {
+			...data,
+			clientId: defaultValues.id,
+			address: dropNull(address),
+			addressEnabled: !!address,
+		},
 	});
 
 	return (

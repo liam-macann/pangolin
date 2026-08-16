@@ -8,8 +8,8 @@ import {
 } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
 
-import { type Client } from '@/lib/data/client';
-import { type Invoice } from '@/lib/data/invoice';
+import { type Client } from '@/api/dto/client';
+import { type Invoice } from '@/api/dto/invoice';
 import { useClient, useClientInvoices } from '@/lib/hooks';
 import { pluralize } from '@/lib/utils';
 

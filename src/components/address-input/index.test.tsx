@@ -4,7 +4,7 @@ import { afterEach, assert, beforeEach, describe, expect, test, vi } from 'vites
 import { userEvent } from 'vitest/browser';
 import { type RenderResult, render } from 'vitest-browser-react';
 
-import { type AddressData } from '@/lib/utils/address';
+import { type AddressMetadata } from '@/api/dto/address';
 
 import { AddressInput, type FormValues } from '.';
 
@@ -60,7 +60,7 @@ const countryMetadata = {
 		sublocality_name_type: 'neighborhood',
 		zip_name_type: 'postal',
 	},
-} satisfies Record<string, AddressData>;
+} satisfies Record<string, AddressMetadata>;
 
 const testCountries = {
 	withSubregion: 'US',

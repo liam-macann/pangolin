@@ -10,8 +10,8 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { type Control, Controller, useForm } from 'react-hook-form';
 import { type z } from 'zod';
 
+import { type Config } from '@/api/dto/config';
 import { createInvoice } from '@/lib/actions/invoice';
-import { type fetchConfig } from '@/lib/data';
 import { useClients, useInvoices } from '@/lib/hooks';
 import { cn, type Simplify } from '@/lib/utils';
 import { formatDate } from '@/lib/utils/date';
@@ -64,10 +64,7 @@ export function CreateInvoiceDialog({
 }: {
 	children: ReactElement;
 	config: Simplify<
-		Pick<
-			Awaited<ReturnType<typeof fetchConfig>>,
-			'id' | 'currency' | 'locale' | 'timezone' | 'taxes' | 'taxRegistration'
-		>
+		Pick<Config, 'id' | 'currency' | 'locale' | 'timezone' | 'taxes' | 'taxRegistration'>
 	>;
 } & ComponentProps<typeof Dialog>) {
 	const [open, setOpen] = useState(false);

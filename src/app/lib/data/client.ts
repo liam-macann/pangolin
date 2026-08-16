@@ -3,33 +3,15 @@ import { QueryBuilder } from 'drizzle-orm/pg-core';
 import { getRegisteredCountries } from 'lib-address';
 import { notFound, unstable_rethrow } from 'next/navigation';
 
+import { type Client } from '@/api/dto/client';
 import { fetchStats } from '@/lib/data/invoice/stats';
-import { crypto, type Decrypted } from '@/lib/encrypt';
+import { crypto } from '@/lib/encrypt';
 import { fetchAddressMetadata, formatAddress } from '@/lib/utils/address';
 import { coalesce } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
 import * as schema from '@/db/schema';
 
-export interface Client {
-	id: string;
-	isFavorite: boolean;
-	isDeleted: boolean;
-	invoiceCount: number;
-	data: ClientData;
-}
-
-export interface ClientData {
-	name: string | null;
-	organization: string | null;
-	scdId: string;
-	email: string;
-	notes: string | null;
-	address: Omit<Decrypted<typeof schema.address.$inferSelect>, 'userId' | 'id'> | null;
-	/** Address string formatted according to country metadata.
-	 *
-	 * This is included to avoid a waterfall on the client, as metadata registration is needed to format. */
-	formattedAddress: string | null;
-}
+export type ClientData = Client['data'];
 
 export async function fetchClients(): Promise<Client[]>;
 export async function fetchClients(opts: { limit?: number; offset?: number }): Promise<Client[]>;

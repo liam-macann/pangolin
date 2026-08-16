@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { check, index, snakeCase, text, unique, uuid } from 'drizzle-orm/pg-core';
-import { type CountryCode } from 'lib-address';
 
+import { type Address } from '@/api/dto/address';
 import { encrypted } from '@/lib/utils/drizzle';
 import { users } from '@/db/schema/auth';
 
@@ -27,7 +27,7 @@ export const address = snakeCase.table(
 		// X – Sorting code
 		sortingCode: text(),
 		// Country or territory
-		country: text().$type<Exclude<CountryCode, 'ZZ'>>().notNull(),
+		country: text().$type<Address['country']>().notNull(),
 
 		userId: uuid()
 			.references(() => users.id, { onDelete: 'cascade' })

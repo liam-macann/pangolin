@@ -1,13 +1,13 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type CountryCode } from 'lib-address';
 import { useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { type Address } from '@/api/dto/address';
+import { type Config } from '@/api/dto/config';
 import { updateUserConfig } from '@/lib/actions/config';
-import { type fetchConfig } from '@/lib/data';
 import { rateToPercent } from '@/lib/utils';
 import { configFields, config as configSchema } from '@/lib/validation/config';
 
@@ -42,7 +42,7 @@ const parseDetail = (v: string) => {
 };
 
 /** Transforms the DB config response into schema input format */
-const configAdapter = (config: Awaited<ReturnType<typeof fetchConfig>>): FormInput => ({
+const configAdapter = (config: Config): FormInput => ({
 	// Schema validation is strict. Avoid destructuring to prevent additional keys.
 
 	timezone: config.timezone,
@@ -73,15 +73,11 @@ const configAdapter = (config: Awaited<ReturnType<typeof fetchConfig>>): FormInp
 
 		// Country may be null in incomplete form state — address validation is dependent on addressEnabled state.
 		// Assertion is necessary as input is transformed through Zod schema.
-		country: (config.address?.country || null) as Exclude<CountryCode, 'ZZ'>,
+		country: (config.address?.country || null) as Address['country'],
 	},
 });
 
-export default function ConfigForm({
-	config,
-}: {
-	config: Awaited<ReturnType<typeof fetchConfig>>;
-}) {
+export default function ConfigForm({ config }: { config: Config }) {
 	/** Mutable value that records the latest config record known to the client.
 	 *  Updates on successful form submission, and used to reset the form. */
 	const savepoint = useRef<FormInput>(configAdapter(config));

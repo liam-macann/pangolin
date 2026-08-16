@@ -14,7 +14,7 @@ import {
 } from 'react-hook-form';
 import { type z } from 'zod';
 
-import { type fetchConfig } from '@/lib/data';
+import { type Config as ConfigDTO } from '@/api/dto/config';
 import { cn, rateToPercent, type Simplify } from '@/lib/utils';
 import { formatCurrency, getCurrencySymbol } from '@/lib/utils/currencies';
 import { type invoice as schema } from '@/lib/validation/invoice';
@@ -58,10 +58,7 @@ interface FormValues extends FieldValues {
 	items: z.input<typeof schema.shape.items>;
 }
 
-type Config = Pick<
-	Awaited<ReturnType<typeof fetchConfig>>,
-	'currency' | 'locale' | 'taxes' | 'taxRegistration'
->;
+type Config = Pick<ConfigDTO, 'currency' | 'locale' | 'taxes' | 'taxRegistration'>;
 
 export function LineItemsField<T extends FormValues>({
 	className,

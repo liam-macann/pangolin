@@ -10,7 +10,7 @@ import {
 	useWatch,
 } from 'react-hook-form';
 
-import { type AddressMetadata } from '@/lib/hooks';
+import { type AddressMetadata } from '@/api/dto/address';
 import { cn, mergeRefs } from '@/lib/utils';
 
 import { Button } from '@/ui/button';

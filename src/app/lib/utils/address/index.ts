@@ -1,17 +1,16 @@
-import { type CountryCode, registerCountry } from 'lib-address';
+import { registerCountry } from 'lib-address';
 
-import { _getAddressMetadata, type AddressData } from '@/lib/actions/address';
+import { type Address, AddressMetadata } from '@/api/dto/address';
+import { _getAddressMetadata } from '@/lib/actions/address';
 
 import { formatAddressLib } from './lib';
-
-export type { AddressData };
 
 /** Fetches address formatting metadata, and registers for schema validation.
  *
  * This may be accessed from the client or server, but uses a POST request internally and
  * so does not support client-side caching. A `fetch()` call to the API route is recommended. */
-export async function fetchAddressMetadata(country: CountryCode) {
-	const data = await _getAddressMetadata(country);
+export async function fetchAddressMetadata(country: Address['country']) {
+	const data = AddressMetadata.parse(await _getAddressMetadata(country));
 
 	// Register in calling environment (either client or server)
 	registerCountry(data);
@@ -20,11 +19,8 @@ export async function fetchAddressMetadata(country: CountryCode) {
 }
 
 import { isDeepStrictEqual } from 'node:util';
-import { type z } from 'zod';
 
 import { transform as structuralSchema } from '@/lib/validation/address';
-
-export type Address = z.input<typeof structuralSchema>;
 
 /** Accepts two unencrypted addresses and returns true if they are equal.
  *

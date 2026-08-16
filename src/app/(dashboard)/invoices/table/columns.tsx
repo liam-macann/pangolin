@@ -4,7 +4,7 @@ import { TZDate } from '@date-fns/tz';
 import { type Row } from '@tanstack/react-table';
 import { type ComponentProps, useContext } from 'react';
 
-import { type Invoice } from '@/lib/data/invoice';
+import { type Invoice } from '@/api/dto/invoice';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
 import { formatDate } from '@/lib/utils/date';

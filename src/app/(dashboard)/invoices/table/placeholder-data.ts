@@ -92,7 +92,7 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 			return {
 				reference: invoiceReference({ index, partition }, config.numberingScheme),
 				id: `placeholder-${i}`,
-				createdAt: issuedAt,
+				createdAt: issuedAt.toISOString(),
 				currency: config.currency,
 				taxRegistration: false,
 				title: null,

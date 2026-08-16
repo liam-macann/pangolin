@@ -1,8 +1,8 @@
 'use client';
 
+import { type Client } from '@/api/dto/client';
+import { type Invoice } from '@/api/dto/invoice';
 import { client } from '@/lib/api';
-import { type Client } from '@/lib/data/client';
-import { type Invoice } from '@/lib/data/invoice';
 
 import { createMutation, detail, list } from './mutator-factory';
 

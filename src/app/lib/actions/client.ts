@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { after } from 'next/server';
 import type z from 'zod/v4';
 
+import { type Address } from '@/api/dto/address';
 import { cleanupAddresses, cleanupClientData } from '@/lib/actions/utils';
 import { crypto } from '@/lib/encrypt';
 import { isAddressEqual } from '@/lib/utils/address';
@@ -97,7 +98,22 @@ async function insertClientData(
 ) {
 	// Must run before invalidation
 	// The reuse lookup depends on the previous record still being active
-	const addressId = await getAddressId(db, data.clientId, address, userId);
+	const addressId = await getAddressId(
+		db,
+		data.clientId,
+		address
+			? {
+					...address,
+					streetAddress: address.streetAddress ?? null,
+					dependentLocality: address.dependentLocality ?? null,
+					city: address.city ?? null,
+					administrativeArea: address.administrativeArea ?? null,
+					postalCode: address.postalCode ?? null,
+					sortingCode: address.sortingCode ?? null,
+				}
+			: null,
+		userId,
+	);
 
 	// Void previously active client data
 	await invalidateActiveScd(
@@ -130,7 +146,7 @@ async function insertClientData(
 async function getAddressId(
 	db: AuthTransaction,
 	clientId: string,
-	address: z.infer<typeof clientData>['address'],
+	address: Address | null,
 	userId: string,
 ) {
 	if (!address) return null;

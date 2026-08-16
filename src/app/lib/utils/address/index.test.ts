@@ -13,11 +13,11 @@ beforeAll(() => {
 
 const sample = {
 	streetAddress: ['1 Test Street'],
-	dependentLocality: undefined,
+	dependentLocality: null,
 	city: 'Sydney',
 	administrativeArea: 'NSW',
 	postalCode: '2000',
-	sortingCode: undefined,
+	sortingCode: null,
 	country: 'AU' as const,
 };
 

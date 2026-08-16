@@ -4,7 +4,7 @@ import { BuildingOfficeIcon, DotsThreeIcon, StarIcon } from '@phosphor-icons/rea
 import { type HTMLMotionProps, motion } from 'motion/react';
 import Link from 'next/link';
 
-import { type Client } from '@/lib/data/client';
+import { type Client } from '@/api/dto/client';
 import { cn, pluralize } from '@/lib/utils';
 
 import { Button } from '@/ui/button';

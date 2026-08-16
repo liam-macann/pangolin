@@ -2,16 +2,16 @@
 
 import { type ClientResponse } from 'hono/client';
 import { type StatusCode } from 'hono/utils/http-status';
-import { type CountryCode, registerCountry } from 'lib-address';
+import { registerCountry } from 'lib-address';
 import _useSWR, { type SWRConfiguration, type SWRResponse } from 'swr';
 import _useSWRImmutable from 'swr/immutable';
 
+import { type Address, AddressMetadata } from '@/api/dto/address';
+import { type Client } from '@/api/dto/client';
+import { type Config as ConfigData } from '@/api/dto/config';
+import { type Invoice } from '@/api/dto/invoice';
 import { client } from '@/lib/api';
 import { type EntityData, parseAPIRes } from '@/lib/api/parse-api-response';
-import { type Config as ConfigData } from '@/lib/data';
-import { type Client } from '@/lib/data/client';
-import { type Invoice } from '@/lib/data/invoice';
-import { type AddressData } from '@/lib/utils/address';
 
 import { useMutateClient } from './mutate';
 
@@ -37,16 +37,11 @@ function makeWrapper(hook: typeof _useSWR) {
 				...config,
 				...(initial !== undefined ? { fallbackData: initial } : {}),
 			},
-		) as SWRResponse<T, ProblemDetails, C>;
+		) as SWRResponse<T, unknown, C>;
 }
 
 const useSWR = makeWrapper(_useSWR);
 const useSWRImmutable = makeWrapper(_useSWRImmutable);
-
-/** Converts the wire-format `createdAt` (ISO string) back into the app-facing `Date`. */
-function toInvoice(item: Omit<Invoice, 'createdAt'> & { createdAt: string }): Invoice {
-	return { ...item, createdAt: new Date(item.createdAt) };
-}
 
 export const useInvoices = <C extends Config>(initial?: Invoice[], config?: C) =>
 	useSWR(
@@ -54,7 +49,6 @@ export const useInvoices = <C extends Config>(initial?: Invoice[], config?: C) =
 		() => client.invoices.$get({ query: {} }),
 		initial,
 		config,
-		data => data.map(toInvoice),
 	);
 
 export const useClientInvoices = <C extends Config>(id: string, initial?: Invoice[], config?: C) =>
@@ -63,7 +57,6 @@ export const useClientInvoices = <C extends Config>(id: string, initial?: Invoic
 		() => client.invoices.$get({ query: { client: id } }),
 		initial,
 		config,
-		data => data.map(toInvoice),
 	);
 
 export const useConfig = <C extends Config>(initial?: ConfigData, config?: C) =>
@@ -103,12 +96,12 @@ export function useClient<C extends Config>(id: string, initial?: Client, config
 	};
 }
 
-export { type AddressData as AddressMetadata, useAddressMetadata };
+export { useAddressMetadata };
 
 /** Pulls data from the local wrapper around Google Address Metadata API. */
 function useAddressMetadata<C extends Config>(
-	countryCode: Exclude<CountryCode, 'ZZ'>,
-	initial?: AddressData,
+	countryCode: Address['country'],
+	initial?: AddressMetadata,
 	config?: C,
 ) {
 	const swr = useSWRImmutable(
@@ -118,7 +111,7 @@ function useAddressMetadata<C extends Config>(
 		config,
 	);
 
-	if (swr.data) registerCountry(swr.data);
+	if (swr.data) registerCountry(AddressMetadata.parse(swr.data));
 
 	return swr;
 }

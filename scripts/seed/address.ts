@@ -1,6 +1,6 @@
 import { allLocales, base, en, Faker, faker } from '@faker-js/faker';
-import { type CountryCode } from 'lib-address';
 
+import { type Address } from '@/api/dto/address';
 import * as schema from '@/db/schema';
 
 import { type Transaction } from '@/scripts/db';
@@ -9,7 +9,7 @@ import { type SeedCrypto } from './encrypt';
 
 const isLocaleKey = (key: string): key is keyof typeof allLocales => key in allLocales;
 
-function fakerForCountry(country: Exclude<CountryCode, 'ZZ'>): Faker {
+function fakerForCountry(country: Address['country']): Faker {
 	const bySuffix = Object.keys(allLocales)
 		// Prefer a locale ending with the provided country (e.g. en_AU, de_AT);
 		.filter(k => k.endsWith(`_${country}`))
@@ -30,7 +30,7 @@ export async function seedAddress(
 	tx: Transaction,
 	userId: string,
 	crypto: SeedCrypto,
-	country = faker.location.countryCode('alpha-2') as Exclude<CountryCode, 'ZZ'>,
+	country = faker.location.countryCode('alpha-2') as Address['country'],
 ): Promise<string> {
 	const id = faker.string.uuid();
 	const f = fakerForCountry(country);

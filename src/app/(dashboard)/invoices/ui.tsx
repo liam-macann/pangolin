@@ -6,8 +6,8 @@ import { type SortingState } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
 import { type ComponentProps, useRef, useState } from 'react';
 
-import { type fetchConfig } from '@/lib/data';
-import { type Invoice } from '@/lib/data/invoice';
+import { type Config } from '@/api/dto/config';
+import { type Invoice } from '@/api/dto/invoice';
 import { useConfig, useInvoices } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 
@@ -64,13 +64,7 @@ function serializeSortParam(sorting: SortingState): string | null {
 	return serialized === buildSortString(DEFAULT_SORT) ? null : serialized;
 }
 
-export function Table({
-	initial,
-	initialConfig,
-}: {
-	initial?: Invoice[];
-	initialConfig: Awaited<ReturnType<typeof fetchConfig>>;
-}) {
+export function Table({ initial, initialConfig }: { initial?: Invoice[]; initialConfig: Config }) {
 	const { data: config } = useConfig(initialConfig, { suspense: true });
 	const { data: invoices } = useInvoices(initial, { suspense: true });
 
@@ -137,7 +131,7 @@ function InvoiceTable({
 	...options
 }: UseInvoiceTableOptions & {
 	locale: string;
-	config: Awaited<ReturnType<typeof fetchConfig>>;
+	config: Config;
 }) {
 	const table = useInvoiceTable({ data, ...options }, state => ({
 		columnFilters: state.columnFilters,
@@ -183,7 +177,7 @@ function InvoiceTable({
 
 const createDialog = createDialogHandle();
 
-function EmptyState({ config }: { config: Awaited<ReturnType<typeof fetchConfig>> }) {
+function EmptyState({ config }: { config: Config }) {
 	return (
 		<>
 			<div className='scrim-b-24 scrim-background max-h-44 overflow-clip'>

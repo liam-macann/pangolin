@@ -7,7 +7,7 @@ import { AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { type Client } from '@/lib/data/client';
+import { type Client } from '@/api/dto/client';
 import { useClients } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 

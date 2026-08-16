@@ -4,8 +4,8 @@ import { type SortingState, type TableState } from '@tanstack/react-table';
 import { toMerged } from 'es-toolkit';
 import { createContext, useMemo } from 'react';
 
-import { type fetchConfig } from '@/lib/data';
-import { type Invoice } from '@/lib/data/invoice';
+import { type Config } from '@/api/dto/config';
+import { type Invoice } from '@/api/dto/invoice';
 import { cn } from '@/lib/utils';
 
 import {
@@ -104,8 +104,6 @@ export function InvoiceTableContent({
 		/>
 	);
 }
-
-type Config = Awaited<ReturnType<typeof fetchConfig>>;
 
 export function PlaceholderTable({ config, count }: { config: Config; count?: number }) {
 	const data = usePlaceholderInvoices(config, count);

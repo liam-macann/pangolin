@@ -5,6 +5,7 @@ import { updateTag } from 'next/cache';
 import { after } from 'next/server';
 import type z from 'zod';
 
+import { type Address } from '@/api/dto/address';
 import { cleanupAddresses, cleanupConfigs } from '@/lib/actions/utils';
 import { crypto, type Vault } from '@/lib/encrypt';
 import { percentToRate } from '@/lib/utils';
@@ -25,7 +26,22 @@ export async function updateUserConfig(input: z.infer<typeof configInput>) {
 
 		// Checks if the address has changed from the still-active previous config, and reuses the previous fkey if not.
 		// Must run before invalidating config. The lookup depends on the previous config still being active.
-		const addressId = await getAddressId(db, vault, address, session.user.id);
+		const addressId = await getAddressId(
+			db,
+			vault,
+			address
+				? {
+						...address,
+						streetAddress: address.streetAddress ?? null,
+						dependentLocality: address.dependentLocality ?? null,
+						city: address.city ?? null,
+						administrativeArea: address.administrativeArea ?? null,
+						postalCode: address.postalCode ?? null,
+						sortingCode: address.sortingCode ?? null,
+					}
+				: null,
+			session.user.id,
+		);
 
 		// Void previously active config
 		await invalidateActiveScd(
@@ -90,7 +106,7 @@ const serializeConfig = async (
 async function getAddressId(
 	tx: AuthTransaction,
 	vault: Vault,
-	address: z.infer<typeof configInput>['address'],
+	address: Address | null,
 	userId: string,
 ) {
 	if (!address) return null;
@@ -113,7 +129,7 @@ async function getAddressId(
 		.insert(tables.address)
 		.values({
 			...address,
-			streetAddress: address.streetAddress && (await vault.encrypt(address.streetAddress)),
+			streetAddress: address.streetAddress && (await vault.encrypt([...address.streetAddress])),
 			userId,
 		})
 		.returning({ id: tables.address.id })
