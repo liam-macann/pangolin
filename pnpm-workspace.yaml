@@ -5,6 +5,7 @@ allowBuilds:
   esbuild: true
   msw: false
   sharp: true
+  vue-demi: true
 
 minimumReleaseAgeExclude:
   - '@better-auth/core@1.7.0'

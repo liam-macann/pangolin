@@ -23,6 +23,8 @@ import SideNav from '@/src/app/ui/dashboard/topnav';
 
 import { FeedbackSubmenu } from './layout-ui';
 
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 export default function Layout({ children }: { children: React.ReactNode }) {
 	return (
 		<div className='min-h-screen text-foreground'>
@@ -60,6 +62,9 @@ async function AccountMenuContent() {
 							</span>
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator />
+						{isDevelopment && (
+							<DropdownMenuItem render={<Link href='/docs/api'>API Reference</Link>} />
+						)}
 						<DropdownMenuItem render={<Link href='/settings'>Settings</Link>} />
 						<FeedbackSubmenu name={session.user.name} email={session.user.email} />
 						<DropdownMenuSeparator />
