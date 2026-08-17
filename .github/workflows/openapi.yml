@@ -1,0 +1,45 @@
+name: OpenAPI specification linting
+
+on:
+  push:
+  pull_request:
+  repository_dispatch:
+    types:
+      - "vercel.deployment.ready"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+      statuses: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.git.sha || github.sha }}
+      - name: Setup pnpm and Node.js
+        uses: pnpm/setup@v1
+        with:
+          runtime: node@24
+          cache: true
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate OpenAPI document
+        run: pnpm openapi:generate
+      - name: Lint OpenAPI document
+        uses: stoplightio/spectral-action@latest
+        with:
+          file_glob: "openapi.json"
+      - name: "Notify Vercel"
+        if: always()
+        uses: "vercel/repository-dispatch/actions/status@v1"
+        with:
+          name: "OpenAPI lint"

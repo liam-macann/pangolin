@@ -1,0 +1,84 @@
+extends:
+  - [spectral:oas, recommended]
+  - "@stoplight/spectral-documentation"
+  - "@stoplight/spectral-owasp-ruleset"
+  - "@apisyouwonthate/style-guide"
+rules:
+  info-contact: false
+  docs-info-contact: false
+  owasp:api4:2023-rate-limit: false
+  owasp:api4:2023-rate-limit-responses-429: false
+
+  # This API is mounted at a relative path on the same origin as the dashboard (no
+  # separate host), so the server URL is intentionally relative rather than an
+  # absolute https:// URL — there's no insecure http scheme in play to warn about.
+  hosts-https-only-oas3:
+    message: "Servers MUST be https and no other protocol is allowed."
+    description: "Using http in production is reckless, advised against by OWASP API Security, and generally unnecessary thanks to free SSL on loads of hosts, gateways like Cloudflare, and OSS tools like Lets Encrypt."
+    given: "$.servers..url"
+    severity: error
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: "^http:"
+  owasp:api4:2023-string-restricted: false
+
+  # Operations with no client-supplied input (path/query params and  body) have nothing to reject with 400/422
+  owasp:api8:2023-define-error-validation:
+    message: "Missing error response of either 400, 422 or 4XX."
+    description: "Carefully define schemas for all the API responses, including either 400, 422 or 4XX responses which describe errors caused by invalid requests."
+    severity: warn
+    given: "$.paths.*[?(@.requestBody || (@.parameters && @.parameters.length > 0))].responses"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+            - required: ["400"]
+            - required: ["422"]
+            - required: ["4XX"]
+
+  # This API's errors consistently use RFC 7807 problem+json (see problemContract), including
+  # on /health — only the success response needs to follow the health-check response format.
+  api-health-format:
+    message: "Health path (`/health`) SHOULD support Health Check Response Format"
+    description: "Use existing standards (and draft standards) wherever possible, like the draft standard for health checks: https://datatracker.ietf.org/doc/html/draft-inadarei-api-health-check. To learn more about health check endpoints see https://apisyouwonthate.com/blog/health-checks-with-kubernetes."
+    formats: [oas3]
+    given: "$.paths[/health].get.responses[200].content.*~"
+    severity: warn
+    then:
+      function: enumeration
+      functionOptions:
+        values: ["application/health+json"]
+
+  # readOnly properties are not client supplied and often can not readily be capped (eg. record count with no meaningful upper bound)
+  owasp:api4:2023-integer-limit:
+    message: "Schema of type integer must specify minimum and maximum."
+    description: "Integers should be limited to mitigate resource exhaustion attacks. This can be done using `minimum` and `maximum` properties."
+    severity: error
+    given: "$..[?(@ && @.type=='integer' && @.readOnly != true)]"
+    then:
+      - function: xor
+        functionOptions:
+          properties: ["minimum", "exclusiveMinimum"]
+      - function: xor
+        functionOptions:
+          properties: ["maximum", "exclusiveMaximum"]
+
+  # UUID and ISO date strings are already length-bounded.
+  # A literal maxLength would just restate what the format already guarantees.
+  owasp:api4:2023-string-limit:
+    message: "Schema of type string must specify maxLength, enum, or const."
+    description: "String size should be limited to mitigate resource exhaustion attacks. This can be done using `maxLength`, `enum` or `const`."
+    severity: error
+    given: "$..[?(@ && @.type=='string' && @.format != 'uuid' && @.format != 'date' && @.format != 'date-time')]"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          anyOf:
+            - required: ["maxLength"]
+            - required: ["enum"]
+            - required: ["const"]

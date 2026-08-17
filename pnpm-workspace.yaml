@@ -1,4 +1,5 @@
 allowBuilds:
+  '@scarf/scarf': false
   "@sentry/cli": true
   bcrypt: true
   core-js: true
