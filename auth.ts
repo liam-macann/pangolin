@@ -5,6 +5,7 @@ import { betterAuth } from 'better-auth/minimal';
 import { nextCookies } from 'better-auth/next-js';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { headers } from 'next/headers';
+import { connection } from 'next/server';
 import { cache } from 'react';
 
 import { authRelations } from '@/db/relations';
@@ -60,10 +61,7 @@ export const { signOut, signInSocial } = auth.api;
 
 export type Session = typeof auth.$Infer.Session;
 
-export const getSession = cache(
-	async (ctx?: Parameters<typeof auth.api.getSession>[0]) =>
-		await auth.api.getSession({
-			headers: await headers(),
-			...ctx,
-		}),
-);
+export const getSession = cache(async (ctx?: Parameters<typeof auth.api.getSession>[0]) => {
+	await connection();
+	return await auth.api.getSession({ headers: await headers(), ...ctx });
+});
