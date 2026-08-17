@@ -394,7 +394,7 @@ describe('fetchInvoices', () => {
 		await insertTestInvoice({ clientDataId, items: [{ quantity: 1, unitCost: 100 }] });
 		await insertTestInvoice({ clientDataId, items: [{ quantity: 1, unitCost: 100 }] });
 
-		const invoices = await fetchInvoices(undefined, 1);
+		const invoices = await fetchInvoices(undefined, { limit: 1 });
 		expect(invoices).toHaveLength(1);
 	});
 

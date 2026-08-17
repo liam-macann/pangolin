@@ -66,7 +66,13 @@ export function AddressInput<T extends FormValues>({
 }
 
 /** Takes an ISO2 string and renders localised address input */
-function LocaleForm({ region, disabled }: { region: CountryCode; disabled?: boolean }) {
+function LocaleForm({
+	region,
+	disabled,
+}: {
+	region: Exclude<CountryCode, 'ZZ'>;
+	disabled?: boolean;
+}) {
 	if (!isValidCountryCode(region)) throw new Error(`Invalid country code: ${region}`);
 
 	// Fetch region from cache or Google Address Metadata API

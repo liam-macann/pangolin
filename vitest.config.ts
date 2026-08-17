@@ -37,6 +37,13 @@ export default defineConfig({
 	},
 	resolve: {
 		tsconfigPaths: true,
+		alias: {
+			// lib-address ESM node entry calls CJS require() to load metadata.
+			// This causes issues under Vitest native ESM, so server tests use its CJS entry.
+			'lib-address$': path.join(libAddressRoot, 'dist/entry-node.cjs'),
+			// Subpath imports
+			'lib-address': libAddressRoot,
+		},
 	},
 	test: {
 		silent: 'passed-only',
@@ -64,15 +71,6 @@ export default defineConfig({
 		projects: [
 			{
 				extends: true,
-				resolve: {
-					alias: {
-						// lib-address ESM node entry calls CJS require() to load metadata.
-						// This causes issues under Vitest native ESM, so server tests use its CJS entry.
-						'lib-address$': path.join(libAddressRoot, 'dist/entry-node.cjs'),
-						// Subpath imports
-						'lib-address': libAddressRoot,
-					},
-				},
 				test: {
 					name: { label: 'server', color: 'green' },
 					environment: 'node',
@@ -80,8 +78,23 @@ export default defineConfig({
 					// Each worker will have to spin up a new DB instance, which adds considerable overhead.
 					// Increased parallelism may make sense with a larger volume of tests.
 					maxWorkers: 2,
-					sequence: { groupOrder: 1 },
+					sequence: { groupOrder: 2 },
 					include: ['src/**/*.test.ts'],
+					exclude: ['src/app/api/**/*.test.ts'],
+					setupFiles: ['./src/test/setup-server.ts'],
+				},
+			},
+			{
+				extends: true,
+				test: {
+					name: { label: 'API', color: 'magenta' },
+					environment: 'node',
+					isolate: false,
+					// Each worker will have to spin up a new DB instance, which adds considerable overhead.
+					// Increased parallelism may make sense with a larger volume of tests.
+					maxWorkers: 1,
+					sequence: { groupOrder: 1 },
+					include: ['src/app/api/**/*.test.ts'],
 					setupFiles: ['./src/test/setup-server.ts'],
 				},
 			},
@@ -100,6 +113,7 @@ export default defineConfig({
 					name: { label: 'browser', color: 'yellow' },
 					include: ['src/**/*.test.tsx', 'src/**/*.browser.test.ts'],
 					setupFiles: ['./src/test/setup-browser.ts'],
+					sequence: { groupOrder: 3 },
 					browser: {
 						enabled: true,
 						headless: true,

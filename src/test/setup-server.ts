@@ -6,6 +6,14 @@ import { vi } from 'vitest';
 
 import { asUser, getSession, sessionStorage, testConnection, warmClient } from './session';
 
+vi.hoisted(() => {
+	// Protect DB and OAuth from being contacted in tests
+	vi.stubEnv('DATABASE_URL', 'postgres://openapi:openapi@localhost:5432/openapi');
+	vi.stubEnv('AUTH_GOOGLE_ID', 'openapi');
+	vi.stubEnv('AUTH_GOOGLE_SECRET', 'openapi');
+	vi.stubEnv('BETTER_AUTH_URL', 'http://localhost:3000');
+});
+
 // Pays the PGlite worker-instance startup cost here, during file setup,
 // so it isn't misattributed to whichever test happens to run first in this worker
 await warmClient();
@@ -45,7 +53,10 @@ vi.mock('@/db/connection', () => ({
 
 // getSession() is typed to return `Session | null`.
 // A test without the `session` fixture will hit the same unauthorized() path production code would
-vi.mock('@/auth', () => ({ getSession }));
+vi.mock(import('@/auth'), async importOriginal => ({
+	...(await importOriginal()),
+	getSession,
+}));
 
 // This is what lets concurrently-running tests each see their own session
 asUser.aroundEach(

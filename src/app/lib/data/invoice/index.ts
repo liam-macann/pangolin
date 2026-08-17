@@ -40,19 +40,13 @@ export type DetailedInvoice = Omit<Invoice, 'clientData' | 'config'> & {
 /** Fetch all invoices for authenticated user, including basic relational data */
 export const fetchInvoices = (
 	filter?: RelationsFilter<typeof relations.documentsWithSum, typeof relations>,
-	limit?: number,
-	offset?: number,
-) =>
-	query(
-		async session => _fetchInvoices(session, filter, limit, offset),
-		'Failed to fetch invoices',
-	);
+	opts?: { limit?: number; offset?: number },
+) => query(async session => _fetchInvoices(session, filter, opts), 'Failed to fetch invoices');
 
 async function _fetchInvoices(
 	session: Session,
 	filter?: RelationsFilter<typeof relations.documentsWithSum, typeof relations>,
-	limit?: number,
-	offset?: number,
+	opts?: { limit?: number; offset?: number },
 ) {
 	'use cache';
 	cacheLife('hours');
@@ -91,8 +85,8 @@ async function _fetchInvoices(
 				},
 			},
 			orderBy: { index: 'desc' },
-			limit,
-			offset,
+			limit: opts?.limit,
+			offset: opts?.offset,
 		}),
 	).then(res =>
 		res.map(({ documentWithSum, ...inv }) => ({
@@ -105,7 +99,7 @@ async function _fetchInvoices(
 
 /** Fetch all invoices for a given client. Accepts logical client ID, not SCD ID. */
 export const fetchInvoicesForClient = (clientId: string, limit?: number) =>
-	fetchInvoices({ clientData: { client: { id: { eq: clientId } } } }, limit);
+	fetchInvoices({ clientData: { client: { id: { eq: clientId } } } }, { limit });
 
 /** Count invoices for the authenticated user, optionally filtered by client */
 export const countInvoices = (clientId?: string) =>

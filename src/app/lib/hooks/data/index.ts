@@ -1,59 +1,91 @@
 'use client';
 
+import { type ClientResponse } from 'hono/client';
+import { type StatusCode } from 'hono/utils/http-status';
+import { type CountryCode, registerCountry } from 'lib-address';
 import _useSWR, { type SWRConfiguration, type SWRResponse } from 'swr';
 import _useSWRImmutable from 'swr/immutable';
 
-import { fetcher } from '@/api';
+import { client } from '@/lib/api';
+import { type EntityData, parseAPIRes } from '@/lib/api/parse-api-response';
+import { type Config as ConfigData } from '@/lib/data';
+import { type Client } from '@/lib/data/client';
+import { type Invoice } from '@/lib/data/invoice';
+import { type AddressData } from '@/lib/utils/address';
 
 import { useMutateClient } from './mutate';
 
-//
-//
-// SWR helpers
-
 type Config = Omit<SWRConfiguration, 'fallbackData'>;
+type Requester = ClientResponse<unknown, StatusCode, string>;
 
-/** Wraps a SWR hook to handle custom application behaviour */
+/** Wraps a SWR hook to issue a Hono client request and unwrap its `{ data }` envelope. */
 function makeWrapper(hook: typeof _useSWR) {
-	return <T, C extends Config>(key: string, initial?: T, config?: C) =>
-		hook(key, fetcher<T>, {
-			...config,
-			...(initial !== undefined ? { fallbackData: initial } : {}),
-		}) as SWRResponse<T, unknown, C>;
+	return <R extends Requester, T = EntityData<R>, C extends Config = Config>(
+		key: string,
+		requester: () => R | Promise<R>,
+		initial?: T,
+		config?: C,
+		transform?: (data: EntityData<R>) => T,
+	) =>
+		hook(
+			key,
+			async () => {
+				const data = await parseAPIRes(requester());
+				return (transform ? transform(data) : data) as T;
+			},
+			{
+				...config,
+				...(initial !== undefined ? { fallbackData: initial } : {}),
+			},
+		) as SWRResponse<T, ProblemDetails, C>;
 }
 
 const useSWR = makeWrapper(_useSWR);
 const useSWRImmutable = makeWrapper(_useSWRImmutable);
 
-//
-//
-// Data fetching hooks
+/** Converts the wire-format `createdAt` (ISO string) back into the app-facing `Date`. */
+function toInvoice(item: Omit<Invoice, 'createdAt'> & { createdAt: string }): Invoice {
+	return { ...item, createdAt: new Date(item.createdAt) };
+}
 
-import { type Data as InvoiceData } from '@/api/invoices/route';
-export const useInvoices = <C extends Config>(initial?: InvoiceData, config?: C) =>
-	useSWR('/api/invoices', initial, config);
+export const useInvoices = <C extends Config>(initial?: Invoice[], config?: C) =>
+	useSWR(
+		client.invoices.$path({ query: {} }),
+		() => client.invoices.$get({ query: {} }),
+		initial,
+		config,
+		data => data.map(toInvoice),
+	);
 
-export const useClientInvoices = <C extends Config>(
-	id: string,
-	initial?: InvoiceData,
-	config?: C,
-) => useSWR(`/api/invoices?client=${id}`, initial, config);
+export const useClientInvoices = <C extends Config>(id: string, initial?: Invoice[], config?: C) =>
+	useSWR(
+		client.invoices.$path({ query: { client: id } }),
+		() => client.invoices.$get({ query: { client: id } }),
+		initial,
+		config,
+		data => data.map(toInvoice),
+	);
 
-import { type Data as ConfigData } from '@/api/config/route';
 export const useConfig = <C extends Config>(initial?: ConfigData, config?: C) =>
-	useSWR('/api/config', initial, config);
+	useSWR(client.config.$path(), () => client.config.$get(), initial, config);
 
-import { type Data as ClientsData } from '@/api/clients/route';
-export const useClients = <C extends Config>(initial?: ClientsData, config?: C) =>
-	useSWR('/api/clients', initial, config);
+export const useClients = <C extends Config>(initial?: Client[], config?: C) =>
+	useSWR(
+		client.clients.$path({ query: {} }),
+		() => client.clients.$get({ query: {} }),
+		initial,
+		config,
+	);
 
-import { type Data as ClientData } from '@/api/clients/[id]/route';
-export function useClient<C extends Config>(id: string, initial?: ClientData, config?: C) {
-	const swr = useSWR(`/api/clients/${id}`, initial, config);
+export function useClient<C extends Config>(id: string, initial?: Client, config?: C) {
+	const swr = useSWR(
+		client.clients[':id'].$path({ param: { id } }),
+		() => client.clients[':id'].$get({ param: { id } }),
+		initial,
+		config,
+	);
 	const { mutate } = useMutateClient(id);
 
-	// Getters forward lazily so SWR's per-field dependency tracking on `swr` still applies —
-	// a spread here would read every field eagerly and force a re-render on any change
 	return {
 		get data() {
 			return swr.data;
@@ -71,22 +103,21 @@ export function useClient<C extends Config>(id: string, initial?: ClientData, co
 	};
 }
 
-import { type CountryCode, registerCountry } from 'lib-address';
+export { type AddressData as AddressMetadata, useAddressMetadata };
 
-import { type Data as AddressInputMetadata } from '@/api/address-metadata/[country]/route';
-
-export { type AddressInputMetadata as AddressMetadata, useAddressMetadata };
-
-/** Pulls data from lib wrapper around Google Address Metadata API */
+/** Pulls data from the local wrapper around Google Address Metadata API. */
 function useAddressMetadata<C extends Config>(
-	countryCode: CountryCode,
-	initial?: AddressInputMetadata,
+	countryCode: Exclude<CountryCode, 'ZZ'>,
+	initial?: AddressData,
 	config?: C,
 ) {
-	const swr = useSWRImmutable(`/api/address-metadata/${countryCode}`, initial, config);
+	const swr = useSWRImmutable(
+		client.address.metadata[':country'].$path({ param: { country: countryCode } }),
+		() => client.address.metadata[':country'].$get({ param: { country: countryCode } }),
+		initial,
+		config,
+	);
 
-	// This idempotent side-effect must take place inside hook lifecycle
-	// to allow the calling component to rely on registration during render
 	if (swr.data) registerCountry(swr.data);
 
 	return swr;

@@ -1,5 +1,6 @@
 'use client';
 
+import { client } from '@/lib/api';
 import { type Client } from '@/lib/data/client';
 import { type Invoice } from '@/lib/data/invoice';
 
@@ -12,17 +13,18 @@ type InvoiceArray = Invoice[];
 
 /** Mutate client array and individual client simultaneously */
 export const useMutateClient = createMutation<Client>(
-	detail(id => `/api/clients/${id}`),
-	list(() => '/api/clients'),
+	detail(id => client.clients[':id'].$path({ param: { id } })),
+	list(() => client.clients.$path({ query: {} })),
 );
 
 /** Mutate invoices and client invoices simultaneously */
 export const useMutateInvoice = createMutation<Invoice>(
-	list(() => '/api/invoices'),
+	list(() => client.invoices.$path({ query: {} })),
 	list((id, cache) => {
-		const invoices: InvoiceArray | undefined = cache.get('/api/invoices')?.data;
+		const key = client.invoices.$path({ query: {} });
+		const invoices: InvoiceArray | undefined = cache.get(key)?.data;
 		const clientId = invoices?.find(item => item.id === id)?.clientData?.clientId;
-		return clientId ? `/api/invoices?client=${clientId}` : undefined;
+		return clientId ? client.invoices.$path({ query: { client: clientId } }) : undefined;
 	}),
 );
 
