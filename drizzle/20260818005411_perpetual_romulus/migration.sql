@@ -1,0 +1,1 @@
+ALTER TABLE "account" RENAME COLUMN "provider_account_id" TO "account_id";
