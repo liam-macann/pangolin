@@ -3,6 +3,8 @@ dist/
 .output/
 
 # dependencies
+.pnpm-store/
+.pnpm/
 node_modules/
 
 # logs
@@ -10,7 +12,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-
 
 # environment variables
 .env*
@@ -33,7 +34,6 @@ coverage/
 
 # testing
 .vitest-attachments/
-__screenshots__/
 
 # typegen
 tsconfig.tsbuildinfo
