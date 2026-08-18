@@ -52,6 +52,7 @@ const nextConfig: NextConfig = {
 							"font-src 'self' data:",
 							"connect-src 'self'",
 							`script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ''}`,
+							"worker-src 'self' blob:",
 							"style-src 'self' 'unsafe-inline'",
 						].join('; '),
 					},
