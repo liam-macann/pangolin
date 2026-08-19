@@ -1,7 +1,94 @@
+import { convertToOpenAPISchema } from '@standard-community/standard-openapi/convert';
+import { isFunction } from 'es-toolkit';
 import { type Env, type Hono, type Schema } from 'hono';
-import { generateSpecs } from 'hono-openapi';
+import { generateSpecs, loadVendor } from 'hono-openapi';
+import {
+	$ZodCheck,
+	type $ZodChecks,
+	type $ZodType,
+	type JSONSchemaGeneratorParams,
+	toJSONSchema,
+} from 'zod/v4/core';
 
 import { auth } from '@/auth';
+
+type ZodCheckType = $ZodChecks['_zod']['def']['check'];
+
+/** Checks whether a value is a {@link $ZodCheck} object */
+const isZodCheck = (value: unknown): value is $ZodCheck => value instanceof $ZodCheck;
+
+/** Returns array of all {@link $ZodCheck} within a schema chain */
+const getZodChecks = (schema: $ZodType) => {
+	const { def } = schema._zod;
+	if (!('checks' in def) || !Array.isArray(def.checks)) return [];
+	return def.checks.filter(isZodCheck);
+};
+
+/** Checks whether a schema has an explicit check with the given Zod check name */
+const hasExplicitCheck = (schema: $ZodType, target: ZodCheckType) =>
+	getZodChecks(schema).some(check => check._zod.def.check === target);
+
+/** Checks whether a schema has an explicit regular-expression check */
+const hasExplicitRegex = (schema: $ZodType) =>
+	getZodChecks(schema).some(check => {
+		const { def } = check._zod;
+		return def.check === 'string_format' && 'format' in def && def.format === 'regex';
+	});
+
+/** Identifies formats whose intrinsic regex is redundant in OpenAPI */
+const hasIntrinsicPatternFormat = (format: string | undefined) =>
+	format && new Set(['uuid', 'email', 'date', 'datetime', 'date-time']).has(format);
+
+/** Creates the Zod JSON Schema override used by the OpenAPI vendor loader. */
+const composeZodOverride = (existing: unknown): JSONSchemaGeneratorParams['override'] => {
+	const previous = isFunction(existing) ? existing : undefined;
+
+	return context => {
+		// Reapply existing JSON Schema gen
+		previous?.(context);
+
+		const { def } = context.zodSchema._zod;
+
+		if ('format' in def && def.format === 'int32') {
+			context.jsonSchema.format = 'int32';
+			if (!hasExplicitCheck(context.zodSchema, 'greater_than')) delete context.jsonSchema.minimum;
+			if (!hasExplicitCheck(context.zodSchema, 'less_than')) delete context.jsonSchema.maximum;
+		}
+
+		if ('format' in def && hasIntrinsicPatternFormat(def.format)) {
+			context.jsonSchema.format = def.format === 'datetime' ? 'date-time' : def.format;
+
+			if (hasExplicitRegex(context.zodSchema)) {
+				// Removes only the intrinsic pattern while retaining explicit regex constraints
+				const { def } = context.zodSchema._zod;
+
+				if (!('pattern' in def)) return;
+				const pattern = def.pattern;
+				const allOf = context.jsonSchema.allOf;
+
+				if (!(pattern instanceof RegExp) || !Array.isArray(allOf)) return;
+
+				context.jsonSchema.allOf = allOf.filter(
+					v => typeof v !== 'object' || !v || !('pattern' in v) || v.pattern !== pattern.source,
+				);
+			} else delete context.jsonSchema.pattern;
+		}
+	};
+};
+
+loadVendor('zod', {
+	toOpenAPISchema: (schema, context) =>
+		convertToOpenAPISchema(
+			// @ts-expect-error -- converter/runtime compatibility with Zod 4 JSON Schema
+			toJSONSchema(schema, {
+				io: context.options?.io,
+				unrepresentable: 'any',
+				override: composeZodOverride(context.options?.override),
+				target: 'draft-07',
+			}),
+			context,
+		),
+});
 
 const documentConfig = {
 	openapi: '3.1.0',
