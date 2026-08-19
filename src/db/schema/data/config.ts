@@ -1,7 +1,6 @@
 import { isNull, type SQL, sql } from 'drizzle-orm';
 import {
 	boolean,
-	char,
 	check,
 	index,
 	integer,
@@ -13,7 +12,6 @@ import {
 	unique,
 	uniqueIndex,
 	uuid,
-	varchar,
 } from 'drizzle-orm/pg-core';
 
 import { encrypted } from '@/lib/utils/drizzle';
@@ -30,7 +28,7 @@ export const taxes = snakeCase.table(
 		userId: uuid('user_id')
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
-		name: varchar({ length: 10 }).notNull(),
+		name: text().notNull(),
 		rate: numeric({ precision: 5, scale: 4, mode: 'number' }).notNull(),
 	},
 	t => [
@@ -39,6 +37,8 @@ export const taxes = snakeCase.table(
 
 		// Necessary for ownership constraint on configTaxes/itemTaxes
 		unique('uq_tax_user').on(t.id, t.userId),
+
+		check('chk_tax_name_length', sql`char_length(${t.name}) <= 10`),
 
 		policy({
 			select: authUid(t.userId),
@@ -118,7 +118,7 @@ export const config = scdTable(
 			.references(() => supportedTimezones.name)
 			.notNull(),
 
-		language: text().default('en').notNull(), // eg. `en`
+		language: text().default('en').notNull(),
 		region: text().notNull(), // eg. `AU`
 		locale: text()
 			.generatedAlwaysAs(
@@ -126,7 +126,7 @@ export const config = scdTable(
 			)
 			.notNull(),
 
-		currency: char({ length: 3 })
+		currency: text()
 			.references(() => currencies.iso)
 			.notNull(),
 		addressId: uuid().references(() => address.id),
@@ -150,6 +150,11 @@ export const config = scdTable(
 
 		check('chk_language_lowercase', sql`${t.language} = lower(${t.language})`),
 		check('chk_region_uppercase', sql`${t.region} = upper(${t.region})`),
+
+		check('chk_trading_name_length', sql`char_length(${t.tradingName}) <= 255`),
+		check('chk_language_length', sql`char_length(${t.language}) <= 3`),
+		check('chk_region_length', sql`char_length(${t.region}) <= 20`),
+		check('chk_currency_length', sql`char_length(${t.currency}) = 3`),
 
 		// Ensure config and address are owned by the same user
 		relationOwnership(t.addressId, address),

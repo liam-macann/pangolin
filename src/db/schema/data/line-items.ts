@@ -1,5 +1,6 @@
 import { type SQL, sql } from 'drizzle-orm';
 import {
+	check,
 	foreignKey,
 	index,
 	integer,
@@ -60,6 +61,9 @@ export const lineItems = snakeCase.table(
 		index('idx_line_item_document_id').on(t.documentId),
 		index('idx_line_item_user_id').on(t.userId),
 		index('idx_line_item_config_id').on(t.configId),
+
+		check('chk_line_item_label_length', sql`char_length(${t.label}) <= 255`),
+		check('chk_line_item_note_length', sql`char_length(${t.note}) <= 255`),
 
 		// Ensure this item references the same config as the associated invoice
 		foreignKey({

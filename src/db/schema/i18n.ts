@@ -1,4 +1,5 @@
-import { boolean, char, interval, pgView, smallint, snakeCase, text } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { boolean, check, interval, pgView, smallint, snakeCase, text } from 'drizzle-orm/pg-core';
 
 import { policy } from './data/_helpers';
 
@@ -6,19 +7,20 @@ import { policy } from './data/_helpers';
 export const currencies = snakeCase.table(
 	'currency',
 	{
-		iso: char({ length: 3 }).primaryKey(),
+		iso: text().primaryKey(),
 		/** Human readable currency name */
 		name: text('name').notNull(),
 		isActive: boolean('is_active').default(true).notNull(),
 		minorUnit: smallint('minor_unit'),
 	},
-	() => [
+	t => [
 		policy({
 			select: true,
 			insert: false,
 			update: false,
 			delete: false,
 		}),
+		check('chk_iso_length', sql`char_length(${t.iso}) = 3`),
 	],
 );
 

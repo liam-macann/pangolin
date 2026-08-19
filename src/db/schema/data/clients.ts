@@ -8,7 +8,6 @@ import {
 	unique,
 	uniqueIndex,
 	uuid,
-	varchar,
 } from 'drizzle-orm/pg-core';
 
 import { users } from '@/db/schema/auth';
@@ -61,9 +60,9 @@ export const clientData = scdTable(
 		clientId: uuid()
 			.references(() => clients.id, { onDelete: 'cascade' })
 			.notNull(),
-		name: varchar({ length: 255 }),
-		organization: varchar({ length: 255 }),
-		email: varchar({ length: 255 }).notNull(),
+		name: text(),
+		organization: text(),
+		email: text().notNull(),
 		notes: text(),
 
 		addressId: uuid().references(() => address.id),
@@ -80,6 +79,11 @@ export const clientData = scdTable(
 		index('idx_client_data_address_id').on(t.addressId),
 
 		check('chk_name_or_org', sql`${t.name} IS NOT NULL OR ${t.organization} IS NOT NULL`),
+
+		check('chk_client_name_length', sql`char_length(${t.name}) <= 255`),
+		check('chk_client_organization_length', sql`char_length(${t.organization}) <= 255`),
+		check('chk_client_email_length', sql`char_length(${t.email}) <= 255`),
+		check('chk_client_notes_length', sql`char_length(${t.notes}) <= 1000`),
 
 		relationOwnership(t.clientId, clients),
 		relationOwnership(t.addressId, address),

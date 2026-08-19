@@ -13,7 +13,6 @@ import {
 	timestamp,
 	unique,
 	uuid,
-	varchar,
 } from 'drizzle-orm/pg-core';
 
 import { users } from '@/db/schema/auth';
@@ -51,7 +50,7 @@ export const invoices = snakeCase.table(
 		dueAt: date().notNull(),
 
 		/** Partition used to identify invoice sequence */
-		partition: varchar({ length: 50 }),
+		partition: text(),
 
 		/** Index of invoice, by partition */
 		index: integer().notNull(),
@@ -77,6 +76,8 @@ export const invoices = snakeCase.table(
 
 		check('chk_due_after_issued', sql`${t.dueAt} >= ${t.issuedAt}`),
 
+		check('chk_invoice_partition_length', sql`char_length(${t.partition}) <= 50`),
+
 		policy({
 			select: authUid(t.userId),
 			insert: authUid(t.userId),
@@ -98,7 +99,7 @@ export const documents = snakeCase.table(
 			.notNull()
 			.references(() => clientData.id),
 
-		title: varchar({ length: 100 }),
+		title: text(),
 		/** Description printed under invoice reference */
 		description: text(),
 
@@ -116,6 +117,9 @@ export const documents = snakeCase.table(
 		index('idx_document_client_data_id').on(t.clientDataId),
 		index('idx_document_config_id').on(t.configId),
 		index('idx_document_user_id').on(t.userId),
+
+		check('chk_document_title_length', sql`char_length(${t.title}) <= 100`),
+		check('chk_document_description_length', sql`char_length(${t.description}) <= 1000`),
 
 		// Enforce that client data is owned by the same user as the invoice
 		relationOwnership(t.clientDataId, clientData),
@@ -158,6 +162,8 @@ export const invoiceStatus = snakeCase.table(
 	t => [
 		index('idx_invoice_status_user_id').on(t.userId),
 
+		check('chk_invoice_status_notes_length', sql`char_length(${t.notes}) <= 1000`),
+
 		// Enforce that status data is owned by the same user as the invoice
 		relationOwnership(t.id, invoices),
 
@@ -184,7 +190,7 @@ export const sequencer = snakeCase.table(
 		namespace: namespaceEnum().notNull(),
 
 		/** `null` for global sequencing, or a sequence key (eg `2026` in annual mode) */
-		partition: varchar({ length: 50 }),
+		partition: text(),
 
 		/** @remarks Equivalent to the last committed value, not the next value in the sequence */
 		count: integer().notNull().default(0),
@@ -202,6 +208,8 @@ export const sequencer = snakeCase.table(
 			.nullsNotDistinct(),
 
 		check('chk_positive_count', sql`${t.count} >= 0`),
+
+		check('chk_sequencer_partition_length', sql`char_length(${t.partition}) <= 50`),
 
 		policy({
 			select: authUid(t.userId),

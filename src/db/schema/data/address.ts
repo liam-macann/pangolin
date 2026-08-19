@@ -1,4 +1,5 @@
-import { index, snakeCase, text, unique, uuid } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { check, index, snakeCase, text, unique, uuid } from 'drizzle-orm/pg-core';
 import { type CountryCode } from 'lib-address';
 
 import { encrypted } from '@/lib/utils/drizzle';
@@ -37,6 +38,13 @@ export const address = snakeCase.table(
 		unique('uq_address_user').on(t.id, t.userId),
 
 		index('idx_address_user_id').on(t.userId),
+
+		check('chk_dependent_locality_length', sql`char_length(${t.dependentLocality}) <= 255`),
+		check('chk_city_length', sql`char_length(${t.city}) <= 255`),
+		check('chk_administrative_area_length', sql`char_length(${t.administrativeArea}) <= 255`),
+		check('chk_postal_code_length', sql`char_length(${t.postalCode}) <= 20`),
+		check('chk_sorting_code_length', sql`char_length(${t.sortingCode}) <= 20`),
+		check('chk_country_length', sql`char_length(${t.country}) <= 2`),
 
 		policy({
 			select: authUid(t.userId),
