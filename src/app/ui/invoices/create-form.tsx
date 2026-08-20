@@ -137,7 +137,13 @@ export function CreateInvoiceDialog({
 											Title
 										</FieldLabel>
 										<div className='flex grow flex-col items-end gap-1'>
-											<Input id='title' placeholder='Optional' {...field} className='max-w-80' />
+											<Input
+												id='title'
+												placeholder='Optional'
+												{...field}
+												value={field.value ?? ''}
+												className='max-w-80'
+											/>
 											{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 										</div>
 									</Field>

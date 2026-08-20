@@ -1,4 +1,5 @@
 import { describe, expect } from 'vitest';
+import { z } from 'zod';
 
 import { voidInvoice } from '@/lib/actions/invoice';
 import {
@@ -8,7 +9,7 @@ import {
 } from '@/lib/actions/tests/helpers';
 import { type Enum } from '@/lib/utils/drizzle';
 import { invoice as invoiceSchema } from '@/lib/validation/invoice';
-import { numberBounds } from '@/lib/zod';
+import { getBounds } from '@/lib/zod';
 import type * as tables from '@/db/schema';
 
 import { asUser as test } from '@/test/session';
@@ -17,8 +18,15 @@ import { fetchStats } from './stats';
 
 type Item = { quantity: number; unitCost: number };
 
-const quantityBounds = numberBounds(invoiceSchema.shape.items.element.shape.quantity);
-const unitCostBounds = numberBounds(invoiceSchema.shape.items.element.shape.unitCost);
+const isNumber = (schema: z.core.$ZodType): schema is z.core.$ZodNumber | z.core.$ZodNumberFormat =>
+	schema instanceof z.ZodNumber || schema instanceof z.ZodNumberFormat;
+
+const quantityBounds = getBounds(invoiceSchema.shape.items.element.shape.quantity, isNumber, {
+	minimum: -Infinity,
+});
+const unitCostBounds = getBounds(invoiceSchema.shape.items.element.shape.unitCost, isNumber, {
+	minimum: -Infinity,
+});
 
 describe('fetchStats', () => {
 	type InvoiceCase = { items: Item[]; status: Enum<typeof tables.statusEnum>; void?: boolean };
@@ -117,15 +125,15 @@ describe('fetchStats', () => {
 			{
 				invoices: [
 					{
-						items: [{ quantity: quantityBounds.maxValue, unitCost: unitCostBounds.maxValue }],
+						items: [{ quantity: quantityBounds.maximum, unitCost: unitCostBounds.maximum }],
 						status: 'unpaid',
 					},
 				],
 				expected: {
 					validCount: 1,
-					netSum: quantityBounds.maxValue * unitCostBounds.maxValue,
-					grossSum: quantityBounds.maxValue * unitCostBounds.maxValue,
-					grossOutstanding: quantityBounds.maxValue * unitCostBounds.maxValue,
+					netSum: quantityBounds.maximum * unitCostBounds.maximum,
+					grossSum: quantityBounds.maximum * unitCostBounds.maximum,
+					grossOutstanding: quantityBounds.maximum * unitCostBounds.maximum,
 				},
 			},
 		],
@@ -134,15 +142,15 @@ describe('fetchStats', () => {
 			{
 				invoices: [
 					{
-						items: [{ quantity: quantityBounds.maxValue, unitCost: unitCostBounds.minValue }],
+						items: [{ quantity: quantityBounds.maximum, unitCost: unitCostBounds.minimum }],
 						status: 'unpaid',
 					},
 				],
 				expected: {
 					validCount: 1,
-					netSum: quantityBounds.maxValue * unitCostBounds.minValue,
-					grossSum: quantityBounds.maxValue * unitCostBounds.minValue,
-					grossOutstanding: quantityBounds.maxValue * unitCostBounds.minValue,
+					netSum: quantityBounds.maximum * unitCostBounds.minimum,
+					grossSum: quantityBounds.maximum * unitCostBounds.minimum,
+					grossOutstanding: quantityBounds.maximum * unitCostBounds.minimum,
 				},
 			},
 		],

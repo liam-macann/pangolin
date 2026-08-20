@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import * as navigation from 'next/navigation';
 import { assert, describe, expect } from 'vitest';
+import { z } from 'zod';
 
 import {
 	setUpConfigAndClient as insertConfigAndClient,
@@ -12,7 +13,7 @@ import {
 import { formatCurrency } from '@/lib/utils/currencies';
 import { taxes as taxesSchema } from '@/lib/validation/config';
 import { invoice as invoiceSchema } from '@/lib/validation/invoice';
-import { arrayBounds, numberBounds } from '@/lib/zod';
+import { getBounds } from '@/lib/zod';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
@@ -22,13 +23,24 @@ import { fetchInvoice, fetchInvoices, fetchInvoicesForClient } from './index';
 
 type Item = { quantity: number; unitCost: number };
 
-const quantityBounds = numberBounds(invoiceSchema.shape.items.element.shape.quantity);
-const unitCostBounds = numberBounds(invoiceSchema.shape.items.element.shape.unitCost);
+const isNumber = (schema: z.core.$ZodType): schema is z.core.$ZodNumber | z.core.$ZodNumberFormat =>
+	schema instanceof z.ZodNumber || schema instanceof z.ZodNumberFormat;
+const isArray = (schema: z.core.$ZodType): schema is z.core.$ZodArray =>
+	schema instanceof z.ZodArray;
 
-const taxRateBounds = numberBounds(taxesSchema.def.element.shape.rate);
+const quantityBounds = getBounds(invoiceSchema.shape.items.element.shape.quantity, isNumber, {
+	minimum: -Infinity,
+});
+const unitCostBounds = getBounds(invoiceSchema.shape.items.element.shape.unitCost, isNumber, {
+	minimum: -Infinity,
+});
 
-const itemsBounds = arrayBounds(invoiceSchema.shape.items);
-const taxCountBounds = arrayBounds(taxesSchema);
+const taxRateBounds = getBounds(taxesSchema.def.element.shape.rate, isNumber, {
+	minimum: -Infinity,
+});
+
+const itemsBounds = getBounds(invoiceSchema.shape.items, isArray);
+const taxCountBounds = getBounds(taxesSchema, isArray);
 
 /** Inserts an active config and client, returning the client data id */
 async function setUpConfigAndClient(configOverrides?: Parameters<typeof insertTestConfig>[0]) {
@@ -132,15 +144,15 @@ describe('fetchInvoice', () => {
 		test('grossTotal does not overflow across the max item count', async () => {
 			const id = await insertTestInvoice({
 				clientDataId: await setUpConfigAndClient(),
-				items: Array.from({ length: itemsBounds.maxLength }, () => ({
+				items: Array.from({ length: itemsBounds.maximum }, () => ({
 					quantity: 1,
-					unitCost: unitCostBounds.maxValue,
+					unitCost: unitCostBounds.maximum,
 				})),
 			});
 
 			const invoice = await fetchInvoice(id);
 			expect(invoice.grossTotal).toBe(
-				Math.round(unitCostBounds.maxValue * itemsBounds.maxLength * 100) / 100,
+				Math.round(unitCostBounds.maximum * itemsBounds.maximum * 100) / 100,
 			);
 		});
 	});
@@ -182,15 +194,15 @@ describe('fetchInvoice', () => {
 		);
 
 		const expectedItemGross =
-			unitCostBounds.maxValue * (1 + (taxCountBounds.maxLength * taxRateBounds.maxValue) / 100);
-		test(`Invoice gross total cannot overflow: ${formatCurrency(expectedItemGross * itemsBounds.maxLength, 'AUD', 'en-AU')}`, async () => {
+			unitCostBounds.maximum * (1 + (taxCountBounds.maximum * taxRateBounds.maximum) / 100);
+		test(`Invoice gross total cannot overflow: ${formatCurrency(expectedItemGross * itemsBounds.maximum, 'AUD', 'en-AU')}`, async () => {
 			const invoice = await itemGrossAmount(
-				unitCostBounds.maxValue,
-				Array(taxCountBounds.maxLength).fill(taxRateBounds.maxValue),
-				itemsBounds.maxLength,
+				unitCostBounds.maximum,
+				Array(taxCountBounds.maximum).fill(taxRateBounds.maximum),
+				itemsBounds.maximum,
 			);
 
-			expect(invoice.grossTotal).toBe(expectedItemGross * itemsBounds.maxLength);
+			expect(invoice.grossTotal).toBe(expectedItemGross * itemsBounds.maximum);
 		});
 	});
 
@@ -289,18 +301,18 @@ describe('fetchInvoice', () => {
 			['unlinked item', [{ quantity: 1, unitCost: 50, taxed: false }], 0],
 			[
 				'max unit cost',
-				[{ quantity: 1, unitCost: unitCostBounds.maxValue, taxed: true }],
-				unitCostBounds.maxValue * 0.1,
+				[{ quantity: 1, unitCost: unitCostBounds.maximum, taxed: true }],
+				unitCostBounds.maximum * 0.1,
 			],
 			[
 				'min unit cost',
-				[{ quantity: 1, unitCost: unitCostBounds.minValue, taxed: true }],
-				unitCostBounds.minValue * 0.1,
+				[{ quantity: 1, unitCost: unitCostBounds.minimum, taxed: true }],
+				unitCostBounds.minimum * 0.1,
 			],
 			[
 				'max quantity',
-				[{ quantity: quantityBounds.maxValue, unitCost: unitCostBounds.maxValue, taxed: true }],
-				quantityBounds.maxValue * unitCostBounds.maxValue * 0.1,
+				[{ quantity: quantityBounds.maximum, unitCost: unitCostBounds.maximum, taxed: true }],
+				quantityBounds.maximum * unitCostBounds.maximum * 0.1,
 			],
 		])('Calculates tax contribution correctly: %s', async ([, items, expectedContribution]) => {
 			const clientDataId = await setUpConfigAndClient({
