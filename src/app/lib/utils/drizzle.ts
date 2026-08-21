@@ -1,5 +1,13 @@
-import { type Column, type SQL, sql } from 'drizzle-orm';
-import { customType, type PgEnum } from 'drizzle-orm/pg-core';
+import { type Column, getColumnTable, type SQL, sql } from 'drizzle-orm';
+import {
+	customType,
+	getTableConfig,
+	type PgChar,
+	PgDialect,
+	type PgEnum,
+	type PgText,
+	type PgVarchar,
+} from 'drizzle-orm/pg-core';
 
 import { type Encrypted, isEncrypted, toBytes, toHex } from '@/lib/utils/encrypt';
 
@@ -107,3 +115,42 @@ export const encrypted = customType<{
 		return toHex(bytes);
 	},
 });
+
+const dialect = new PgDialect();
+
+/** Reads length bounds of a string column, from either type (VARCHAR, CHAR) or check constraints */
+export const getTextColumnBounds = (column: PgChar | PgText | PgVarchar) => {
+	const checks = getTableConfig(getColumnTable(column)).checks;
+
+	// In Postgres, all three are equivalent
+	const functions = [
+		dialect.sqlToQuery(sql`char_length(${column})`).sql,
+		dialect.sqlToQuery(sql`character_length(${column})`).sql,
+		dialect.sqlToQuery(sql`length(${column})`).sql,
+	];
+
+	return checks
+		.flatMap(check => {
+			const sql = dialect.sqlToQuery(check.value).sql;
+			const prefix = functions.find(prefix => sql.startsWith(prefix));
+			if (!prefix) return [];
+
+			const match = sql.slice(prefix.length).match(/^\s*(<=|>=|=)\s*(\d+)$/);
+			if (!match) return [];
+
+			const operator = match[1];
+			const length = Number(match[2]);
+
+			if (operator === '<=') return [{ minLength: 0, maxLength: length }];
+			if (operator === '>=') return [{ minLength: length, maxLength: Infinity }];
+			return [{ minLength: length, maxLength: length }];
+		})
+		.reduce(
+			(acc, check) => ({
+				minLength: Math.max(acc.minLength, check.minLength),
+				maxLength: Math.min(acc.maxLength, check.maxLength),
+			}),
+			// CHAR length does not impose minimum, but rather pads input to length
+			{ minLength: 0, maxLength: column.length ?? Infinity },
+		);
+};
