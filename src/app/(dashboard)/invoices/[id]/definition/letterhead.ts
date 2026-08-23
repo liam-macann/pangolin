@@ -36,7 +36,7 @@ export function letterheadTable({ config }: InvoicePrintData): ContentTable {
 					{
 						alignment: 'right',
 						stack: [
-							{ stack: config.tradingNumber || [] },
+							{ stack: [...(config.tradingNumber || [])] },
 
 							config.email ? { text: config.email } : [],
 							config.phone ? { text: config.phone } : [],

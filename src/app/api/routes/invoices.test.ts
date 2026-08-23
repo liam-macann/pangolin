@@ -41,7 +41,7 @@ describe('GET /api/invoices', () => {
 
 		expect(body.data).toHaveLength(1);
 		expect(body.data[0].clientData.clientId).toBe(clientA.id);
-		expect(body.meta).toEqual({ total: 1 });
+		expect(body.meta).toEqual({ total: 1, limit: 200 });
 	});
 
 	asUser('No cross-tenant leakage when filtering with a client UUID', async ({ db, auth }) => {

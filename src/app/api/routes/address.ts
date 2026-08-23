@@ -28,6 +28,7 @@ const route = defineRoute.public({
 		},
 		...problemContract({
 			INVALID_COUNTRY: 'The country code is invalid.',
+			422: 'An invalid country code was provided.',
 		}),
 	},
 });

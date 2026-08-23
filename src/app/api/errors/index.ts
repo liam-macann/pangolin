@@ -15,7 +15,7 @@ export const ProblemDetails = z
 		/** Short summary of the problem type */
 		title: z.string().max(255).meta({ description: 'Short summary of the problem type' }),
 		/** HTTP status code */
-		status: z.int().min(100).max(599).meta({ description: 'HTTP status code' }),
+		status: z.int32().min(100).max(599).meta({ description: 'HTTP status code' }),
 		/** Human-readable explanation specific to this occurrence */
 		detail: z.string().max(2000).optional().meta({ description: 'Human-readable explanation' }),
 		/** URI that identifies the specific occurrence */

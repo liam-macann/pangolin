@@ -12,7 +12,7 @@ export function documentFooter(
 	invoice: InvoicePrintData,
 	pageMargins: [number, number, number, number],
 ): DynamicContent {
-	const footerLeftContent = invoice.config.paymentDetails || [];
+	const footerLeftContent = [...(invoice.config.paymentDetails || [])];
 
 	return () => {
 		return {

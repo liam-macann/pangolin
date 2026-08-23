@@ -22,7 +22,8 @@ const query = z
 				examples: ['550e8400-e29b-41d4-a716-446655440000'],
 			}),
 	})
-	.extend(paginationSchema.omit({ total: true }).shape);
+	.extend(paginationSchema.omit({ total: true }).shape)
+	.strict();
 
 const route = defineRoute.protected({
 	tags: ['Invoices'],

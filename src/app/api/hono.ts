@@ -48,9 +48,9 @@ app.use(
 		allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
 	}),
 );
+app.use(compress());
 app.use(methodNotAllowed({ app }));
 app.use(prettyJSON());
-app.use(compress());
 app.use(trimTrailingSlash({ alwaysRedirect: true }));
 const etag = _etag();
 app.use(async (c, next) => {

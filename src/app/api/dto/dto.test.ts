@@ -25,7 +25,7 @@ import * as db from '@/db/schema';
 type FieldMapping = [column: Column, path: string];
 
 interface DTOConfig {
-	dto: z.ZodReadonly<z.ZodObject>;
+	dto: z.ZodObject;
 	fields: FieldMapping[];
 	exempt?: string[];
 }
@@ -115,7 +115,7 @@ const isString = (s: z.core.$ZodType) => s instanceof z.ZodString || s instanceo
 describe('API contract fields are compatible with database storage constraints', () => {
 	describe.for(
 		DTOs.map(v => {
-			const name = v.dto.unwrap().meta()?.ref;
+			const name = v.dto.meta()?.ref;
 			assert(typeof name === 'string', 'DTO metadata ref missing');
 			return { name, ...v };
 		}),

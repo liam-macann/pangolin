@@ -172,7 +172,7 @@ async function getAddressId(
 			.insert(schema.address)
 			.values({
 				...address,
-				streetAddress: address.streetAddress && (await vault.encrypt(address.streetAddress)),
+				streetAddress: address.streetAddress && (await vault.encrypt([...address.streetAddress])),
 				userId,
 			})
 			.returning({ id: schema.address.id })

@@ -36,7 +36,7 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 	const colors = schemes[invoice.config.colorScheme];
 
 	/** Necessary before execution to estimate bottom margin height */
-	const footerLeftContent: string[] = invoice.config.paymentDetails || [];
+	const footerLeftContent: string[] = [...(invoice.config.paymentDetails || [])];
 
 	const pageMargins: [number, number, number, number] = [
 		spacing(18), // L

@@ -13,22 +13,22 @@ export const createApiRouter = () => new Hono<Env>();
 export const defineRoute = {
 	protected: (config: DescribeRouteOptions) =>
 		[describeRoute({ ...config, security: [{ SessionCookie: [] }] }), requireAuth] as const,
-	public: (config: DescribeRouteOptions) => [describeRoute(config)] as const,
+	public: (config: DescribeRouteOptions) => [describeRoute({ ...config, security: [{}] })] as const,
 };
 
 export const validationHook = standardSchemaProblemHook();
 
 export const paginationSchema = z.object({
-	total: z.int().nonnegative(),
+	total: z.int32().nonnegative().readonly(),
 	limit: z
-		.preprocess(v => Number(v), z.int32().positive().max(100))
-		.optional()
+		.preprocess(v => Number(v), z.int32().positive().max(200))
+		.default(200)
 		.meta({
 			description: 'Maximum number of items to return.',
 			examples: [20],
 		}),
 	offset: z
-		.preprocess(v => Number(v), z.int32().nonnegative())
+		.preprocess(v => Number(v), z.int32().nonnegative().max(100_000))
 		.optional()
 		.meta({
 			description: 'Number of items to skip.',

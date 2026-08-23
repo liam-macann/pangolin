@@ -7,7 +7,7 @@ import { clientData as clientDataSchema } from '@/db/schema/data';
 /** Field-level schema for client data, excluding generated fields.
  *  Carries no cross-field refinements, so subsets may be derived with pick()/omit()/extend(). */
 export const clientDataFields = createInsertSchema(clientDataSchema, {
-	email: z.string().trim().pipe(z.email()),
+	email: s => z.string().trim().pipe(z.email()).pipe(s),
 	name: s => s.transform(value => value?.trim() || null),
 	organization: s => s.transform(value => value?.trim() || null),
 })

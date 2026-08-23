@@ -76,12 +76,14 @@ export const configFields = createInsertSchema(configSchema, {
 		.max(15, 'No more than 15 items allowed'),
 	email: z
 		.string()
+		.max(255)
 		.optional()
 		// Normalise the empty string before validation, so an empty field is cleaned rather than rejected
 		.transform(value => value?.trim() || undefined)
 		.pipe(z.email('Invalid email').optional()),
 	phone: z
 		.string() // Phone numbers can be alphanumeric, and contain characters (eg. separators, parentheses)
+		.max(50)
 		.optional()
 		.transform(value => value?.trim() || undefined),
 	header: z

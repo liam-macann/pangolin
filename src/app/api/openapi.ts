@@ -81,7 +81,8 @@ loadVendor('zod', {
 		convertToOpenAPISchema(
 			// @ts-expect-error -- converter/runtime compatibility with Zod 4 JSON Schema
 			toJSONSchema(schema, {
-				io: context.options?.io,
+				// Matches the upstream default (@standard-community/standard-openapi)
+				io: context.options?.io ?? 'input',
 				unrepresentable: 'any',
 				override: composeZodOverride(context.options?.override),
 				target: 'draft-07',
@@ -100,14 +101,23 @@ export const documentConfig = {
 		version: 'unstable_internal',
 		description: 'Internal REST API for the Invoicer dashboard.',
 	},
-	servers: [{ url: '/api', description: 'Base URL for the Invoicer API.' }],
+	servers: [
+		{
+			url: '/api',
+			description: 'Base URL for the Invoicer API (production).',
+			'x-internal': true,
+		},
+	],
 	tags: [
 		{ name: 'Address', description: 'Address metadata operations.' },
 		{ name: 'Clients', description: 'Client directory operations.' },
 		{ name: 'Config', description: 'User configuration operations.' },
 		{ name: 'Invoices', description: 'Invoice listing operations.' },
 		{ name: 'Meta', description: 'API root and health check operations.' },
-	],
+		...(process.env.NODE_ENV === 'production'
+			? []
+			: [{ name: 'Avatar', description: 'User avatar operations.' }]),
+	].toSorted((a, b) => a.name.localeCompare(b.name, 'en')),
 };
 
 export async function getOpenApiDocument(routes: Hono<Env, Schema, '/'>) {

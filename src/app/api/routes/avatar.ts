@@ -23,7 +23,7 @@ const route = defineRoute.protected({
 	tags: ['Avatar'],
 	operationId: 'getAvatar',
 	description: "Return the current user's avatar image.",
-	hide: process.env.NODE_ENV === 'production',
+	...(process.env.NODE_ENV === 'production' ? { hide: true } : {}),
 	responses: {
 		200: {
 			content: {

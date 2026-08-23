@@ -12,7 +12,7 @@ import {
 	validationHook,
 } from './shared';
 
-const listQuery = paginationSchema.omit({ total: true });
+const listQuery = paginationSchema.omit({ total: true }).strict();
 const listRoute = defineRoute.protected({
 	tags: ['Clients'],
 	operationId: 'listClients',

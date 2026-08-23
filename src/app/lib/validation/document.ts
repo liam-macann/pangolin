@@ -35,11 +35,14 @@ const item = createInsertSchema(schema.lineItems, {
 
 export const document = createInsertSchema(schema.documents, {
 	clientDataId: z.uuid({ error: 'Please select a client' }),
-	title: z
-		.string()
-		.transform(v => v.trim())
-		.transform(v => (v === '' ? undefined : v))
-		.optional(),
+	title: s =>
+		z
+			.string()
+			.max(100, 'Too long')
+			.transform(v => v.trim())
+			.optional()
+			.transform(v => (v === '' ? undefined : (v ?? undefined)))
+			.pipe(s.optional()),
 	description: z
 		.string()
 		.transform(v => v?.trim())

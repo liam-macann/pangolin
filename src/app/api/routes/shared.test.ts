@@ -17,7 +17,7 @@ describe('defineRoute', () => {
 		expect(route[1]).toBe(requireAuth);
 	});
 
-	test('Leaves public routes without authentication metadata', () => {
+	test('Marks public routes as explicitly allowing anonymous access', () => {
 		const route = defineRoute.public(baseRoute);
 
 		expect(route).toHaveLength(1);
@@ -37,6 +37,6 @@ describe('defineRoute', () => {
 		const paths = document.paths ?? {};
 
 		expect(paths['/protected']?.get?.security).toEqual([{ SessionCookie: [] }]);
-		expect(paths['/public']?.get?.security).toBeUndefined();
+		expect(paths['/public']?.get?.security).toEqual([{}]);
 	});
 });

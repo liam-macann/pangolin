@@ -29,8 +29,10 @@ export const transform = z.object({
 			z
 				.string()
 				.trim()
+				.max(255, 'Too long')
 				.refine(str => !str.includes('\n'), 'Must not contain newline characters'),
 		)
+		.max(3, 'No more than 3 lines allowed')
 		.transform(lines => {
 			// Trim final empty lines
 			while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
@@ -46,26 +48,31 @@ export const transform = z.object({
 	dependentLocality: z
 		.string()
 		.trim()
+		.max(255, 'Too long')
 		.nullish()
 		.transform(v => v || undefined),
 	city: z
 		.string()
 		.trim()
+		.max(255, 'Too long')
 		.nullish()
 		.transform(v => v || undefined),
 	administrativeArea: z
 		.string()
 		.trim()
+		.max(255, 'Too long')
 		.nullish()
 		.transform(v => v || undefined),
 	postalCode: z
 		.string()
 		.trim()
+		.max(20, 'Too long')
 		.nullish()
 		.transform(v => v || undefined),
 	sortingCode: z
 		.string()
 		.trim()
+		.max(20, 'Too long')
 		.nullish()
 		.transform(v => v || undefined),
 	country: z.enum(validCountryCodes, 'Invalid country or territory'),
