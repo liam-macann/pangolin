@@ -1,10 +1,12 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type CountryCode, registerCountry } from 'lib-address';
 import { FormProvider, useForm } from 'react-hook-form';
 import { afterEach, assert, beforeEach, describe, expect, test, vi } from 'vitest';
-import { userEvent } from 'vitest/browser';
+import { type Locator, userEvent } from 'vitest/browser';
 import { type RenderResult, render } from 'vitest-browser-react';
 
 import { type AddressMetadata } from '@/api/dto/address';
+import { useAddressMetadata as useQueryAddressMetadata } from '@/lib/hooks/data/address';
 
 import { AddressInput, type FormValues } from '.';
 
@@ -107,6 +109,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.restoreAllMocks();
+	vi.unstubAllGlobals();
 });
 
 describe('AddressInput', () => {
@@ -167,6 +170,62 @@ describe('AddressInput', () => {
 		await expect
 			.element(getAddressField(screen, 'administrativeArea'))
 			.toHaveAccessibleName(/province/i);
+	});
+
+	test('Keeps the previous address format while the next country loads', async () => {
+		useAddressMetadata.mockImplementation(useQueryAddressMetadata);
+
+		const nextCountry = Promise.withResolvers<Response>();
+		vi.stubGlobal(
+			'fetch',
+			vi.fn((input: RequestInfo | URL) => {
+				if (String(input).endsWith('/AU'))
+					return Promise.resolve(Response.json({ data: countryMetadata.AU }));
+
+				return nextCountry.promise;
+			}),
+		);
+
+		const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+		const screen = await render(
+			<QueryClientProvider client={queryClient}>
+				<TestForm address={{ country: 'AU' }} />
+			</QueryClientProvider>,
+		);
+
+		async function invariantAU(assertions?: (input: Locator) => Promise<unknown>) {
+			const fields = ['zip', 'sortingCode'] as const;
+			fields.map(async field => {
+				const input = getAddressField(screen, field);
+				await expect.element(input).toBeVisible();
+				await assertions?.(input);
+			});
+
+			// Check that postal field has localised label
+			const postal = getAddressField(screen, 'zip');
+			await expect.element(postal).toHaveAccessibleName(/postal code/i);
+		}
+
+		await invariantAU(input => expect.element(input).toBeEnabled());
+
+		// Switch country; UI in loading state
+		const country = getAddressField(screen, 'country');
+		await userEvent.click(country);
+		await userEvent.fill(country, 'United States');
+		await userEvent.click(screen.getByRole('option', { name: 'United States' }));
+		await expect.element(screen.getByTestId(`address-locale`)).toHaveAttribute('aria-busy');
+
+		await invariantAU(input => expect.element(input).toBeDisabled());
+
+		// Loading has settled; US fields visible
+		nextCountry.resolve(Response.json({ data: countryMetadata.US }));
+
+		// Check that postal field has localised label
+		const postal = getAddressField(screen, 'zip');
+		await expect.element(postal).toHaveAccessibleName(/zip code/i);
+
+		// Check that fields have unmounted
+		await expect.element(getAddressField(screen, 'sortingCode')).not.toBeInTheDocument();
 	});
 
 	test('Renders every field from the kitchen sink locale', async () => {

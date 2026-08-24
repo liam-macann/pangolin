@@ -85,20 +85,18 @@ function LocaleForm({ region, disabled }: { region: Address['country']; disabled
 		);
 
 	return (
-		<Fields
-			disabled={isLoading || disabled}
-			metadata={data ?? { fmt: intlFmt }}
-			className={cn(
-				'transition-colors duration-300 ease-out-quad',
-				isLoading &&
-					'animate-pulse cursor-progress bg-muted delay-75 *:pointer-events-none **:delay-75',
-			)}
-		/>
+		<span
+			className='group/address-fields contents aria-busy:cursor-progress'
+			aria-busy={isLoading ?? undefined}
+			data-testid='address-locale'
+		>
+			<Fields disabled={isLoading || disabled} metadata={data ?? { fmt: intlFmt }} />
+		</span>
 	);
 }
 
 /** Render fields from field mapping */
-function Fields({ className, ...props }: FieldProps & { className?: string }) {
+function Fields({ ...props }: FieldProps) {
 	// Not every region has a defined format (eg. Antarctica).
 	// API route merges with generic 'ZZ' region, but this acts as a fallback.
 	const rawFmt = props.metadata?.lfmt || props.metadata?.fmt || intlFmt;
@@ -130,7 +128,10 @@ function Fields({ className, ...props }: FieldProps & { className?: string }) {
 					key={i}
 					className={cn(
 						'group/address-line flex border-b border-dotted empty:hidden focus-within:z-10 md:text-sm',
-						className,
+
+						'transition-colors duration-300 ease-out-quad',
+						'group-aria-busy/address-fields:animate-pulse group-aria-busy/address-fields:delay-75 group-aria-busy/address-fields:**:delay-75',
+						'group-aria-busy/address-fields:bg-muted group-aria-busy/address-fields:*:pointer-events-none',
 					)}
 				>
 					{arr.map(v => {
