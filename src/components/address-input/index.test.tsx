@@ -196,11 +196,13 @@ describe('AddressInput', () => {
 
 		async function invariantAU(assertions?: (input: Locator) => Promise<unknown>) {
 			const fields = ['zip', 'sortingCode'] as const;
-			fields.map(async field => {
-				const input = getAddressField(screen, field);
-				await expect.element(input).toBeVisible();
-				await assertions?.(input);
-			});
+			await Promise.all(
+				fields.map(async field => {
+					const input = getAddressField(screen, field);
+					await expect.element(input).toBeVisible();
+					await assertions?.(input);
+				}),
+			);
 
 			// Check that postal field has localised label
 			const postal = getAddressField(screen, 'zip');

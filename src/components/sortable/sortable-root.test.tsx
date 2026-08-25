@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest';
-import { commands } from 'vitest/browser';
+import { commands, userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import { SortableHandle } from './sortable-handle';
@@ -13,7 +13,8 @@ type Item = {
 };
 
 describe('Sortable', () => {
-	test('Executes onReorder callback after a pointer drag', async () => {
+	test('Executes onReorder callback after a keyboard-driven drag', async () => {
+		// Using pointer-based drag introduced too much flakiness in Firefox, due to timing issues with underlying library
 		const sample: Item[] = [
 			{ id: 'first', label: 'First item' },
 			{ id: 'second', label: 'Second item' },
@@ -34,8 +35,10 @@ describe('Sortable', () => {
 		);
 
 		const handle = screen.getByRole('button', { name: 'Reorder item' }).first();
-		const target = screen.getByRole('button', { name: 'Reorder item' }).nth(1);
-		await commands.dragWithAnimation(handle.selector, target.selector);
+		handle.element().focus();
+		await userEvent.keyboard('{Space}');
+		await userEvent.keyboard('{ArrowDown}');
+		await userEvent.keyboard('{Space}');
 
 		await expect.poll(() => onReorder).toHaveBeenCalledTimes(1);
 		expect(onReorder).toHaveBeenCalledWith(expect.objectContaining({ initialIndex: 0, index: 1 }));
