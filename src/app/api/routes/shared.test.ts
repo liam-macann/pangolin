@@ -39,4 +39,19 @@ describe('defineRoute', () => {
 		expect(paths['/protected']?.get?.security).toEqual([{ SessionCookie: [] }]);
 		expect(paths['/public']?.get?.security).toEqual([{}]);
 	});
+
+	test('Adds a 401 response to protected routes but not public routes', async () => {
+		const app = createApiRouter()
+			.get('/protected', ...defineRoute.protected(baseRoute), c => c.json({}, 200))
+			.get('/public', ...defineRoute.public(baseRoute), c => c.json({}, 200));
+
+		const document = await generateSpecs(app, {
+			documentation: { info: { title: 'Test API', version: 'test' } },
+		});
+
+		const paths = document.paths ?? {};
+
+		expect(paths['/protected']?.get?.responses?.[401]).toBeDefined();
+		expect(paths['/public']?.get?.responses?.[401]).toBeUndefined();
+	});
 });

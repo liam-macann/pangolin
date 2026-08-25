@@ -9,6 +9,39 @@ rules:
   owasp:api4:2023-rate-limit: false
   owasp:api4:2023-rate-limit-responses-429: false
 
+  # Replaced by 401-matches-security-scheme below, which enforces both directions:
+  # protected routes must document 401, public routes must not.
+  owasp:api8:2023-define-error-responses-401: false
+
+  # Public routes never hit `requireAuth` and can't return 401; protected routes always do and should specify a 401.
+  401-matches-security-scheme:
+    message: "A 401 response must be documented if and only if the operation has a security scheme."
+    severity: error
+    given: "$.paths.*.*"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          if:
+            properties:
+              security:
+                type: array
+                contains:
+                  type: object
+                  maxProperties: 0
+          then:
+            properties:
+              responses:
+                type: object
+                not:
+                  required: ["401"]
+          else:
+            properties:
+              responses:
+                type: object
+                required: ["401"]
+
   # This API is mounted at a relative path on the same origin as the dashboard (no
   # separate host), so the server URL is intentionally relative rather than an
   # absolute https:// URL — there's no insecure http scheme in play to warn about.

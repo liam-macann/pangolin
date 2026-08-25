@@ -12,7 +12,17 @@ export const createApiRouter = () => new Hono<Env>();
 
 export const defineRoute = {
 	protected: (config: DescribeRouteOptions) =>
-		[describeRoute({ ...config, security: [{ SessionCookie: [] }] }), requireAuth] as const,
+		[
+			describeRoute({
+				...config,
+				security: [{ SessionCookie: [] }],
+				responses: {
+					...Object.fromEntries([toEntry('UNAUTHORIZED', 'Authentication required.')]),
+					...config.responses,
+				},
+			}),
+			requireAuth,
+		] as const,
 	public: (config: DescribeRouteOptions) => [describeRoute({ ...config, security: [{}] })] as const,
 };
 
@@ -63,22 +73,7 @@ type ProblemMap<T> = { [K in keyof T as ProblemStatusOf<K>]: ProblemDetailsOpenA
 export const problemContract = <T extends Partial<Record<ProblemKey | number, string>>>(
 	entries: T,
 ) => {
-	const toEntry = (key: ProblemKey | number, description?: string) => {
-		const example =
-			typeof key === 'number' ? problemDetails({ status: key }).problemDetails : problems.get(key);
-
-		return [
-			example.status,
-			problemDetailsResponse(
-				example.status,
-				description,
-				ProblemDetails.meta({ title: 'ProblemDetails', examples: [example] }),
-			),
-		];
-	};
-
 	return Object.fromEntries([
-		toEntry('UNAUTHORIZED', 'Authentication required.'),
 		toEntry(500, 'Unexpected server error.'),
 
 		...Object.keys(entries).map(rawKey => {
@@ -86,4 +81,18 @@ export const problemContract = <T extends Partial<Record<ProblemKey | number, st
 			return toEntry(key, entries[rawKey as keyof T] as string | undefined);
 		}),
 	]) as ProblemMap<T>;
+};
+
+const toEntry = (key: ProblemKey | number, description?: string) => {
+	const example =
+		typeof key === 'number' ? problemDetails({ status: key }).problemDetails : problems.get(key);
+
+	return [
+		example.status,
+		problemDetailsResponse(
+			example.status,
+			description,
+			ProblemDetails.meta({ title: 'ProblemDetails', examples: [example] }),
+		),
+	];
 };
