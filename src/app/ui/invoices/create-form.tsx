@@ -71,7 +71,7 @@ export function CreateInvoiceDialog({
 	const [open, setOpen] = useState(false);
 	const [formVersion, setFormVersion] = useState(0); // Reset counter
 
-	const { mutateAsync } = useInvoiceMutation({ mutationFn: createInvoice });
+	const { mutateAsync } = useInvoiceMutation(undefined, { mutationFn: createInvoice });
 
 	const { control, reset, handleSubmit, getValues } = useForm({
 		resolver: zodResolver(schema),

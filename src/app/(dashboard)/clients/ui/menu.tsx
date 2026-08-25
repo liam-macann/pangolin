@@ -17,42 +17,52 @@ import {
 import { toast } from '@/ui/toast';
 
 export function useClientActions(client: Client) {
-	const { mutateAsync: setFavorite } = useClientMutation(client.id, {
-		mutationFn: (status: boolean) => updateClientFavorite(client.id, status),
-		onError: () => toast.error('Failed to update client. Please try again later.'),
-	});
+	const { mutate: setFavorite } = useClientMutation(
+		client.id,
+		{
+			scope: { id: 'favorite' },
+			mutationFn: (status: boolean) => updateClientFavorite(client.id, status),
+			onError: () => toast.error('Failed to update client. Please try again later.'),
+		},
+		(curr, status) => ({ ...curr, isFavorite: status }),
+	);
 
-	const { mutateAsync: updateDeleted } = useClientMutation(client.id, {
-		mutationFn: (status: boolean) => updateClientDeleted(client.id, status),
-	});
+	const archiveToastId = `archive-${client.id}`;
+	const { mutate: setArchived } = useClientMutation(
+		client.id,
+		{
+			scope: { id: 'deleted' },
+			mutationFn: (status: boolean) => {
+				toast.loading({
+					title: `${status ? 'Archiving' : 'Restoring'} client…`,
+					id: archiveToastId,
+					actionProps: undefined,
+				});
 
-	const setArchived = async (v: boolean) => {
-		const toastId = `archive-${client.id}`;
-		toast.loading({
-			title: `${v ? 'Archiving' : 'Restoring'} client…`,
-			id: toastId,
-			actionProps: undefined,
-		});
-
-		try {
-			await updateDeleted(v);
-			toast.success({
-				title: `${client.data.name} ${v ? 'archived' : 'restored'}`,
-				id: toastId,
-				actionProps: v
-					? {
-							children: 'Undo',
-							onClick: e => {
-								e.preventDefault();
-								void setArchived(!v);
-							},
-						}
-					: undefined,
-			});
-		} catch {
-			toast.error({ title: 'Failed to archive client. Please try again later.', id: toastId });
-		}
-	};
+				return updateClientDeleted(client.id, status);
+			},
+			onError: () =>
+				toast.error({
+					title: `Failed to archive ${client.data.name || client.data.organization}. Please try again later.`,
+					id: archiveToastId,
+				}),
+			onSuccess: (_data, v) =>
+				toast.success({
+					title: `${client.data.name || client.data.organization} ${v ? 'archived' : 'restored'}`,
+					id: archiveToastId,
+					actionProps: v
+						? {
+								children: 'Undo',
+								onClick: e => {
+									e.preventDefault();
+									setArchived(!v);
+								},
+							}
+						: undefined,
+				}),
+		},
+		(curr, status) => ({ ...curr, isDeleted: status }),
+	);
 
 	return { setFavorite, setArchived };
 }

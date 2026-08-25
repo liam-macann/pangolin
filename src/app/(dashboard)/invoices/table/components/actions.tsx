@@ -38,9 +38,11 @@ import { type Invoice } from './../columns';
 export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) {
 	const invoice = row.original;
 
-	const { mutateAsync } = useInvoiceMutation({
+	const { mutate } = useInvoiceMutation(invoice.id, {
+		scope: { id: 'void' },
 		mutationFn: ({ id }: { id: string }) => voidInvoice(id),
 		onError: () => toast.error('Failed to mark invoice as void'),
+		onSuccess: () => toast.success(`Voided invoice ${invoice.reference}`),
 	});
 
 	return (
@@ -90,10 +92,7 @@ export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) 
 				</AlertDialogHeader>
 				<AlertDialogFooter>
 					<AlertDialogCancel>Cancel</AlertDialogCancel>
-					<AlertDialogAction
-						variant='destructive'
-						onClick={() => void mutateAsync({ id: invoice.id })}
-					>
+					<AlertDialogAction variant='destructive' onClick={() => void mutate({ id: invoice.id })}>
 						Mark as void
 					</AlertDialogAction>
 				</AlertDialogFooter>
@@ -110,10 +109,15 @@ export function NotesButton({
 	invoiceId: string;
 	defaultValue?: string;
 }) {
-	const { mutateAsync } = useInvoiceMutation({
-		mutationFn: ({ id, notes }: { id: string; notes: string }) => setInvoiceNotes(id, notes),
-		onError: () => toast.error('Failed to update invoice notes'),
-	});
+	const { mutateAsync } = useInvoiceMutation(
+		invoiceId,
+		{
+			scope: { id: 'notes' },
+			mutationFn: ({ id, notes }: { id: string; notes: string }) => setInvoiceNotes(id, notes),
+			onError: () => toast.error('Failed to update invoice notes'),
+		},
+		(curr, { notes }) => ({ ...curr, status: { ...curr.status, notes } }),
+	);
 
 	const fieldId = useId();
 

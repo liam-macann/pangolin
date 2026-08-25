@@ -1,24 +1,13 @@
 'use client';
 
-import {
-	type DefaultError,
-	type QueryFunctionContext,
-	type UseMutationOptions,
-	useMutation,
-	useSuspenseQuery,
-} from '@tanstack/react-query';
+import { type QueryFunctionContext } from '@tanstack/react-query';
 
 import { type Client } from '@/api/dto/client';
 import { client } from '@/lib/api';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import {
-	type EntityResponse,
-	invalidateKeys,
-	type ListResponse,
-	type QueryOptionsFor,
-	withInvalidation,
-} from './helper';
+import { type EntityResponse, type ListResponse, type QueryOptionsFor } from './helper';
+import { createOptimisticResource } from './mutation';
 
 export const clientKeys = {
 	all: ['clients'] as const,
@@ -31,44 +20,41 @@ const affectedClientKeys = (clientId: string | undefined) => [
 	clientKeys.lists(),
 	...(clientId === undefined ? [] : [clientKeys.detail(clientId)]),
 ];
+const factory = createOptimisticResource<Client>({
+	mutationKey: clientKeys.all,
+	invalidates: affectedClientKeys,
+});
 
-function clientsQuery() {
-	return {
-		queryKey: clientKeys.list(),
-		queryFn: ({ signal }: QueryFunctionContext) =>
-			parseAPIRes(client.clients.$get({ query: {} }, { init: { signal } })),
-	};
-}
+type ClientsResponse = ListResponse<Client>;
+type ClientResponse = EntityResponse<Client>;
 
-function clientQuery(id: string) {
-	return {
-		queryKey: clientKeys.detail(id),
-		queryFn: ({ signal }: QueryFunctionContext) =>
-			parseAPIRes(client.clients[':id'].$get({ param: { id } }, { init: { signal } })),
-	};
-}
-
-export const useClients = <TData = ListResponse<Client>>(
-	options?: QueryOptionsFor<ListResponse<Client>, TData>,
-) => useSuspenseQuery({ ...clientsQuery(), ...options });
-
-export const useClient = <TData = EntityResponse<Client>>(
-	id: string,
-	options?: QueryOptionsFor<EntityResponse<Client>, TData>,
-) => useSuspenseQuery({ ...clientQuery(id), ...options });
-
-export function useClientMutation<
-	TData = unknown,
-	TError = DefaultError,
-	TVariables = void,
-	TOnMutateResult = unknown,
->(
-	clientId: string | undefined,
-	options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>,
+export function useClients<TData = ClientsResponse>(
+	options?: QueryOptionsFor<ClientsResponse, TData>,
 ) {
-	return useMutation(
-		withInvalidation(options, queryClient =>
-			invalidateKeys(queryClient, affectedClientKeys(clientId)),
-		),
+	return factory.useOptimisticQuery(
+		{
+			queryKey: clientKeys.list(),
+			queryFn: ({ signal }: QueryFunctionContext) =>
+				parseAPIRes(client.clients.$get({ query: {} }, { init: { signal } })),
+			...options,
+		},
+		(response, update) => ({ ...response, data: response.data.map(update) }),
 	);
 }
+
+export function useClient<TData = ClientResponse>(
+	id: string,
+	options?: QueryOptionsFor<ClientResponse, TData>,
+) {
+	return factory.useOptimisticQuery(
+		{
+			queryKey: clientKeys.detail(id),
+			queryFn: ({ signal }: QueryFunctionContext) =>
+				parseAPIRes(client.clients[':id'].$get({ param: { id } }, { init: { signal } })),
+			...options,
+		},
+		(response, update) => ({ ...response, data: update(response.data) }),
+	);
+}
+
+export const useClientMutation = factory.useOptimisticMutation;

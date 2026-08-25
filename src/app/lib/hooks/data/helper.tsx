@@ -4,8 +4,6 @@ import {
 	type DefaultError,
 	QueryClient,
 	QueryClientProvider,
-	type QueryKey,
-	type UseMutationOptions,
 	type UseSuspenseQueryOptions,
 } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -18,7 +16,6 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
 
 	const { data: session } = useSession();
 	const userId = session?.user.id ?? null;
-
 	const previous = usePrevious(userId);
 
 	useIsomorphicLayoutEffect(() => {
@@ -45,26 +42,8 @@ export function envelopeWrapper<T>(data: T[]): ListResponse<T> {
 	return { data, meta: { total: data.length, limit: 200, offset: undefined } };
 }
 
-export type QueryInvalidator = Pick<QueryClient, 'invalidateQueries'>;
-export const invalidateKeys = (queryClient: QueryInvalidator, queryKeys: readonly QueryKey[]) =>
-	Promise.all(queryKeys.map(queryKey => queryClient.invalidateQueries({ queryKey })));
-
-/** Omits the props that bind a query to an entity, which are always defined in our entity hooks */
+/** Omits the props that bind a query to an entity, which are always defined in our entity hooks. */
 export type QueryOptionsFor<TResponse, TData = TResponse> = Omit<
 	UseSuspenseQueryOptions<TResponse, DefaultError, TData>,
 	'queryFn' | 'queryKey'
 >;
-
-/** Runs onSuccess callback, then invalidates derived queries */
-export function withInvalidation<TData, TError, TVariables, TOnMutateResult>(
-	options: UseMutationOptions<TData, TError, TVariables, TOnMutateResult>,
-	invalidate: (queryClient: QueryClient, variables: TVariables) => unknown,
-): UseMutationOptions<TData, TError, TVariables, TOnMutateResult> {
-	return {
-		...options,
-		onSuccess: async (data, variables, onMutateResult, context, ...args) => {
-			await options.onSuccess?.(data, variables, onMutateResult, context, ...args);
-			await invalidate(context.client, variables);
-		},
-	};
-}
