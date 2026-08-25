@@ -29,7 +29,9 @@ interface UseAsyncStatusOptions {
 	onFulfilled?: (value: unknown) => void;
 }
 
-/** Tracks the status of promise */
+/** Tracks the status of a promise
+ * @remarks Only the latest promise passed to track() will be followed
+ */
 export function useAsyncStatus({
 	loadingDelay = 500,
 	resetDelay = 1500,
@@ -39,52 +41,56 @@ export function useAsyncStatus({
 	const [status, setStatus] = useState<AsyncStatus>(null);
 	const timeout = useRef<NodeJS.Timeout>(null);
 
+	/** Counter that reflects how many promises have been tracked */
+	const trackedPromise = useRef(0);
+
 	const track = useCallback(
 		<T>(promise: Promise<T>) => {
+			const promiseId = ++trackedPromise.current;
+			const isCurrent = () => trackedPromise.current === promiseId;
+
 			const clear = () => {
-				if (timeout.current) clearTimeout(timeout.current);
+				if (!timeout.current) return;
+				clearTimeout(timeout.current);
+				timeout.current = null;
 			};
 
 			clear();
 
-			timeout.current = setTimeout(
-				() => setStatus(prev => (prev === null ? 'pending' : prev)),
-				loadingDelay,
-			);
+			// The loading delay should only occur if no status is visible
+			if (status === null) {
+				timeout.current = setTimeout(() => {
+					// Check that tracked promise has not changed since timeout was scheduled
+					if (isCurrent()) setStatus('pending');
+				}, loadingDelay);
+			} else setStatus('pending');
+
+			const settle = (next: Exclude<AsyncStatus, 'pending' | null>, callback: () => void) => {
+				clear();
+				callback();
+				setStatus(next);
+				timeout.current = setTimeout(() => {
+					if (!isCurrent()) return;
+					timeout.current = null;
+					setStatus(prev => (prev === next ? null : prev));
+				}, resetDelay);
+			};
 
 			return promise.then(
 				value => {
-					clear();
-					onFulfilled?.(value);
-					setStatus('fulfilled');
-					timeout.current = setTimeout(
-						() =>
-							setStatus(prev => {
-								clear();
-								return prev === 'fulfilled' ? null : prev;
-							}),
-						resetDelay,
-					);
+					if (!isCurrent()) return value;
+					settle('fulfilled', () => onFulfilled?.(value));
 					return value;
 				},
 				err => {
-					clear();
-					onRejected?.(err);
-					setStatus('rejected');
-					timeout.current = setTimeout(
-						() =>
-							setStatus(prev => {
-								clear();
-								return prev === 'rejected' ? null : prev;
-							}),
-						resetDelay,
-					);
+					if (!isCurrent()) throw err;
+					settle('rejected', () => onRejected?.(err));
 
 					throw err;
 				},
 			);
 		},
-		[loadingDelay, resetDelay, onRejected, onFulfilled],
+		[status, loadingDelay, resetDelay, onRejected, onFulfilled],
 	);
 
 	return [status, track] as const;
