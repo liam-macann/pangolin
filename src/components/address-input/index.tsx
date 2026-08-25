@@ -1,17 +1,18 @@
 'use client';
 
-import { WarningCircleIcon, WarningIcon } from '@phosphor-icons/react/ssr';
+import { WarningIcon } from '@phosphor-icons/react/ssr';
 import { isValidCountryCode } from 'lib-address';
+import { type ComponentProps, Suspense, useDeferredValue } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { type Control, useWatch } from 'react-hook-form';
 import type z from 'zod';
 
-import { type Address } from '@/api/dto/address';
+import { type Address, type AddressMetadata } from '@/api/dto/address';
 import { useAddressMetadata } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type schema from '@/lib/validation/address';
 
-import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
+import { Alert, AlertTitle } from '@/ui/alert';
 import { FieldSet } from '@/ui/field';
 
 import { Country, FIELD_MAPPING, type FieldProps } from './fields';
@@ -47,6 +48,7 @@ export function AddressInput<T extends FormValues>({
 			)}
 		>
 			<ErrorBoundary
+				resetKeys={[region]}
 				fallback={
 					<Alert variant='destructive' className='m-2 w-auto!'>
 						<WarningIcon />
@@ -56,9 +58,7 @@ export function AddressInput<T extends FormValues>({
 					</Alert>
 				}
 			>
-				{(region && <LocaleForm disabled={disabled} region={region} />) || (
-					<Fields disabled={disabled} metadata={{ fmt: intlFmt }} />
-				)}
+				<AddressFields disabled={disabled} region={region} />
 			</ErrorBoundary>
 
 			<Country disabled={disabled} />
@@ -66,31 +66,46 @@ export function AddressInput<T extends FormValues>({
 	);
 }
 
+function AddressFields({ region, disabled, ...props }: ComponentProps<typeof LocaleFields>) {
+	if (!region) return <FieldLayout disabled={disabled} metadata={{ fmt: intlFmt }} />;
+
+	return (
+		<Suspense fallback={<FieldLayout loading metadata={{ fmt: intlFmt }} />}>
+			<LocaleFields disabled={disabled} region={region} {...props} />
+		</Suspense>
+	);
+}
+
 /** Takes an ISO2 string and renders localised address input */
-function LocaleForm({ region, disabled }: { region: Address['country']; disabled?: boolean }) {
+function LocaleFields({ region, disabled }: { region: Address['country']; disabled?: boolean }) {
 	if (!isValidCountryCode(region)) throw new Error(`Invalid country code: ${region}`);
 
+	const deferredRegion = useDeferredValue(region);
+	const isStale = deferredRegion !== region;
+
 	// Fetch region from cache or Google Address Metadata API
-	const { data, isLoading, error } = useAddressMetadata(region, undefined, {
-		keepPreviousData: true,
-	});
+	const { data: response, isFetching } = useAddressMetadata(deferredRegion);
+	const isLoading = isStale || isFetching;
 
-	if (error || (!isLoading && !data))
-		return (
-			<Alert variant='destructive' className='m-2 mb-1 w-auto rounded-sm'>
-				<WarningCircleIcon />
-				<AlertTitle>Failed to load address format</AlertTitle>
-				<AlertDescription>Please refresh the page, and try again later.</AlertDescription>
-			</Alert>
-		);
+	return <FieldLayout disabled={disabled} loading={isLoading} metadata={response.data} />;
+}
 
+function FieldLayout({
+	metadata,
+	loading = false,
+	disabled,
+}: {
+	metadata: Partial<AddressMetadata>;
+	loading?: boolean;
+	disabled?: boolean;
+}) {
 	return (
 		<span
 			className='group/address-fields contents aria-busy:cursor-progress'
-			aria-busy={isLoading ?? undefined}
+			aria-busy={loading || undefined}
 			data-testid='address-locale'
 		>
-			<Fields disabled={isLoading || disabled} metadata={data ?? { fmt: intlFmt }} />
+			<Fields disabled={loading || disabled} metadata={metadata} />
 		</span>
 	);
 }

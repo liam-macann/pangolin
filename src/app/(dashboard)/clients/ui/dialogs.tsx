@@ -16,7 +16,7 @@ import z from 'zod/v4';
 
 import { type Client } from '@/api/dto/client';
 import { createClient, updateClient } from '@/lib/actions/client';
-import { useClient, useClients } from '@/lib/hooks';
+import { useClientMutation } from '@/lib/hooks';
 import { dropNull } from '@/lib/utils';
 import { transform as addressTransformSchema } from '@/lib/validation/address';
 import { clientDataCreate as createSchema, clientData as schema } from '@/lib/validation/client';
@@ -76,7 +76,7 @@ export function CreateClientDialog({
 	children,
 	...props
 }: { children: ReactElement } & ComponentProps<typeof Dialog>) {
-	const { mutate } = useClients();
+	const { mutateAsync } = useClientMutation(undefined, { mutationFn: createClient });
 
 	const form = useForm({
 		resolver: zodResolver(createFormSchema),
@@ -93,15 +93,12 @@ export function CreateClientDialog({
 			title='Create client'
 			form={form}
 			onSubmit={async data => {
-				const promise = createClient(data).then(() => void mutate());
-
-				toast.promise(promise, {
+				const promise = mutateAsync(data).then(() => undefined);
+				return toast.promise(promise, {
 					loading: 'Creating new client…',
 					success: 'Client created',
 					error: 'Failed to add new client',
 				});
-
-				return promise;
 			}}
 			{...props}
 		>
@@ -118,7 +115,7 @@ export function UpdateClientDialog({
 	children: ReactElement;
 	defaultValues: Client;
 } & ComponentProps<typeof Dialog>) {
-	const { mutate: mutateClient } = useClient(defaultValues.id);
+	const { mutateAsync } = useClientMutation(defaultValues.id, { mutationFn: updateClient });
 
 	const { address, ...data } = defaultValues.data;
 
@@ -136,17 +133,13 @@ export function UpdateClientDialog({
 		<ClientDialog
 			title='Update client'
 			form={form}
-			onSubmit={async data => {
-				const promise = updateClient(data).then(() => void mutateClient());
-
-				toast.promise(promise, {
+			onSubmit={async data =>
+				toast.promise(mutateAsync(data), {
 					loading: 'Updating client details…',
 					success: 'Client updated',
 					error: 'Failed to update client',
-				});
-
-				return promise;
-			}}
+				})
+			}
 			{...props}
 		>
 			{children}

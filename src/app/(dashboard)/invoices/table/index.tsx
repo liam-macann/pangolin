@@ -48,6 +48,7 @@ export function useInvoiceTable<TSelected = TableState<DataTableFeatures>>(
 		{
 			data: tableData,
 			columns: invoiceColumns,
+			getRowId: invoice => invoice.id,
 			enableSortingRemoval: false,
 			initialState: toMerged(
 				{ sorting: DEFAULT_SORT, columnVisibility: { clientId: false } },

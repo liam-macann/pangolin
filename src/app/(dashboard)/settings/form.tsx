@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { type Address } from '@/api/dto/address';
 import { type Config } from '@/api/dto/config';
 import { updateUserConfig } from '@/lib/actions/config';
+import { useConfigMutation } from '@/lib/hooks';
 import { rateToPercent } from '@/lib/utils';
 import { configFields, config as configSchema } from '@/lib/validation/config';
 
@@ -78,6 +79,8 @@ const configAdapter = (config: Config): FormInput => ({
 });
 
 export default function ConfigForm({ config }: { config: Config }) {
+	const { mutateAsync } = useConfigMutation({ mutationFn: updateUserConfig });
+
 	/** Mutable value that records the latest config record known to the client.
 	 *  Updates on successful form submission, and used to reset the form. */
 	const savepoint = useRef<FormInput>(configAdapter(config));
@@ -119,7 +122,7 @@ export default function ConfigForm({ config }: { config: Config }) {
 						}
 
 						const { addressEnabled, ...payload } = config;
-						const promise = updateUserConfig(payload).then(() => revertToSavepoint(config));
+						const promise = mutateAsync(payload).then(() => revertToSavepoint(config));
 
 						toast.promise(promise, {
 							loading: 'Updating settings…',

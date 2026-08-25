@@ -8,7 +8,7 @@ import {
 } from '@phosphor-icons/react';
 import { useCommandState } from 'cmdk';
 import { useRouter } from 'next/navigation';
-import { type ComponentProps, useRef, useState } from 'react';
+import { type ComponentProps, Suspense, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { useClients, useConfig, useInvoices, useKeyPress, usePrevious } from '@/lib/hooks';
@@ -58,7 +58,17 @@ function GlobalSearch() {
 			>
 				<Command>
 					<CommandInput placeholder='Search for people or invoices…' />
-					<Items onOpenChange={setOpen} />
+					<Suspense
+						fallback={
+							<CommandList className='overflow-clip'>
+								<CommandEmpty className='animate-pulse justify-center py-16 font-medium'>
+									Loading…
+								</CommandEmpty>
+							</CommandList>
+						}
+					>
+						<Items onOpenChange={setOpen} />
+					</Suspense>
 					<footer className='sticky bottom-0 flex items-center gap-2 border-input/30 border-t bg-background px-4 py-2 pb-2.5 text-muted-foreground text-xs dark:bg-popover'>
 						<Kbd className='size-5'>
 							<ArrowElbowDownLeftIcon aria-label='Enter' />
@@ -84,29 +94,23 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 
 	if (search !== prevSearch) listRef.current?.scrollTo({ top: 0 });
 
-	if (config.isLoading || clients.isLoading)
-		return (
-			<CommandList className='overflow-clip'>
-				<CommandEmpty className='animate-pulse justify-center py-16 font-medium'>
-					Loading…
-				</CommandEmpty>
-			</CommandList>
-		);
-
 	if (!config.data)
 		return (
 			<CommandList>
 				<CommandEmpty>Failed to load configuration.</CommandEmpty>
 			</CommandList>
 		);
-	const { locale } = config.data;
+
+	const { locale } = config.data.data;
+	const clientsData = clients.data?.data;
+	const invoicesData = invoices.data?.data;
 
 	return (
 		<CommandList ref={listRef}>
 			<CommandEmpty>No results found.</CommandEmpty>
-			{!!clients.data?.length && (
+			{!!clientsData?.length && (
 				<CommandGroup heading='Clients'>
-					{clients.data?.map(client => (
+					{clientsData.map(client => (
 						<CommandItem
 							key={client.id}
 							value={client.id}
@@ -137,9 +141,9 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 			)}
 
 			{/* Allow invoices to populate after clients appear */}
-			{!!invoices.data?.length && (
+			{!!invoicesData?.length && (
 				<CommandGroup heading='Invoices'>
-					{invoices.data?.map(invoice => (
+					{invoicesData.map(invoice => (
 						<CommandItem
 							key={invoice.id}
 							value={invoice.id}

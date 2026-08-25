@@ -104,7 +104,7 @@ type MapLookup<K extends keyof LibAddress> = K extends keyof typeof libFieldMap
 
 /** Zod validation schema for postal addresses. Use .parseAsync() to ensure address metadata is present. */
 export const schema = transform
-	// SWR hook includes validation registration, so data should already be registered when parsing front-end form.
+	// The address metadata query registers countries before parsing the front-end form.
 	// Server registers each country at build time, in API route.
 	.transform(async val => {
 		const registered = getRegisteredCountries().map(c => c.value);

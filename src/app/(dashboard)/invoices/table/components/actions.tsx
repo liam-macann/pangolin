@@ -5,7 +5,7 @@ import { type Row } from '@tanstack/react-table';
 import { type ComponentProps, useId } from 'react';
 
 import { setInvoiceNotes, voidInvoice } from '@/lib/actions/invoice';
-import { patchStatus, useMutateInvoice } from '@/lib/hooks';
+import { useInvoiceMutation } from '@/lib/hooks';
 
 import { type DataTableFeatures } from '@/components/data-table';
 import {
@@ -38,7 +38,10 @@ import { type Invoice } from './../columns';
 export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) {
 	const invoice = row.original;
 
-	const { mutate } = useMutateInvoice(invoice.id);
+	const { mutateAsync } = useInvoiceMutation({
+		mutationFn: ({ id }: { id: string }) => voidInvoice(id),
+		onError: () => toast.error('Failed to mark invoice as void'),
+	});
 
 	return (
 		<AlertDialog>
@@ -89,15 +92,7 @@ export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) 
 					<AlertDialogCancel>Cancel</AlertDialogCancel>
 					<AlertDialogAction
 						variant='destructive'
-						onClick={() => {
-							mutate(
-								voidInvoice(invoice.id).catch(err => {
-									toast.error('Failed to void invoice');
-									throw err;
-								}),
-								{ optimisticData: patchStatus({ isVoid: true }) },
-							);
-						}}
+						onClick={() => void mutateAsync({ id: invoice.id })}
 					>
 						Mark as void
 					</AlertDialogAction>
@@ -115,7 +110,10 @@ export function NotesButton({
 	invoiceId: string;
 	defaultValue?: string;
 }) {
-	const { mutate } = useMutateInvoice(invoiceId);
+	const { mutateAsync } = useInvoiceMutation({
+		mutationFn: ({ id, notes }: { id: string; notes: string }) => setInvoiceNotes(id, notes),
+		onError: () => toast.error('Failed to update invoice notes'),
+	});
 
 	const fieldId = useId();
 
@@ -139,15 +137,7 @@ export function NotesButton({
 					id={fieldId}
 					onBlur={e => {
 						const value = e.target.value;
-
-						mutate(
-							setInvoiceNotes(invoiceId, value).catch(err => {
-								toast.error('Failed to update invoice notes');
-								// Error must rethrow to revert data on failure
-								throw err;
-							}),
-							{ optimisticData: patchStatus({ notes: value }) },
-						);
+						void mutateAsync({ id: invoiceId, notes: value });
 					}}
 					defaultValue={defaultValue}
 					placeholder='Your private notes'

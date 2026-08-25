@@ -1,18 +1,19 @@
 'use client';
 
+import { type Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { TZDate } from '@date-fns/tz';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DotsThreeIcon, WarningIcon } from '@phosphor-icons/react';
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
 import { addDays } from 'date-fns';
-import { type ComponentProps, type ReactElement, useState } from 'react';
+import { type ComponentProps, type ReactElement, Suspense, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { type Control, Controller, useForm } from 'react-hook-form';
 import { type z } from 'zod';
 
 import { type Config } from '@/api/dto/config';
 import { createInvoice } from '@/lib/actions/invoice';
-import { useClients, useInvoices } from '@/lib/hooks';
+import { useClients, useInvoiceMutation } from '@/lib/hooks';
 import { cn, type Simplify } from '@/lib/utils';
 import { formatDate } from '@/lib/utils/date';
 import { invoice as schema } from '@/lib/validation/invoice';
@@ -69,7 +70,8 @@ export function CreateInvoiceDialog({
 } & ComponentProps<typeof Dialog>) {
 	const [open, setOpen] = useState(false);
 	const [formVersion, setFormVersion] = useState(0); // Reset counter
-	const { mutate } = useInvoices();
+
+	const { mutateAsync } = useInvoiceMutation({ mutationFn: createInvoice });
 
 	const { control, reset, handleSubmit, getValues } = useForm({
 		resolver: zodResolver(schema),
@@ -104,15 +106,13 @@ export function CreateInvoiceDialog({
 				>
 					<form
 						onSubmit={handleSubmit(data => {
-							const promise = createInvoice(data).then(() => {
-								// This should really pass the action returned invoice, but that needs an identical shape to the fetcher
-								mutate();
+							const promise = mutateAsync(data).then(() => {
 								setOpen(false);
 								setFormVersion(v => v + 1);
 								reset();
 							});
 
-							toast.promise(promise, {
+							return toast.promise(promise, {
 								loading: 'Creating invoice…',
 								success: 'Invoice created',
 								error: 'Failed to create invoice',
@@ -120,7 +120,9 @@ export function CreateInvoiceDialog({
 						})}
 					>
 						<FieldGroup className='gap-4'>
-							<BillTo control={control} />
+							<Suspense fallback={<BillToCombobox items={[]} loading />}>
+								<BillTo control={control} />
+							</Suspense>
 
 							<Controller
 								name='title'
@@ -242,11 +244,12 @@ export function CreateInvoiceDialog({
 }
 
 function BillTo({ control }: { control: Control<z.input<typeof schema>> }) {
-	const { data: clientsData, isLoading: isClientsLoading, error: isClientsError } = useClients();
+	const { data: clientsResponse } = useClients();
+	const clientsData = clientsResponse.data;
 
-	const items = (clientsData || []).map(client => ({
+	const items = clientsData.map(client => ({
 		value: client.data.scdId,
-		label: client.data.name || client.data.organization,
+		label: (client.data.name || client.data.organization) as string,
 	}));
 
 	return (
@@ -254,44 +257,54 @@ function BillTo({ control }: { control: Control<z.input<typeof schema>> }) {
 			name='clientDataId'
 			control={control}
 			render={({ field, fieldState }) => (
-				<Field orientation='horizontal'>
-					<FieldLabel htmlFor='clientId' className='mt-4.5 grow-0! -translate-y-1/2 self-start'>
-						Bill To
-					</FieldLabel>
-					<div className='flex grow flex-col items-end gap-1'>
-						<Combobox
-							id='clientId'
-							items={items}
-							disabled={isClientsLoading || !!isClientsError || !clientsData}
-							{...field}
-							value={items.find(i => i.value === (field.value || '')) || null}
-							onValueChange={v => field.onChange(v?.value)}
-						>
-							<ComboboxInput
-								className={cn(
-									'w-full max-w-80',
-									isClientsLoading && '*:has-disabled:cursor-wait *:has-disabled:opacity-100',
-								)}
-								placeholder='e.g. John Smith'
-							/>
-							<ComboboxContent>
-								<ComboboxEmpty>No clients found.</ComboboxEmpty>
-								<ComboboxList>
-									{item => (
-										<ComboboxItem key={item.value} value={item}>
-											{item.label}
-										</ComboboxItem>
-									)}
-								</ComboboxList>
-							</ComboboxContent>
-						</Combobox>
-
-						{!!isClientsError && <FieldError errors={[{ message: 'Failed to fetch clients' }]} />}
-						{fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-					</div>
-				</Field>
+				<BillToCombobox
+					errors={fieldState.invalid ? [fieldState.error] : undefined}
+					items={items}
+					{...field}
+					value={items.find(i => i.value === (field.value || '')) || null}
+					onValueChange={v => field.onChange(v?.value)}
+				/>
 			)}
 		/>
+	);
+}
+
+function BillToCombobox({
+	errors,
+	loading = false,
+	...props
+}: {
+	errors?: ComponentProps<typeof FieldError>['errors'];
+	loading?: boolean;
+} & ComboboxPrimitive.Root.Props<{ value: string; label: string }>) {
+	return (
+		<Field orientation='horizontal'>
+			<FieldLabel htmlFor='clientId' className='mt-4.5 grow-0! -translate-y-1/2 self-start'>
+				Bill To
+			</FieldLabel>
+			<div className='flex grow flex-col items-end gap-1'>
+				<Combobox id='clientId' disabled={loading} {...props}>
+					<ComboboxInput
+						id='clientId'
+						disabled={loading}
+						className={cn('w-full max-w-80', loading && '*:disabled:cursor-wait')}
+						placeholder='e.g. John Smith'
+					/>
+					<ComboboxContent>
+						<ComboboxEmpty>No clients found.</ComboboxEmpty>
+						<ComboboxList>
+							{item => (
+								<ComboboxItem key={item.value} value={item}>
+									{item.label}
+								</ComboboxItem>
+							)}
+						</ComboboxList>
+					</ComboboxContent>
+				</Combobox>
+
+				{errors && <FieldError errors={errors} />}
+			</div>
+		</Field>
 	);
 }
 

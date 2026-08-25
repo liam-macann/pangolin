@@ -7,7 +7,7 @@ import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { type ComponentProps } from 'react';
 
 import { updateInvoiceStatus } from '@/lib/actions/invoice';
-import { patchStatus, useAsyncStatus, useMutateInvoice } from '@/lib/hooks';
+import { useAsyncStatus, useInvoiceMutation } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 
 import { type DataTableFeatures } from '@/components/data-table';
@@ -50,7 +50,10 @@ export function StatusSelect({
 	const invoice = row.original;
 	const status = invoice.status.status;
 
-	const { mutate } = useMutateInvoice(invoice.id);
+	const { mutateAsync } = useInvoiceMutation({
+		mutationFn: (status: Parameters<typeof updateInvoiceStatus>[1]) =>
+			updateInvoiceStatus(invoice.id, status),
+	});
 
 	const [updateStatus, track] = useAsyncStatus({
 		onRejected: () => toast.error('Failed to update invoice status'),
@@ -61,12 +64,7 @@ export function StatusSelect({
 			value={status}
 			onValueChange={v => {
 				if (!v) return;
-
-				// updateInvoiceStatus resolves with void, so the resolved cache value is derived from
-				// the same patch used optimistically rather than the server response.
-				const patch = patchStatus({ status: v });
-
-				mutate(track(updateInvoiceStatus(invoice.id, v)), { optimisticData: patch });
+				track(mutateAsync(v));
 			}}
 		>
 			<SelectTrigger

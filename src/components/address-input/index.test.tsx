@@ -19,7 +19,9 @@ type Fields =
 	| 'sortingCode'
 	| 'country';
 
-const { useAddressMetadata } = vi.hoisted(() => ({ useAddressMetadata: vi.fn() }));
+const { useAddressMetadata } = vi.hoisted(() => ({
+	useAddressMetadata: vi.fn(),
+}));
 
 const countryMetadata = {
 	CA: {
@@ -100,9 +102,8 @@ beforeEach(() => {
 		if (metadata) registerCountry(metadata);
 
 		return {
-			data: metadata,
-			isLoading: false,
-			error: undefined,
+			data: { data: metadata },
+			isFetching: false,
 		};
 	});
 });
@@ -285,7 +286,9 @@ describe('AddressInput', () => {
 	});
 
 	test('Disables input while country metadata is loading', async () => {
-		useAddressMetadata.mockReturnValue({ data: undefined, isLoading: true, error: undefined });
+		useAddressMetadata.mockImplementation(() => {
+			throw new Promise(() => {});
+		});
 
 		const screen = await render(<TestForm address={{ country: 'CA' }} />);
 
@@ -345,25 +348,27 @@ describe('AddressInput', () => {
 		await expect.element(country).toBeEnabled();
 	});
 
-	test('Renders alert when country metadata cannot be loaded', async () => {
-		useAddressMetadata.mockReturnValue({
-			data: undefined,
-			isLoading: false,
-			error: new Error('network'),
+	test('Retries metadata loading when the country changes after an error', async () => {
+		useAddressMetadata.mockImplementation((countryCode: CountryCode) => {
+			if (countryCode === 'CA') throw new Error('metadata failure');
+
+			registerCountry(countryMetadata.US);
+			return { data: { data: countryMetadata.US }, isFetching: false };
 		});
+		vi.spyOn(console, 'error').mockImplementation(() => {});
 
-		const screen = await render(<TestForm address={{ country: 'AU' }} />);
-
-		await expect
-			.element(screen.getByRole('alert'))
-			.toHaveTextContent(/failed to load address format/i);
-
-		await expect
-			.element(screen.getByText(/please refresh the page, and try again later\./i))
-			.toBeVisible();
+		const screen = await render(<TestForm address={{ country: 'CA' }} />);
+		await expect.element(screen.getByRole('alert')).toBeVisible();
 
 		const country = getAddressField(screen, 'country');
-		await expect.element(country).toBeVisible();
+		await userEvent.click(country);
+		await userEvent.fill(country, 'United States');
+		await userEvent.click(screen.getByRole('option', { name: 'United States' }));
+
+		await expect.element(screen.getByRole('alert')).not.toBeInTheDocument();
+		await expect
+			.element(getAddressField(screen, 'administrativeArea'))
+			.toHaveAccessibleName(/state/i);
 	});
 
 	describe('Street address', () => {

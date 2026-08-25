@@ -3,15 +3,15 @@ import '@/src/app/ui/global.css';
 import { MotionConfig } from 'motion/react';
 import { type Metadata } from 'next';
 import { Provider } from 'react-wrap-balancer';
-import { SWRConfig } from 'swr';
+
+import { QueryProvider } from '@/lib/hooks/data/helper';
+import { cn } from '@/lib/utils';
 
 import { DisableThemeTransitions } from '@/components/disable-theme-transitions';
 import { Toaster } from '@/ui/toast';
 import { TooltipProvider } from '@/ui/tooltip';
 
 import { InstrumentSans } from '@/src/app/ui/fonts';
-
-import { cn } from './lib/utils';
 
 export const metadata: Metadata = {
 	title: {
@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 			className={cn(InstrumentSans.variable, 'motion-safe:scroll-smooth')}
 		>
 			<TooltipProvider>
-				<SWRConfig>
+				<QueryProvider>
 					<MotionConfig reducedMotion='user'>
 						<body className='bg-background font-sans antialiased'>
 							<DisableThemeTransitions />
@@ -40,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 							</Provider>
 						</body>
 					</MotionConfig>
-				</SWRConfig>
+				</QueryProvider>
 			</TooltipProvider>
 		</html>
 	);

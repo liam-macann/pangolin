@@ -27,7 +27,6 @@ export default defineConfig({
 			'react-dom',
 			'react-dom/client',
 			'vitest-browser-react/pure',
-			'swr',
 			'es-toolkit/object',
 			'next/navigation',
 			'next/cache',

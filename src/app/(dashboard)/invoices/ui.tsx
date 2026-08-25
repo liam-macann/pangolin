@@ -4,12 +4,12 @@ import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { PlusCircleIcon, ReceiptIcon } from '@phosphor-icons/react';
 import { type SortingState } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
-import { type ComponentProps, useRef, useState } from 'react';
+import { type ComponentProps, Suspense, useRef, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 
 import { type Config } from '@/api/dto/config';
 import { type Invoice } from '@/api/dto/invoice';
-import { useConfig, useInvoices } from '@/lib/hooks';
-import { cn } from '@/lib/utils';
+import { envelopeWrapper, toEntityResponse, useConfig, useInvoices } from '@/lib/hooks';
 
 import { Button } from '@/ui/button';
 import {
@@ -65,8 +65,13 @@ function serializeSortParam(sorting: SortingState): string | null {
 }
 
 export function Table({ initial, initialConfig }: { initial?: Invoice[]; initialConfig: Config }) {
-	const { data: config } = useConfig(initialConfig, { suspense: true });
-	const { data: invoices } = useInvoices(initial, { suspense: true });
+	const {
+		data: { data: config },
+	} = useConfig({ initialData: toEntityResponse(initialConfig) });
+
+	const {
+		data: { data: invoices },
+	} = useInvoices(initial ? { initialData: envelopeWrapper(initial) } : undefined);
 
 	const searchParams = useSearchParams();
 
@@ -220,24 +225,32 @@ function EmptyState({ config }: { config: Config }) {
 	);
 }
 
-function Dialog() {
-	const { data, isLoading, error } = useConfig();
+function Trigger(props: ComponentProps<typeof Button>) {
+	return (
+		<Button variant='outline' size='lg' {...props}>
+			<PlusCircleIcon />
+			<span className='hidden sm:block'>Create invoice</span>
+		</Button>
+	);
+}
 
-	function Trigger(props: ComponentProps<typeof Button>) {
-		return (
-			<Button variant='outline' size='lg' {...props}>
-				<PlusCircleIcon />
-				<span className='hidden sm:block'>Create invoice</span>
-			</Button>
-		);
-	}
+function DialogContent() {
+	const { data: response } = useConfig();
+	const data = response.data;
 
-	return data ? (
+	return (
 		<CreateInvoiceDialog handle={createDialog} config={data}>
 			<Trigger />
 		</CreateInvoiceDialog>
-	) : (
-		// Does not use loading prop, as we don't want disabled styles
-		<Trigger className={cn(isLoading && 'cursor-progress')} disabled={!!error} />
+	);
+}
+
+export function Dialog() {
+	return (
+		<ErrorBoundary fallback={<Trigger disabled />}>
+			<Suspense fallback={<Trigger className='cursor-progress' />}>
+				<DialogContent />
+			</Suspense>
+		</ErrorBoundary>
 	);
 }

@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 import { type Client } from '@/api/dto/client';
 import { type Invoice } from '@/api/dto/invoice';
-import { useClient, useClientInvoices } from '@/lib/hooks';
+import { envelopeWrapper, toEntityResponse, useClient, useClientInvoices } from '@/lib/hooks';
 import { pluralize } from '@/lib/utils';
 
 import { Badge } from '@/ui/badge';
@@ -29,10 +29,12 @@ export function Table({
 	initialInvoices: Invoice[];
 	locale: string;
 }) {
-	const { data: client } = useClient(initialClient.id, initialClient, { suspense: true });
-	const { data: invoices } = useClientInvoices(initialClient.id, initialInvoices, {
-		suspense: true,
-	});
+	const {
+		data: { data: client },
+	} = useClient(initialClient.id, { initialData: toEntityResponse(initialClient) });
+	const {
+		data: { data: invoices },
+	} = useClientInvoices(initialClient.id, { initialData: envelopeWrapper(initialInvoices) });
 
 	const limit = 5;
 	const table = useInvoiceTable(
@@ -65,7 +67,9 @@ export function Table({
 }
 
 export function Header({ initialClient }: { initialClient: Client }) {
-	const { data: client } = useClient(initialClient.id, initialClient, { suspense: true });
+	const {
+		data: { data: client },
+	} = useClient(initialClient.id, { initialData: toEntityResponse(initialClient) });
 
 	return (
 		<div className='flex items-baseline justify-between'>

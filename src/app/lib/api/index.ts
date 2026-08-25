@@ -2,4 +2,5 @@ import { hc } from 'hono/client';
 
 import { type AppType } from '@/api/hono';
 
-export const client = hc<AppType>('/api');
+const queryFetch: typeof fetch = (input, init) => fetch(input, { ...init, cache: 'no-store' });
+export const client = hc<AppType>('/api', { fetch: queryFetch });
