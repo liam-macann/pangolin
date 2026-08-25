@@ -1,0 +1,39 @@
+name: Schemathesis API fuzzing
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  repository_dispatch:
+    types:
+      - "vercel.deployment.ready"
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+      statuses: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          ref: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.git.sha || github.sha }}
+      - name: Setup nub
+        uses: nubjs/setup-nub@v0
+      - name: Setup uv
+        uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: nub ci
+      - name: Run Schemathesis API fuzzing
+        run: nub run test:fuzz
+      - name: "Notify Vercel"
+        if: always()
+        uses: "vercel/repository-dispatch/actions/status@v1"
+        with:
+          name: "API fuzz test"

@@ -38,6 +38,7 @@ scripts/.openapi-*.mjs
 
 # testing
 .vitest-attachments/
+.schemathesis
 
 # typegen
 tsconfig.tsbuildinfo

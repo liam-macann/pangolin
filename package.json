@@ -27,10 +27,11 @@
 		"db:sync-currencies": "nub ./scripts/sync-currencies.ts",
 		"openapi:generate": "nub ./scripts/generate-openapi.ts",
 		"openapi:lint": "nub run openapi:generate && spectral lint openapi.json --fail-severity=warn",
-		"test": "vitest --typecheck",
-		"test:run": "vitest run --typecheck",
+		"test:fuzz": "vitest run --project fuzz --no-file-parallelism --reporter=tree",
+		"test": "vitest --project '!fuzz' --typecheck",
+		"test:run": "vitest run --project '!fuzz' --typecheck",
 		"test:browser": "vitest --project browser",
-		"coverage": "vitest run --coverage"
+		"coverage": "vitest run --project '!fuzz' --coverage"
 	},
 	"lint-staged": {
 		"*": ["biome check --write --no-errors-on-unmatched --files-ignore-unknown=true"]
@@ -126,6 +127,7 @@
 		"drizzle-orm": "1.0.0-rc.5-ab785fc",
 		"drizzle-seed": "1.0.0-rc.5-ab785fc",
 		"esbuild": "^0.28.2",
+		"fast-xml-parser": "^5.11.0",
 		"git-format-staged": "^4.0.2",
 		"husky": "^9.1.7",
 		"openapi-types": "^12.1.3",

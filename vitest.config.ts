@@ -7,6 +7,7 @@ import { playwright } from '@vitest/browser-playwright';
 import { configDefaults, defineConfig } from 'vitest/config';
 
 import { dragWithAnimation } from './src/test/commands.js';
+import { SchemathesisSequencer } from './src/test/schemathesis/sequencer.js';
 
 const require = createRequire(import.meta.url);
 const libAddressRoot = path.dirname(require.resolve('lib-address/package.json'));
@@ -60,6 +61,8 @@ export default defineConfig({
 		silent: 'passed-only',
 		setupFiles: ['./src/test/setup.ts'],
 		clearMocks: true,
+		// Orders the two `*.fuzz.ts` files (generate → replay); a no-op for every other project
+		sequence: { sequencer: SchemathesisSequencer },
 		coverage: {
 			include: [
 				...(configDefaults.coverage.include ?? []),
@@ -106,6 +109,18 @@ export default defineConfig({
 					maxWorkers: 2,
 					sequence: { groupOrder: 1 },
 					include: ['src/app/api/**/*.test.ts'],
+					setupFiles: ['./src/test/setup-server.ts'],
+				},
+			},
+			{
+				// Schemathesis API fuzzing — opt in with `--project fuzz` (needs `uvx` on PATH);
+				// the default scripts skip it with `--project '!fuzz'`.
+				extends: true,
+				test: {
+					name: { label: 'fuzz', color: 'cyan' },
+					environment: 'node',
+					isolate: false,
+					include: ['src/app/api/schemathesis.*.fuzz.ts'],
 					setupFiles: ['./src/test/setup-server.ts'],
 				},
 			},
