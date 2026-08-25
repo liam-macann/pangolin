@@ -5,7 +5,9 @@ import { type ElementType } from './type';
 export * from './type';
 
 import { type ClassValue, clsx } from 'clsx';
+import { omitBy } from 'es-toolkit';
 import { twMerge } from 'tailwind-merge';
+import { type SetOptional, type Simplify } from 'type-fest';
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
 export const formatNumber = (amount: number, locale: string) => {
@@ -64,6 +66,26 @@ export function pluralize(count: number, singular: string, plural: string) {
 			throw new Error(`Unknown: ${form}`);
 	}
 }
+
+type NullKeys<T> = {
+	[K in keyof T]-?: null extends T[K] ? K : never;
+}[keyof T];
+
+/** Removes null from object property types, converting to optional fields */
+type DropNullResult<T> =
+	NonNullable<T> extends infer O
+		? O extends object
+			? Simplify<SetOptional<{ [K in keyof O]: Exclude<O[K], null> }, NullKeys<O>>>
+			: never
+		: never;
+
+/** Strips null values from an object return, returning undefined instead */
+export const dropNull = <T extends Record<string, unknown> | null | undefined>(
+	obj?: T,
+): DropNullResult<T> | undefined => {
+	if (!obj) return undefined;
+	return omitBy(obj, value => value === null) as DropNullResult<T>;
+};
 
 // From NPM package `merge-refs`
 /**
