@@ -25,15 +25,12 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.git.sha || github.sha }}
-      - name: Setup pnpm and Node.js
-        uses: pnpm/setup@v1
-        with:
-          runtime: node@24
-          cache: true
+      - name: Setup nub
+        uses: nubjs/setup-nub@v0
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: nub ci
       - name: Generate OpenAPI document
-        run: pnpm openapi:generate
+        run: nub run openapi:generate
       - name: Lint OpenAPI document
         uses: stoplightio/spectral-action@latest
         with:

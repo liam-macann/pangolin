@@ -25,15 +25,14 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.git.sha || github.sha }}
-      - name: Setup pnpm and Node.js
-        uses: pnpm/setup@v1
-        with:
-          runtime: node@24
-          cache: true
+      - name: Setup nub
+        uses: nubjs/setup-nub@v0
+      - name: Install dependencies
+        run: nub ci
       - name: Install Playwright Browsers
-        run: pnpm exec playwright install --with-deps
+        run: nub exec playwright install --with-deps
       - name: Run tests
-        run: pnpm test:run
+        run: nub run test:run
       - name: "Notify Vercel"
         if: always()
         uses: "vercel/repository-dispatch/actions/status@v1"
