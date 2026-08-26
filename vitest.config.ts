@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
 import { configDefaults, defineConfig } from 'vitest/config';
 
-import { dragWithAnimation } from './src/test/commands';
+import { dragWithAnimation } from './src/test/commands.js';
 
 const require = createRequire(import.meta.url);
 const libAddressRoot = path.dirname(require.resolve('lib-address/package.json'));
@@ -76,7 +76,7 @@ export default defineConfig({
 					isolate: false,
 					// Each worker will have to spin up a new DB instance, which adds considerable overhead.
 					// Increased parallelism may make sense with a larger volume of tests.
-					maxWorkers: 2,
+					maxWorkers: 4,
 					sequence: { groupOrder: 2 },
 					include: ['src/**/*.test.ts'],
 					exclude: ['src/app/api/**/*.test.ts'],
@@ -91,7 +91,7 @@ export default defineConfig({
 					isolate: false,
 					// Each worker will have to spin up a new DB instance, which adds considerable overhead.
 					// Increased parallelism may make sense with a larger volume of tests.
-					maxWorkers: 1,
+					maxWorkers: 2,
 					sequence: { groupOrder: 1 },
 					include: ['src/app/api/**/*.test.ts'],
 					setupFiles: ['./src/test/setup-server.ts'],

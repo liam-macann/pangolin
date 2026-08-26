@@ -12,7 +12,7 @@ export type TestTX = Parameters<Parameters<TestDB['transaction']>[0]>[0];
 
 /** Boots an in-memory Postgres (PGlite) instance with every migration in `drizzle/` applied */
 export async function createTestDB(): Promise<TestDB> {
-	const db = drizzle({ relations });
+	const db = drizzle({ relations, connection: { relaxedDurability: true } });
 	await applyMigrations(db);
 	return db;
 }
