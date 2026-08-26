@@ -49,7 +49,16 @@ app.use(
 	}),
 );
 app.use(compress());
-app.use(methodNotAllowed({ app }));
+app.use(
+	methodNotAllowed({
+		app,
+		onMethodNotAllowed: (_c, methods) => {
+			const res = problems.create('METHOD_NOT_ALLOWED').getResponse();
+			res.headers.set('Allow', methods.join(', '));
+			return res;
+		},
+	}),
+);
 app.use(prettyJSON());
 app.use(trimTrailingSlash({ alwaysRedirect: true }));
 const etag = _etag();

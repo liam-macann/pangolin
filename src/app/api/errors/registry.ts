@@ -18,6 +18,11 @@ export const registry = {
 		status: 404,
 		title: 'Resource Not Found',
 	},
+	METHOD_NOT_ALLOWED: {
+		type: 'about:blank',
+		status: 405,
+		title: 'Method Not Allowed',
+	},
 	UPSTREAM_UNAVAILABLE: {
 		type: `${PROBLEM_BASE}/upstream_unavailable`,
 		status: 502,
