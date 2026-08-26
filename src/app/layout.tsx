@@ -1,5 +1,8 @@
 import '@/src/app/ui/global.css';
 
+import { TanStackDevtools } from '@tanstack/react-devtools';
+import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
+import { TableDevtoolsPanel } from '@tanstack/react-table-devtools';
 import { MotionConfig } from 'motion/react';
 import { type Metadata } from 'next';
 import { Provider } from 'react-wrap-balancer';
@@ -38,6 +41,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 								{children}
 								<Toaster timeout={4000} />
 							</Provider>
+
+							{process.env.NODE_ENV === 'development' && (
+								<TanStackDevtools
+									eventBusConfig={{ connectToServerBus: true }}
+									plugins={[
+										{ name: 'TanStack Query', render: <ReactQueryDevtoolsPanel /> },
+										{ name: 'TanStack Table', render: <TableDevtoolsPanel /> },
+									]}
+								/>
+							)}
 						</body>
 					</MotionConfig>
 				</QueryProvider>
