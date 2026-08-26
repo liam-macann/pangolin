@@ -31,7 +31,7 @@ const routes = new Hono()
 export type AppType = typeof routes;
 export { routes };
 
-const app = new Hono<Env>().basePath('/api').onError(onError);
+const app = new Hono<Env>({ strict: false }).basePath('/api').onError(onError);
 
 if (process.env.NODE_ENV !== 'test') app.use(logger());
 app.use(secureHeaders());
