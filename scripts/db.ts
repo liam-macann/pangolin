@@ -1,12 +1,3 @@
-// Polyfill
-import fetch from 'node-fetch';
-import { WebSocket } from 'ws';
-
-// biome-ignore lint/suspicious/noExplicitAny: Necessary for polyfill. Script does not run in production
-globalThis.WebSocket = WebSocket as any;
-// biome-ignore lint/suspicious/noExplicitAny: Necessary for polyfill. Script does not run in production
-globalThis.fetch = fetch as any;
-
 import { Pool } from '@neondatabase/serverless';
 import { defineRelations } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';

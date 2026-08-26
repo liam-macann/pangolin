@@ -1,7 +1,7 @@
 import 'server-only';
 
+import { randomUUID } from 'node:crypto';
 import { notFound } from 'next/navigation';
-import { v4 as uuid } from 'uuid';
 import type z from 'zod';
 
 import { document as zodSchema } from '@/lib/validation/document';
@@ -42,7 +42,7 @@ export async function createDocument(input: z.infer<typeof zodSchema>) {
 			});
 
 		// Necessary to have stable ID to link taxes with items
-		const itemsWithId = items.map((item, i) => ({ ...item, id: uuid(), order: i }));
+		const itemsWithId = items.map((item, i) => ({ ...item, id: randomUUID(), order: i }));
 
 		// Insert line items
 		await tx
