@@ -4,8 +4,11 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 
 import { fetchConfig } from '@/lib/data';
-import { fetchClientStats, fetchClients } from '@/lib/data/client';
-import { fetchInvoicesForClient } from '@/lib/data/invoice';
+import { fetchClientStats } from '@/lib/data/client';
+import { clientQueries } from '@/lib/hooks/data/client';
+import { configQueries } from '@/lib/hooks/data/config';
+import { PrefetchQuery } from '@/lib/hooks/data/helpers/prefetch';
+import { invoiceQueries } from '@/lib/hooks/data/invoice';
 import { cn, pluralize } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
 
@@ -24,15 +27,12 @@ export const instant = false;
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params;
-
-	const [client, invoices, config] = await Promise.all([
-		fetchClients(id),
-		fetchInvoicesForClient(id, 5),
-		fetchConfig(),
-	]);
+	const statsPromise = fetchClientStats(id);
 
 	return (
-		<>
+		<PrefetchQuery
+			queries={[clientQueries.detail(id), invoiceQueries.list(id), configQueries.current()]}
+		>
 			<Button
 				variant='ghost'
 				size='sm'
@@ -47,7 +47,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 			/>
 
 			<section className='flex flex-col gap-2'>
-				<Header initialClient={client} />
+				<Header clientId={id} />
 
 				<div className='mt-8 grid xs:grid-cols-2 gap-2 sm:grid-cols-3'>
 					<Suspense
@@ -71,20 +71,24 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 							</>
 						}
 					>
-						<SummaryCards id={id} />
+						<SummaryCards statsPromise={statsPromise} />
 					</Suspense>
 				</div>
 			</section>
 			<section className='mt-16'>
 				<h2 className='mb-6 font-display font-semibold text-2xl'>Recent activity</h2>
-				<Table initialClient={client} locale={config.locale} initialInvoices={invoices} />
+				<Table clientId={id} />
 			</section>
-		</>
+		</PrefetchQuery>
 	);
 }
 
-async function SummaryCards({ id }: { id: string }) {
-	const [config, stats] = await Promise.all([fetchConfig(), fetchClientStats(id)]);
+async function SummaryCards({
+	statsPromise,
+}: {
+	statsPromise: ReturnType<typeof fetchClientStats>;
+}) {
+	const [config, stats] = await Promise.all([fetchConfig(), statsPromise]);
 
 	return (
 		<>

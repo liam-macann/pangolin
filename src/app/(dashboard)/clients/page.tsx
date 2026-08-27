@@ -1,6 +1,7 @@
 import { type Metadata } from 'next';
 
-import { fetchClients } from '@/lib/data/client';
+import { clientQueries } from '@/lib/hooks/data/client';
+import { PrefetchQuery } from '@/lib/hooks/data/helpers/prefetch';
 
 import { Clients } from './ui';
 
@@ -11,7 +12,10 @@ export const metadata: Metadata = {
 // instant = false: fully request-time client list
 export const instant = false;
 
-export default async function Page() {
-	const clients = await fetchClients();
-	return <Clients initial={clients} />;
+export default function Page() {
+	return (
+		<PrefetchQuery queries={[clientQueries.list()]}>
+			<Clients />
+		</PrefetchQuery>
+	);
 }

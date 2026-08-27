@@ -1,13 +1,14 @@
 'use client';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
 
 import { useSession } from '@/lib/auth';
 import { useIsomorphicLayoutEffect, usePrevious } from '@/lib/hooks';
 
+import { getQueryClient } from './client';
+
 export function QueryProvider({ children }: { children: React.ReactNode }) {
-	const [client] = useState(() => new QueryClient());
+	const client = getQueryClient();
 
 	const { data: session } = useSession();
 	const userId = session?.user.id ?? null;

@@ -8,9 +8,7 @@ import {
 } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
 
-import { type Client } from '@/api/dto/client';
-import { type Invoice } from '@/api/dto/invoice';
-import { envelopeWrapper, toEntityResponse, useClient, useClientInvoices } from '@/lib/hooks';
+import { useClient, useClientInvoices, useConfig } from '@/lib/hooks';
 import { pluralize } from '@/lib/utils';
 
 import { Badge } from '@/ui/badge';
@@ -20,56 +18,51 @@ import { InvoiceTableContent, LocaleContext, useInvoiceTable } from './../../inv
 import { UpdateClientDialog } from './../ui/dialogs';
 import { OverflowMenu } from './../ui/menu';
 
-export function Table({
-	initialClient,
-	initialInvoices,
-	locale,
-}: {
-	initialClient: Client;
-	initialInvoices: Invoice[];
-	locale: string;
-}) {
+const LIMIT = 5;
+export function Table({ clientId }: { clientId: string }) {
 	const {
 		data: { data: client },
-	} = useClient(initialClient.id, { initialData: toEntityResponse(initialClient) });
+	} = useClient(clientId);
 	const {
 		data: { data: invoices },
-	} = useClientInvoices(initialClient.id, { initialData: envelopeWrapper(initialInvoices) });
+	} = useClientInvoices(clientId);
+	const {
+		data: { data: config },
+	} = useConfig();
 
-	const limit = 5;
 	const table = useInvoiceTable(
 		{
-			initialState: { pagination: { pageSize: limit } },
-			data: invoices.slice(0, limit),
+			initialState: { pagination: { pageSize: LIMIT } },
+			data: invoices.slice(0, LIMIT),
 		},
 		() => null,
 	);
 
 	return (
 		<>
-			<LocaleContext value={locale}>
+			<LocaleContext value={config.locale}>
 				<table.AppTable>
 					<InvoiceTableContent table={table} />
 				</table.AppTable>
 			</LocaleContext>
 
-			{client.invoiceCount > Math.min(invoices.length, limit) && (
+			{client.invoiceCount > Math.min(invoices.length, LIMIT) && (
 				<Link
-					href={`/invoices?client=${initialClient.id}`}
+					href={`/invoices?client=${clientId}`}
 					className='mt-3 ml-4 inline-block rounded-md font-medium text-muted-foreground text-sm'
 				>
-					+ {client.invoiceCount - Math.min(invoices.length, limit)} more{' '}
-					{pluralize(client.invoiceCount - Math.min(invoices.length, limit), 'invoice', 'invoices')}
+					+ {client.invoiceCount - Math.min(invoices.length, LIMIT)} more{' '}
+					{pluralize(client.invoiceCount - Math.min(invoices.length, LIMIT), 'invoice', 'invoices')}
 				</Link>
 			)}
 		</>
 	);
 }
 
-export function Header({ initialClient }: { initialClient: Client }) {
+export function Header({ clientId }: { clientId: string }) {
 	const {
 		data: { data: client },
-	} = useClient(initialClient.id, { initialData: toEntityResponse(initialClient) });
+	} = useClient(clientId);
 
 	return (
 		<div className='flex items-baseline justify-between'>

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { type Client } from '@/api/dto/client';
-import { envelopeWrapper, useClients } from '@/lib/hooks';
+import { useClients } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 
 import {
@@ -30,10 +30,10 @@ import {
 import { CreateClientDialog } from './../ui/dialogs';
 import { Card } from './card';
 
-export function Clients({ initial }: { initial: Client[] }) {
+export function Clients() {
 	const {
 		data: { data },
-	} = useClients({ initialData: envelopeWrapper(initial) });
+	} = useClients();
 	const favorites = data.filter(client => client.isFavorite);
 
 	return (

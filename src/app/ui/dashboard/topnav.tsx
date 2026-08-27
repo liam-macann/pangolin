@@ -36,7 +36,11 @@ function NavLink({ link, active }: { link: (typeof links)[number]; active: boole
 					: 'text-muted-foreground',
 			)}
 			nativeButton={false}
-			render={<Link href={link.href}>{link.name}</Link>}
+			render={
+				<Link href={link.href} prefetch>
+					{link.name}
+				</Link>
+			}
 		/>
 	);
 }

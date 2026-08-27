@@ -6,12 +6,16 @@ import {
 	MagnifyingGlassIcon,
 	UserCircleIcon,
 } from '@phosphor-icons/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCommandState } from 'cmdk';
 import { useRouter } from 'next/navigation';
 import { type ComponentProps, Suspense, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { useClients, useConfig, useInvoices, useKeyPress, usePrevious } from '@/lib/hooks';
+import { clientQueries } from '@/lib/hooks/data/client';
+import { configQueries } from '@/lib/hooks/data/config';
+import { invoiceQueries } from '@/lib/hooks/data/invoice';
 import { pluralize } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
 
@@ -30,15 +34,29 @@ import { toast } from '@/ui/toast';
 
 function GlobalSearch() {
 	const [open, setOpen] = useState(false);
+	const queryClient = useQueryClient();
+
+	const prefetch = () => {
+		void Promise.allSettled([
+			queryClient.query(clientQueries.list()),
+			queryClient.query(invoiceQueries.list()),
+			queryClient.query(configQueries.current()),
+		]);
+	};
+
+	const openSearch = () => {
+		prefetch();
+		setOpen(true);
+	};
 
 	useKeyPress({
 		'$mod+k': e => {
 			e.preventDefault();
-			setOpen(true);
+			openSearch();
 		},
 		'/': e => {
 			e.preventDefault();
-			setOpen(true);
+			openSearch();
 		},
 	});
 
@@ -47,7 +65,7 @@ function GlobalSearch() {
 			onError={() => toast.error('Something went wrong. Please try again later.')}
 			fallback={<Trigger disabled />}
 		>
-			<Trigger onClick={() => setOpen(true)} />
+			<Trigger onClick={openSearch} onPointerEnter={prefetch} onFocus={prefetch} />
 			<CommandDialog
 				title='Search'
 				description='Find people or invoices…'

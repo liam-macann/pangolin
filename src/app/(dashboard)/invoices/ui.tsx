@@ -8,8 +8,7 @@ import { type ComponentProps, Suspense, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { type Config } from '@/api/dto/config';
-import { type Invoice } from '@/api/dto/invoice';
-import { envelopeWrapper, toEntityResponse, useConfig, useInvoices } from '@/lib/hooks';
+import { useConfig, useInvoices } from '@/lib/hooks';
 
 import { Button } from '@/ui/button';
 import {
@@ -64,14 +63,14 @@ function serializeSortParam(sorting: SortingState): string | null {
 	return serialized === buildSortString(DEFAULT_SORT) ? null : serialized;
 }
 
-export function Table({ initial, initialConfig }: { initial?: Invoice[]; initialConfig: Config }) {
+export function Table() {
 	const {
 		data: { data: config },
-	} = useConfig({ initialData: toEntityResponse(initialConfig) });
+	} = useConfig();
 
 	const {
 		data: { data: invoices },
-	} = useInvoices(initial ? { initialData: envelopeWrapper(initial) } : undefined);
+	} = useInvoices();
 
 	const searchParams = useSearchParams();
 
