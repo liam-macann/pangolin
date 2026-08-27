@@ -7,7 +7,7 @@ import rpc from '#rpc';
 import { type Address, AddressMetadata } from '@/api/dto/address';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { type EntityResponse, type QueryOptionsFor } from './helper';
+import { type EntityResponse, type QueryOptionsFor } from './helpers';
 
 export const addressKeys = {
 	all: ['address'] as const,

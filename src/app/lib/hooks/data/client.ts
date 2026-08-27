@@ -6,7 +6,7 @@ import rpc from '#rpc';
 import { type Client } from '@/api/dto/client';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { type EntityResponse, type ListResponse, type QueryOptionsFor } from './helper';
+import { type EntityResponse, type ListResponse, type QueryOptionsFor } from './helpers';
 import { createOptimisticResource } from './mutation';
 
 export const clientKeys = {

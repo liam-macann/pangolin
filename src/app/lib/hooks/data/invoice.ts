@@ -6,7 +6,7 @@ import rpc from '#rpc';
 import { type Invoice } from '@/api/dto/invoice';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { type ListResponse, type QueryOptionsFor } from './helper';
+import { type ListResponse, type QueryOptionsFor } from './helpers';
 import { createOptimisticResource } from './mutation';
 
 export const invoiceKeys = {

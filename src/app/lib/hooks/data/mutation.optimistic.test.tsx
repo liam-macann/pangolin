@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { type QueryOptionsFor } from './helper';
+import { type QueryOptionsFor } from './helpers';
 import { createOptimisticResource } from './mutation';
 import {
 	createControlledMutation,

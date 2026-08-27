@@ -10,7 +10,7 @@ import rpc from '#rpc';
 import { type Config } from '@/api/dto/config';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { type EntityResponse, type QueryOptionsFor } from './helper';
+import { type EntityResponse, type QueryOptionsFor } from './helpers';
 import { type MutationOptions, useInvalidatingMutation } from './mutation';
 
 export const configKeys = {

@@ -7,7 +7,7 @@ import { MotionConfig } from 'motion/react';
 import { type Metadata } from 'next';
 import { Provider } from 'react-wrap-balancer';
 
-import { QueryProvider } from '@/lib/hooks/data/helper';
+import { QueryProvider } from '@/lib/hooks/data/helpers/provider';
 import { cn } from '@/lib/utils';
 
 import { DisableThemeTransitions } from '@/components/disable-theme-transitions';
