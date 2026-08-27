@@ -3,8 +3,8 @@
 import { type QueryFunctionContext, useSuspenseQuery } from '@tanstack/react-query';
 import { registerCountry } from 'lib-address';
 
+import rpc from '#rpc';
 import { type Address, AddressMetadata } from '@/api/dto/address';
-import { client } from '@/lib/api';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
 import { type EntityResponse, type QueryOptionsFor } from './helper';
@@ -19,7 +19,7 @@ function addressMetadataQuery(country: Address['country']) {
 		queryKey: addressKeys.metadata(country),
 		queryFn: async ({ signal }: QueryFunctionContext) => {
 			const response = await parseAPIRes(
-				client.address.metadata[':country'].$get({ param: { country } }, { init: { signal } }),
+				rpc.address.metadata[':country'].$get({ param: { country } }, { init: { signal } }),
 			);
 			registerCountry(AddressMetadata.parse(response.data));
 			return response;

@@ -203,6 +203,7 @@
 							":PACKAGE_WITH_PROTOCOL:",
 							":PACKAGE:",
 							":BLANK_LINE:",
+							"#rpc",
 							"@/api",
 							"@/api/**",
 							"@/lib/**",

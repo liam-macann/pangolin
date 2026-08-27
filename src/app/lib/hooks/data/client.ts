@@ -2,8 +2,8 @@
 
 import { type QueryFunctionContext } from '@tanstack/react-query';
 
+import rpc from '#rpc';
 import { type Client } from '@/api/dto/client';
-import { client } from '@/lib/api';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
 import { type EntityResponse, type ListResponse, type QueryOptionsFor } from './helper';
@@ -35,7 +35,7 @@ export function useClients<TData = ClientsResponse>(
 		{
 			queryKey: clientKeys.list(),
 			queryFn: ({ signal }: QueryFunctionContext) =>
-				parseAPIRes(client.clients.$get({ query: {} }, { init: { signal } })),
+				parseAPIRes(rpc.clients.$get({ query: {} }, { init: { signal } })),
 			...options,
 		},
 		(response, update) => ({ ...response, data: response.data.map(update) }),
@@ -50,7 +50,7 @@ export function useClient<TData = ClientResponse>(
 		{
 			queryKey: clientKeys.detail(id),
 			queryFn: ({ signal }: QueryFunctionContext) =>
-				parseAPIRes(client.clients[':id'].$get({ param: { id } }, { init: { signal } })),
+				parseAPIRes(rpc.clients[':id'].$get({ param: { id } }, { init: { signal } })),
 			...options,
 		},
 		(response, update) => ({ ...response, data: update(response.data) }),

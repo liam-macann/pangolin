@@ -2,8 +2,8 @@
 
 import { type QueryFunctionContext } from '@tanstack/react-query';
 
+import rpc from '#rpc';
 import { type Invoice } from '@/api/dto/invoice';
-import { client } from '@/lib/api';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
 import { type ListResponse, type QueryOptionsFor } from './helper';
@@ -31,10 +31,7 @@ function useOptimisticInvoiceQuery<TData>(
 			queryKey: invoiceKeys.list(clientId),
 			queryFn: ({ signal }: QueryFunctionContext) =>
 				parseAPIRes(
-					client.invoices.$get(
-						{ query: clientId ? { client: clientId } : {} },
-						{ init: { signal } },
-					),
+					rpc.invoices.$get({ query: clientId ? { client: clientId } : {} }, { init: { signal } }),
 				),
 			...options,
 		},

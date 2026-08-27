@@ -6,8 +6,8 @@ import {
 	useSuspenseQuery,
 } from '@tanstack/react-query';
 
+import rpc from '#rpc';
 import { type Config } from '@/api/dto/config';
-import { client } from '@/lib/api';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
 import { type EntityResponse, type QueryOptionsFor } from './helper';
@@ -24,7 +24,7 @@ export const useConfig = <TData = EntityResponse<Config>>(
 	useSuspenseQuery({
 		queryKey: configKeys.current(),
 		queryFn: ({ signal }: QueryFunctionContext) =>
-			parseAPIRes(client.config.$get({}, { init: { signal } })),
+			parseAPIRes(rpc.config.$get({}, { init: { signal } })),
 		...options,
 	});
 

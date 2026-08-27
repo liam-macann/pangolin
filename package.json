@@ -1,5 +1,11 @@
 {
 	"private": true,
+	"imports": {
+		"#rpc": {
+			"react-server": "./src/app/api/rpc/index.server.ts",
+			"default": "./src/app/api/rpc/index.client.ts"
+		}
+	},
 	"engines": {
 		"node": "24.x"
 	},
@@ -57,6 +63,7 @@
 		"babel-plugin-react-compiler": "^19.1.0-rc.3",
 		"better-auth": "^1.7.1",
 		"class-variance-authority": "^0.7.1",
+		"client-only": "^0.0.1",
 		"clsx": "^2.1.1",
 		"cmdk": "^1.1.1",
 		"countries-list": "3.4.0",
