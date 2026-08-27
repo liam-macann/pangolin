@@ -1,5 +1,7 @@
 import { type DefaultError, type UseSuspenseQueryOptions } from '@tanstack/react-query';
 
+export * from './define';
+
 export type EntityResponse<T> = { data: T };
 export const toEntityResponse = <T,>(data: T): EntityResponse<T> => ({ data });
 

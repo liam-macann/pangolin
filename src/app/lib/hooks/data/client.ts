@@ -1,12 +1,10 @@
-'use client';
-
-import { type QueryFunctionContext } from '@tanstack/react-query';
+import { type InferResponseType } from 'hono/client';
 
 import rpc from '#rpc';
 import { type Client } from '@/api/dto/client';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { type EntityResponse, type ListResponse, type QueryOptionsFor } from './helpers';
+import { declareQueries, type QueryOptionsFor } from './helpers';
 import { createOptimisticResource } from './mutation';
 
 export const clientKeys = {
@@ -15,6 +13,18 @@ export const clientKeys = {
 	list: () => ['clients', 'list', {}] as const,
 	detail: (id: string) => ['clients', 'detail', id] as const,
 };
+
+export const clientQueries = declareQueries({
+	list: () => ({
+		queryKey: clientKeys.list(),
+		queryFn: ({ signal }) => parseAPIRes(rpc.clients.$get({ query: {} }, { init: { signal } })),
+	}),
+	detail: (id: string) => ({
+		queryKey: clientKeys.detail(id),
+		queryFn: ({ signal }) =>
+			parseAPIRes(rpc.clients[':id'].$get({ param: { id } }, { init: { signal } })),
+	}),
+});
 
 const affectedClientKeys = (clientId: string | undefined) => [
 	clientKeys.lists(),
@@ -25,36 +35,26 @@ const factory = createOptimisticResource<Client>({
 	invalidates: affectedClientKeys,
 });
 
-type ClientsResponse = ListResponse<Client>;
-type ClientResponse = EntityResponse<Client>;
+type ClientsResponse = InferResponseType<typeof rpc.clients.$get, 200>;
+type ClientResponse = InferResponseType<(typeof rpc.clients)[':id']['$get'], 200>;
 
-export function useClients<TData = ClientsResponse>(
+export const useClients = <TData = ClientsResponse>(
 	options?: QueryOptionsFor<ClientsResponse, TData>,
-) {
-	return factory.useOptimisticQuery(
-		{
-			queryKey: clientKeys.list(),
-			queryFn: ({ signal }: QueryFunctionContext) =>
-				parseAPIRes(rpc.clients.$get({ query: {} }, { init: { signal } })),
-			...options,
-		},
+) =>
+	factory.useOptimisticQuery(
+		{ ...clientQueries.list(), ...options },
+		// Optimistic patcher
 		(response, update) => ({ ...response, data: response.data.map(update) }),
 	);
-}
 
-export function useClient<TData = ClientResponse>(
+export const useClient = <TData = ClientResponse>(
 	id: string,
 	options?: QueryOptionsFor<ClientResponse, TData>,
-) {
-	return factory.useOptimisticQuery(
-		{
-			queryKey: clientKeys.detail(id),
-			queryFn: ({ signal }: QueryFunctionContext) =>
-				parseAPIRes(rpc.clients[':id'].$get({ param: { id } }, { init: { signal } })),
-			...options,
-		},
+) =>
+	factory.useOptimisticQuery(
+		{ ...clientQueries.detail(id), ...options },
+		// Optimistic patcher
 		(response, update) => ({ ...response, data: update(response.data) }),
 	);
-}
 
 export const useClientMutation = factory.useOptimisticMutation;

@@ -1,43 +1,40 @@
-'use client';
-
 import { type QueryFunctionContext } from '@tanstack/react-query';
+import { type InferResponseType } from 'hono/client';
 
 import rpc from '#rpc';
 import { type Invoice } from '@/api/dto/invoice';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { type ListResponse, type QueryOptionsFor } from './helpers';
+import { declareQueries, type QueryOptionsFor } from './helpers';
 import { createOptimisticResource } from './mutation';
 
-export const invoiceKeys = {
-	all: ['invoices'] as const,
-	lists: () => ['invoices', 'list'] as const,
-	list: (clientId?: string) => ['invoices', 'list', { client: clientId ?? null }] as const,
-};
+const invoiceRoot = ['invoices'] as const;
 
-const factory = createOptimisticResource<Invoice>({
-	mutationKey: invoiceKeys.all,
-	invalidates: () => [invoiceKeys.all],
+export const invoiceQueries = declareQueries({
+	list: (clientId?: string) => ({
+		queryKey: [...invoiceRoot, 'list', { client: clientId ?? null }] as const,
+		queryFn: ({ signal }: QueryFunctionContext) =>
+			parseAPIRes(
+				rpc.invoices.$get({ query: clientId ? { client: clientId } : {} }, { init: { signal } }),
+			),
+	}),
 });
 
-type InvoicesResponse = ListResponse<Invoice>;
+type InvoicesResponse = InferResponseType<typeof rpc.invoices.$get, 200>;
 
-function useOptimisticInvoiceQuery<TData>(
+const factory = createOptimisticResource<Invoice>({
+	mutationKey: invoiceRoot,
+	invalidates: () => [invoiceRoot],
+});
+
+const useOptimisticInvoiceQuery = <TData>(
 	clientId: string | undefined,
 	options?: QueryOptionsFor<InvoicesResponse, TData>,
-) {
-	return factory.useOptimisticQuery(
-		{
-			queryKey: invoiceKeys.list(clientId),
-			queryFn: ({ signal }: QueryFunctionContext) =>
-				parseAPIRes(
-					rpc.invoices.$get({ query: clientId ? { client: clientId } : {} }, { init: { signal } }),
-				),
-			...options,
-		},
+) =>
+	factory.useOptimisticQuery(
+		{ ...invoiceQueries.list(clientId), ...options },
 		(response, update) => ({ ...response, data: response.data.map(update) }),
 	);
-}
 
 export const useInvoices = <TData = InvoicesResponse>(
 	options?: QueryOptionsFor<InvoicesResponse, TData>,

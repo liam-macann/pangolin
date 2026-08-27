@@ -1,35 +1,31 @@
-'use client';
-
 import {
 	type DefaultError,
 	type QueryFunctionContext,
 	useSuspenseQuery,
 } from '@tanstack/react-query';
+import { type InferResponseType } from 'hono/client';
 
 import rpc from '#rpc';
-import { type Config } from '@/api/dto/config';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { type EntityResponse, type QueryOptionsFor } from './helpers';
+import { declareQueries, type QueryOptionsFor } from './helpers';
 import { type MutationOptions, useInvalidatingMutation } from './mutation';
 
-export const configKeys = {
-	all: ['config'] as const,
-	current: () => ['config', 'current'] as const,
-};
+const configRoot = ['config'] as const;
+type ConfigResponse = InferResponseType<typeof rpc.config.$get, 200>;
 
-export const useConfig = <TData = EntityResponse<Config>>(
-	options?: QueryOptionsFor<EntityResponse<Config>, TData>,
-) =>
-	useSuspenseQuery({
-		queryKey: configKeys.current(),
+export const configQueries = declareQueries({
+	current: () => ({
+		queryKey: [...configRoot, 'current'] as const,
 		queryFn: ({ signal }: QueryFunctionContext) =>
 			parseAPIRes(rpc.config.$get({}, { init: { signal } })),
-		...options,
-	});
+	}),
+});
 
-export function useConfigMutation<TData = unknown, TError = DefaultError, TVariables = void>(
+export const useConfig = <TData = ConfigResponse>(
+	options?: QueryOptionsFor<ConfigResponse, TData>,
+) => useSuspenseQuery({ ...configQueries.current(), ...options });
+
+export const useConfigMutation = <TData = unknown, TError = DefaultError, TVariables = void>(
 	options: MutationOptions<TData, TError, TVariables>,
-) {
-	return useInvalidatingMutation(options, [configKeys.all]);
-}
+) => useInvalidatingMutation(options, [configRoot]);
