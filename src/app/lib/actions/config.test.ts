@@ -1,5 +1,5 @@
 import { updateTag } from 'next/cache';
-import { assert, beforeEach, describe, expect, vi } from 'vitest';
+import { afterEach, assert, beforeEach, describe, expect, vi } from 'vitest';
 
 import * as actions from '@/lib/actions/utils';
 import { crypto } from '@/lib/encrypt';
@@ -16,6 +16,8 @@ describe('updateUserConfig', () => {
 		vi.spyOn(actions, 'cleanupConfigs').mockResolvedValue();
 		vi.spyOn(actions, 'cleanupAddresses').mockResolvedValue();
 	});
+
+	afterEach(() => vi.restoreAllMocks());
 
 	/** Fetch the active config without processing data */
 	const getUserConfig = () =>

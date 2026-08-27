@@ -42,12 +42,13 @@ vi.mock('next/server');
 // The real DB connection must never run in a test
 vi.mock('@/db/connection', () => ({
 	get db() {
-		if (!testConnection.current) {
+		const connection = testConnection.getStore();
+		if (!connection) {
 			throw new Error(
 				'@/db accessed without a test database initialized. Use the `asUser` fixture from @/test/session',
 			);
 		}
-		return testConnection.current;
+		return connection;
 	},
 }));
 
@@ -60,7 +61,8 @@ vi.mock(import('@/auth'), async importOriginal => ({
 
 // This is what lets concurrently-running tests each see their own session
 asUser.aroundEach(
-	async (runTest, { session }) => await sessionStorage.run(session, () => runTest()),
+	async (runTest, { db, session }) =>
+		await sessionStorage.run(session, () => testConnection.run(db, () => runTest())),
 );
 
 vi.mock(import('react'), async importOriginal => {

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
 import * as navigation from 'next/navigation';
-import { assert, beforeEach, describe, expect, vi } from 'vitest';
+import { afterEach, assert, beforeEach, describe, expect, vi } from 'vitest';
 
 import * as actions from '@/lib/actions/utils';
 import { crypto } from '@/lib/encrypt';
@@ -27,6 +27,8 @@ beforeEach(async () => {
 	vi.spyOn(actions, 'cleanupClientData').mockResolvedValue();
 	vi.spyOn(actions, 'cleanupAddresses').mockResolvedValue();
 });
+
+afterEach(() => vi.restoreAllMocks());
 type ClientInput = Parameters<typeof createClient>[0];
 
 /** Wraps the createClient and updateClient actions for use in shared insertion tests */

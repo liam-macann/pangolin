@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import * as navigation from 'next/navigation';
 import { NextRequest } from 'next/server';
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { insertTestInvoice, setUpConfigAndClient } from '@/lib/actions/tests/helpers';
 import * as invoiceData from '@/lib/data/invoice';
@@ -17,6 +17,8 @@ vi.mock(import('@/lib/data/invoice'), async importOriginal => {
 
 const request = (id: string) => new NextRequest(`http://localhost/invoices/${id}`);
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) });
+
+afterEach(() => vi.restoreAllMocks());
 
 describe('GET /invoices/[id]', () => {
 	test('Rejects a malformed invoice id with 400', async () => {

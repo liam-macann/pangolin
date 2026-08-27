@@ -139,7 +139,7 @@ describe('AddressInput', () => {
 
 		const state = getAddressField(screen, 'administrativeArea');
 		await expect.element(state).toBeVisible();
-		await expect.element(state).toHaveAccessibleName(/province/i);
+		await expect.element(state).toHaveAccessibleName(/^province$/i);
 
 		const city = getAddressField(screen, 'city');
 		await expect.element(city).toBeVisible();
@@ -163,14 +163,15 @@ describe('AddressInput', () => {
 		await userEvent.fill(country, 'Canada');
 		const option = screen.getByRole('option', { name: 'Canada' });
 		await expect.element(option).toBeVisible();
-		await userEvent.click(option);
+		// Firefox intermittently drops a pointer click on the popup while it is still animating open
+		await userEvent.keyboard('{Enter}');
 
 		await expect.poll(() => useAddressMetadata.mock.lastCall?.[0]).toBe('CA');
 
 		await expect.element(country).toHaveValue('Canada');
 		await expect
 			.element(getAddressField(screen, 'administrativeArea'))
-			.toHaveAccessibleName(/province/i);
+			.toHaveAccessibleName(/^province$/i);
 	});
 
 	test('Keeps the previous address format while the next country loads', async () => {

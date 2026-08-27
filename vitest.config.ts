@@ -21,6 +21,7 @@ const isWatch = configDefaults.watch && !isRun;
 
 export default defineConfig({
 	optimizeDeps: {
+		entries: ['src/**/*.test.tsx', 'src/**/*.browser.test.ts'],
 		include: [
 			'react',
 			'react/jsx-dev-runtime',
@@ -31,7 +32,18 @@ export default defineConfig({
 			'next/navigation',
 			'next/cache',
 			'next/server',
+			'hono/client',
 			'server-only',
+			'client-only',
+			'@uidotdev/usehooks',
+			'usehooks-ts',
+			'@base-ui/react',
+			'@phosphor-icons/react',
+			'class-variance-authority',
+			'clsx',
+			'motion/react',
+			'react-is',
+			'tailwind-merge',
 		],
 	},
 	resolve: {
@@ -76,7 +88,7 @@ export default defineConfig({
 					isolate: false,
 					// Each worker will have to spin up a new DB instance, which adds considerable overhead.
 					// Increased parallelism may make sense with a larger volume of tests.
-					maxWorkers: 4,
+					maxWorkers: 2,
 					sequence: { groupOrder: 2 },
 					include: ['src/**/*.test.ts'],
 					exclude: ['src/app/api/**/*.test.ts'],

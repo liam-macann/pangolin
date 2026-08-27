@@ -12,7 +12,8 @@ import { type Session } from '@/auth';
 
 import { createTestDB, type TestTX } from './pglite';
 
-export const testConnection: { current: TestTX | null } = { current: null };
+/** Stores the current test transaction separately according to each calling async context */
+export const testConnection = new AsyncLocalStorage<TestTX>();
 
 /** Memoized worker-scoped PGlite instance, kicked off eagerly during file setup */
 let clientPromise: ReturnType<typeof createTestDB> | undefined;
@@ -75,15 +76,15 @@ export const asUser = base
 			async ({ client }, use) => {
 				const ROLLBACK = new Error('rollback');
 				try {
-					await client.transaction(async tx => {
-						testConnection.current = tx;
-						await use(tx);
-						throw ROLLBACK;
-					});
+					await client.transaction(
+						async tx =>
+							await testConnection.run(tx, async () => {
+								await use(tx);
+								throw ROLLBACK;
+							}),
+					);
 				} catch (err) {
 					if (err !== ROLLBACK) throw err;
-				} finally {
-					testConnection.current = null;
 				}
 			},
 			// Forces fixture to run even if not destructured in the test

@@ -4,6 +4,16 @@ import { renderHook } from 'vitest-browser-react';
 
 export const createDeferred = () => Promise.withResolvers<void>();
 
+type Act = (callback: () => unknown) => Promise<unknown>;
+
+/**
+ * Wait out a full timer cycle inside `act()`
+ *
+ * TanStack Query schedules cache notifications via `setTimeout(0)`, so a microtask flush
+ * `act(() => Promise.resolve())` settles the mutation promise but not the re-render
+ */
+export const settle = (act: Act) => act(() => new Promise(resolve => setTimeout(resolve, 10)));
+
 /** Wraps a render callback with QueryClientProvider */
 export async function setupTest<T>(renderCallback: () => T) {
 	const client = new QueryClient();
@@ -26,8 +36,10 @@ export type MutationControl = {
 	reject: (err?: Error) => Promise<void>;
 };
 
-export const settleAll = (controls: MutationControl[]) =>
-	Promise.allSettled(controls.map(control => control.resolve()));
+export const settleAll = async (controls: MutationControl[]) => {
+	for (const control of controls) control.server.resolve();
+	await Promise.allSettled(controls.map(control => control.result));
+};
 
 /** Create a mutation hook, that remains pending until manually resolved */
 export function createControlledMutation<TVariables = void>(controls?: MutationControl[]) {
@@ -40,29 +52,27 @@ export function createControlledMutation<TVariables = void>(controls?: MutationC
 
 	return {
 		mutationFn,
-		bind: (
-			act: (callback: () => void) => Promise<unknown>,
-			mutateAsync: (value: TVariables) => Promise<unknown>,
-		) => ({
+		bind: (act: Act, mutateAsync: (value: TVariables) => Promise<unknown>) => ({
 			mutateAsync: async (value: TVariables) => {
 				const request = createDeferred();
 				requests.push(request);
 
-				let result = Promise.resolve<unknown>(undefined);
-				await act(() => {
-					result = mutateAsync(value);
-				});
+				const result = mutateAsync(value);
+				// Commit the optimistic overlay before the caller inspects rendered state
+				await settle(act);
 
 				const control: MutationControl = {
 					result,
 					server: request,
 					resolve: async () => {
 						request.resolve();
-						await result;
+						await result.catch(() => undefined);
+						await settle(act);
 					},
 					reject: async (err = new Error('Mutation rejected')) => {
 						request.reject(err);
 						await result.catch(() => undefined);
+						await settle(act);
 					},
 				};
 				controls?.push(control);

@@ -5,6 +5,7 @@ import { createOptimisticResource } from './mutation';
 import {
 	createControlledMutation,
 	type MutationControl,
+	settle,
 	settleAll,
 	setupTest,
 } from './tests/helpers';
@@ -61,7 +62,7 @@ describe('createOptimisticResource()', { timeout: 1000 }, () => {
 					result.current.useMutateArchived.mutateAsync(value),
 				),
 			};
-			const flush = () => act(() => Promise.resolve());
+			const flush = () => settle(act);
 
 			const snapshot = () => ({
 				/** Data with optimistic overlay; what is visible in the UI */

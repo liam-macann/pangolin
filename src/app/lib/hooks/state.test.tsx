@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { describe, expect, test, vi } from 'vitest';
-import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 
 import { useControllableState } from './state';
@@ -25,18 +24,18 @@ describe('useControllableState', () => {
 	test('Updates its internal value when uncontrolled', async () => {
 		const screen = await render(<Harness />);
 
-		await userEvent.click(screen.getByRole('button', { name: 'Set value' }));
-		expect(screen.getByLabelText('value')).toHaveTextContent('5');
+		await screen.getByRole('button', { name: 'Set value' }).click();
+		await expect.element(screen.getByLabelText('value')).toHaveTextContent('5');
 
-		await userEvent.click(screen.getByRole('button', { name: 'Increment' }));
-		expect(screen.getByLabelText('value')).toHaveTextContent('6');
+		await screen.getByRole('button', { name: 'Increment' }).click();
+		await expect.element(screen.getByLabelText('value')).toHaveTextContent('6');
 	});
 
 	test('Reports uncontrolled updates to callback', async () => {
 		const onChange = vi.fn();
 		const screen = await render(<Harness onChange={onChange} />);
 
-		await userEvent.click(screen.getByRole('button', { name: 'Increment' }));
+		await screen.getByRole('button', { name: 'Increment' }).click();
 
 		expect(onChange).toHaveBeenCalledWith(3);
 	});
@@ -45,11 +44,11 @@ describe('useControllableState', () => {
 		const onChange = vi.fn();
 		const screen = await render(<Harness value={10} onChange={onChange} />);
 
-		await userEvent.click(screen.getByRole('button', { name: 'Increment' }));
+		await screen.getByRole('button', { name: 'Increment' }).click();
 
 		expect(onChange).toHaveBeenCalledWith(11);
 		// The controlled value={10} has not changed
-		expect(screen.getByLabelText('value')).toHaveTextContent('10');
+		await expect.element(screen.getByLabelText('value')).toHaveTextContent('10');
 	});
 
 	test('Renders the value supplied by the parent after an update', async () => {
@@ -59,8 +58,8 @@ describe('useControllableState', () => {
 		}
 
 		const screen = await render(<ControlledHarness />);
-		await userEvent.click(screen.getByRole('button', { name: 'Increment' }));
-		expect(screen.getByLabelText('value')).toHaveTextContent('11');
+		await screen.getByRole('button', { name: 'Increment' }).click();
+		await expect.element(screen.getByLabelText('value')).toHaveTextContent('11');
 	});
 
 	test('Warns when changing between uncontrolled and controlled', async () => {
