@@ -44,9 +44,12 @@ importers:
       '@radix-ui/colors':
         specifier: ^3.0.0
         version: 3.0.0
-      '@scalar/api-reference-react':
-        specifier: ^0.9.65
-        version: 0.9.65(react@19.2.8)(tailwindcss@4.3.3)(typescript@7.0.2)(zod@4.4.3)
+      '@scalar/api-reference':
+        specifier: 1.66.1
+        version: 1.66.1(tailwindcss@4.3.3)(typescript@7.0.2)(zod@4.4.3)
+      '@scalar/server-side-rendering':
+        specifier: 0.1.44
+        version: 0.1.44(tailwindcss@4.3.3)(typescript@7.0.2)(zod@4.4.3)
       '@sentry/nextjs':
         specifier: ^10.71.0
         version: 10.71.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(@types/node@26.3.0)(esbuild@0.28.2)(next@16.3.2(@opentelemetry/api@1.9.1)(react@19.2.8)(react-dom@19.2.8(react@19.2.8)))(postcss@8.5.26)(webpack@5.109.2)
@@ -2518,12 +2521,6 @@ packages:
     resolution: {integrity: sha512-4F0aZtdnCWZN5EvJQTAlXPzVetniu9pQqPeukck/AUNtvsk59CdNHjd8DjAB3+SS3wv3gfNj0C+obhzjUbCNZg==}
     engines: {node: '>=22'}
 
-  '@scalar/api-reference-react@0.9.65':
-    resolution: {integrity: sha512-0kBuLtyZcvLcMIhuLGr3WHalytf5eqGPvT5soMSP0tdHZkIoTkzeOHCQNiDCiuq7Jct3a2IqsRrDrokukf9N2A==}
-    engines: {node: '>=22'}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0
-
   '@scalar/api-reference@1.66.1':
     resolution: {integrity: sha512-+iHSJX8HPUyDGinNiLRV8qgFb+fbNwAjGDWzl8Wg/VNEcbmA40t1ZuL/WoWNqphI2QaPfjiCLtmsIhanWAed3w==}
     engines: {node: '>=22'}
@@ -2570,6 +2567,10 @@ packages:
 
   '@scalar/schemas@0.8.3':
     resolution: {integrity: sha512-cTjgiJxXFXMqXlFZafXOyTOKm1lUfbDTbe9La+dPcQPe6q0zXAiVtys0IKILQWNrjXPidY0eaB9Va/rd16bfxw==}
+    engines: {node: '>=22'}
+
+  '@scalar/server-side-rendering@0.1.44':
+    resolution: {integrity: sha512-3YEbBmJOqfw8OO3syIKHR9G4FaVJj2rvTikzRRlUbDzfl9U0SOyBEEiicNK7NU7LUwV7GqP95NYssF5/BQQArQ==}
     engines: {node: '>=22'}
 
   '@scalar/sidebar@0.10.1':
@@ -9535,25 +9536,6 @@ snapshots:
       - supports-color
       - universal-cookie
 
-  '@scalar/api-reference-react@0.9.65(react@19.2.8)(tailwindcss@4.3.3)(typescript@7.0.2)(zod@4.4.3)':
-    dependencies:
-      '@scalar/api-reference': 1.66.1(tailwindcss@4.3.3)(typescript@7.0.2)(zod@4.4.3)
-      '@scalar/types': 0.18.2
-      react: 19.2.8
-    transitivePeerDependencies:
-      - '@vue/composition-api'
-      - async-validator
-      - axios
-      - change-case
-      - drauu
-      - idb-keyval
-      - jwt-decode
-      - nprogress
-      - qrcode
-      - sortablejs
-      - supports-color
-      - universal-cookie
-
   '@scalar/api-reference@1.66.1(tailwindcss@4.3.3)(typescript@7.0.2)(zod@4.4.3)':
     dependencies:
       '@headlessui/vue': 1.7.23(vue@3.5.41(typescript@7.0.2))
@@ -9690,6 +9672,26 @@ snapshots:
     dependencies:
       '@scalar/helpers': 0.11.1
       '@scalar/validation': 0.6.3
+
+  '@scalar/server-side-rendering@0.1.44(tailwindcss@4.3.3)(typescript@7.0.2)(zod@4.4.3)':
+    dependencies:
+      '@scalar/api-reference': 1.66.1(tailwindcss@4.3.3)(typescript@7.0.2)(zod@4.4.3)
+      '@scalar/types': 0.18.2
+      '@unhead/vue': 2.1.17(vue@3.5.41(typescript@7.0.2))
+      vue: 3.5.41(typescript@7.0.2)
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+      - async-validator
+      - axios
+      - change-case
+      - drauu
+      - idb-keyval
+      - jwt-decode
+      - nprogress
+      - qrcode
+      - sortablejs
+      - supports-color
+      - universal-cookie
 
   '@scalar/sidebar@0.10.1(tailwindcss@4.3.3)(typescript@7.0.2)':
     dependencies:

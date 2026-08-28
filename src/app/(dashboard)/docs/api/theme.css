@@ -1,282 +1,280 @@
 @reference "../../../ui/global.css";
 
-/* ==========================================================================
-   Tokens
-   ========================================================================== */
-.light-mode,
-.dark-mode {
-	--scalar-background-1: var(--background);
-	--scalar-background-2: var(--color-gray-2);
-	--scalar-background-3: var(--scalar-background-2);
-	--scalar-background-4: var(--popover);
-	--scalar-background-accent: var(--accent);
-	--scalar-color-1: var(--foreground);
-	--scalar-color-2: var(--muted-foreground);
-	--scalar-color-3: var(--muted-foreground);
-	--scalar-color-accent: var(--primary);
-	--scalar-border-color: var(--border);
-	--scalar-link-color: var(--primary);
-	--scalar-link-color-hover: var(--primary);
-	--scalar-link-color-visited: var(--primary);
+/* Scalar injects its full stylesheet during hydration. ID selector is required to over-specify */
+#scalar-api-reference {
+	/* ==========================================================================
+	   Tokens
+	   ========================================================================== */
+	&.light-mode,
+	&.dark-mode,
+	& .light-mode,
+	& .dark-mode {
+		--scalar-background-1: var(--background);
+		--scalar-background-2: var(--color-gray-2);
+		--scalar-background-3: var(--scalar-background-2);
+		--scalar-background-4: var(--popover);
+		--scalar-background-accent: var(--accent);
+		--scalar-color-1: var(--foreground);
+		--scalar-color-2: var(--muted-foreground);
+		--scalar-color-3: var(--muted-foreground);
+		--scalar-color-accent: var(--primary);
+		--scalar-border-color: var(--border);
+		--scalar-link-color: var(--primary);
+		--scalar-link-color-hover: var(--primary);
+		--scalar-link-color-visited: var(--primary);
 
-	--scalar-button-1: var(--primary);
-	--scalar-button-1-hover: color-mix(in oklch, var(--primary), var(--foreground) 10%);
-	--scalar-button-1-color: var(--primary-foreground);
+		--scalar-button-1: var(--primary);
+		--scalar-button-1-hover: color-mix(in oklch, var(--primary), var(--foreground) 10%);
+		--scalar-button-1-color: var(--primary-foreground);
 
-	--scalar-button-secondary: var(--color-accent);
-	--scalar-button-secondary-hover: var(--secondary-2);
-	--scalar-button-secondary-color: var(--secondary-foreground);
+		--scalar-button-secondary: var(--color-accent);
+		--scalar-button-secondary-hover: var(--secondary-2);
+		--scalar-button-secondary-color: var(--secondary-foreground);
 
-	--scalar-button-focus: var(--ring);
-	--scalar-color-danger: var(--destructive);
-	--scalar-background-danger: var(--destructive-background);
+		--scalar-button-focus: var(--ring);
+		--scalar-color-danger: var(--destructive);
+		--scalar-background-danger: var(--destructive-background);
 
-	--scalar-sidebar-background-1: var(--sidebar);
-	--scalar-sidebar-color-1: var(--sidebar-foreground);
-	--scalar-sidebar-color-2: var(--muted-foreground);
-	--scalar-sidebar-color-active: var(--sidebar-primary);
-	--scalar-sidebar-border-color: var(--sidebar-border);
-	--scalar-sidebar-item-hover-background: var(--sidebar-accent);
-	--scalar-sidebar-item-hover-color: var(--sidebar-accent-foreground);
-	--scalar-sidebar-item-active-background: var(--sidebar-accent);
-	--scalar-sidebar-search-background: var(--card);
-	--scalar-sidebar-search-color: var(--muted-foreground);
-	--scalar-sidebar-search-border-color: var(--sidebar-border);
+		--scalar-sidebar-background-1: var(--sidebar);
+		--scalar-sidebar-color-1: var(--sidebar-foreground);
+		--scalar-sidebar-color-2: var(--muted-foreground);
+		--scalar-sidebar-color-active: var(--sidebar-primary);
+		--scalar-sidebar-border-color: var(--sidebar-border);
+		--scalar-sidebar-item-hover-background: var(--sidebar-accent);
+		--scalar-sidebar-item-hover-color: var(--sidebar-accent-foreground);
+		--scalar-sidebar-item-active-background: var(--sidebar-accent);
+		--scalar-sidebar-search-background: var(--card);
+		--scalar-sidebar-search-color: var(--muted-foreground);
+		--scalar-sidebar-search-border-color: var(--sidebar-border);
 
-	--scalar-tooltip-background: var(--popover);
-	--scalar-tooltip-color: var(--popover-foreground);
-	--scalar-radius: var(--radius);
-	--scalar-font: var(--font-sans);
+		--scalar-tooltip-background: var(--popover);
+		--scalar-tooltip-color: var(--popover-foreground);
+		--scalar-radius: var(--radius);
+		--scalar-font: var(--font-sans);
 
-	--scalar-border-width: 1px;
-}
-
-/* ==========================================================================
-   Component Styles
-   ========================================================================== */
-.scalar-app {
-	[href="https://www.scalar.com"] {
-		display: none;
+		--scalar-border-width: 1px;
 	}
 
-	/* Layout and sections */
-
-	.introduction-section {
-		padding-top: 0;
-
-		.section-header {
-			@apply font-display mt-4 text-4xl font-bold;
-		}
-	}
-
-	.section-container {
-		padding: 0;
-
-		&:has(> .section[id*="tag/"]:first-child) {
-			@apply border-t-0 mt-24;
+	/* ==========================================================================
+	   Component Styles
+	   ========================================================================== */
+	.scalar-app {
+		[href="https://www.scalar.com"] {
+			display: none;
 		}
 
-		> .section[id*="tag/"]:first-child {
-			@apply border-y-2 -mx-4 px-4 py-10;
+		/* Layout and sections */
+
+		.introduction-section {
+			padding-top: 0;
 
 			.section-header {
-				@apply font-display text-3xl font-bold;
+				@apply font-display mt-4 text-4xl font-bold;
 			}
 		}
 
-		.section:not(.collapsible-section-content) {
-			@apply py-12;
-		}
+		.section-container {
+			padding: 0;
 
-		.contents.divide-y {
-			@apply divide-dotted;
-		}
-	}
+			&:has(> .section[id*="tag/"]:first-child) {
+				@apply border-t-0 mt-24;
+			}
 
-	.client-libraries-list {
-		overflow: visible;
+			> .section[id*="tag/"]:first-child {
+				@apply border-y-2 -mx-4 px-4 py-10;
 
-		.client-libraries__active {
-			border-bottom-width: 2px;
-			margin-bottom: -1px;
-		}
-	}
-
-	/* HTTP verb badges */
-	.request-method,
-	.sidebar-heading-type {
-		background-color: color-mix(currentColor 12%, transparent);
-		border: 1px color-mix(currentColor 40%, transparent) solid;
-		font-weight: 700;
-		line-height: 1;
-		@apply inline-block rounded-md px-2 py-1;
-
-		&.request-method {
-			@apply mr-2 text-xs/[1];
-		}
-
-		&.sidebar-heading-type {
-			@apply h-auto;
-		}
-	}
-
-	[class*="font-sidebar"]:has(.sidebar-heading-type) {
-		align-items: center;
-	}
-
-	/* Shared button component base */
-	.scalar-button,
-	.show-api-client-button,
-	.scalar-sidebar-toggle,
-	.group\/copy-label,
-	.schema-properties:has(> .schema-card-title[aria-expanded="false"]),
-	.security-requirement-badge[aria-haspopup] {
-		@apply shrink-0 cursor-pointer select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium text-sm outline-none;
-		@apply transition ease-out focus-visible:ring disabled:cursor-not-allowed disabled:opacity-50;
-		@apply [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0;
-		@apply aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40;
-		@apply *:data-[icon=inline-end]:-mr-0.5 *:data-[icon=inline-start]:-ml-0.5 not-data-[size^=icon-]:*:[svg]:not-data-icon:first:-ml-0.5 not-data-[size^=icon-]:*:[svg]:not-data-icon:last:-mr-0.5;
-
-		svg {
-			margin-right: 0;
-		}
-
-		/* Ghost variant */
-		&.scalar-button-ghost,
-		&.group\/copy-label {
-			@apply border border-transparent text-accent-foreground not-disabled:hover:bg-accent focus-visible:border-ring aria-expanded:bg-muted aria-expanded:text-foreground;
-		}
-
-		/* Secondary variant */
-		&.security-requirement-badge[aria-haspopup] {
-			@apply border border-secondary-foreground/2 bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary-2 focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%];
-			@apply aria-expanded:bg-secondary aria-expanded:text-secondary-foreground;
-		}
-
-		/* Primary variant */
-		&.scalar-button-solid,
-		&.show-api-client-button {
-			@apply scrim-t-12 scrim-white/10 overflow-hidden border border-black/10 bg-primary text-primary-foreground shadow-xs dark:border-black/30;
-			@apply not-disabled:hover:bg-primary/90 focus-visible:ring-2 not-disabled:active:motion-safe:scale-[98%];
-			@apply inset-ring-[0.5px] inset-ring-white/8 inset-shadow-white/10 inset-shadow-xs;
-		}
-
-		/* Outline variant */
-		&.schema-properties:has(> .schema-card-title[aria-expanded="false"]) {
-			@apply border not-disabled:hover:text-accent-foreground focus-visible:border-ring;
-			@apply bg-background bg-linear-to-b from-80% from-transparent to-black/2 dark:bg-linear-to-t dark:bg-secondary dark:from-15% dark:to-white/1;
-			@apply not-disabled:hover:bg-accent/70 not-disabled:active:motion-safe:scale-[98%] dark:not-disabled:hover:bg-gray-4;
-			@apply aria-expanded:bg-accent/70 aria-expanded:dark:bg-gray-4;
-		}
-
-		/* Small size */
-		&.security-requirement-badge[aria-haspopup] {
-			@apply h-8 gap-1.5 in-data-[slot=button-group]:rounded-md rounded-[min(var(--radius-md),10px)] px-3;
-		}
-	}
-
-	.show-api-client-button {
-		@apply h-8 gap-1.5 rounded-[min(var(--radius-md),10px)] px-3 in-data-[slot=button-group]:rounded-md;
-	}
-
-	/* Combobox */
-	[id^="headlessui-popover-panel-scalar-"] {
-		max-height: 300px;
-	}
-
-	/* Combobox/select background */
-	:is([id^="headlessui-popover-panel-scalar-"], .operation-auth) [class*="absolute inset-0 -z-1"],
-	[role="menu"] ~ [class*="absolute inset-0 -z-1"] {
-		@apply rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-border;
-	}
-
-	/* OpenAPI Examples, Defaults */
-	.property-default-label,
-	.property-example {
-		@apply underline decoration-dotted underline-offset-2 decoration-1;
-
-		/* 'Default' has border-based underline that does not match 'Example' */
-		> span {
-			border: none;
-		}
-
-		/* Popover */
-		.property-example-value-list,
-		.property-default-value-list {
-			gap: 0;
-			@apply p-1;
-
-			.property-example-value,
-			.property-default-value {
-				@apply rounded-sm;
-
-				&:first-of-type {
-					@apply inset-shadow-xs;
-				}
-
-				&:not(:last-of-type) {
-					border-bottom-left-radius: 0;
-					border-bottom-right-radius: 0;
-				}
-
-				& + .property-example-value {
-					border-top: 0;
-					border-top-left-radius: 0;
-					border-top-right-radius: 0;
+				.section-header {
+					@apply font-display text-3xl font-bold;
 				}
 			}
-		}
-	}
 
-	.property--deprecated {
-		/* Deprecated properties have lowered opacity by default.
-		   Popovers are not portalled out, so we need to exclude these children from the opacity change. */
-		& > * {
-			opacity: inherit;
-		}
-
-		.property-heading > *:not(:has([type="button"])) {
-			opacity: 0.75;
-		}
-	}
-
-	/* Code blocks */
-	.scalar-code-block {
-		.scalar-code-copy {
-			background-color: transparent;
-			backdrop-filter: blur(1rem);
-
-			* {
-				fill: inherit;
+			.section:not(.collapsible-section-content) {
+				@apply py-12;
 			}
 
-			.group\/copy-label {
-				padding-right: 70%;
-			}
-
-			.scalar-code-copy-backdrop {
-				inset: -1px;
-				background: var(--scalar-background-1);
+			.contents.divide-y {
+				@apply divide-dotted;
 			}
 		}
+
+		.client-libraries-list {
+			overflow: visible;
+
+			.client-libraries__active {
+				border-bottom-width: 2px;
+				margin-bottom: -1px;
+			}
+		}
+
+		/* HTTP verb badges */
+		.request-method,
+		.sidebar-heading-type {
+			background-color: color-mix(currentColor 12%, transparent);
+			border: 1px color-mix(currentColor 40%, transparent) solid;
+			font-weight: 700;
+			line-height: 1;
+			@apply inline-block rounded-md px-2 py-1;
+
+			&.request-method {
+				@apply mr-2 text-xs/[1];
+			}
+
+			&.sidebar-heading-type {
+				@apply h-auto;
+			}
+		}
+
+		[class*="font-sidebar"]:has(.sidebar-heading-type) {
+			align-items: center;
+		}
+
+		/* Shared button component base */
+		.scalar-button,
+		.show-api-client-button,
+		.scalar-sidebar-toggle,
+		.group\/copy-label,
+		.schema-properties:has(> .schema-card-title[aria-expanded="false"]),
+		.security-requirement-badge[aria-haspopup] {
+			@apply shrink-0 cursor-pointer select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-medium text-sm outline-none;
+			@apply transition ease-out focus-visible:ring disabled:cursor-not-allowed disabled:opacity-50;
+			@apply [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0;
+			@apply aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40;
+			@apply *:data-[icon=inline-end]:-mr-0.5 *:data-[icon=inline-start]:-ml-0.5 not-data-[size^=icon-]:*:[svg]:not-data-icon:first:-ml-0.5 not-data-[size^=icon-]:*:[svg]:not-data-icon:last:-mr-0.5;
+
+			svg {
+				margin-right: 0;
+			}
+
+			/* Ghost variant */
+			&.scalar-button-ghost,
+			&.group\/copy-label {
+				@apply border border-transparent text-accent-foreground not-disabled:hover:bg-accent focus-visible:border-ring aria-expanded:bg-muted aria-expanded:text-foreground;
+			}
+
+			/* Secondary variant */
+			&.security-requirement-badge[aria-haspopup] {
+				@apply border border-secondary-foreground/2 bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary-2 focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%];
+				@apply aria-expanded:bg-secondary aria-expanded:text-secondary-foreground;
+			}
+
+			/* Primary variant */
+			&.scalar-button-solid,
+			&.show-api-client-button {
+				@apply scrim-t-12 scrim-white/10 overflow-hidden border border-black/10 bg-primary text-primary-foreground shadow-xs dark:border-black/30;
+				@apply not-disabled:hover:bg-primary/90 focus-visible:ring-2 not-disabled:active:motion-safe:scale-[98%];
+				@apply inset-ring-[0.5px] inset-ring-white/8 inset-shadow-white/10 inset-shadow-xs;
+			}
+
+			/* Outline variant */
+			&.schema-properties:has(> .schema-card-title[aria-expanded="false"]) {
+				@apply border not-disabled:hover:text-accent-foreground focus-visible:border-ring;
+				@apply bg-background bg-linear-to-b from-80% from-transparent to-black/2 dark:bg-linear-to-t dark:bg-secondary dark:from-15% dark:to-white/1;
+				@apply not-disabled:hover:bg-accent/70 not-disabled:active:motion-safe:scale-[98%] dark:not-disabled:hover:bg-gray-4;
+				@apply aria-expanded:bg-accent/70 aria-expanded:dark:bg-gray-4;
+			}
+
+			/* Small size */
+			&.security-requirement-badge[aria-haspopup] {
+				@apply h-8 gap-1.5 in-data-[slot=button-group]:rounded-md rounded-[min(var(--radius-md),10px)] px-3;
+			}
+		}
+
+		.show-api-client-button {
+			@apply h-8 gap-1.5 rounded-[min(var(--radius-md),10px)] px-3 in-data-[slot=button-group]:rounded-md;
+		}
+
+		/* Combobox */
+		[id^="headlessui-popover-panel-scalar-"] {
+			max-height: 300px;
+		}
+
+		/* Combobox/select background */
+		:is([id^="headlessui-popover-panel-scalar-"], .operation-auth) [class*="absolute inset-0 -z-1"],
+		[role="menu"] ~ [class*="absolute inset-0 -z-1"] {
+			@apply rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-border;
+		}
+
+		/* OpenAPI Examples, Defaults */
+		.property-default-label,
+		.property-example {
+			@apply underline decoration-dotted underline-offset-2 decoration-1;
+
+			/* 'Default' has border-based underline that does not match 'Example' */
+			> span {
+				border: none;
+			}
+
+			/* Popover */
+			.property-example-value-list,
+			.property-default-value-list {
+				gap: 0;
+				@apply p-1;
+
+				.property-example-value,
+				.property-default-value {
+					@apply rounded-sm;
+
+					&:first-of-type {
+						@apply inset-shadow-xs;
+					}
+
+					&:not(:last-of-type) {
+						border-bottom-left-radius: 0;
+						border-bottom-right-radius: 0;
+					}
+
+					& + .property-example-value {
+						border-top: 0;
+						border-top-left-radius: 0;
+						border-top-right-radius: 0;
+					}
+				}
+			}
+		}
+
+		.property--deprecated {
+			/* Deprecated properties have lowered opacity by default.
+			   Popovers are not portalled out, so we need to exclude these children from the opacity change. */
+			& > * {
+				opacity: inherit;
+			}
+
+			.property-heading > *:not(:has([type="button"])) {
+				opacity: 0.75;
+			}
+		}
+
+		/* Code blocks */
+		.scalar-code-block {
+			background-color: var(--scalar-background-1);
+
+			.scalar-code-copy {
+				background-color: transparent;
+				backdrop-filter: blur(1rem);
+
+				* {
+					fill: inherit;
+				}
+
+				.group\/copy-label {
+					padding-right: 70%;
+				}
+
+				.scalar-code-copy-backdrop {
+					inset: -1px;
+					background: var(--scalar-background-1);
+				}
+			}
+		}
+
+		/* Schema properties */
+		.schema-card--level-1 > .schema-properties.schema-properties-open {
+			background-color: var(--card);
+			@apply mb-6;
+		}
+
+		.schema-card--level-3 .schema-properties.schema-properties-open {
+			@apply inset-shadow-xs;
+		}
 	}
-}
-
-/* ==========================================================================
-   Theme Overrides
-   ========================================================================== */
-.light-mode .scalar-app .scalar-code-block {
-	background-color: var(--scalar-background-1);
-}
-
-/* ==========================================================================
-   Schema Properties (Flat Selectors)
-   ========================================================================== */
-.schema-card--level-1 > .schema-properties.schema-properties-open {
-	background-color: var(--card);
-	@apply mb-6;
-}
-
-.schema-card--level-3 .schema-properties.schema-properties-open {
-	@apply inset-shadow-xs;
 }

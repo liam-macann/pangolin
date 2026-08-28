@@ -88,7 +88,7 @@ const nextConfig: NextConfig = {
 			},
 		];
 	},
-	serverExternalPackages: ['pdfmake'],
+	serverExternalPackages: ['pdfmake', '@scalar/server-side-rendering'],
 };
 
 export default withSentryConfig(nextConfig, {
