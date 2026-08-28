@@ -146,14 +146,20 @@ function FormatPrice({
 	const scribbleSize = '6rem';
 
 	return (
-		<div className={cn('font-medium tabular-nums decoration-2', className)} {...props}>
+		<div
+			className={cn(
+				'font-medium tabular-nums decoration-2 group-data-void/row:text-foreground/50 group-data-void/row:opacity-70',
+				className,
+			)}
+			{...props}
+		>
 			<span className='relative'>
 				{formatCurrency(row.original.grossTotal, row.original.config.currency, locale)}
 				<div
 					aria-hidden='true'
 					className={cn(
-						'filter-pencil-solid pointer-events-none absolute -inset-1 left-1/2 -translate-x-1/2 scale-x-100 bg-repeat-x',
-						'hidden group-data-void/row:block', // Conditionally show when void
+						'filter-pencil-solid pointer-events-none absolute -inset-1 -inset-x-2.5 left-1/2 -translate-x-1/2 bg-repeat-x',
+						'hidden opacity-80 group-data-void/row:block', // Conditionally show when void
 						'group-even/row:rotate-180 group-nth-[3n]/row:scale-y-120', // Row-to-row variation
 					)}
 					style={{

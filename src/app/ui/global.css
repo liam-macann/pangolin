@@ -123,7 +123,7 @@
 	}
 
 	/* Use sepia to force color into stroke */
-	filter: brightness(0) invert(var(--scribble-lum, 0.2)) sepia(1) saturate(var(--scribble-sat, 3.5))
+	filter: brightness(0) invert(var(--scribble-lum, 0.2)) sepia(1) saturate(var(--scribble-sat, 5))
 		url("/pencil.svg#stroke") contrast(0.85);
 }
 
