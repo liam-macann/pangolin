@@ -26,7 +26,14 @@ export const dragWithAnimation: BrowserCommand<
 		testFrame.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => resolve())));
 
 	const start = { x: source.x + source.width / 2, y: source.y + source.height / 2 };
-	const end = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
+	const targetCenter = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
+
+	// Overshoot into the target's far edge (relative to the drag direction) so the pointer
+	// clears any swap/activation threshold even amid sub-pixel cross-engine timing differences.
+	const end = {
+		x: targetCenter.x + Math.sign(targetCenter.x - start.x) * (target.width / 2),
+		y: targetCenter.y + Math.sign(targetCenter.y - start.y) * (target.height / 2),
+	};
 
 	await page.mouse.move(start.x, start.y);
 	await page.mouse.down();

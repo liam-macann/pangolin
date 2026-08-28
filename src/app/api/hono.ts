@@ -18,8 +18,10 @@ import avatar from './routes/avatar';
 import clients from './routes/clients';
 import config from './routes/config';
 import invoices from './routes/invoices';
+import meta from './routes/meta';
 
 const routes = new Hono()
+	.route('/', meta)
 	.route('/config', config)
 	.route('/clients', clients)
 	.route('/invoices', invoices)
@@ -58,7 +60,7 @@ app.use(async (c, next) => {
 });
 app.use(timeout(30 * 1000));
 
-app.route('', routes);
+app.route('/', routes);
 app.notFound(() => problems.create('NOT_FOUND').getResponse());
 
 export const getOpenApiDocument = () => _getOpenApiDocument(routes);

@@ -90,7 +90,10 @@ loadVendor('zod', {
 		),
 });
 
-const documentConfig = {
+/** Path to the interactive API reference page, relative to the dashboard origin */
+export const apiDocsPath = '/docs/api';
+
+export const documentConfig = {
 	openapi: '3.1.0',
 	info: {
 		title: 'Invoicer API',
@@ -103,6 +106,7 @@ const documentConfig = {
 		{ name: 'Clients', description: 'Client directory operations.' },
 		{ name: 'Config', description: 'User configuration operations.' },
 		{ name: 'Invoices', description: 'Invoice listing operations.' },
+		{ name: 'Meta', description: 'API root and health check operations.' },
 	],
 };
 
