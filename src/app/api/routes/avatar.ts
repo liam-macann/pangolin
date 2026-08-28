@@ -23,7 +23,6 @@ const route = defineRoute.protected({
 	tags: ['Avatar'],
 	operationId: 'getAvatar',
 	description: "Return the current user's avatar image.",
-	...(process.env.NODE_ENV === 'production' ? { hide: true } : {}),
 	responses: {
 		200: {
 			content: {
@@ -66,7 +65,6 @@ const app = createApiRouter().get('/', ...route, async c => {
 		},
 	});
 
-	c.set('streaming', true);
 	c.header('Content-Type', contentType);
 	c.header(
 		'Cache-Control',

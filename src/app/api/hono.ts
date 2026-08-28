@@ -62,8 +62,12 @@ app.use(trimTrailingSlash({ alwaysRedirect: true }));
 const etag = _etag();
 app.use(async (c, next) => {
 	await next();
-	// Skips responses declared as streamed: etag() buffers the whole body
-	if (!c.get('streaming')) await etag(c, async () => {});
+	// Only hash fully-buffered JSON bodies
+	// etag() clones and awaits the whole response stream, which would buffer a streamed response
+	const contentType = c.res.headers.get('Content-Type') ?? '';
+
+	// This assumes that JSON values will never be streamed
+	if (/^application\/(problem\+|health\+)?json\b/.test(contentType)) await etag(c, async () => {});
 });
 app.use(timeout(30 * 1000));
 

@@ -110,16 +110,21 @@ export const documentConfig = {
 	],
 	tags: [
 		{ name: 'Address', description: 'Address metadata operations.' },
+		{ name: 'Avatar', description: 'User avatar operations.' },
 		{ name: 'Clients', description: 'Client directory operations.' },
 		{ name: 'Config', description: 'User configuration operations.' },
 		{ name: 'Invoices', description: 'Invoice listing operations.' },
 		{ name: 'Meta', description: 'API root and health check operations.' },
-		...(process.env.NODE_ENV === 'production'
-			? []
-			: [{ name: 'Avatar', description: 'User avatar operations.' }]),
 	].toSorted((a, b) => a.name.localeCompare(b.name, 'en')),
 };
 
+/** Routes documented for CI lint + fuzz coverage, but withheld from the production-served spec. */
+const internalOnly = {
+	paths: /^\/avatar(\/|$)/,
+	tags: ['Avatar'],
+};
+
+/** @internal Requires explicit routes to be provided. Prefer export from `@/api/hono` */
 export async function getOpenApiDocument(routes: Hono<Env, Schema, '/'>) {
 	const authContext = await auth.$context;
 
@@ -137,5 +142,9 @@ export async function getOpenApiDocument(routes: Hono<Env, Schema, '/'>) {
 				},
 			},
 		},
+		// Strip internal routes (and their now-orphaned tags) from the spec served in production
+		...(process.env.NODE_ENV === 'production'
+			? { exclude: internalOnly.paths, excludeTags: internalOnly.tags }
+			: {}),
 	});
 }

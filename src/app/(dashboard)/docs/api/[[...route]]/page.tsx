@@ -11,14 +11,8 @@ export const metadata: Metadata = {
 	description: 'Interactive reference documentation for the Invoicer API.',
 };
 
-// @scalar/api-reference-react pulls in the `web-worker` polyfill, which
-// runs worker_threads.isMainThread-dependent code at import time.
-//
-// That crashes inside Next.js instant-navigation probe worker (not real SSR, which renders this fine)
-export const instant = false;
-
 const content = await getOpenApiDocument();
-export default async function ApiReferencePage() {
+export default function ApiReferencePage() {
 	return (
 		<ApiReferenceReact
 			configuration={{

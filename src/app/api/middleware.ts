@@ -7,8 +7,6 @@ import { getSession, type Session } from '@/auth';
 export type Env = {
 	Variables: {
 		session: Session;
-		/** Marks a response body as streamed, so hono.ts can skip body-buffering middleware (eg. etag) */
-		streaming?: boolean;
 	};
 };
 

@@ -163,6 +163,9 @@ describe('GET /api/avatar', () => {
 		const res = await sessionStorage.run(withImage, () => app.request('/api/avatar'));
 		expect(res.status).toBe(200);
 
+		// The etag middleware must not run on a streamed response
+		expect(res.headers.get('ETag')).toBeNull();
+
 		await res.body?.cancel();
 	});
 });

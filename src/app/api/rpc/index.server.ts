@@ -5,12 +5,37 @@ import { headers } from 'next/headers';
 
 import app, { type AppType } from '@/api/hono';
 
-const internalFetch: typeof fetch = async (input, init) => {
-	const outgoing = new Request(input, init);
-	const requestHeaders = new Headers(await headers());
-	outgoing.headers.forEach((value, key) => void requestHeaders.set(key, value));
-	return app.request(new Request(outgoing, { headers: requestHeaders }));
+const origin = (inbound: Headers) => {
+	const firstValue = (value: string | null) => value?.split(',')[0]?.trim() || undefined;
+
+	const host = firstValue(inbound.get('x-forwarded-host')) ?? firstValue(inbound.get('host'));
+
+	const protocol = firstValue(inbound.get('x-forwarded-proto'));
+	const scheme = protocol === 'http' || protocol === 'https' ? protocol : 'https';
+
+	try {
+		return new URL(`${scheme}://${host ?? 'localhost'}`);
+	} catch {
+		return new URL(`${scheme}://localhost`);
+	}
 };
 
-export const rpc = hc<AppType>('http://hono.internal/api', { fetch: internalFetch });
+/** Routes in-process RPC through Hono, preserving caller request context */
+const internalFetch: typeof fetch = async (input, init) => {
+	const inbound = await headers();
+	const request = new Request(input, init);
+
+	const source = new URL(request.url);
+	const url = new URL(source.pathname + source.search, origin(inbound));
+
+	const rewritten = new Request(url, request);
+
+	const outbound = new Headers(inbound);
+	rewritten.headers.forEach((value, key) => void outbound.set(key, value));
+
+	return app.request(new Request(rewritten, { headers: outbound }));
+};
+
+// Placeholder sentinel; internalFetch rewrites the origin per request
+export const rpc = hc<AppType>('http://internal/api', { fetch: internalFetch });
 export default rpc;
