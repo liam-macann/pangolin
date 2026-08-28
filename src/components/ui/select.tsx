@@ -41,7 +41,7 @@ function SelectTrigger({
 		<SelectPrimitive.Trigger
 			data-slot='select-trigger'
 			className={cn(
-				'data-placeholder:text-muted-foreground',
+				'select-none data-placeholder:text-muted-foreground',
 				'*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2',
 				'aria-invalid:border-destructive aria-invalid:ring aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40',
 				'not-disabled:active:motion-safe:scale-100',
