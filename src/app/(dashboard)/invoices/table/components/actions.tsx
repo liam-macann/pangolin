@@ -38,7 +38,8 @@ import { type Invoice } from './../columns';
 export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) {
 	const invoice = row.original;
 
-	const { mutate } = useInvoiceMutation(invoice.id, {
+	const { mutate } = useInvoiceMutation({
+		targetId: invoice.id,
 		scope: { id: 'void' },
 		mutationFn: ({ id }: { id: string }) => voidInvoice(id),
 		onError: () => toast.error('Failed to mark invoice as void'),
@@ -109,15 +110,13 @@ export function NotesButton({
 	invoiceId: string;
 	defaultValue?: string;
 }) {
-	const { mutateAsync } = useInvoiceMutation(
-		invoiceId,
-		{
-			scope: { id: 'notes' },
-			mutationFn: ({ id, notes }: { id: string; notes: string }) => setInvoiceNotes(id, notes),
-			onError: () => toast.error('Failed to update invoice notes'),
-		},
-		(curr, { notes }) => ({ ...curr, status: { ...curr.status, notes } }),
-	);
+	const { mutateAsync } = useInvoiceMutation({
+		targetId: invoiceId,
+		scope: { id: 'notes' },
+		mutationFn: ({ id, notes }: { id: string; notes: string }) => setInvoiceNotes(id, notes),
+		onError: () => toast.error('Failed to update invoice notes'),
+		optimisticFn: (curr, { notes }) => ({ ...curr, status: { ...curr.status, notes } }),
+	});
 
 	const fieldId = useId();
 

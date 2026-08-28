@@ -1,60 +1,72 @@
+import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 import { type InferResponseType } from 'hono/client';
 
 import rpc from '#rpc';
 import { type Client } from '@/api/dto/client';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { declareQueries, type QueryOptionsFor } from './helpers';
-import { createOptimisticResource } from './mutation';
+import { type SuspenseOptions } from './helpers';
+import { createOptimisticResource } from './mutation/resource';
 
-export const clientKeys = {
-	all: ['clients'] as const,
-	lists: () => ['clients', 'list'] as const,
-	list: () => ['clients', 'list', {}] as const,
-	detail: (id: string) => ['clients', 'detail', id] as const,
+export const clientQueries = {
+	rootKey: () => ['clients'] as const,
+
+	listsKey: () => [...clientQueries.rootKey(), 'list'] as const,
+	listKey: () => [...clientQueries.listsKey(), {}] as const,
+	list: () =>
+		queryOptions({
+			queryKey: clientQueries.listKey(),
+			queryFn: ({ signal }) => parseAPIRes(rpc.clients.$get({ query: {} }, { init: { signal } })),
+		}),
+
+	detailsKey: () => [...clientQueries.rootKey(), 'detail'] as const,
+	detailKey: (id: string) => [...clientQueries.detailsKey(), id] as const,
+	detail: (id: string) =>
+		queryOptions({
+			queryKey: clientQueries.detailKey(id),
+			queryFn: ({ signal }) =>
+				parseAPIRes(rpc.clients[':id'].$get({ param: { id } }, { init: { signal } })),
+		}),
 };
 
-export const clientQueries = declareQueries({
-	list: () => ({
-		queryKey: clientKeys.list(),
-		queryFn: ({ signal }) => parseAPIRes(rpc.clients.$get({ query: {} }, { init: { signal } })),
-	}),
-	detail: (id: string) => ({
-		queryKey: clientKeys.detail(id),
-		queryFn: ({ signal }) =>
-			parseAPIRes(rpc.clients[':id'].$get({ param: { id } }, { init: { signal } })),
-	}),
-});
-
 const affectedClientKeys = (clientId: string | undefined) => [
-	clientKeys.lists(),
-	...(clientId === undefined ? [] : [clientKeys.detail(clientId)]),
+	clientQueries.listsKey(),
+	...(clientId === undefined ? [] : [clientQueries.detailKey(clientId)]),
 ];
 const factory = createOptimisticResource<Client>({
-	mutationKey: clientKeys.all,
+	mutationKey: clientQueries.rootKey(),
 	invalidates: affectedClientKeys,
 });
 
 type ClientsResponse = InferResponseType<typeof rpc.clients.$get, 200>;
 type ClientResponse = InferResponseType<(typeof rpc.clients)[':id']['$get'], 200>;
+type ClientsOptions<TData> = SuspenseOptions<
+	ClientsResponse,
+	ReturnType<typeof clientQueries.listKey>,
+	TData
+>;
+type ClientOptions<TData> = SuspenseOptions<
+	ClientResponse,
+	ReturnType<typeof clientQueries.detailKey>,
+	TData
+>;
 
-export const useClients = <TData = ClientsResponse>(
-	options?: QueryOptionsFor<ClientsResponse, TData>,
-) =>
-	factory.useOptimisticQuery(
-		{ ...clientQueries.list(), ...options },
-		// Optimistic patcher
+export const useClients = <TData = ClientsResponse>(options?: ClientsOptions<TData>) => {
+	const select = factory.useOptimisticSelect(
 		(response, update) => ({ ...response, data: response.data.map(update) }),
+		options?.select,
 	);
 
-export const useClient = <TData = ClientResponse>(
-	id: string,
-	options?: QueryOptionsFor<ClientResponse, TData>,
-) =>
-	factory.useOptimisticQuery(
-		{ ...clientQueries.detail(id), ...options },
-		// Optimistic patcher
+	return useSuspenseQuery({ ...clientQueries.list(), ...options, select });
+};
+
+export const useClient = <TData = ClientResponse>(id: string, options?: ClientOptions<TData>) => {
+	const select = factory.useOptimisticSelect(
 		(response, update) => ({ ...response, data: update(response.data) }),
+		options?.select,
 	);
+
+	return useSuspenseQuery({ ...clientQueries.detail(id), ...options, select });
+};
 
 export const useClientMutation = factory.useOptimisticMutation;

@@ -1,31 +1,33 @@
-import {
-	type DefaultError,
-	type QueryFunctionContext,
-	useSuspenseQuery,
-} from '@tanstack/react-query';
+import { type DefaultError, queryOptions, useSuspenseQuery } from '@tanstack/react-query';
 import { type InferResponseType } from 'hono/client';
 
 import rpc from '#rpc';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { declareQueries, type QueryOptionsFor } from './helpers';
-import { type MutationOptions, useInvalidatingMutation } from './mutation';
+import { type SuspenseOptions } from './helpers';
+import { type MutationOptions, useInvalidatingMutation } from './mutation/invalidate';
 
-const configRoot = ['config'] as const;
+export const configQueries = {
+	rootKey: () => ['config'] as const,
+
+	currentKey: () => [...configQueries.rootKey(), 'current'] as const,
+	current: () =>
+		queryOptions({
+			queryKey: configQueries.currentKey(),
+			queryFn: ({ signal }) => parseAPIRes(rpc.config.$get({}, { init: { signal } })),
+		}),
+};
+
 type ConfigResponse = InferResponseType<typeof rpc.config.$get, 200>;
+type ConfigOptions<TData> = SuspenseOptions<
+	ConfigResponse,
+	ReturnType<typeof configQueries.currentKey>,
+	TData
+>;
 
-export const configQueries = declareQueries({
-	current: () => ({
-		queryKey: [...configRoot, 'current'] as const,
-		queryFn: ({ signal }: QueryFunctionContext) =>
-			parseAPIRes(rpc.config.$get({}, { init: { signal } })),
-	}),
-});
-
-export const useConfig = <TData = ConfigResponse>(
-	options?: QueryOptionsFor<ConfigResponse, TData>,
-) => useSuspenseQuery({ ...configQueries.current(), ...options });
+export const useConfig = <TData = ConfigResponse>(options?: ConfigOptions<TData>) =>
+	useSuspenseQuery({ ...configQueries.current(), ...options, select: options?.select });
 
 export const useConfigMutation = <TData = unknown, TError = DefaultError, TVariables = void>(
 	options: MutationOptions<TData, TError, TVariables>,
-) => useInvalidatingMutation(options, [configRoot]);
+) => useInvalidatingMutation({ ...options, invalidates: [configQueries.rootKey()] });

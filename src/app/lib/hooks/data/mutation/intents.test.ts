@@ -1,7 +1,7 @@
 import { cloneDeep } from 'es-toolkit';
 import { describe, expect, test } from 'vitest';
 
-import { isIntentSuperseded, selectOptimisticIntents } from './mutation';
+import { isIntentSuperseded, selectOptimisticIntents } from './intents';
 
 const first = Symbol('first');
 const second = Symbol('second');

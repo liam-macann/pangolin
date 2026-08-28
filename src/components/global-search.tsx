@@ -15,6 +15,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useClients, useConfig, useInvoices, useKeyPress, usePrevious } from '@/lib/hooks';
 import { clientQueries } from '@/lib/hooks/data/client';
 import { configQueries } from '@/lib/hooks/data/config';
+import { prefetch } from '@/lib/hooks/data/helpers';
 import { invoiceQueries } from '@/lib/hooks/data/invoice';
 import { pluralize } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
@@ -36,16 +37,16 @@ function GlobalSearch() {
 	const [open, setOpen] = useState(false);
 	const queryClient = useQueryClient();
 
-	const prefetch = () => {
+	const prefetchSearch = () => {
 		void Promise.allSettled([
-			queryClient.query(clientQueries.list()),
-			queryClient.query(invoiceQueries.list()),
-			queryClient.query(configQueries.current()),
+			prefetch(queryClient, clientQueries.list()),
+			prefetch(queryClient, invoiceQueries.list()),
+			prefetch(queryClient, configQueries.current()),
 		]);
 	};
 
 	const openSearch = () => {
-		prefetch();
+		prefetchSearch();
 		setOpen(true);
 	};
 
@@ -65,7 +66,7 @@ function GlobalSearch() {
 			onError={() => toast.error('Something went wrong. Please try again later.')}
 			fallback={<Trigger disabled />}
 		>
-			<Trigger onClick={openSearch} onPointerEnter={prefetch} onFocus={prefetch} />
+			<Trigger onClick={openSearch} onPointerEnter={prefetchSearch} onFocus={prefetchSearch} />
 			<CommandDialog
 				title='Search'
 				description='Find people or invoices…'

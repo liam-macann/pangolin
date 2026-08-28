@@ -1,11 +1,9 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { type QueryOptionsFor } from './helpers';
-import { createOptimisticResource } from './mutation';
+import { createOptimisticResource } from './resource';
 import {
 	createControlledMutation,
 	type MutationControl,
-	settle,
 	settleAll,
 	setupTest,
 } from './tests/helpers';
@@ -14,149 +12,11 @@ describe('createOptimisticResource()', { timeout: 1000 }, () => {
 	type Entity = { id: string; favorite: boolean; archived: boolean };
 
 	const queryKey = ['entities'] as const;
-	const serverEntities: Entity[] = [
-		{ id: 'target', favorite: false, archived: false },
-		{ id: 'other', favorite: false, archived: false },
-	];
-	const applyUpdate = (entities: Entity[], update: (entity: Entity) => Entity) =>
-		entities.map(update);
 	const invalidates = vi.fn(() => [queryKey]);
 
 	const resource = createOptimisticResource<Entity>({
 		mutationKey: ['entity-mutation'],
 		invalidates,
-	});
-
-	describe('useOptimisticQuery()', () => {
-		/** Sets up mutation hooks, and returns a helper to fetch a snapshot */
-		async function setupMutations<TData = Entity[]>(options?: QueryOptionsFor<Entity[], TData>) {
-			const opts = { queryKey, queryFn: () => Promise.resolve(serverEntities), ...options };
-
-			const requests: MutationControl[] = [];
-			const favoriteMutation = createControlledMutation<boolean>(requests);
-			const archiveMutation = createControlledMutation<boolean>(requests);
-
-			const { act, result, QueryClient } = await setupTest(() => ({
-				useEntity: resource.useOptimisticQuery<Entity[], TData>(
-					{ initialData: serverEntities, ...opts },
-					applyUpdate,
-				),
-
-				useMutateFavourite: resource.useOptimisticMutation(
-					'target',
-					{ mutationFn: favoriteMutation.mutationFn, scope: { id: 'favorite' } },
-					(entity, val) => ({ ...entity, favorite: val }),
-				),
-				useMutateArchived: resource.useOptimisticMutation(
-					'target',
-					{ mutationFn: archiveMutation.mutationFn, scope: { id: 'archive' } },
-					(entity, val) => ({ ...entity, archived: val }),
-				),
-			}));
-
-			const hooks = {
-				favorite: favoriteMutation.bind(act, value =>
-					result.current.useMutateFavourite.mutateAsync(value),
-				),
-				archive: archiveMutation.bind(act, value =>
-					result.current.useMutateArchived.mutateAsync(value),
-				),
-			};
-			const flush = () => settle(act);
-
-			const snapshot = () => ({
-				/** Data with optimistic overlay; what is visible in the UI */
-				overlaid: result.current.useEntity.data,
-				/** Data sitting in the Tanstack cache; the last server response */
-				cache: QueryClient.getQueryData<Entity[]>(queryKey),
-			});
-
-			return { flush, hooks, QueryClient, settleAll: () => settleAll(requests), snapshot };
-		}
-
-		describe('Concurrency', () => {
-			test('Replays concurrent intents over server data, preserving response cache', async () => {
-				const { hooks, settleAll, snapshot } = await setupMutations();
-
-				await hooks.favorite.mutateAsync(true);
-				await hooks.archive.mutateAsync(true).then(res => res.resolve());
-
-				const { cache, overlaid } = snapshot();
-
-				const visibleTarget = overlaid.find(entity => entity.id === 'target');
-				const cachedTarget = cache?.find(entity => entity.id === 'target');
-
-				expect(visibleTarget?.favorite).toBe(true);
-				expect(cachedTarget?.favorite).toBe(false);
-
-				await settleAll();
-			});
-
-			test('Applies select after replaying intents', async () => {
-				const { hooks, settleAll, snapshot } = await setupMutations({
-					select: entities => entities.find(entity => entity.id === 'target')?.favorite,
-				});
-
-				await hooks.favorite.mutateAsync(true);
-				await hooks.archive.mutateAsync(true).then(res => res.resolve());
-
-				expect(snapshot().overlaid).toBe(true);
-
-				await settleAll();
-			});
-
-			test('Resolves overlapping mutations independently', async () => {
-				const { hooks, settleAll } = await setupMutations();
-
-				const first = await hooks.favorite.mutateAsync(true);
-				const second = await hooks.favorite.mutateAsync(false);
-
-				const secondSettled = vi.fn();
-				second.result.then(secondSettled);
-
-				await first.resolve();
-				expect(secondSettled).not.toHaveBeenCalled();
-
-				await second.resolve();
-				expect(secondSettled).toHaveBeenCalledOnce();
-
-				await settleAll();
-			});
-		});
-
-		describe('Rollback', () => {
-			test('Removes a failed optimistic update without changing cached server data', async () => {
-				const { flush, hooks, settleAll, snapshot } = await setupMutations();
-
-				const request = await hooks.favorite.mutateAsync(true);
-				expect(snapshot().overlaid.find(entity => entity.id === 'target')?.favorite).toBe(true);
-
-				const error = new Error('Favorite request failed');
-				request.server.reject(error);
-				await expect(request.result).rejects.toBe(error);
-				await flush();
-
-				const { cache, overlaid } = snapshot();
-				expect(overlaid.find(entity => entity.id === 'target')?.favorite).toBe(false);
-				expect(cache).toEqual(serverEntities);
-
-				await settleAll();
-			});
-		});
-
-		describe('Targeting', () => {
-			test('Only applies an optimistic update to its target entity', async () => {
-				const { hooks, settleAll, snapshot } = await setupMutations();
-
-				await hooks.favorite.mutateAsync(true);
-				expect(snapshot().overlaid).toEqual([
-					{ id: 'target', favorite: true, archived: false },
-					{ id: 'other', favorite: false, archived: false },
-				]);
-
-				await settleAll();
-			});
-		});
 	});
 
 	describe('useOptimisticMutation()', () => {
@@ -167,11 +27,13 @@ describe('createOptimisticResource()', { timeout: 1000 }, () => {
 				const b = createControlledMutation(controls);
 
 				const { act, result } = await setupTest(() => ({
-					a: resource.useOptimisticMutation('target', {
+					a: resource.useOptimisticMutation({
+						targetId: 'target',
 						mutationFn: a.mutationFn,
 						scope: { id: 'a' },
 					}),
-					b: resource.useOptimisticMutation('target', {
+					b: resource.useOptimisticMutation({
+						targetId: 'target',
 						mutationFn: b.mutationFn,
 						scope: { id: 'b' },
 					}),
@@ -197,9 +59,18 @@ describe('createOptimisticResource()', { timeout: 1000 }, () => {
 				const b1Mutation = createControlledMutation(controls);
 
 				const { act, result } = await setupTest(() => ({
-					a1: resource.useOptimisticMutation('target', { mutationFn: a1Mutation.mutationFn }),
-					a2: resource.useOptimisticMutation('target', { mutationFn: a2Mutation.mutationFn }),
-					b1: resource.useOptimisticMutation('other', { mutationFn: b1Mutation.mutationFn }),
+					a1: resource.useOptimisticMutation({
+						targetId: 'target',
+						mutationFn: a1Mutation.mutationFn,
+					}),
+					a2: resource.useOptimisticMutation({
+						targetId: 'target',
+						mutationFn: a2Mutation.mutationFn,
+					}),
+					b1: resource.useOptimisticMutation({
+						targetId: 'other',
+						mutationFn: b1Mutation.mutationFn,
+					}),
 				}));
 
 				const a1 = await a1Mutation.bind(act, () => result.current.a1.mutateAsync()).mutateAsync();
@@ -230,9 +101,18 @@ describe('createOptimisticResource()', { timeout: 1000 }, () => {
 					});
 
 					return {
-						a1: resource.useOptimisticMutation(undefined, { mutationFn: a1Mutation.mutationFn }),
-						a2: resource.useOptimisticMutation(undefined, { mutationFn: a2Mutation.mutationFn }),
-						b1: resourceB.useOptimisticMutation(undefined, { mutationFn: b1Mutation.mutationFn }),
+						a1: resource.useOptimisticMutation({
+							targetId: undefined,
+							mutationFn: a1Mutation.mutationFn,
+						}),
+						a2: resource.useOptimisticMutation({
+							targetId: undefined,
+							mutationFn: a2Mutation.mutationFn,
+						}),
+						b1: resourceB.useOptimisticMutation({
+							targetId: undefined,
+							mutationFn: b1Mutation.mutationFn,
+						}),
 					};
 				});
 
@@ -256,10 +136,12 @@ describe('createOptimisticResource()', { timeout: 1000 }, () => {
 				invalidates.mockClear();
 
 				await setupTest(() => ({
-					bound: resource.useOptimisticMutation('invoiceId', {
+					bound: resource.useOptimisticMutation({
+						targetId: 'invoiceId',
 						mutationFn: () => Promise.resolve(),
 					}),
-					unbound: resource.useOptimisticMutation(undefined, {
+					unbound: resource.useOptimisticMutation({
+						targetId: undefined,
 						mutationFn: () => Promise.resolve(),
 					}),
 				}));
@@ -282,12 +164,14 @@ describe('createOptimisticResource()', { timeout: 1000 }, () => {
 				const bSuccess = vi.fn();
 
 				const { act, result } = await setupTest(() => ({
-					a: resource.useOptimisticMutation('target', {
+					a: resource.useOptimisticMutation({
+						targetId: 'target',
 						mutationFn: a.mutationFn,
 						onSettled: aSettled,
 						onSuccess: aSuccess,
 					}),
-					b: resource.useOptimisticMutation('target', {
+					b: resource.useOptimisticMutation({
+						targetId: 'target',
 						mutationFn: b.mutationFn,
 						onSettled: bSettled,
 						onSuccess: bSuccess,
@@ -318,12 +202,14 @@ describe('createOptimisticResource()', { timeout: 1000 }, () => {
 				const bError = vi.fn();
 
 				const { act, result } = await setupTest(() => ({
-					a: resource.useOptimisticMutation('target', {
+					a: resource.useOptimisticMutation({
+						targetId: 'target',
 						mutationFn: a.mutationFn,
 						onSettled: aSettled,
 						onError: aError,
 					}),
-					b: resource.useOptimisticMutation('target', {
+					b: resource.useOptimisticMutation({
+						targetId: 'target',
 						mutationFn: b.mutationFn,
 						onSettled: bSettled,
 						onError: bError,
@@ -349,11 +235,12 @@ describe('createOptimisticResource()', { timeout: 1000 }, () => {
 				const aError = vi.fn();
 
 				const { act, result } = await setupTest(() => ({
-					first: resource.useOptimisticMutation('target', {
+					first: resource.useOptimisticMutation({
+						targetId: 'target',
 						mutationFn: a.mutationFn,
 						onError: aError,
 					}),
-					second: resource.useOptimisticMutation('target', { mutationFn: b.mutationFn }),
+					second: resource.useOptimisticMutation({ targetId: 'target', mutationFn: b.mutationFn }),
 				}));
 
 				const first = await a.bind(act, () => result.current.first.mutateAsync()).mutateAsync();

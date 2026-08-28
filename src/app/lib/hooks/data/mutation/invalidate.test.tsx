@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest';
 
-import { useInvalidatingMutation } from './mutation';
+import { useInvalidatingMutation } from './invalidate';
 import { createDeferred, setupTest } from './tests/helpers';
 
 describe('useInvalidatingMutation()', { timeout: 1000 }, () => {
@@ -9,10 +9,11 @@ describe('useInvalidatingMutation()', { timeout: 1000 }, () => {
 			const callback = createDeferred();
 			const onSuccess = vi.fn(() => callback.promise);
 			const { act, result, QueryClient } = await setupTest(() =>
-				useInvalidatingMutation({ mutationFn: () => Promise.resolve('saved'), onSuccess }, [
-					['first-query'],
-					['second-query'],
-				]),
+				useInvalidatingMutation({
+					mutationFn: () => Promise.resolve('saved'),
+					onSuccess,
+					invalidates: [['first-query'], ['second-query']],
+				}),
 			);
 			const invalidate = vi.spyOn(QueryClient, 'invalidateQueries');
 
@@ -35,10 +36,10 @@ describe('useInvalidatingMutation()', { timeout: 1000 }, () => {
 		test('Awaits every query invalidation before succeeding', async () => {
 			const [firstInvalidation, secondInvalidation] = [createDeferred(), createDeferred()];
 			const { act, result, QueryClient } = await setupTest(() =>
-				useInvalidatingMutation({ mutationFn: () => Promise.resolve('saved') }, [
-					['first-query'],
-					['second-query'],
-				]),
+				useInvalidatingMutation({
+					mutationFn: () => Promise.resolve('saved'),
+					invalidates: [['first-query'], ['second-query']],
+				}),
 			);
 
 			const invalidate = vi
@@ -67,13 +68,11 @@ describe('useInvalidatingMutation()', { timeout: 1000 }, () => {
 			const callback = createDeferred();
 
 			const { act, result, QueryClient } = await setupTest(() =>
-				useInvalidatingMutation(
-					{
-						mutationFn: () => Promise.resolve('saved'),
-						onSuccess: () => callback.promise,
-					},
-					[['query']],
-				),
+				useInvalidatingMutation({
+					mutationFn: () => Promise.resolve('saved'),
+					onSuccess: () => callback.promise,
+					invalidates: [['query']],
+				}),
 			);
 
 			const invalidateSpy = vi.spyOn(QueryClient, 'invalidateQueries');
@@ -91,7 +90,10 @@ describe('useInvalidatingMutation()', { timeout: 1000 }, () => {
 		test('Keeps a successful mutation successful when query invalidation fails', async () => {
 			const invalidation = createDeferred();
 			const { act, result, QueryClient } = await setupTest(() =>
-				useInvalidatingMutation({ mutationFn: () => Promise.resolve('saved') }, [['query']]),
+				useInvalidatingMutation({
+					mutationFn: () => Promise.resolve('saved'),
+					invalidates: [['query']],
+				}),
 			);
 			vi.spyOn(QueryClient, 'invalidateQueries').mockImplementation(() => invalidation.promise);
 

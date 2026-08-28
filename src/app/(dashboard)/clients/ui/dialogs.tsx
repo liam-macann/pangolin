@@ -76,7 +76,7 @@ export function CreateClientDialog({
 	children,
 	...props
 }: { children: ReactElement } & ComponentProps<typeof Dialog>) {
-	const { mutateAsync } = useClientMutation(undefined, { mutationFn: createClient });
+	const { mutateAsync } = useClientMutation({ targetId: undefined, mutationFn: createClient });
 
 	const form = useForm({
 		resolver: zodResolver(createFormSchema),
@@ -115,7 +115,10 @@ export function UpdateClientDialog({
 	children: ReactElement;
 	defaultValues: Client;
 } & ComponentProps<typeof Dialog>) {
-	const { mutateAsync } = useClientMutation(defaultValues.id, { mutationFn: updateClient });
+	const { mutateAsync } = useClientMutation({
+		targetId: defaultValues.id,
+		mutationFn: updateClient,
+	});
 
 	const { address, ...data } = defaultValues.data;
 

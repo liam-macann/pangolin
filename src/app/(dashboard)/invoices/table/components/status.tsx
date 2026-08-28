@@ -50,15 +50,13 @@ export function StatusSelect({
 	const invoice = row.original;
 	const status = invoice.status.status;
 
-	const { mutateAsync } = useInvoiceMutation(
-		invoice.id,
-		{
-			mutationFn: (status: Parameters<typeof updateInvoiceStatus>[1]) =>
-				updateInvoiceStatus(invoice.id, status),
-			scope: { id: 'status' },
-		},
-		(curr, next) => ({ ...curr, status: { ...curr.status, status: next } }),
-	);
+	const { mutateAsync } = useInvoiceMutation({
+		targetId: invoice.id,
+		mutationFn: (status: Parameters<typeof updateInvoiceStatus>[1]) =>
+			updateInvoiceStatus(invoice.id, status),
+		scope: { id: 'status' },
+		optimisticFn: (curr, next) => ({ ...curr, status: { ...curr.status, status: next } }),
+	});
 
 	const [updateStatus, track] = useAsyncStatus({
 		onRejected: () => toast.error(`Failed to update status of ${invoice.reference}`),
