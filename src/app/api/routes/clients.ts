@@ -23,7 +23,7 @@ const listRoute = defineRoute.protected({
 				'application/json': {
 					schema: resolver(
 						z.object({
-							data: z.array(Client).max(100),
+							data: z.array(Client).max(200),
 							meta: paginationSchema,
 						}),
 					),

@@ -3,6 +3,9 @@ extends:
   - "@stoplight/spectral-documentation"
   - "@stoplight/spectral-owasp-ruleset"
   - "@apisyouwonthate/style-guide"
+functionsDir: "./.spectral/functions"
+functions:
+  - pagination-page-size
 rules:
   info-contact: false
   docs-info-contact: false
@@ -41,6 +44,15 @@ rules:
               responses:
                 type: object
                 required: ["401"]
+
+  # A list operation success response must be able to represent the largest page limit
+  pagination-response-fits-limit:
+    message: "{{error}}"
+    description: "The success response `data` array must not cap below the maximum page size the `limit` parameter permits."
+    severity: error
+    given: "$.paths.*[get,post,put,patch,delete]"
+    then:
+      function: pagination-page-size
 
   # This API is mounted at a relative path on the same origin as the dashboard (no
   # separate host), so the server URL is intentionally relative rather than an
