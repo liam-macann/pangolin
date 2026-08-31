@@ -1,4 +1,4 @@
-import { isNull, sql } from 'drizzle-orm';
+import { isNull, type SQL, sql } from 'drizzle-orm';
 import {
 	boolean,
 	check,
@@ -10,6 +10,7 @@ import {
 	uuid,
 } from 'drizzle-orm/pg-core';
 
+import { coalesce } from '@/lib/utils/drizzle';
 import { users } from '@/db/schema/auth';
 
 import { authUid, policy, relationOwnership, scdTable } from './_helpers';
@@ -62,6 +63,9 @@ export const clientData = scdTable(
 			.notNull(),
 		name: text(),
 		organization: text(),
+		displayName: text()
+			.generatedAlwaysAs((): SQL => coalesce(clientData.name, clientData.organization))
+			.notNull(),
 		email: text().notNull(),
 		notes: text(),
 

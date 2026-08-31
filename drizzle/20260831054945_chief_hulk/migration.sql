@@ -1,0 +1,1 @@
+ALTER TABLE "client_data" ADD COLUMN "display_name" text GENERATED ALWAYS AS (coalesce("client_data"."name","client_data"."organization")) STORED;
