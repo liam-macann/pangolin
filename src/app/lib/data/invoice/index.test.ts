@@ -386,14 +386,16 @@ describe('fetchInvoice', () => {
 });
 
 describe('fetchInvoices', () => {
-	test('Lists invoices ordered by index, descending', async () => {
+	test('Lists invoices ordered by issued date, descending', async () => {
 		const clientDataId = await setUpConfigAndClient();
 		const first = await insertTestInvoice({
 			clientDataId,
+			issuedAt: new Date('2026-01-01'),
 			items: [{ quantity: 1, unitCost: 100 }],
 		});
 		const second = await insertTestInvoice({
 			clientDataId,
+			issuedAt: new Date('2026-01-02'),
 			items: [{ quantity: 1, unitCost: 100 }],
 		});
 

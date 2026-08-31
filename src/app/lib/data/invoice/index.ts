@@ -84,7 +84,7 @@ async function _fetchInvoices(
 					},
 				},
 			},
-			orderBy: { index: 'desc' },
+			orderBy: { issuedAt: 'desc' },
 			limit: opts?.limit,
 			offset: opts?.offset,
 		}),
