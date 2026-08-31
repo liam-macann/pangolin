@@ -1,4 +1,4 @@
-import { and, count, eq, getColumns, isNull, type SQL } from 'drizzle-orm';
+import { and, count, eq, getColumns, isNull, type RelationsFilter, type SQL } from 'drizzle-orm';
 import { QueryBuilder } from 'drizzle-orm/pg-core';
 import { getRegisteredCountries } from 'lib-address';
 import { notFound, unstable_rethrow } from 'next/navigation';
@@ -9,19 +9,27 @@ import { crypto } from '@/lib/encrypt';
 import { fetchAddressMetadata, formatAddress } from '@/lib/utils/address';
 import { coalesce } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
+import { type relations } from '@/db/relations';
 import * as schema from '@/db/schema';
 
 export type ClientData = Client['data'];
 
-export async function fetchClients(): Promise<Client[]>;
-export async function fetchClients(opts: { limit?: number; offset?: number }): Promise<Client[]>;
-export async function fetchClients(id: string): Promise<Client>;
+export async function fetchClient(id: string) {
+	const clients = await fetchClients(
+		{ id: { eq: id }, isDeleted: { eq: undefined } },
+		{ limit: 1 },
+	);
+	if (!clients[0]) notFound();
+	return clients[0];
+}
 
 /** Fetch all clients for authenticated user, or a single client if `id` is provided.
  * @remarks Define `{ limit, offset }` to paginate the list form */
-export async function fetchClients(arg?: string | { limit?: number; offset?: number }) {
-	const id = typeof arg === 'string' ? arg : undefined;
-	const { limit, offset } = typeof arg === 'string' ? {} : (arg ?? {});
+export async function fetchClients(
+	filter?: RelationsFilter<typeof relations.clients, typeof relations>,
+	opts?: { limit?: number; offset?: number },
+) {
+	const { limit, offset } = opts ?? {};
 
 	try {
 		return await withRLS(async (db, session) => {
@@ -54,7 +62,8 @@ export async function fetchClients(arg?: string | { limit?: number; offset?: num
 				where: {
 					userId: { eq: session.user.id },
 					// Exclude deleted clients, unless requesting a specific id
-					...(id ? { id: { eq: id } } : { isDeleted: { eq: false } }),
+					isDeleted: { eq: false },
+					...(filter !== undefined ? filter : {}),
 				},
 				orderBy: (c, { sql }) =>
 					sql<string>`(${db
@@ -91,11 +100,6 @@ export async function fetchClients(arg?: string | { limit?: number; offset?: num
 					};
 				}),
 			);
-
-			if (id) {
-				if (!mapped[0]) notFound();
-				return mapped[0];
-			}
 
 			return mapped;
 		});

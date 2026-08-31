@@ -2,7 +2,7 @@ import { resolver, validator } from 'hono-openapi';
 import { z } from 'zod';
 
 import { Client } from '@/api/dto/client';
-import { countClients, fetchClients } from '@/lib/data/client';
+import { countClients, fetchClient, fetchClients } from '@/lib/data/client';
 
 import {
 	createApiRouter,
@@ -64,13 +64,16 @@ const getRoute = defineRoute.protected({
 const app = createApiRouter()
 	.get('/', ...listRoute, validator('query', listQuery, validationHook), async c => {
 		const { limit = undefined, offset = undefined } = c.req.valid('query');
-		const [data, total] = await Promise.all([fetchClients({ limit, offset }), countClients()]);
+		const [data, total] = await Promise.all([
+			fetchClients(undefined, { limit, offset }),
+			countClients(),
+		]);
 
 		return c.json({ data, meta: { total, limit, offset } }, 200);
 	})
 	.get('/:id', ...getRoute, validator('param', getParams, validationHook), async c => {
 		const { id } = c.req.valid('param');
-		const data = await fetchClients(id);
+		const data = await fetchClient(id);
 		return c.json({ data }, 200);
 	});
 

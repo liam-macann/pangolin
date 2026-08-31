@@ -17,11 +17,11 @@ import * as tables from '@/db/schema';
 
 import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
-import { fetchClientStats, fetchClients } from './client';
+import { fetchClient, fetchClientStats, fetchClients } from './client';
 
 describe('fetchClients', () => {
 	test('Throws notFound() for a nonexistent client id', async () => {
-		await expect(fetchClients(randomUUID())).rejects.toThrow();
+		await expect(fetchClient(randomUUID())).rejects.toThrow();
 		expect(navigation.notFound).toHaveBeenCalled();
 	});
 
@@ -32,10 +32,10 @@ describe('fetchClients', () => {
 		const otherSession = await createTestSession(db, auth);
 		const client = await insertTestClient();
 
-		await expect(sessionStorage.run(otherSession, () => fetchClients(client.id))).rejects.toThrow();
+		await expect(sessionStorage.run(otherSession, () => fetchClient(client.id))).rejects.toThrow();
 		expect(navigation.notFound).toHaveBeenCalled();
 
-		await expect(fetchClients(client.id)).resolves.not.toThrow();
+		await expect(fetchClient(client.id)).resolves.not.toThrow();
 	});
 
 	test('Lists only non-deleted clients', async () => {
@@ -51,7 +51,7 @@ describe('fetchClients', () => {
 		const client = await insertTestClient();
 		await updateClientDeleted(client.id, true);
 
-		const fetched = await fetchClients(client.id);
+		const fetched = await fetchClient(client.id);
 		expect(fetched.isDeleted).toBe(true);
 	});
 
@@ -78,7 +78,7 @@ describe('fetchClients', () => {
 			address,
 		});
 
-		const fetched = await fetchClients(client.id);
+		const fetched = await fetchClient(client.id);
 		expect(fetched.data.name).toBe('Alaric Wivell');
 		expect(fetched.data.email).toBe('client@acme.example');
 
@@ -90,7 +90,7 @@ describe('fetchClients', () => {
 	test('formattedAddress is null when the client has no address', async () => {
 		const client = await insertTestClient({ address: null });
 
-		const fetched = await fetchClients(client.id);
+		const fetched = await fetchClient(client.id);
 		expect(fetched.data.address).toBeNull();
 		expect(fetched.data.formattedAddress).toBeNull();
 	});
@@ -108,7 +108,7 @@ describe('fetchClients', () => {
 		});
 		await voidInvoice(voided);
 
-		const fetched = await fetchClients(client.id);
+		const fetched = await fetchClient(client.id);
 		expect(fetched.invoiceCount).toBe(2);
 	});
 
@@ -129,7 +129,7 @@ describe('fetchClients', () => {
 			}),
 		);
 
-		expect((await fetchClients(client.id)).invoiceCount).toBe(1);
+		expect((await fetchClient(client.id)).invoiceCount).toBe(1);
 	});
 });
 
