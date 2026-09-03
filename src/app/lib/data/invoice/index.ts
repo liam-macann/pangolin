@@ -1,4 +1,4 @@
-import { and, asc, count, eq, min, type RelationsFilter, sql, sum } from 'drizzle-orm';
+import { and, asc, count, eq, min, sql, sum } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
 import { notFound, unstable_rethrow } from 'next/navigation';
 
@@ -6,17 +6,15 @@ import { type Config } from '@/api/dto/config';
 import { type Invoice } from '@/api/dto/invoice';
 import { fetchConfig } from '@/lib/data';
 import { type ClientData } from '@/lib/data/client';
+import { type FetchOptions, query } from '@/lib/data/helpers';
 import { crypto } from '@/lib/encrypt';
 import { invoiceReference, type Simplify } from '@/lib/utils';
-import { coalesce, withFilter } from '@/lib/utils/drizzle';
+import { coalesce, mergeOrderBy, withFilter } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
 import { type relations } from '@/db/relations';
 import * as schema from '@/db/schema';
 
 import { type Session } from '@/auth';
-
-import { query } from './../helpers';
-
 /** A billed line item, joined with the tax rows applied to it */
 export type LineItem = Simplify<
 	Omit<
@@ -37,70 +35,72 @@ export type DetailedInvoice = Omit<Invoice, 'clientData' | 'config'> & {
 	tax: { name: string; contribution: number }[];
 };
 
-/** Fetch all invoices for authenticated user, including basic relational data */
-export const fetchInvoices = (
-	filter?: RelationsFilter<typeof relations.documentsWithSum, typeof relations>,
-	opts?: { limit?: number; offset?: number },
-) => query(async session => _fetchInvoices(session, filter, opts), 'Failed to fetch invoices');
+/** Fetch a bounded window of invoices for the authenticated user. */
+export const fetchInvoices = (opts: Parameters<typeof _fetchInvoices>[1]) =>
+	query(async session => _fetchInvoices(session, opts), 'Failed to fetch invoices');
 
 async function _fetchInvoices(
 	session: Session,
-	filter?: RelationsFilter<typeof relations.documentsWithSum, typeof relations>,
-	opts?: { limit?: number; offset?: number },
+	opts: FetchOptions<typeof relations.invoices>,
 ): Promise<Invoice[]> {
 	'use cache';
 	cacheLife('hours');
 	cacheTag(`invoices-${session.user.id}`);
 
 	return withRLS(session, async tx =>
-		tx.query.invoices.findMany({
-			where: {
-				userId: { eq: session.user.id },
-				...(filter !== undefined ? { documentWithSum: filter } : {}),
-			},
-			columns: { userId: false },
-			with: {
-				status: { columns: { id: false, userId: false } },
-				documentWithSum: {
-					columns: {
-						id: false,
-						clientDataId: false,
-						configId: false,
-						userId: false,
+		tx.query.invoices
+			.findMany({
+				where: {
+					...(opts.where ?? {}),
+					userId: { eq: session.user.id },
+				},
+				columns: { userId: false },
+				with: {
+					status: { columns: { id: false, userId: false } },
+					documentWithSum: {
+						columns: {
+							id: false,
+							clientDataId: false,
+							configId: false,
+							userId: false,
 
-						// Included with config data
-						taxRegistration: false,
-						currency: false,
-					},
-					with: {
-						clientData: { columns: { name: true, organization: true, clientId: true } },
-						config: {
-							columns: {
-								timezone: true,
-								currency: true,
-								numberingScheme: true,
+							// Included with config data
+							taxRegistration: false,
+							currency: false,
+						},
+						with: {
+							clientData: { columns: { name: true, organization: true, clientId: true } },
+							config: {
+								columns: {
+									timezone: true,
+									currency: true,
+									numberingScheme: true,
+								},
 							},
 						},
 					},
 				},
-			},
-			orderBy: { issuedAt: 'desc' },
-			limit: opts?.limit,
-			offset: opts?.offset,
-		}),
-	).then(res =>
-		res.map(({ documentWithSum, ...inv }) => ({
-			...documentWithSum,
-			...inv,
-			createdAt: documentWithSum.createdAt.toISOString(),
-			reference: invoiceReference(inv, documentWithSum.config.numberingScheme),
-		})),
+				orderBy: mergeOrderBy(opts.orderBy, { issuedAt: 'desc', id: 'desc' }),
+				limit: opts.limit,
+				offset: opts.offset,
+			})
+			.then(res =>
+				res.map(({ documentWithSum, ...inv }) => ({
+					...documentWithSum,
+					...inv,
+					createdAt: documentWithSum.createdAt.toISOString(),
+					reference: invoiceReference(inv, documentWithSum.config.numberingScheme),
+				})),
+			),
 	);
 }
 
-/** Fetch all invoices for a given client. Accepts logical client ID, not SCD ID. */
-export const fetchInvoicesForClient = (clientId: string, limit?: number) =>
-	fetchInvoices({ clientData: { client: { id: { eq: clientId } } } }, { limit });
+/** Fetches invoices for a given client. Accepts logical client ID, not SCD ID. */
+export const fetchInvoicesForClient = (clientId: string, limit: number) =>
+	fetchInvoices({
+		where: { documentWithSum: { clientData: { client: { id: { eq: clientId } } } } },
+		limit,
+	});
 
 /** Count invoices for the authenticated user, optionally filtered by client */
 export const countInvoices = (clientId?: string) =>

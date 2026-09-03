@@ -1,36 +1,34 @@
-import { and, count, eq, getColumns, isNull, type RelationsFilter, type SQL } from 'drizzle-orm';
+import { and, count, EmptyFilter, eq, getColumns, isNull, type SQL } from 'drizzle-orm';
 import { QueryBuilder } from 'drizzle-orm/pg-core';
 import { getRegisteredCountries } from 'lib-address';
 import { notFound, unstable_rethrow } from 'next/navigation';
 
 import { type Client } from '@/api/dto/client';
+import { type FetchOptions } from '@/lib/data/helpers';
 import { fetchStats } from '@/lib/data/invoice/stats';
 import { crypto } from '@/lib/encrypt';
 import { fetchAddressMetadata, formatAddress } from '@/lib/utils/address';
-import { coalesce } from '@/lib/utils/drizzle';
+import { coalesce, mergeOrderBy } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
 import { type relations } from '@/db/relations';
 import * as schema from '@/db/schema';
 
 export type ClientData = Client['data'];
 
-export async function fetchClient(id: string) {
-	const clients = await fetchClients(
-		{ id: { eq: id }, isDeleted: { eq: undefined } },
-		{ limit: 1 },
-	);
-	if (!clients[0]) notFound();
-	return clients[0];
+/** Fetch one client by id, including soft-deleted clients */
+export async function fetchClient(id: string): Promise<Client> {
+	const [client] = await fetchClients({
+		where: { id: { eq: id }, isDeleted: { eq: EmptyFilter } },
+		limit: 1,
+	});
+	if (!client) notFound();
+	return client;
 }
 
-/** Fetch all clients for authenticated user, or a single client if `id` is provided.
- * @remarks Define `{ limit, offset }` to paginate the list form */
+/** Fetch a list of clients for the authenticated user */
 export async function fetchClients(
-	filter?: RelationsFilter<typeof relations.clients, typeof relations>,
-	opts?: { limit?: number; offset?: number },
-) {
-	const { limit, offset } = opts ?? {};
-
+	opts: FetchOptions<typeof relations.clients>,
+): Promise<Client[]> {
 	try {
 		return await withRLS(async (db, session) => {
 			const res = await db.query.clients.findMany({
@@ -50,30 +48,35 @@ export async function fetchClients(
 				},
 				extras: {
 					/** Includes voided invoices */
-					invoiceCount: (c, { sql }) =>
+					invoiceCount: (client, { sql }) =>
 						sql`(${db
 							.select({ count: count(schema.invoices.id) })
 							.from(schema.clientData)
-							.where(eq(schema.clientData.clientId, c.id))
+							.where(eq(schema.clientData.clientId, client.id))
 							.leftJoin(schema.documents, eq(schema.documents.clientDataId, schema.clientData.id))
 							.leftJoin(schema.invoices, eq(schema.invoices.id, schema.documents.id))}
 						)`.mapWith(Number),
 				},
 				where: {
-					userId: { eq: session.user.id },
-					// Exclude deleted clients, unless requesting a specific id
+					// Exclude deleted clients by default
 					isDeleted: { eq: false },
-					...(filter !== undefined ? filter : {}),
+					...(opts.where ?? {}),
+					userId: { eq: session.user.id },
 				},
-				orderBy: (c, { sql }) =>
-					sql<string>`(${db
-						.select({ name: coalesce(schema.clientData.organization, schema.clientData.name) })
-						.from(schema.clientData)
-						.where(and(eq(schema.clientData.clientId, c.id), isNull(schema.clientData.validTo)))
-						.limit(1)}
-				)`,
-				limit,
-				offset,
+				orderBy: mergeOrderBy(
+					opts.orderBy,
+					(client, { sql }) =>
+						sql<string>`(${db
+							.select({ name: coalesce(schema.clientData.organization, schema.clientData.name) })
+							.from(schema.clientData)
+							.where(
+								and(eq(schema.clientData.clientId, client.id), isNull(schema.clientData.validTo)),
+							)
+							.limit(1)}
+    				)`,
+				),
+				limit: opts.limit,
+				offset: opts.offset,
 			});
 
 			const vault = await crypto(session.user.id);

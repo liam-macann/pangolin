@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
+import { type DBQueryConfigOrderBy, type GetTableViewFieldSelection } from 'drizzle-orm';
 import * as navigation from 'next/navigation';
 import { assert, describe, expect } from 'vitest';
 
-import { updateClientDeleted } from '@/lib/actions/client';
+import { updateClientDeleted, updateClientFavorite } from '@/lib/actions/client';
 import { voidInvoice } from '@/lib/actions/invoice';
 import {
 	addressBuilder,
@@ -38,13 +39,26 @@ describe('fetchClients', () => {
 		await expect(fetchClient(client.id)).resolves.not.toThrow();
 	});
 
-	test('Lists only non-deleted clients', async () => {
-		const kept = await insertTestClient({ name: 'Kept Client' });
-		const deleted = await insertTestClient({ name: 'Deleted Client' });
+	test('Lists only non-deleted clients by default', async () => {
+		const kept = await insertTestClient({ name: 'Marleigh Shimp' });
+		const deleted = await insertTestClient({ name: 'Burdell Maciag' });
 		await updateClientDeleted(deleted.id, true);
 
-		const clients = await fetchClients();
+		const clients = await fetchClients({ limit: 200 });
 		expect(clients.map(c => c.id)).toEqual([kept.id]);
+	});
+
+	test('Lists can request deleted clients', async () => {
+		await insertTestClient({ name: 'Marleigh Shimp' });
+		const deleted = await insertTestClient({ name: 'Burdell Maciag' });
+		await updateClientDeleted(deleted.id, true);
+
+		const clients = await fetchClients({
+			where: { isDeleted: { eq: true } },
+			limit: 200,
+		});
+
+		expect(clients.map(c => c.id)).toEqual([deleted.id]);
 	});
 
 	test('A deleted client can still be fetched directly by id', async () => {
@@ -55,19 +69,53 @@ describe('fetchClients', () => {
 		expect(fetched.isDeleted).toBe(true);
 	});
 
-	test('Orders clients by organization, falling back to personal name', async () => {
-		// Two clients share a null organization, so only a name-based fallback (rather than
-		// nulls-last-by-organization alone) can deterministically place them relative to each other
-		await insertTestClient({ name: 'Zed Person', organization: null });
-		await insertTestClient({ name: 'Alice Person', organization: null });
-		await insertTestClient({ name: 'Yara Person', organization: 'Acme Corp' });
+	describe('orderBy', () => {
+		test('Default orders clients by organization, falling back to personal name', async () => {
+			await insertTestClient({ name: 'Zaria Lemery', organization: null });
+			await insertTestClient({ name: 'Azariyah Radabaugh', organization: null });
+			await insertTestClient({ name: 'Yosselin Rhames', organization: 'Acme Corp' });
 
-		const clients = await fetchClients();
-		expect(clients.map(c => c.data.organization ?? c.data.name)).toEqual([
-			'Acme Corp',
-			'Alice Person',
-			'Zed Person',
-		]);
+			const clients = await fetchClients({ limit: 200 });
+			expect(clients.map(c => c.data.organization ?? c.data.name)).toEqual([
+				'Acme Corp',
+				'Azariyah Radabaugh',
+				'Zaria Lemery',
+			]);
+		});
+
+		test('Allows overriding the orderBy defaults', async () => {
+			const azariyah = await insertTestClient({ name: 'Azariyah Radabaugh' });
+			const zaria = await insertTestClient({ name: 'Zaria Lemery' });
+			await updateClientFavorite(zaria.id, true);
+
+			const clientsDefault = await fetchClients({ limit: 200 });
+			expect(clientsDefault.map(c => c.id)).toEqual([azariyah.id, zaria.id]);
+
+			const clientsOverride = await fetchClients({ limit: 200, orderBy: { isFavorite: 'desc' } });
+			expect(clientsOverride.map(c => c.id)).toEqual([zaria.id, azariyah.id]);
+		});
+
+		test.for<
+			[
+				string,
+				DBQueryConfigOrderBy<
+					typeof tables.clients,
+					GetTableViewFieldSelection<typeof tables.clients>
+				>,
+			]
+		>([
+			['object', { isFavorite: 'desc' }],
+			['callback', (client, { desc }) => desc(client.isFavorite)],
+		])('Allows extending the orderBy defaults with %s-form', async ([_, orderBy]) => {
+			const zaria = await insertTestClient({ name: 'Zaria Lemery' });
+			const azariyah = await insertTestClient({ name: 'Azariyah Radabaugh' });
+			const yosselin = await insertTestClient({ name: 'Yosselin Rhames' });
+			await updateClientFavorite(zaria.id, true);
+			await updateClientFavorite(azariyah.id, true);
+
+			const clients = await fetchClients({ limit: 200, orderBy });
+			expect(clients.map(c => c.id)).toEqual([azariyah.id, zaria.id, yosselin.id]);
+		});
 	});
 
 	test('Decrypts client fields and computes formattedAddress from the decrypted address', async () => {

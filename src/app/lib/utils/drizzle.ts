@@ -1,4 +1,14 @@
-import { type Column, getColumnTable, type SQL, sql } from 'drizzle-orm';
+import {
+	type Column,
+	type DBQueryConfigOrderBy,
+	type DBQueryConfigOrderByCallback,
+	type FieldSelection,
+	getColumnTable,
+	relationsOrderToSQL,
+	type SchemaEntry,
+	type SQL,
+	sql,
+} from 'drizzle-orm';
 import {
 	customType,
 	getTableConfig,
@@ -83,6 +93,26 @@ export function coalesce<Args extends [SqlOrPrimitive, SqlOrPrimitive, ...SqlOrP
 		args.map(a => (typeof a === 'string' ? sql`'${a}'` : sql`${a}`) as AnySql),
 		sql.raw(','),
 	)})`;
+}
+
+/** Accepts an arbitrary number of orderBy parameters, and returns a merged orderBy callback
+ * @remarks Earlier arguments take precedence, as order is preserved in the SQL query
+ */
+export function mergeOrderBy<TTable extends SchemaEntry, TColumns extends FieldSelection>(
+	...orderBys: Array<DBQueryConfigOrderBy<TTable, TColumns> | undefined>
+): DBQueryConfigOrderByCallback<TTable> {
+	return (table, operators) => {
+		return orderBys.flatMap(orderBy => {
+			if (!orderBy) return [];
+
+			const resolved =
+				typeof orderBy === 'function'
+					? orderBy(table, operators)
+					: relationsOrderToSQL(table, orderBy);
+
+			return resolved ?? [];
+		});
+	};
 }
 
 export const encrypted = customType<{

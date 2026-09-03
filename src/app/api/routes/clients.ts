@@ -64,10 +64,7 @@ const getRoute = defineRoute.protected({
 const app = createApiRouter()
 	.get('/', ...listRoute, validator('query', listQuery, validationHook), async c => {
 		const { limit = undefined, offset = undefined } = c.req.valid('query');
-		const [data, total] = await Promise.all([
-			fetchClients(undefined, { limit, offset }),
-			countClients(),
-		]);
+		const [data, total] = await Promise.all([fetchClients({ limit, offset }), countClients()]);
 
 		return c.json({ data, meta: { total, limit, offset } }, 200);
 	})

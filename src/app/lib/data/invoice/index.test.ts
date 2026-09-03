@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { type DBQueryConfigOrderBy, eq, type GetTableViewFieldSelection } from 'drizzle-orm';
 import * as navigation from 'next/navigation';
 import { assert, describe, expect } from 'vitest';
 import { z } from 'zod';
@@ -385,30 +385,91 @@ describe('fetchInvoice', () => {
 	});
 });
 
-describe('fetchInvoices', () => {
-	test('Lists invoices ordered by issued date, descending', async () => {
-		const clientDataId = await setUpConfigAndClient();
-		const first = await insertTestInvoice({
-			clientDataId,
-			issuedAt: new Date('2026-01-01'),
-			items: [{ quantity: 1, unitCost: 100 }],
-		});
-		const second = await insertTestInvoice({
-			clientDataId,
-			issuedAt: new Date('2026-01-02'),
-			items: [{ quantity: 1, unitCost: 100 }],
+describe('fetchInvoices()', () => {
+	describe('orderBy', () => {
+		test('Orders invoices by issued date (descending) by default', async () => {
+			const clientDataId = await setUpConfigAndClient();
+			const first = await insertTestInvoice({
+				clientDataId,
+				issuedAt: new Date('2026-01-01'),
+				items: [{ quantity: 1, unitCost: 100 }],
+			});
+			const second = await insertTestInvoice({
+				clientDataId,
+				issuedAt: new Date('2026-01-02'),
+				items: [{ quantity: 1, unitCost: 100 }],
+			});
+
+			const invoices = await fetchInvoices({ limit: 200 });
+			expect(invoices.map(i => i.id)).toEqual([second, first]);
 		});
 
-		const invoices = await fetchInvoices();
-		expect(invoices.map(i => i.id)).toEqual([second, first]);
+		test('Allows overriding the orderBy defaults', async () => {
+			const clientDataId = await setUpConfigAndClient();
+			const first = await insertTestInvoice({
+				clientDataId,
+				issuedAt: new Date('2026-01-01'),
+			});
+			const second = await insertTestInvoice({
+				clientDataId,
+				issuedAt: new Date('2026-01-02'),
+			});
+
+			const invoicesDefault = await fetchInvoices({ limit: 200 });
+			expect(invoicesDefault.map(i => i.id)).toEqual([second, first]);
+
+			const invoicesOverride = await fetchInvoices({ limit: 200, orderBy: { issuedAt: 'asc' } });
+			expect(invoicesOverride.map(i => i.id)).toEqual([first, second]);
+		});
+
+		test.for<
+			[
+				string,
+				DBQueryConfigOrderBy<
+					typeof tables.invoices,
+					GetTableViewFieldSelection<typeof tables.invoices>
+				>,
+			]
+		>([
+			['object', { dueAt: 'asc' }],
+			['callback', (invoice, { asc }) => asc(invoice.dueAt)],
+		])('Allows extending the orderBy defaults with %s-form', async ([_, orderBy]) => {
+			const clientDataId = await setUpConfigAndClient();
+
+			const first = await insertTestInvoice({
+				clientDataId,
+				issuedAt: new Date('2026-01-01'),
+				dueAt: new Date('2026-02-03'),
+			});
+			const second = await insertTestInvoice({
+				clientDataId,
+				issuedAt: new Date('2026-01-02'),
+				dueAt: new Date('2026-02-02'),
+			});
+			const third = await insertTestInvoice({
+				clientDataId,
+				issuedAt: new Date('2026-01-03'),
+				dueAt: new Date('2026-02-03'),
+			});
+			const fourth = await insertTestInvoice({
+				clientDataId,
+				issuedAt: new Date('2026-01-04'),
+				dueAt: new Date('2026-02-03'),
+			});
+
+			const invoices = await fetchInvoices({ limit: 200, orderBy });
+			// second has earliest due date, and so places first.
+			// fourth, third, and first tie; order is resolved by fallback issuedAt 'desc'
+			expect(invoices.map(i => i.id)).toEqual([second, fourth, third, first]);
+		});
 	});
 
-	test('Respects the limit parameter', async () => {
+	test('Respects the limit option', async () => {
 		const clientDataId = await setUpConfigAndClient();
 		await insertTestInvoice({ clientDataId, items: [{ quantity: 1, unitCost: 100 }] });
 		await insertTestInvoice({ clientDataId, items: [{ quantity: 1, unitCost: 100 }] });
 
-		const invoices = await fetchInvoices(undefined, { limit: 1 });
+		const invoices = await fetchInvoices({ limit: 1 });
 		expect(invoices).toHaveLength(1);
 	});
 
@@ -416,7 +477,8 @@ describe('fetchInvoices', () => {
 		const clientDataId = await setUpConfigAndClient();
 		await insertTestInvoice({ clientDataId, items: [{ quantity: 1, unitCost: 100 }] });
 
-		const [invoice] = await fetchInvoices();
+		const invoices = await fetchInvoices({ limit: 200 });
+		const [invoice] = invoices;
 		expect(invoice.reference).toBe('INV-001');
 	});
 
@@ -425,12 +487,14 @@ describe('fetchInvoices', () => {
 		await insertTestInvoice({ clientDataId, items: [{ quantity: 1, unitCost: 100 }] });
 
 		const otherSession = await createTestSession(db, auth);
-		const otherInvoices = await sessionStorage.run(otherSession, () => fetchInvoices());
+		const otherInvoices = await sessionStorage.run(otherSession, () =>
+			fetchInvoices({ limit: 200 }),
+		);
 		expect(otherInvoices).toEqual([]);
 	});
 });
 
-describe('fetchInvoicesForClient', () => {
+describe('fetchInvoicesForClient()', () => {
 	test('Scopes invoices to the given client only', async () => {
 		await insertTestConfig();
 		const clientA = await insertTestClient();
@@ -445,7 +509,7 @@ describe('fetchInvoicesForClient', () => {
 			items: [{ quantity: 1, unitCost: 50 }],
 		});
 
-		const invoices = await fetchInvoicesForClient(clientA.id);
+		const invoices = await fetchInvoicesForClient(clientA.id, 200);
 		expect(invoices.map(i => i.id)).toEqual([invoiceA]);
 	});
 });
