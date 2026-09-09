@@ -1,9 +1,9 @@
 import { resolver } from 'hono-openapi';
 import { z } from 'zod';
 
-import { problems } from '@/api/errors';
+import { problemContract, problems } from '@/api/errors';
 
-import { createApiRouter, defineRoute, problemContract } from './shared';
+import { createApiRouter, defineRoute } from './shared';
 
 const MAX_BODY_BYTES = 5 * 1024 * 1024;
 
@@ -22,19 +22,18 @@ function isAllowedAvatarUrl(raw: string): boolean {
 const route = defineRoute.protected({
 	tags: ['Avatar'],
 	operationId: 'getAvatar',
-	description: "Return the current user's avatar image.",
+	description: 'Return an avatar image for the current user.',
 	responses: {
 		200: {
-			content: {
-				'image/*': {
-					schema: resolver(z.file().max(MAX_BODY_BYTES)),
-				},
-			},
-			description: "Return the current user's avatar image.",
+			content: { 'image/*': { schema: resolver(z.file().max(MAX_BODY_BYTES)) } },
+			description: 'Return an avatar image for the current user.',
 		},
 		204: { description: 'The current user does not have an avatar image.' },
 		...problemContract({
-			502: 'The avatar image could not be retrieved from the upstream provider.',
+			502: {
+				description: 'The avatar image could not be retrieved from the upstream provider.',
+				problems: ['UPSTREAM_UNAVAILABLE'],
+			},
 		}),
 	},
 });

@@ -1,11 +1,9 @@
 import { Hono } from 'hono';
-import { type DescribeRouteOptions, describeRoute, resolver } from 'hono-openapi';
-import { problemDetails } from 'hono-problem-details';
+import { type DescribeRouteOptions, describeRoute } from 'hono-openapi';
 import { standardSchemaProblemHook } from 'hono-problem-details/standard-schema';
 import { z } from 'zod';
 
-import { ProblemDetails } from '@/api/errors';
-import { type ProblemKey, type ProblemStatus, problems } from '@/api/errors/registry';
+import { problemContract } from '@/api/errors/contract';
 import { type Env, requireAuth } from '@/api/middleware';
 
 export const createApiRouter = () => new Hono<Env>();
@@ -17,7 +15,12 @@ export const defineRoute = {
 				...config,
 				security: [{ SessionCookie: [] }],
 				responses: {
-					...Object.fromEntries([toEntry('UNAUTHORIZED', 'Authentication required.')]),
+					...problemContract({
+						401: {
+							description: 'Authentication is required.',
+							problems: ['UNAUTHORIZED'],
+						},
+					}),
 					...config.responses,
 				},
 			}),
@@ -45,54 +48,3 @@ export const paginationSchema = z.object({
 			examples: [0],
 		}),
 });
-
-const problemDetailsResponse = (status: number, description?: string, schema = ProblemDetails) => ({
-	content: {
-		'application/problem+json': {
-			schema: resolver(schema),
-		},
-	},
-	description: description ?? `HTTP ${status} error.`,
-});
-
-type ProblemDetailsOpenAPI = ReturnType<typeof problemDetailsResponse>;
-
-/** Resolves a ProblemKey to HTTP status code, allowing numeric codes to fall through */
-type ProblemStatusOf<K extends PropertyKey> = K extends number
-	? K
-	: K extends ProblemKey
-		? ProblemStatus<K>
-		: never;
-
-/** Renames each input key to resolved status code, mapping to a response */
-type ProblemMap<T> = { [K in keyof T as ProblemStatusOf<K>]: ProblemDetailsOpenAPI };
-
-/** Allows specifying problem errors from the registry, alongside a route-specific description
- * @remarks Includes middleware responses by default
- */
-export const problemContract = <T extends Partial<Record<ProblemKey | number, string>>>(
-	entries: T,
-) => {
-	return Object.fromEntries([
-		toEntry(500, 'Unexpected server error.'),
-
-		...Object.keys(entries).map(rawKey => {
-			const key = /^\d+$/.test(rawKey) ? Number(rawKey) : (rawKey as ProblemKey);
-			return toEntry(key, entries[rawKey as keyof T] as string | undefined);
-		}),
-	]) as ProblemMap<T>;
-};
-
-const toEntry = (key: ProblemKey | number, description?: string) => {
-	const example =
-		typeof key === 'number' ? problemDetails({ status: key }).problemDetails : problems.get(key);
-
-	return [
-		example.status,
-		problemDetailsResponse(
-			example.status,
-			description,
-			ProblemDetails.meta({ title: 'ProblemDetails', examples: [example] }),
-		),
-	];
-};

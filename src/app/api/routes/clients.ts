@@ -2,15 +2,10 @@ import { resolver, validator } from 'hono-openapi';
 import { z } from 'zod';
 
 import { Client } from '@/api/dto/client';
+import { problemContract } from '@/api/errors';
 import { countClients, fetchClient, fetchClients } from '@/lib/data/client';
 
-import {
-	createApiRouter,
-	defineRoute,
-	paginationSchema,
-	problemContract,
-	validationHook,
-} from './shared';
+import { createApiRouter, defineRoute, paginationSchema, validationHook } from './shared';
 
 const listQuery = paginationSchema.omit({ total: true }).strict();
 const listRoute = defineRoute.protected({
@@ -32,7 +27,10 @@ const listRoute = defineRoute.protected({
 			description: 'List the current user’s clients.',
 		},
 		...problemContract({
-			422: 'Invalid query parameters.',
+			422: {
+				description: 'Invalid query parameters.',
+				problems: [422],
+			},
 		}),
 	},
 });
@@ -55,8 +53,14 @@ const getRoute = defineRoute.protected({
 			description: 'Return the requested client.',
 		},
 		...problemContract({
-			NOT_FOUND: 'The requested client was not found.',
-			422: 'The client identifier is invalid.',
+			404: {
+				description: 'The requested client was not found.',
+				problems: ['NOT_FOUND'],
+			},
+			422: {
+				description: 'The client identifier is invalid.',
+				problems: [422],
+			},
 		}),
 	},
 });

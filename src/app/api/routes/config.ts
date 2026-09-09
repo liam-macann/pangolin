@@ -2,9 +2,10 @@ import { resolver } from 'hono-openapi';
 import { z } from 'zod';
 
 import { Config } from '@/api/dto/config';
+import { problemContract } from '@/api/errors';
 import { fetchConfig } from '@/lib/data';
 
-import { createApiRouter, defineRoute, problemContract } from './shared';
+import { createApiRouter, defineRoute } from './shared';
 
 const route = defineRoute.protected({
 	tags: ['Config'],

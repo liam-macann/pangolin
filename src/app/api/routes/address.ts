@@ -1,12 +1,11 @@
 import { resolver, validator } from 'hono-openapi';
-import { isValidCountryCode } from 'lib-address';
 import { z } from 'zod';
 
 import { AddressMetadata, country } from '@/api/dto/address';
-import { problems } from '@/api/errors';
+import { problemContract } from '@/api/errors';
 import { fetchAddressMetadata } from '@/lib/utils/address';
 
-import { createApiRouter, defineRoute, problemContract, validationHook } from './shared';
+import { createApiRouter, defineRoute, validationHook } from './shared';
 
 const params = z.object({
 	country: country.meta({
@@ -27,8 +26,10 @@ const route = defineRoute.public({
 			description: 'Return address format metadata for a country.',
 		},
 		...problemContract({
-			INVALID_COUNTRY: 'The country code is invalid.',
-			422: 'An invalid country code was provided.',
+			422: {
+				description: 'The country code parameter is invalid.',
+				problems: [422],
+			},
 		}),
 	},
 });
@@ -39,9 +40,6 @@ const app = createApiRouter().get(
 	validator('param', params, validationHook),
 	async c => {
 		const { country } = c.req.valid('param');
-		if (!isValidCountryCode(country)) {
-			throw problems.create('INVALID_COUNTRY');
-		}
 
 		const data = await fetchAddressMetadata(country);
 		c.header('Cache-Control', `public, max-age=${86400 * 2}, stale-while-revalidate=${86400 * 7}`);

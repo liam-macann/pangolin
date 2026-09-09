@@ -2,15 +2,10 @@ import { resolver, validator } from 'hono-openapi';
 import { z } from 'zod';
 
 import { Invoice } from '@/api/dto/invoice';
+import { problemContract } from '@/api/errors';
 import { countInvoices, fetchInvoices } from '@/lib/data/invoice';
 
-import {
-	createApiRouter,
-	defineRoute,
-	paginationSchema,
-	problemContract,
-	validationHook,
-} from './shared';
+import { createApiRouter, defineRoute, paginationSchema, validationHook } from './shared';
 
 const query = z
 	.object({
@@ -43,7 +38,12 @@ const route = defineRoute.protected({
 			},
 			description: 'List invoices, optionally filtered by client.',
 		},
-		...problemContract({ 422: 'Invalid query parameters.' }),
+		...problemContract({
+			422: {
+				description: 'Invalid query parameters.',
+				problems: [422],
+			},
+		}),
 	},
 });
 

@@ -1,9 +1,10 @@
 import { resolver } from 'hono-openapi';
 import { z } from 'zod';
 
+import { problemContract } from '@/api/errors';
 import { apiDocsPath, documentConfig } from '@/api/openapi';
 
-import { createApiRouter, defineRoute, problemContract } from './shared';
+import { createApiRouter, defineRoute } from './shared';
 
 const rootRoute = defineRoute.public({
 	tags: ['Meta'],

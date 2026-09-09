@@ -28,10 +28,10 @@ export const registry = {
 		status: 502,
 		title: 'Upstream Unavailable',
 	},
-	INVALID_COUNTRY: {
-		type: `${PROBLEM_BASE}/invalid_country`,
-		status: 400,
-		title: 'Invalid Country Code',
+	INVALID_CURSOR: {
+		type: `${PROBLEM_BASE}/invalid_cursor`,
+		status: 422,
+		title: 'Invalid Pagination Cursor',
 	},
 } as const;
 
