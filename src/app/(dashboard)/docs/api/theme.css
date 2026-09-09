@@ -1,10 +1,12 @@
 @reference "../../../ui/global.css";
 
 /* Scalar injects its full stylesheet during hydration. ID selector is required to over-specify */
-#scalar-api-reference {
+#scalar-api-reference,
+.scalar-app {
 	/* ==========================================================================
 	   Tokens
 	   ========================================================================== */
+	&,
 	&.light-mode,
 	&.dark-mode,
 	& .light-mode,
@@ -49,7 +51,7 @@
 
 		--scalar-tooltip-background: var(--popover);
 		--scalar-tooltip-color: var(--popover-foreground);
-		--scalar-radius: var(--radius);
+		--scalar-radius: calc(var(--radius) / 2);
 		--scalar-font: var(--font-sans);
 
 		--scalar-border-width: 1px;
@@ -128,6 +130,10 @@
 			align-items: center;
 		}
 
+		.security-requirement-badge {
+			padding: 0 !important;
+		}
+
 		/* Shared button component base */
 		.scalar-button,
 		.show-api-client-button,
@@ -146,15 +152,14 @@
 			}
 
 			/* Ghost variant */
-			&.scalar-button-ghost,
+			&.scalar-button-ghost:not(.collapsible-section-trigger &),
 			&.group\/copy-label {
 				@apply border border-transparent text-accent-foreground not-disabled:hover:bg-accent focus-visible:border-ring aria-expanded:bg-muted aria-expanded:text-foreground;
-			}
 
-			/* Secondary variant */
-			&.security-requirement-badge[aria-haspopup] {
-				@apply border border-secondary-foreground/2 bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary-2 focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%];
-				@apply aria-expanded:bg-secondary aria-expanded:text-secondary-foreground;
+				.scalar-card-header &,
+				.scalar-card-footer & {
+					@apply px-1.5 -mx-1.5;
+				}
 			}
 
 			/* Primary variant */
@@ -194,9 +199,15 @@
 			@apply rounded-md bg-popover text-popover-foreground shadow-md ring-1 ring-border;
 		}
 
+		.property-detail + .property-detail::before {
+			/* The default "·" character does not match what is used for interpolated strings (eg. for contentEncoding) */
+			content: "•";
+		}
+
 		/* OpenAPI Examples, Defaults */
 		.property-default-label,
-		.property-example {
+		.property-example,
+		.property-pattern {
 			@apply underline decoration-dotted underline-offset-2 decoration-1;
 
 			/* 'Default' has border-based underline that does not match 'Example' */
@@ -206,13 +217,15 @@
 
 			/* Popover */
 			.property-example-value-list,
-			.property-default-value-list {
+			.property-default-value-list,
+			.property-pattern-popup {
 				gap: 0;
-				@apply p-1;
+				@apply p-1 no-underline;
 
 				.property-example-value,
-				.property-default-value {
-					@apply rounded-sm;
+				.property-default-value,
+				.property-pattern-value {
+					@apply rounded-sm *:text-xs *:text-foreground items-center;
 
 					&:first-of-type {
 						@apply inset-shadow-xs;
