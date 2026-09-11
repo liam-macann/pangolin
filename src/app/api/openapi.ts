@@ -28,16 +28,22 @@ const getZodChecks = (schema: $ZodType) => {
 const hasExplicitCheck = (schema: $ZodType, target: ZodCheckType) =>
 	getZodChecks(schema).some(check => check._zod.def.check === target);
 
-/** Checks whether a schema has an explicit regular-expression check */
-const hasExplicitRegex = (schema: $ZodType) =>
-	getZodChecks(schema).some(check => {
+/** Returns the RegEx patterns from explicit chained checks */
+const getExplicitPatterns = (schema: $ZodType) =>
+	getZodChecks(schema).flatMap(check => {
 		const { def } = check._zod;
-		return def.check === 'string_format' && 'format' in def && def.format === 'regex';
+		return 'pattern' in def && def.pattern instanceof RegExp ? [def.pattern.source] : [];
 	});
 
-/** Identifies formats whose intrinsic regex is redundant in OpenAPI */
-const hasIntrinsicPatternFormat = (format: string | undefined) =>
-	format && new Set(['uuid', 'email', 'date', 'datetime', 'date-time']).has(format);
+/** Identifies Zod types whose intrinsic regex is redundant in OpenAPI
+ * @param format The Zod def.format, not generated OpenAPI format */
+const hasIntrinsicPattern = (format: string | undefined) =>
+	format && new Set(['uuid', 'email', 'date', 'datetime', 'base64', 'base64url']).has(format);
+
+/** Identifies Zod formats represented by contentEncoding rather than OpenAPI format.
+ * @param format The Zod def.format, not generated OpenAPI format */
+const isContentEncodingFormat = (format: string | undefined) =>
+	format && new Set(['base64', 'base64url']).has(format);
 
 /** Creates the Zod JSON Schema override used by the OpenAPI vendor loader. */
 const composeZodOverride = (existing: unknown): JSONSchemaGeneratorParams['override'] => {
@@ -55,21 +61,24 @@ const composeZodOverride = (existing: unknown): JSONSchemaGeneratorParams['overr
 			if (!hasExplicitCheck(context.zodSchema, 'less_than')) delete context.jsonSchema.maximum;
 		}
 
-		if ('format' in def && hasIntrinsicPatternFormat(def.format)) {
-			context.jsonSchema.format = def.format === 'datetime' ? 'date-time' : def.format;
+		if ('format' in def && hasIntrinsicPattern(def.format)) {
+			// We don't need to define both format and contentEncoding.
+			// The upstream Zod behaviour differs depending on chained validators (eg. .regex() removes format)
+			if (isContentEncodingFormat(def.format)) delete context.jsonSchema.format;
+			// We should always define format when stripping intrinsic pattern, else there is no spec constraint
+			// The upstream Zod behaviour differs depending on chained validators (eg. .regex() removes format)
+			// NB: OpenAPI defines 'date-time' not 'datetime' (which Zod uses internally)
+			else context.jsonSchema.format = def.format === 'datetime' ? 'date-time' : def.format;
 
-			if (hasExplicitRegex(context.zodSchema)) {
+			const patterns = getExplicitPatterns(context.zodSchema);
+			if (patterns.length > 0) {
 				// Removes only the intrinsic pattern while retaining explicit regex constraints
-				const { def } = context.zodSchema._zod;
-
-				if (!('pattern' in def)) return;
-				const pattern = def.pattern;
 				const allOf = context.jsonSchema.allOf;
 
-				if (!(pattern instanceof RegExp) || !Array.isArray(allOf)) return;
+				if (!Array.isArray(allOf)) return;
 
 				context.jsonSchema.allOf = allOf.filter(
-					v => typeof v !== 'object' || !v || !('pattern' in v) || v.pattern !== pattern.source,
+					schema => typeof schema.pattern !== 'string' || patterns.includes(schema.pattern),
 				);
 			} else delete context.jsonSchema.pattern;
 		}
@@ -95,7 +104,6 @@ loadVendor('zod', {
 export const apiDocsPath = '/docs/api';
 
 export const documentConfig = {
-	openapi: '3.1.0',
 	info: {
 		title: 'Invoicer API',
 		version: 'unstable_internal',
