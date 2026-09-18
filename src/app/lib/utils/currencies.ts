@@ -1,5 +1,7 @@
 import { currencies as data } from 'countries-list/currencies';
 
+import { formatNumeric, type Numeric } from './numeric';
+
 /** Financial index/accounting units listed as a secondary currency for their country
  *  (eg. Switzerland's CHE/CHW alongside CHF) */
 // biome-ignore format: Best to keep dense
@@ -23,8 +25,10 @@ export const currencies = Object.entries(data)
 	.map(([iso, currency]) => ({ iso, name: currency.name }))
 	.sort((a, b) => a.iso.localeCompare(b.iso));
 
-export const formatCurrency = (amount: number, currency: string, locale: string) =>
-	new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount);
+export const formatCurrency = (amount: Numeric, currency: string, locale: string) => {
+	const formatter = new Intl.NumberFormat(locale, { style: 'currency', currency });
+	return formatNumeric(amount, formatter);
+};
 
 // Using Intl (and not a simple symbol dictionary) allows locale to change display
 // eg. an en-AU locale will not use the dollar sign for USD, which is ambiguous

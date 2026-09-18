@@ -1,5 +1,6 @@
 import { type invoices, type numberingScheme } from '@/db/schema';
 
+import { formatNumeric, type Numeric } from './numeric';
 import { type ElementType } from './type';
 
 export * from './type';
@@ -10,18 +11,17 @@ import { twMerge } from 'tailwind-merge';
 import { type SetOptional, type Simplify } from 'type-fest';
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
-export const formatNumber = (amount: number, locale: string) => {
-	return new Intl.NumberFormat(locale, {
-		style: 'decimal',
-	}).format(amount);
+export const formatNumber = (amount: Numeric, locale: string) => {
+	const formatter = new Intl.NumberFormat(locale, { style: 'decimal' });
+	return formatNumeric(amount, formatter);
 };
 
 /** Converts a user-facing percentage to its stored fractional rate: 15.5 → 0.155 */
-export const percentToRate = (percent: number) => Math.round(percent * 100) / 10_000;
+export const percentToRate = (percent: Numeric) => Math.round(Number(percent) * 100) / 10_000;
 
 /** Converts a fractional rate as stored in the database to user-facing percentage: 0.155 → 15.5.
  * @remarks Rounding to the storage scale avoids floating-point artefacts. */
-export const rateToPercent = (rate: number) => Math.round(rate * 10_000) / 100;
+export const rateToPercent = (rate: Numeric) => Math.round(Number(rate) * 10_000) / 100;
 
 export const invoiceReference = (
 	invoice: Pick<typeof invoices.$inferSelect, 'partition' | 'index'>,
@@ -54,8 +54,8 @@ export function seededRandom(seed: number) {
 // Localisation is irrelevant as we only target English
 const pluralRules = new Intl.PluralRules('en-GB');
 /** Accepts a number, and returns either singular or plural form */
-export function pluralize(count: number, singular: string, plural: string) {
-	const form = pluralRules.select(count);
+export function pluralize(count: Numeric, singular: string, plural: string) {
+	const form = pluralRules.select(Number(count));
 
 	switch (form) {
 		case 'one':

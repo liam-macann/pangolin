@@ -15,6 +15,7 @@ import {
 	type PgChar,
 	PgDialect,
 	type PgEnum,
+	type PgNumeric,
 	type PgText,
 	type PgVarchar,
 } from 'drizzle-orm/pg-core';
@@ -183,4 +184,9 @@ export const getTextColumnBounds = (column: PgChar | PgText | PgVarchar) => {
 			// CHAR length does not impose minimum, but rather pads input to length
 			{ minLength: 0, maxLength: column.length ?? Infinity },
 		);
+};
+
+export const getNumericColumnPrecision = (column: PgNumeric) => {
+	if (typeof column.precision !== 'number') return undefined;
+	return { precision: column.precision, scale: column.scale ?? 0 };
 };

@@ -5,6 +5,7 @@ import {
 	PgCustomColumn,
 	PgDate,
 	PgDateString,
+	PgNumeric,
 	PgText,
 	PgTimestamp,
 	PgTimestampString,
@@ -18,7 +19,7 @@ import { Address } from '@/api/dto/address';
 import { Client } from '@/api/dto/client';
 import { Config } from '@/api/dto/config';
 import { Invoice } from '@/api/dto/invoice';
-import { getTextColumnBounds } from '@/lib/utils/drizzle';
+import { getNumericColumnPrecision, getTextColumnBounds } from '@/lib/utils/drizzle';
 import { collectNodes, getBounds } from '@/lib/zod';
 import * as db from '@/db/schema';
 
@@ -140,6 +141,29 @@ describe('API contract fields are compatible with database storage constraints',
 
 				if (column instanceof PgCustomColumn && column.getSQLType() === 'bytea')
 					return ctx.skip(`${column.name} is encrypted`);
+
+				if (column instanceof PgNumeric) {
+					// We expect NUMERIC to be mapped to NumericString, not a generic z.string()
+					assert(field instanceof z.ZodString, 'Expected numeric string');
+
+					const { maximum } = getBounds(field);
+					assert(Number.isFinite(maximum), 'Missing maximum length on Zod schema');
+
+					const numeric = getNumericColumnPrecision(column);
+					assert(numeric, 'Expected NUMERIC to declare a precision');
+
+					// Scale may be negative
+					const fractionDigits = Math.max(numeric.scale, 0);
+					const integerDigits = Math.max(numeric.precision - numeric.scale, 1);
+
+					const maxLength =
+						integerDigits + // Precision
+						fractionDigits + // Scale
+						(fractionDigits > 0 ? 1 : 0) + // Decimal point
+						1; // Signed bit
+
+					return expect(maximum).toBeGreaterThanOrEqual(maxLength);
+				}
 
 				assert(
 					column instanceof PgChar || column instanceof PgText || column instanceof PgVarchar,

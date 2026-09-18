@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'vitest';
 
-import { invoiceReference, percentToRate, pluralize, rateToPercent } from '@/lib/utils';
+import {
+	formatNumber,
+	invoiceReference,
+	percentToRate,
+	pluralize,
+	rateToPercent,
+} from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils/currencies';
+import { NumericString } from '@/lib/utils/numeric';
 
 describe('invoiceReference', () => {
 	test('Does not allow negative indices', () =>
@@ -39,23 +47,39 @@ describe('Rate/percentage conversions', () => {
 		[0.0825, 8.25],
 		[0, 0],
 		[-2, -200],
-	])('Converts stored rate %s to %s%', ([rate, percent]) =>
-		expect(rateToPercent(rate)).toBe(percent),
-	);
+	])('Converts stored rate %s to %s%', ([rate, percent]) => {
+		expect(rateToPercent(rate)).toBe(percent);
+		expect(rateToPercent(NumericString.parse(rate.toFixed(4)))).toBe(percent);
+	});
 
-	test.for<[rate: number, percent: number]>([
-		[0.155, 15.5],
-		[0.07, 7], // 0.07 * 100 === 7.000000000000001 without rounding
-		[0.0825, 8.25],
+	test.for<[percent: number, rate: number]>([
+		[15.5, 0.155],
+		[7, 0.07],
+		[8.25, 0.0825],
 		[0, 0],
-		[-2, -200],
-	])('Converts stored percent %s to %s%', ([rate, percent]) =>
-		expect(percentToRate(percent)).toBe(rate),
-	);
+		[-200, -2],
+	])('Converts percentage %s% to stored rate %s', ([percent, rate]) => {
+		expect(percentToRate(percent)).toBe(rate);
+		expect(percentToRate(NumericString.parse(percent.toString()))).toBe(rate);
+	});
 
 	test.for([15.5, 7, 0.01, 12.34, 200])('Round-trips %s% through database serialisation', percent =>
 		expect(rateToPercent(percentToRate(percent))).toBe(percent),
 	);
+});
+
+describe('Decimal string formatting', () => {
+	test('Preserves precision beyond the safe integer range', () => {
+		expect(formatNumber('999999999999999.99', 'en-US')).toBe('999,999,999,999,999.99');
+		expect(formatCurrency('999999999999999.99', 'USD', 'en-US')).toBe('$999,999,999,999,999.99');
+	});
+
+	test('Rejects invalid numeric strings', () => {
+		// @ts-expect-error Exercise the runtime guard
+		expect(() => formatNumber('', 'en-US')).toThrow('Invalid numeric value');
+		// @ts-expect-error Exercise the runtime guard
+		expect(() => formatCurrency('not-a-number', 'USD', 'en-US')).toThrow('Invalid numeric value');
+	});
 });
 
 describe('pluralize', () => {
