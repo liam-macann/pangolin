@@ -13,7 +13,7 @@ import * as schema from '@/db/schema';
 
 import { createDocument } from './document';
 
-export async function createInvoice(input: z.infer<typeof zodSchema>) {
+export async function createInvoice(input: z.input<typeof zodSchema>) {
 	// Validate form using Zod
 	const { notes, status, ...invoice } = await zodSchema.parseAsync(input);
 

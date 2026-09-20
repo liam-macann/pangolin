@@ -13,6 +13,7 @@ import {
 	uuid,
 } from 'drizzle-orm/pg-core';
 
+import { type NumericString } from '@/lib/utils/numeric';
 import { users } from '@/db/schema/auth';
 
 import { authUid, policy, relationOwnership } from './_helpers';
@@ -33,12 +34,13 @@ export const lineItems = snakeCase.table(
 		/** Optional information to describe the item */
 		note: text(),
 
-		quantity: numeric({ precision: 8, scale: 2, mode: 'number' }).notNull(),
+		quantity: numeric({ precision: 8, scale: 2, mode: 'string' }).$type<NumericString>().notNull(),
 		/** Unit by which quantity is measured. Unitless quantities are valid (eg. 3 hours; 6; 1 item) */
 		unit: unitEnum(),
-		unitCost: numeric({ precision: 12, scale: 4, mode: 'number' }).notNull(),
+		unitCost: numeric({ precision: 12, scale: 4, mode: 'string' }).$type<NumericString>().notNull(),
 
-		netAmount: numeric({ precision: 19, scale: 4, mode: 'number' })
+		netAmount: numeric({ precision: 19, scale: 4, mode: 'string' })
+			.$type<NumericString>()
 			.generatedAlwaysAs((): SQL => sql`${lineItems.quantity} * ${lineItems.unitCost}`)
 			.notNull(),
 

@@ -8,7 +8,7 @@ import { document as zodSchema } from '@/lib/validation/document';
 import { withRLS } from '@/db';
 import * as schema from '@/db/schema';
 
-export async function createDocument(input: z.infer<typeof zodSchema>) {
+export async function createDocument(input: z.input<typeof zodSchema>) {
 	// Validate input using Zod
 	const { items, ...document } = await zodSchema.parseAsync(input);
 

@@ -1,6 +1,7 @@
 import { createInsertSchema } from 'drizzle-orm/zod';
 import z from 'zod/v4';
 
+import { NumericString } from '@/lib/utils/numeric';
 import { intlNumber } from '@/lib/zod';
 import * as schema from '@/db/schema/data';
 
@@ -13,14 +14,28 @@ const item = createInsertSchema(schema.lineItems, {
 		.optional(),
 	quantity: s =>
 		intlNumber(
-			z.number().min(0, 'Enter a valid quantity').max(10000, 'Too large'),
+			z
+				.number()
+				.multipleOf(0.01, 'Too many decimals')
+				.min(0, 'Enter a valid quantity')
+				.max(10000, 'Too large'),
 			'Enter quantity',
-		).pipe(s),
+		)
+			.transform(value => value.toFixed(2))
+			.pipe(s)
+			.pipe(NumericString),
 	unitCost: s =>
 		intlNumber(
-			z.number('Enter a valid cost').min(-1000000, 'Too small').max(1000000, 'Too large'),
+			z
+				.number('Enter a valid cost')
+				.multipleOf(0.0001, 'Too many decimals')
+				.min(-1000000, 'Too small')
+				.max(1000000, 'Too large'),
 			'Enter cost',
-		).pipe(s),
+		)
+			.transform(value => value.toFixed(4))
+			.pipe(s)
+			.pipe(NumericString),
 })
 	.pick({
 		label: true,

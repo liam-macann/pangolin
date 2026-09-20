@@ -159,9 +159,9 @@ function LineItemsInput({
 		append({
 			label: '',
 			note: '',
-			quantity: '' as unknown as number, // Input condition satisfied, and we want to init empty values
+			quantity: '',
 			unit: null,
-			unitCost: '' as unknown as number, // Input condition satisfied, and we want to init empty values
+			unitCost: '',
 			taxes: config.taxRegistration ? new Set(config.taxes.map(tax => tax.id)) : new Set(),
 		});
 

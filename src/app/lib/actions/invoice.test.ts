@@ -123,7 +123,7 @@ describe('createInvoice', () => {
 			status: { status: 'unpaid', isVoid: false },
 		});
 		expect(record?.items).toHaveLength(1);
-		expect(record?.items[0]).toMatchObject({ label: 'Consulting services', quantity: 2 });
+		expect(record?.items[0]).toMatchObject({ label: 'Consulting services', quantity: '2.00' });
 	});
 
 	test('Links items to taxes when the config is tax-registered', async ({ session }) => {

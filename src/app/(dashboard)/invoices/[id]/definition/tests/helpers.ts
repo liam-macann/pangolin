@@ -46,10 +46,10 @@ export const invoiceDataBuilder = (data?: PartialDeep<InvoicePrintData>): Invoic
 	const baseItem: Minimized<ElementType<InvoicePrintData['items']>> = {
 		label: 'Development',
 		note: null,
-		quantity: 10,
+		quantity: '10.00',
 		unit: null,
-		unitCost: 100,
-		netAmount: 1000,
+		unitCost: '100.0000',
+		netAmount: '1000.0000',
 		taxes: [],
 	};
 

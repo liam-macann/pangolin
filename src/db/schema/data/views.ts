@@ -23,9 +23,9 @@ export const itemsWithTax = snakeCase
 				taxRegistration: config.taxRegistration,
 				/** @remarks This can safely be used regardless of tax registration. Unregistered taxes will not be applied. */
 				grossAmount:
-					sql`((1 + COALESCE(${sum(taxes.rate)} * ${config.taxRegistration}::INT, 0)) * ${lineItems.netAmount})::NUMERIC(19, 4)`.as(
-						'gross_amount',
-					),
+					sql`((1 + COALESCE(${sum(taxes.rate)} * ${config.taxRegistration}::INT, 0)) * ${lineItems.netAmount})::NUMERIC(19, 4)`
+						.mapWith(lineItems.netAmount)
+						.as('gross_amount'),
 			})
 			.from(lineItems)
 			.leftJoin(itemTaxes, eq(itemTaxes.itemId, lineItems.id))

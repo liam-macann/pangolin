@@ -188,7 +188,7 @@ describe('fetchInvoice', () => {
 			'Calculates item gross amount correctly: %s',
 			async ([, { unitCost, rates, expectedGross }]) => {
 				const invoice = await itemGrossAmount(unitCost, rates);
-				expect(invoice.items[0].grossAmount).toBe(expectedGross);
+				expect(invoice.items[0].grossAmount).toBe(expectedGross.toFixed(4));
 				expect(invoice.grossTotal).toBe(expectedGross);
 			},
 		);

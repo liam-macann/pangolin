@@ -2,6 +2,7 @@ import { assert, describe, expect, test } from 'vitest';
 
 import { formatCurrency } from '@/lib/utils/currencies';
 import { type Enum } from '@/lib/utils/drizzle';
+import { type NumericString } from '@/lib/utils/numeric';
 import { type unitEnum } from '@/db/schema/data/line-items';
 
 import { lineItemsTable } from './line-items';
@@ -129,11 +130,11 @@ describe('lineItemsTable', () => {
 	});
 
 	describe('Quantity pluralization', () => {
-		test.for<{ qty: number; unit: Enum<typeof unitEnum>; expected: string }>([
-			{ qty: 1, unit: 'hours', expected: '1 hour' },
-			{ qty: 2, unit: 'hours', expected: '2 hours' },
-			{ qty: 1, unit: 'items', expected: '1 item' },
-			{ qty: 3.2, unit: 'items', expected: '3.2 items' },
+		test.for<{ qty: NumericString; unit: Enum<typeof unitEnum>; expected: string }>([
+			{ qty: '1', unit: 'hours', expected: '1 hour' },
+			{ qty: '2', unit: 'hours', expected: '2 hours' },
+			{ qty: '1', unit: 'items', expected: '1 item' },
+			{ qty: '3.2', unit: 'items', expected: '3.2 items' },
 		] as const)('$qty unit=$unit renders as $expected', ({ qty, unit, expected }) => {
 			const { table } = lineItemsTable(invoiceDataBuilder({ items: [{ quantity: qty, unit }] }));
 			expect(renderText(table.body[table.headerRows ?? 0][1])).toBe(expected);
@@ -141,7 +142,7 @@ describe('lineItemsTable', () => {
 
 		test('Unit label is omitted when unit is unset', () => {
 			const { table } = lineItemsTable(
-				invoiceDataBuilder({ items: [{ quantity: 5, unit: null }] }),
+				invoiceDataBuilder({ items: [{ quantity: '5', unit: null }] }),
 			);
 			expect(renderText(table.body[table.headerRows ?? 0][1])).toBe('5');
 		});
@@ -150,7 +151,7 @@ describe('lineItemsTable', () => {
 	test('Each and amount cells render the formatted currency values', () => {
 		const invoice = invoiceDataBuilder({
 			config: { taxRegistration: false, currency: 'AUD', locale: 'en-AU' },
-			items: [{ unitCost: 149.9, netAmount: 299.8 }],
+			items: [{ unitCost: '149.9', netAmount: '299.8' }],
 		});
 
 		const { table } = lineItemsTable(invoice);

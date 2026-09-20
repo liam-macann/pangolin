@@ -1,18 +1,19 @@
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
-import { type AnyPgColumn, PgNumericNumber } from 'drizzle-orm/pg-core';
+import { type AnyPgColumn, PgNumeric } from 'drizzle-orm/pg-core';
 import { assert, describe, expect } from 'vitest';
 
 import { insertTestClient, insertTestConfig } from '@/lib/actions/tests/helpers';
+import { type Numeric, NumericString } from '@/lib/utils/numeric';
 import { withRLS } from '@/db';
 import * as schema from '@/db/schema';
 
 import { asUser as test } from '@/test/session';
 
 /** Largest absolute value a Drizzle NUMERIC column can store, read off its own precision and scale */
-function numericColumnBounds(column: AnyPgColumn<{ dataType: 'number' }>) {
+function numericColumnBounds(column: AnyPgColumn<{ dataType: 'number' | 'string numeric' }>) {
 	assert(
-		column instanceof PgNumericNumber && typeof column.precision === 'number',
+		column instanceof PgNumeric && typeof column.precision === 'number',
 		'Expected a NUMERIC column with a declared precision',
 	);
 	const scale = column.scale ?? 0;
@@ -23,7 +24,7 @@ const quantityBounds = numericColumnBounds(schema.lineItems.quantity);
 const unitCostBounds = numericColumnBounds(schema.lineItems.unitCost);
 
 /** Bypasses app-level validation to directly insert a config, a client, and invoice with items */
-async function createTestInvoice({ items }: { items: { quantity: number; unitCost: number }[] }) {
+async function createTestInvoice({ items }: { items: { quantity: Numeric; unitCost: Numeric }[] }) {
 	const configId = await insertTestConfig();
 
 	return withRLS(async (db, session) => {
@@ -57,8 +58,8 @@ async function createTestInvoice({ items }: { items: { quantity: number; unitCos
 				id: randomUUID(),
 				documentId: invoice.id,
 				label: 'Item',
-				quantity: item.quantity,
-				unitCost: item.unitCost,
+				quantity: NumericString.parse(item.quantity.toString()),
+				unitCost: NumericString.parse(item.unitCost.toString()),
 				configId,
 				userId: session.user.id,
 			})),
@@ -81,6 +82,6 @@ describe('Invoice item numeric bounds', () => {
 				.where(eq(schema.itemsWithTax.documentId, invoiceId)),
 		);
 
-		expect(item.netAmount).toBe(quantityBounds.maxValue * unitCostBounds.maxValue);
+		expect(item.netAmount).toBe((quantityBounds.maxValue * unitCostBounds.maxValue).toFixed(4));
 	});
 });
