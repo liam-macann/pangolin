@@ -163,9 +163,9 @@ describe('fetchStats', () => {
 		expect(stats.totals).toEqual([
 			expect.objectContaining({
 				currency: 'AUD',
-				netSum: expected.netSum,
-				grossSum: expected.grossSum,
-				grossOutstanding: expected.grossOutstanding,
+				netSum: expected.netSum.toFixed(4),
+				grossSum: expected.grossSum.toFixed(4),
+				grossOutstanding: expected.grossOutstanding.toFixed(4),
 			}),
 		]);
 	});
@@ -191,15 +191,15 @@ describe('fetchStats', () => {
 			expect.arrayContaining([
 				expect.objectContaining({
 					currency: 'AUD',
-					netSum: 100,
-					grossSum: 100,
-					grossOutstanding: 100,
+					netSum: '100.0000',
+					grossSum: '100.0000',
+					grossOutstanding: '100.0000',
 				}),
 				expect.objectContaining({
 					currency: 'USD',
-					netSum: 50,
-					grossSum: 50,
-					grossOutstanding: 50,
+					netSum: '50.0000',
+					grossSum: '50.0000',
+					grossOutstanding: '50.0000',
 				}),
 			]),
 		);

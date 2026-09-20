@@ -126,7 +126,9 @@ async function SummaryCards({
 						</span>
 					)
 				}
-				className={cn(stats.totals && stats.totals[0].grossOutstanding > 0 && 'text-destructive')}
+				className={cn(
+					stats.totals && Number(stats.totals[0].grossOutstanding) > 0 && 'text-destructive',
+				)}
 			>
 				{stats.totals
 					? formatCurrency(

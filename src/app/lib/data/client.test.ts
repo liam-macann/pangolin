@@ -201,9 +201,9 @@ describe('fetchClientStats', () => {
 		expect(stats.totals).toEqual([
 			expect.objectContaining({
 				currency: 'AUD',
-				netSum: 100,
-				grossSum: 100,
-				grossOutstanding: 100,
+				netSum: '100.0000',
+				grossSum: '100.0000',
+				grossOutstanding: '100.0000',
 			}),
 		]);
 	});

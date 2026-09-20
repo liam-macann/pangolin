@@ -1,13 +1,28 @@
-import { and, countDistinct, desc, eq, getColumns, isNotNull, max, ne, sum } from 'drizzle-orm';
+import {
+	and,
+	countDistinct,
+	desc,
+	eq,
+	getColumns,
+	isNotNull,
+	max,
+	ne,
+	type SQL,
+	sql,
+	sum,
+} from 'drizzle-orm';
 import { QueryBuilder } from 'drizzle-orm/pg-core';
 
 import { coalesce, jsonbAgg, jsonbBuildObject, withFilter } from '@/lib/utils/drizzle';
+import { type NumericString } from '@/lib/utils/numeric';
 import { withRLS } from '@/db';
 import * as schema from '@/db/schema';
 
 import { type Session } from '@/auth';
 
 import { query } from './../helpers';
+
+const toNumericString = (value: SQL.Aliased | SQL) => sql<NumericString>`${value}::numeric::text`;
 
 /** Fetch all invoices for authenticated user, including basic relational data */
 
@@ -50,9 +65,7 @@ export async function _fetchStats(
 						ne(validityFilter.status, 'refunded'),
 					),
 					0,
-				)
-					.mapWith(Number)
-					.as('net_sum'),
+				).as('net_sum'),
 
 				grossSum: coalesce(
 					withFilter(
@@ -61,9 +74,7 @@ export async function _fetchStats(
 						ne(validityFilter.status, 'refunded'),
 					),
 					0,
-				)
-					.mapWith(Number)
-					.as('gross_sum'),
+				).as('gross_sum'),
 
 				grossOutstanding: coalesce(
 					withFilter(
@@ -72,9 +83,7 @@ export async function _fetchStats(
 						eq(validityFilter.status, 'unpaid'),
 					),
 					0,
-				)
-					.mapWith(Number)
-					.as('gross_outstanding'),
+				).as('gross_outstanding'),
 
 				currency: validityFilter.currency,
 				maxCreatedAt: max(validityFilter.createdAt).as('max_created_at'),
@@ -88,9 +97,9 @@ export async function _fetchStats(
 				.select({
 					totals: jsonbAgg(
 						jsonbBuildObject({
-							netSum: totals.netSum,
-							grossSum: totals.grossSum,
-							grossOutstanding: totals.grossOutstanding,
+							netSum: toNumericString(totals.netSum),
+							grossSum: toNumericString(totals.grossSum),
+							grossOutstanding: toNumericString(totals.grossOutstanding),
 							currency: totals.currency,
 							updatedAt: totals.maxCreatedAt,
 						}),
