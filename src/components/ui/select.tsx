@@ -142,7 +142,7 @@ function SelectItem({ className, children, ...props }: SelectPrimitive.Item.Prop
 
 function SelectClear({ className, children, ...props }: Omit<SelectPrimitive.Item.Props, 'value'>) {
 	return (
-		<SelectItem key={'reset'} value={null} {...props}>
+		<SelectItem key={'reset'} value={null} aria-label='Clear selection' {...props}>
 			{children ?? '–'}
 		</SelectItem>
 	);
