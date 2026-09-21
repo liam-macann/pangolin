@@ -9,7 +9,7 @@ import {
 	insertTestClient,
 	insertTestConfig,
 	insertTestInvoice,
-} from '@/lib/actions/tests/helpers';
+} from '@/lib/actions/tests/fixtures';
 import { formatCurrency } from '@/lib/utils/currencies';
 import { taxes as taxesSchema } from '@/lib/validation/config';
 import { invoice as invoiceSchema } from '@/lib/validation/invoice';

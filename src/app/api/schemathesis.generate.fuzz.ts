@@ -1,4 +1,4 @@
-import { insertTestInvoice, setUpConfigAndClient } from '@/lib/actions/tests/helpers';
+import { insertTestInvoice, setUpConfigAndClient } from '@/lib/actions/tests/fixtures';
 
 import { runSchemathesis } from '@/test/schemathesis/fixture';
 import { asUser } from '@/test/session';

@@ -6,13 +6,8 @@ import * as tables from '@/db/schema';
 import { asUser as test } from '@/test/session';
 
 import { updateClient } from './client';
-import {
-	addressBuilder,
-	clientBuilder,
-	insertTestClient,
-	insertTestConfig,
-	insertTestInvoice,
-} from './tests/helpers';
+import { addressBuilder, clientBuilder } from './tests/builders';
+import { insertTestClient, insertTestConfig, insertTestInvoice } from './tests/fixtures';
 import { cleanupAddresses, cleanupClientData, cleanupConfigs } from './utils';
 
 const testAddress = addressBuilder({ streetAddress: ['123 Main St'] });

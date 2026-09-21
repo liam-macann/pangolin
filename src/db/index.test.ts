@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import * as navigation from 'next/navigation';
 import { assert, describe, expect, test, vi } from 'vitest';
 
-import { insertTestClient } from '@/lib/actions/tests/helpers';
+import { insertTestClient } from '@/lib/actions/tests/fixtures';
 import { withRLS } from '@/db';
 import * as schema from '@/db/schema';
 

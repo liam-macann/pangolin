@@ -5,13 +5,13 @@ import { assert, describe, expect } from 'vitest';
 
 import { updateClientDeleted, updateClientFavorite } from '@/lib/actions/client';
 import { voidInvoice } from '@/lib/actions/invoice';
+import { addressBuilder } from '@/lib/actions/tests/builders';
 import {
-	addressBuilder,
 	insertTestClient,
 	insertTestConfig,
 	insertTestInvoice,
 	setUpConfigAndClient,
-} from '@/lib/actions/tests/helpers';
+} from '@/lib/actions/tests/fixtures';
 import { formatAddress } from '@/lib/utils/address';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';

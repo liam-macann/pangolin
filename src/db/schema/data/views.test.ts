@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { type AnyPgColumn, PgNumeric } from 'drizzle-orm/pg-core';
 import { assert, describe, expect } from 'vitest';
 
-import { insertTestClient, insertTestConfig } from '@/lib/actions/tests/helpers';
+import { insertTestClient, insertTestConfig } from '@/lib/actions/tests/fixtures';
 import { type Numeric, NumericString } from '@/lib/utils/numeric';
 import { withRLS } from '@/db';
 import * as schema from '@/db/schema';

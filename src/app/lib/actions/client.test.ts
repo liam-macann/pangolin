@@ -12,7 +12,8 @@ import * as tables from '@/db/schema';
 import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { createClient, updateClient, updateClientDeleted, updateClientFavorite } from './client';
-import { addressBuilder, clientBuilder, insertTestClient } from './tests/helpers';
+import { addressBuilder, clientBuilder } from './tests/builders';
+import { insertTestClient } from './tests/fixtures';
 
 /** Fetch the active clientData row (and associated address) for a given client */
 const getActiveClientData = (clientId: string) =>

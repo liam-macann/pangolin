@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { describe, expect, test } from 'vitest';
 
 import app from '@/api/hono';
-import { insertTestClient } from '@/lib/actions/tests/helpers';
+import { insertTestClient } from '@/lib/actions/tests/fixtures';
 
 import { asUser, createTestSession, sessionStorage } from '@/test/session';
 

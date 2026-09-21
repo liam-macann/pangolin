@@ -3,7 +3,7 @@ import * as navigation from 'next/navigation';
 import { NextRequest } from 'next/server';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { insertTestInvoice, setUpConfigAndClient } from '@/lib/actions/tests/helpers';
+import { insertTestInvoice, setUpConfigAndClient } from '@/lib/actions/tests/fixtures';
 import * as invoiceData from '@/lib/data/invoice';
 
 import { asUser, createTestSession, sessionStorage } from '@/test/session';

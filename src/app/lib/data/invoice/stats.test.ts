@@ -6,7 +6,7 @@ import {
 	insertTestConfig,
 	insertTestInvoice,
 	setUpConfigAndClient,
-} from '@/lib/actions/tests/helpers';
+} from '@/lib/actions/tests/fixtures';
 import { type Enum } from '@/lib/utils/drizzle';
 import { invoice as invoiceSchema } from '@/lib/validation/invoice';
 import { getBounds } from '@/lib/zod';

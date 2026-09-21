@@ -10,12 +10,8 @@ import * as tables from '@/db/schema';
 import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { createInvoice, setInvoiceNotes, updateInvoiceStatus, voidInvoice } from './invoice';
-import {
-	insertTestClient,
-	insertTestInvoice,
-	invoiceBuilder,
-	setUpConfigAndClient,
-} from './tests/helpers';
+import { invoiceBuilder } from './tests/builders';
+import { insertTestClient, insertTestInvoice, setUpConfigAndClient } from './tests/fixtures';
 
 const getInvoice = (id: string) =>
 	withRLS(async (db, session) =>

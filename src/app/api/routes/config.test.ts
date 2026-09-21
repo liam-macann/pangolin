@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import app from '@/api/hono';
-import { insertTestConfig } from '@/lib/actions/tests/helpers';
+import { insertTestConfig } from '@/lib/actions/tests/fixtures';
 
 import { asUser } from '@/test/session';
 

@@ -9,7 +9,7 @@ import * as tables from '@/db/schema';
 import { asUser as test } from '@/test/session';
 
 import { updateUserConfig } from './config';
-import { addressBuilder, configBuilder } from './tests/helpers';
+import { addressBuilder, configBuilder } from './tests/builders';
 
 describe('updateUserConfig', () => {
 	beforeEach(() => {

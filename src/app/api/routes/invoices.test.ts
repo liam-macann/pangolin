@@ -5,7 +5,7 @@ import {
 	insertTestClient,
 	insertTestInvoice,
 	setUpConfigAndClient,
-} from '@/lib/actions/tests/helpers';
+} from '@/lib/actions/tests/fixtures';
 
 import { asUser, createTestSession, sessionStorage } from '@/test/session';
 

@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { expect, test, vi } from 'vitest';
 
-import { insertTestConfig } from '@/lib/actions/tests/helpers';
+import { insertTestConfig } from '@/lib/actions/tests/fixtures';
 
 import { asUser } from '@/test/session';
 

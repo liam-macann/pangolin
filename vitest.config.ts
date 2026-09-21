@@ -45,6 +45,7 @@ export default defineConfig({
 			'motion/react',
 			'react-is',
 			'tailwind-merge',
+			'date-fns',
 		],
 	},
 	resolve: {
