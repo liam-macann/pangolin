@@ -1,10 +1,12 @@
 /// <reference types="vitest/browser" />
 
+import { globSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import { playwright } from '@vitest/browser-playwright';
 import { configDefaults, defineConfig } from 'vitest/config';
+import { type BrowserInstanceOption } from 'vitest/node';
 
 import { dragWithAnimation } from './src/test/commands.js';
 import { SchemathesisSequencer } from './src/test/schemathesis/sequencer.js';
@@ -20,9 +22,34 @@ const isCoverage = args.includes('--coverage');
 const isRun = args.includes('run') || args.includes('--run');
 const isWatch = configDefaults.watch && !isRun;
 
+const browserTestPatterns = ['src/**/*.test.tsx', 'src/**/*.browser.test.ts'];
+
+/** Shards test files across browser instances */
+const browserInstances = (
+	partial: Partial<BrowserInstanceOption> & Pick<BrowserInstanceOption, 'browser'>,
+) => {
+	// CI runner can't handle parallel browser instances (WebKit crashes/stalls)
+	const BROWSER_INSTANCES = process.env.CI ? 1 : 3;
+
+	const shards = Array.from({ length: BROWSER_INSTANCES }, (_, instance) =>
+		globSync(browserTestPatterns)
+			.sort()
+			.filter((_, fileIndex) => fileIndex % BROWSER_INSTANCES === instance),
+	).filter(files => files.length > 0);
+
+	return shards.map(
+		(files, index): BrowserInstanceOption => ({
+			name: `browser (${shards.length > 1 ? `${partial.browser} ${index + 1}/${shards.length}` : partial.browser})`,
+			fileParallelism: false,
+			include: files,
+			...partial,
+		}),
+	);
+};
+
 export default defineConfig({
 	optimizeDeps: {
-		entries: ['src/**/*.test.tsx', 'src/**/*.browser.test.ts'],
+		entries: browserTestPatterns,
 		include: [
 			'react',
 			'react/jsx-dev-runtime',
@@ -142,7 +169,7 @@ export default defineConfig({
 				plugins: [react()],
 				test: {
 					name: { label: 'browser', color: 'yellow' },
-					include: ['src/**/*.test.tsx', 'src/**/*.browser.test.ts'],
+					include: browserTestPatterns,
 					setupFiles: ['./src/test/setup-browser.ts'],
 					sequence: { groupOrder: 3 },
 					browser: {
@@ -153,7 +180,13 @@ export default defineConfig({
 						instances:
 							isCoverage || isWatch
 								? [{ browser: 'chromium' }]
-								: [{ browser: 'chromium' }, { browser: 'firefox' }, { browser: 'webkit' }],
+								: [
+										{ browser: 'chromium' },
+										...browserInstances({ browser: 'webkit' }),
+										// Firefox has an issue where parallelism within an instance steals focus between screens.
+										// This disables file parallelism, but shards between instances to maintain speed.
+										...browserInstances({ browser: 'firefox' }),
+									],
 						commands: { dragWithAnimation },
 					},
 				},

@@ -216,7 +216,8 @@ describe('AddressInput', () => {
 		const country = getAddressField(screen, 'country');
 		await userEvent.click(country);
 		await userEvent.fill(country, 'United States');
-		await userEvent.click(screen.getByRole('option', { name: 'United States' }));
+		await expect.element(screen.getByRole('option', { name: 'United States' })).toBeVisible();
+		await userEvent.keyboard('{Enter}');
 		await expect.element(screen.getByTestId(`address-locale`)).toHaveAttribute('aria-busy');
 
 		await invariantAU(input => expect.element(input).toBeDisabled());
