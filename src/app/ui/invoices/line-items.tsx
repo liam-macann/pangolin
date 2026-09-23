@@ -109,7 +109,7 @@ function ItemSum({
 			// Side effect: increment taxesSum to prevent second loop pass
 			[...item.taxes].forEach(id => {
 				const tax = taxes.get(id);
-				if (tax) taxesSum.set(id, (taxesSum.get(id) || 0) + tax.rate * unitCost * quantity);
+				if (tax) taxesSum.set(id, (taxesSum.get(id) || 0) + Number(tax.rate) * unitCost * quantity);
 			});
 
 			return acc + unitCost * quantity;

@@ -52,12 +52,12 @@ describe('Rate/percentage conversions', () => {
 		expect(rateToPercent(NumericString.parse(rate.toFixed(4)))).toBe(percent);
 	});
 
-	test.for<[percent: number, rate: number]>([
-		[15.5, 0.155],
-		[7, 0.07],
-		[8.25, 0.0825],
-		[0, 0],
-		[-200, -2],
+	test.for<[percent: number, rate: NumericString]>([
+		[15.5, '0.1550'],
+		[7, '0.0700'],
+		[8.25, '0.0825'],
+		[0, '0.0000'],
+		[-200, '-2.0000'],
 	])('Converts percentage %s% to stored rate %s', ([percent, rate]) => {
 		expect(percentToRate(percent)).toBe(rate);
 		expect(percentToRate(NumericString.parse(percent.toString()))).toBe(rate);

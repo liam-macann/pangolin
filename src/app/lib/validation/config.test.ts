@@ -12,4 +12,8 @@ describe('taxes', () => {
 	test.for([0.155, 200.01, -1])('Rejects out-of-contract rate %s', rate =>
 		expect(taxes.safeParse([{ name: 'GST', rate }]).success).toBe(false),
 	);
+
+	test('Serializes validated percentages as decimal strings', () => {
+		expect(taxes.parse([{ name: 'GST', rate: 15.5 }])).toEqual([{ name: 'GST', rate: '15.50' }]);
+	});
 });

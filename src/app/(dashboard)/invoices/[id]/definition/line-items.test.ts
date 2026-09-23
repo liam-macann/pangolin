@@ -69,7 +69,7 @@ describe('lineItemsTable', () => {
 			const { table } = lineItemsTable(
 				invoiceDataBuilder({
 					config: { taxRegistration: true },
-					items: [{ taxes: [{ name: 'GST', rate: 0.1 }] }],
+					items: [{ taxes: [{ name: 'GST', rate: '0.1000' }] }],
 				}),
 			);
 

@@ -163,7 +163,7 @@ describe('buildDocDefinition', () => {
 					unit: 'hours',
 					unitCost: 150,
 					netAmount: 750,
-					taxes: [{ name: 'GST', rate: 0.1 }],
+					taxes: [{ name: 'GST', rate: '0.1000' }],
 				},
 				{
 					label: 'Stock imagery licence',

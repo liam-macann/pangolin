@@ -39,7 +39,7 @@ describe('updateUserConfig', () => {
 	test('Converts percentage to fractional tax rates', async () => {
 		await updateUserConfig(configBuilder({ taxes: [{ name: 'GST', rate: 15.5 }] }));
 		expect(await getUserConfig()).toMatchObject({
-			taxes: [{ name: 'GST', rate: 0.155 }],
+			taxes: [{ name: 'GST', rate: '0.1550' }],
 		});
 	});
 

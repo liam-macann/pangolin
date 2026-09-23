@@ -1,6 +1,6 @@
 import { type invoices, type numberingScheme } from '@/db/schema';
 
-import { formatNumeric, type Numeric } from './numeric';
+import { formatNumeric, type Numeric, NumericString } from './numeric';
 import { type ElementType } from './type';
 
 export * from './type';
@@ -17,7 +17,8 @@ export const formatNumber = (amount: Numeric, locale: string) => {
 };
 
 /** Converts a user-facing percentage to its stored fractional rate: 15.5 → 0.155 */
-export const percentToRate = (percent: Numeric) => Math.round(Number(percent) * 100) / 10_000;
+export const percentToRate = (percent: Numeric) =>
+	NumericString.parse((Math.round(Number(percent) * 100) / 10_000).toFixed(4));
 
 /** Converts a fractional rate as stored in the database to user-facing percentage: 0.155 → 15.5.
  * @remarks Rounding to the storage scale avoids floating-point artefacts. */

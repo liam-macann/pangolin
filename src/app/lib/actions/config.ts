@@ -15,7 +15,7 @@ import { type AuthTransaction, withRLS } from '@/db';
 import * as tables from '@/db/schema';
 import { invalidateActiveScd } from '@/db/schema/data/_helpers';
 
-export async function updateUserConfig(input: z.infer<typeof configInput>) {
+export async function updateUserConfig(input: z.input<typeof configInput>) {
 	// Validate the input data
 	const data = await configInput.parseAsync(input);
 

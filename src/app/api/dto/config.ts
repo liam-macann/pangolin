@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { Address } from '@/api/dto/address';
+import { NumericString } from '@/lib/utils/numeric';
 import { colorEnum, numberingScheme } from '@/db/schema';
 
 const ConfigTax = z.object({
@@ -13,7 +14,7 @@ const ConfigTax = z.object({
 		.normalize()
 		.max(10)
 		.meta({ examples: ['VAT', 'GST'] }),
-	rate: z.number().meta({ examples: [20] }),
+	rate: NumericString.max(12).meta({ examples: ['0.2000'] }),
 });
 
 export const Config = z

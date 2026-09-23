@@ -4,6 +4,7 @@ import { createInsertSchema } from 'drizzle-orm/zod';
 import z from 'zod/v4';
 
 import { currencies } from '@/lib/utils/currencies';
+import { NumericString } from '@/lib/utils/numeric';
 import { intlNumber } from '@/lib/zod';
 import { config as configSchema, taxes as taxesSchema } from '@/db/schema/data';
 
@@ -27,7 +28,10 @@ export const taxes = z
 						.min(0, 'Negative taxes are not allowed')
 						.max(200, 'Tax may not exceed 200%'),
 					'Please enter a quantity',
-				).pipe(s),
+				)
+					.transform(value => value.toFixed(2))
+					.pipe(s)
+					.pipe(NumericString),
 		}).pick({ name: true, rate: true }),
 	)
 	.superRefine((arr, ctx) => {

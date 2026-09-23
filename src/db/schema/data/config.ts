@@ -15,6 +15,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import { encrypted } from '@/lib/utils/drizzle';
+import { type NumericString } from '@/lib/utils/numeric';
 import { users } from '@/db/schema/auth';
 import { currencies, supportedTimezones } from '@/db/schema/i18n';
 
@@ -29,7 +30,7 @@ export const taxes = snakeCase.table(
 			.notNull()
 			.references(() => users.id, { onDelete: 'cascade' }),
 		name: text().notNull(),
-		rate: numeric({ precision: 5, scale: 4, mode: 'number' }).notNull(),
+		rate: numeric({ precision: 5, scale: 4, mode: 'string' }).$type<NumericString>().notNull(),
 	},
 	t => [
 		// Eliminate redundant storage (force application to reuse identical rows)

@@ -102,9 +102,9 @@ describe('subtotalTable', () => {
 			config: { taxRegistration: true },
 			items: [
 				// Case where tax has been referenced on item
-				{ taxes: [{ name: 'GST', rate: 0.5 }] },
+				{ taxes: [{ name: 'GST', rate: '0.5' }] },
 				// Case where tax has been referenced on item, but not applied to item
-				{ taxes: [{ name: 'LCT', rate: 0 }] },
+				{ taxes: [{ name: 'LCT', rate: '0' }] },
 				// Case where tax has not been referenced on item
 				{ taxes: [] },
 			],

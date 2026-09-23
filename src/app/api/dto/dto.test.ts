@@ -71,6 +71,7 @@ const DTOs: DTOConfig[] = [
 			[db.config.currency, 'currency'],
 			[db.taxes.id, 'taxes.items.id'],
 			[db.taxes.name, 'taxes.items.name'],
+			[db.taxes.rate, 'taxes.items.rate'],
 			...addressFields('address'),
 			[db.config.email, 'email'],
 			[db.config.phone, 'phone'],

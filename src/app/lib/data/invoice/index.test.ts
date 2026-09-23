@@ -346,8 +346,8 @@ describe('fetchInvoice', () => {
 			const rows = await withRLS(db =>
 				db.select({ id: tables.taxes.id, rate: tables.taxes.rate }).from(tables.taxes),
 			);
-			const gst10 = rows.find(r => r.rate === 0.1);
-			const gst5 = rows.find(r => r.rate === 0.05);
+			const gst10 = rows.find(r => r.rate === '0.1000');
+			const gst5 = rows.find(r => r.rate === '0.0500');
 			assert(gst10, 'GST at 10% should exist after config was seeded');
 			assert(gst5, 'GST at 5% should exist after config was seeded');
 
