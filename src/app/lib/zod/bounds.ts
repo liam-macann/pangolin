@@ -1,4 +1,4 @@
-import { type z } from 'zod';
+import { z } from 'zod';
 
 import { collectNodes } from './introspection';
 
@@ -15,6 +15,15 @@ type Fallback = { readonly minimum?: unknown; readonly maximum?: unknown };
 type Bounds<F extends Fallback = Record<never, never>> = {
 	readonly minimum: number | ('minimum' extends keyof F ? F['minimum'] : never);
 	readonly maximum: number | ('maximum' extends keyof F ? F['maximum'] : never);
+};
+
+const readBounds = (schema: z.core.$ZodType) => {
+	const jsonSchema = z.toJSONSchema(schema, { unrepresentable: 'any' });
+
+	return {
+		minimum: jsonSchema.minimum ?? jsonSchema.minLength ?? jsonSchema.minItems,
+		maximum: jsonSchema.maximum ?? jsonSchema.maxLength ?? jsonSchema.maxItems,
+	};
 };
 
 /**
@@ -58,18 +67,12 @@ export function getBounds(
 		// Root-path filtering prevents a container from silently donating nested field bounds
 		(node, path): node is ZodBounded => path === '' && (predicate?.(node) ?? true),
 		{ pipe: 'both' },
-	).filter(
-		({ schema: node }) =>
-			typeof node._zod.bag.minimum === 'number' || typeof node._zod.bag.maximum === 'number',
-	);
+	)
+		.map(({ schema: node }) => readBounds(node))
+		.filter(({ minimum, maximum }) => typeof minimum === 'number' || typeof maximum === 'number');
 
-	const minimums = matches.flatMap(({ schema: node }) =>
-		typeof node._zod.bag.minimum === 'number' ? [node._zod.bag.minimum] : [],
-	);
-
-	const maximums = matches.flatMap(({ schema: node }) =>
-		typeof node._zod.bag.maximum === 'number' ? [node._zod.bag.maximum] : [],
-	);
+	const minimums = matches.flatMap(({ minimum }) => (typeof minimum === 'number' ? [minimum] : []));
+	const maximums = matches.flatMap(({ maximum }) => (typeof maximum === 'number' ? [maximum] : []));
 
 	return {
 		minimum:

@@ -15,20 +15,7 @@ const nextConfig: NextConfig = {
 	},
 	turbopack: {
 		rules: {
-			'*.svg': {
-				loaders: ['@svgr/webpack'],
-				as: '*.js',
-			},
-			// Uses zod-compiler to eliminate runtime overhead
-			'*.{ts,tsx}': {
-				condition: {
-					all: [
-						{ not: 'foreign' }, // skip node_modules
-						{ content: /[Zz]od/ }, // skip files that cannot contain a schema
-					],
-				},
-				loaders: ['zod-compiler/turbopack'],
-			},
+			'*.svg': { loaders: ['@svgr/webpack'], as: '*.js' },
 		},
 	},
 	async redirects() {

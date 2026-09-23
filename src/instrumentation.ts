@@ -2,6 +2,9 @@ import * as Sentry from '@sentry/nextjs';
 
 export async function register() {
 	if (process.env.NEXT_RUNTIME === 'nodejs') {
+		// Installs Zod JIT compiler globally
+		// Server only: forbidden under client CSP
+		await import('zod/compile');
 		await import('./../sentry.server.config');
 	}
 

@@ -175,7 +175,14 @@ describe('API contract fields are compatible with database storage constraints',
 const postgres = new PGlite();
 
 describe('Zod .length() and Postgres char_length() use identical Unicode code point evaluation', () => {
-	const assertCodePointLength = async (str: string) => {
+	test.for([
+		['ASCII', 'abc'],
+		['precomposed characters', 'éñø'],
+		['combining characters', 'e\u0301n\u0303a\u030a'],
+		['astral characters', '😀𝄞𐐷'],
+		['regional indicator pairs', '🇦🇺🇯🇵🇺🇳'],
+		['zero-width joiner sequences', '👨‍👩‍👧‍👦👩‍💻🧑‍🚀'],
+	])('%s', async ([, str]) => {
 		/** Destructuring a string returns an array of codepoints */
 		const codepoints = [...str].length;
 
@@ -200,23 +207,6 @@ describe('Zod .length() and Postgres char_length() use identical Unicode code po
 				.max(codepoints - 1)
 				.safeParse(str).success,
 		).toBe(false);
-	};
-
-	test.for([
-		['ASCII', 'abc'],
-		['precomposed characters', 'éñø'],
-		['combining characters', 'e\u0301n\u0303a\u030a'],
-	])('%s', async ([, value]) => {
-		await assertCodePointLength(value);
-	});
-
-	// Zod documents that it uses codepoint evaluation, but has not yet shipped this behaviour
-	test.fails.for([
-		['astral characters', '😀𝄞𐐷'],
-		['regional indicator pairs', '🇦🇺🇯🇵🇺🇳'],
-		['zero-width joiner sequences', '👨‍👩‍👧‍👦👩‍💻🧑‍🚀'],
-	])('%s', async ([, value]) => {
-		await assertCodePointLength(value);
 	});
 });
 
