@@ -1,6 +1,7 @@
 import { assert, describe, expect, test } from 'vitest';
 
 import { formatCurrency } from '@/lib/utils/currencies';
+import { type NumericString } from '@/lib/utils/numeric';
 
 import { type InvoicePrintData } from './index';
 import { subtotalTable } from './subtotals';
@@ -43,16 +44,16 @@ describe('subtotalTable', () => {
 		expect(renderText(table[table.length - 1][0])).toBe('Total');
 	});
 
-	test.for([
-		[{ name: 'GST', contribution: 100 }],
+	test.for<{ name: string; contribution: NumericString }[]>([
+		[{ name: 'GST', contribution: '100' }],
 		[
-			{ name: 'VAT', contribution: 0 },
-			{ name: 'GST', contribution: 10 },
+			{ name: 'VAT', contribution: '0' },
+			{ name: 'GST', contribution: '10' },
 		],
 		[
-			{ name: 'LCT', contribution: 0 },
-			{ name: 'VAT', contribution: 0 },
-			{ name: 'GST', contribution: 0 },
+			{ name: 'LCT', contribution: '0' },
+			{ name: 'VAT', contribution: '0' },
+			{ name: 'GST', contribution: '0' },
 		],
 	])('Every tax is included in the subtotal table (test case %$)', taxes => {
 		// Taxes defined in config should always be included in the subtotal table,
@@ -110,11 +111,11 @@ describe('subtotalTable', () => {
 			],
 			tax: [
 				// Case where tax has been applied
-				{ name: 'GST', contribution: 100 },
+				{ name: 'GST', contribution: '100' },
 
 				// Case where tax has not been applied
-				{ name: 'VAT', contribution: 0 },
-				{ name: 'LCT', contribution: 0 },
+				{ name: 'VAT', contribution: '0' },
+				{ name: 'LCT', contribution: '0' },
 			],
 		});
 
@@ -151,8 +152,8 @@ describe('subtotalTable', () => {
 		const invoice = invoiceDataBuilder({
 			config: { taxRegistration: false, currency: 'AUD', locale: 'de' },
 			tax: [
-				{ name: 'GST', contribution: 45.5 },
-				{ name: 'LCT', contribution: 0 },
+				{ name: 'GST', contribution: '45.5' },
+				{ name: 'LCT', contribution: '0' },
 			],
 			netTotal: 455,
 			grossTotal: 500.5,

@@ -330,7 +330,9 @@ describe('fetchInvoice', () => {
 			});
 
 			const invoice = await fetchInvoice(id);
-			expect(invoice.tax).toEqual([{ name: 'GST', contribution: expectedContribution }]);
+
+			expect(invoice.tax).toEqual([{ name: 'GST', contribution: expect.any(String) }]);
+			expect(Number(invoice.tax[0]?.contribution)).toBeCloseTo(expectedContribution, 8);
 		});
 
 		test('Two tax rows sharing a name but different rates collapse into a single breakdown row', async () => {
@@ -361,7 +363,7 @@ describe('fetchInvoice', () => {
 
 			const invoice = await fetchInvoice(id);
 			// 100 * 10% + 100 * 5%, collapsed into a single 'GST' row, not two
-			expect(invoice.tax).toEqual([{ name: 'GST', contribution: 15 }]);
+			expect(invoice.tax).toEqual([{ name: 'GST', contribution: '15.00000000' }]);
 		});
 
 		test('Breakdown rows are ordered by configured tax order', async () => {

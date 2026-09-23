@@ -10,6 +10,7 @@ import { type FetchOptions, query } from '@/lib/data/helpers';
 import { crypto } from '@/lib/encrypt';
 import { invoiceReference, type Simplify } from '@/lib/utils';
 import { coalesce, mergeOrderBy, withFilter } from '@/lib/utils/drizzle';
+import { type NumericString } from '@/lib/utils/numeric';
 import { withRLS } from '@/db';
 import { type relations } from '@/db/relations';
 import * as schema from '@/db/schema';
@@ -32,7 +33,7 @@ export type DetailedInvoice = Omit<Invoice, 'clientData' | 'config'> & {
 	items: LineItem[];
 
 	/** Tax contribution across all items, collapsed by tax name */
-	tax: { name: string; contribution: number }[];
+	tax: { name: string; contribution: NumericString }[];
 };
 
 /** Fetch a bounded window of invoices for the authenticated user. */
@@ -139,7 +140,7 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 					.select({
 						contribution:
 							sql`${withFilter(sum(schema.lineItems.netAmount), eq(schema.itemTaxes.taxId, schema.taxes.id))} * ${schema.taxes.rate} * ${schema.config.taxRegistration}::int`
-								.mapWith(Number)
+								.mapWith(schema.lineItems.netAmount)
 								.as('contribution'),
 
 						taxId: schema.taxes.id,
@@ -202,7 +203,9 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 				.with(taxContribution)
 				.select({
 					name: taxContribution.name,
-					contribution: coalesce(sum(taxContribution.contribution), 0).mapWith(Number),
+					contribution: coalesce(sum(taxContribution.contribution), 0).mapWith(
+						schema.lineItems.netAmount,
+					),
 				})
 				.from(taxContribution)
 				.groupBy(taxContribution.name)

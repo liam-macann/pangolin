@@ -174,7 +174,7 @@ describe('buildDocDefinition', () => {
 					taxes: [],
 				},
 			],
-			tax: [{ name: 'GST', contribution: 75 }],
+			tax: [{ name: 'GST', contribution: '75.0000' }],
 			netTotal: 870,
 			grossTotal: 945,
 		});

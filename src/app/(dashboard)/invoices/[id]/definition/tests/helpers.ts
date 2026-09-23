@@ -60,7 +60,7 @@ export const invoiceDataBuilder = (data?: PartialDeep<InvoicePrintData>): Invoic
 
 	const baseTax: Minimized<ElementType<InvoicePrintData['tax']>> = {
 		name: 'GST',
-		contribution: 100,
+		contribution: '100.0000',
 	};
 
 	const { items: partialItems, tax: partialTax, ...partial } = data ?? {};
