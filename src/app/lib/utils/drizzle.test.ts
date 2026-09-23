@@ -1,8 +1,8 @@
-import { sql } from 'drizzle-orm';
-import { char, check, pgTable, text, varchar } from 'drizzle-orm/pg-core';
+import { desc, sql } from 'drizzle-orm';
+import { char, check, integer, PgDialect, pgTable, text, varchar } from 'drizzle-orm/pg-core';
 import { describe, expect, test } from 'vitest';
 
-import { getTextColumnBounds } from '@/lib/utils/drizzle';
+import { getTextColumnBounds, jsonbAgg } from '@/lib/utils/drizzle';
 
 describe('getTextColumnBounds()', () => {
 	const t = pgTable(
@@ -41,4 +41,23 @@ describe('getTextColumnBounds()', () => {
 
 	test('Combines type and check bounds', () =>
 		expect(getTextColumnBounds(t.constrainedVarchar)).toEqual({ minLength: 2, maxLength: 8 }));
+});
+
+describe('jsonbAgg()', () => {
+	const dialect = new PgDialect();
+	const t = pgTable('drizzle_agg', { value: integer(), rank: integer() });
+	const render = (query: ReturnType<typeof jsonbAgg>) => dialect.sqlToQuery(query).sql;
+
+	test('Aggregates without filter or order', () =>
+		expect(render(jsonbAgg(sql`${t.value}`))).toBe('jsonb_agg("drizzle_agg"."value")'));
+
+	test('Orders inside the aggregate call', () =>
+		expect(render(jsonbAgg(sql`${t.value}`, undefined, desc(t.rank)))).toBe(
+			'jsonb_agg("drizzle_agg"."value" ORDER BY "drizzle_agg"."rank" desc)',
+		));
+
+	test('Places FILTER after an ordered aggregate call', () =>
+		expect(render(jsonbAgg(sql`${t.value}`, sql`${t.value} is not null`, desc(t.rank)))).toBe(
+			`COALESCE(jsonb_agg("drizzle_agg"."value" ORDER BY "drizzle_agg"."rank" desc) FILTER (WHERE "drizzle_agg"."value" is not null), '[]'::jsonb)`,
+		));
 });

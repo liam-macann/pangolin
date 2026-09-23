@@ -43,23 +43,16 @@ export type ColumnType<T> =
 // biome-ignore lint/suspicious/noExplicitAny: Conflict between mutability of type and return value. PgEnum type is stricter than structural check.
 export type Enum<T extends PgEnum<any>> = T['enumValues'][number];
 
-const _jsonbAgg = <T>(expression: SQL<T> | SQL.Aliased<T>) => sql<T[]>`jsonb_agg(${expression})`;
-
-/** Pass a PgColumn to filter the aggregation where column is not null */
+/** Pass a PgColumn to filter the aggregation where column is not null
+ * @remarks ORDER BY belongs inside the aggregate's parentheses; FILTER follows them. */
 export function jsonbAgg<T>(expression: SQL<T> | SQL.Aliased<T>, filter?: SQL, order?: SQL) {
-	if (!filter) return _jsonbAgg(expression);
+	const aggregate = sql<T[]>`jsonb_agg(${expression}`;
+	if (order) aggregate.append(sql` ORDER BY ${order}`);
+	aggregate.append(sql`)`);
 
-	const query = sql<T[]>`COALESCE(
-        ${_jsonbAgg(expression)}`;
+	if (!filter) return aggregate;
 
-	if (filter) query.append(sql` FILTER (WHERE ${filter})`);
-	if (order) query.append(sql` ORDER BY ${order}`);
-
-	query.append(sql`,
-        '[]'::jsonb
-      )`);
-
-	return query;
+	return sql<T[]>`COALESCE(${aggregate} FILTER (WHERE ${filter}), '[]'::jsonb)`;
 }
 
 /**

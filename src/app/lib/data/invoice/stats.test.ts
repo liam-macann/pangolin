@@ -1,3 +1,4 @@
+import { eq, sql } from 'drizzle-orm';
 import { describe, expect } from 'vitest';
 import { z } from 'zod';
 
@@ -10,8 +11,9 @@ import {
 import { type Enum } from '@/lib/utils/drizzle';
 import { invoice as invoiceSchema } from '@/lib/validation/invoice';
 import { getBounds } from '@/lib/zod';
-import type * as tables from '@/db/schema';
+import * as tables from '@/db/schema';
 
+import { type TestTX } from '@/test/pglite';
 import { asUser as test } from '@/test/session';
 
 import { fetchStats } from './stats';
@@ -170,43 +172,87 @@ describe('fetchStats', () => {
 		]);
 	});
 
-	test('Aggregates totals separately per currency, instead of merging them together', async () => {
-		const { client } = await setUpConfigAndClient({ currency: 'AUD' });
-		await insertTestInvoice({
-			clientDataId: client.data.scdId,
-			items: [{ quantity: 1, unitCost: 100 }],
-		});
-
-		// A later config change to a new currency must not merge into the earlier AUD total
-		await insertTestConfig({ currency: 'USD' });
-		await insertTestInvoice({
-			clientDataId: client.data.scdId,
-			items: [{ quantity: 1, unitCost: 50 }],
-		});
-
-		const stats = await fetchStats();
-		expect(stats.validCount).toBe(2);
-		expect(stats.totals).toHaveLength(2);
-		expect(stats.totals).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({
-					currency: 'AUD',
-					netSum: '100.0000',
-					grossSum: '100.0000',
-					grossOutstanding: '100.0000',
-				}),
-				expect.objectContaining({
-					currency: 'USD',
-					netSum: '50.0000',
-					grossSum: '50.0000',
-					grossOutstanding: '50.0000',
-				}),
-			]),
-		);
-	});
-
 	test('Returns a zero count and null totals when the user has no invoices', async () => {
 		const stats = await fetchStats();
 		expect(stats).toEqual({ validCount: 0, totals: null });
+	});
+
+	describe('Mixed currencies', () => {
+		test('Aggregates totals separately per currency, instead of merging them together', async () => {
+			const { client } = await setUpConfigAndClient({ currency: 'AUD' });
+			await insertTestInvoice({
+				clientDataId: client.data.scdId,
+				items: [{ quantity: 1, unitCost: 100 }],
+			});
+
+			// A later config change to a new currency must not merge into the earlier AUD total
+			await insertTestConfig({ currency: 'USD' });
+			await insertTestInvoice({
+				clientDataId: client.data.scdId,
+				items: [{ quantity: 1, unitCost: 50 }],
+			});
+
+			const stats = await fetchStats();
+			expect(stats.validCount).toBe(2);
+			expect(stats.totals).toHaveLength(2);
+			expect(stats.totals).toEqual(
+				expect.arrayContaining([
+					expect.objectContaining({
+						currency: 'AUD',
+						netSum: '100.0000',
+						grossSum: '100.0000',
+						grossOutstanding: '100.0000',
+					}),
+					expect.objectContaining({
+						currency: 'USD',
+						netSum: '50.0000',
+						grossSum: '50.0000',
+						grossOutstanding: '50.0000',
+					}),
+				]),
+			);
+		});
+
+		// Helper to keep DB noise out of test bodies
+		async function setDocumentCreatedAt(db: TestTX, id: string, createdAt: string) {
+			await db.execute(sql`SET LOCAL ROLE neondb_owner`);
+			await db
+				.update(tables.documents)
+				.set({ createdAt: new Date(createdAt) })
+				.where(eq(tables.documents.id, id));
+			await db.execute(sql`SET LOCAL ROLE authenticated`);
+		}
+
+		test.for([
+			{
+				expected: ['AUD', 'USD'],
+				invoices: [
+					{ currency: 'AUD', createdAt: '2026-02-01' },
+					{ currency: 'USD', createdAt: '2026-01-01' },
+				],
+			},
+			{
+				expected: ['USD', 'AUD'],
+				invoices: [
+					{ currency: 'AUD', createdAt: '2026-01-01' },
+					{ currency: 'USD', createdAt: '2026-02-01' },
+				],
+			},
+		])(
+			'Orders currency totals by most recent invoice: $expected',
+			async ({ invoices, expected }, { db }) => {
+				const { client } = await setUpConfigAndClient();
+
+				// Insert in fixed order so sorting relies strictly on createdAt
+				for (const { currency, createdAt } of invoices) {
+					await insertTestConfig({ currency });
+					const id = await insertTestInvoice({ clientDataId: client.data.scdId });
+					await setDocumentCreatedAt(db, id, createdAt);
+				}
+
+				const stats = await fetchStats();
+				expect(stats.totals?.map(t => t.currency)).toEqual(expected);
+			},
+		);
 	});
 });
