@@ -70,6 +70,10 @@ export default defineConfig({
 				'src/app/**/*.ts',
 				'src/app/**/*.tsx',
 
+				'src/app/api/schemathesis.*.fuzz.ts',
+				'src/app/**/*.test.ts',
+				'src/app/**/*.test.tsx',
+
 				'src/db/index.ts',
 				'src/db/schema/data/_helpers.ts',
 
