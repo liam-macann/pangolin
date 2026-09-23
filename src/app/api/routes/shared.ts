@@ -31,17 +31,20 @@ export const defineRoute = {
 
 export const validationHook = standardSchemaProblemHook();
 
+const coerceToNumber = (value: unknown) =>
+	typeof value === 'string' && value.trim() !== '' ? Number(value) : value;
+
 export const paginationSchema = z.object({
 	total: z.int32().nonnegative().readonly(),
 	limit: z
-		.preprocess(v => Number(v), z.int32().positive().max(200))
+		.preprocess(coerceToNumber, z.int32().positive().max(200))
 		.default(200)
 		.meta({
 			description: 'Maximum number of items to return.',
 			examples: [20],
 		}),
 	offset: z
-		.preprocess(v => Number(v), z.int32().nonnegative().max(100_000))
+		.preprocess(coerceToNumber, z.int32().nonnegative().max(100_000))
 		.optional()
 		.meta({
 			description: 'Number of items to skip.',

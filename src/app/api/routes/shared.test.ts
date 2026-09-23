@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 
 import { requireAuth } from '@/api/middleware';
 
-import { createApiRouter, defineRoute } from './shared';
+import { createApiRouter, defineRoute, paginationSchema } from './shared';
 
 describe('defineRoute', () => {
 	const baseRoute = {
@@ -53,5 +53,13 @@ describe('defineRoute', () => {
 
 		expect(paths['/protected']?.get?.responses?.[401]).toBeDefined();
 		expect(paths['/public']?.get?.responses?.[401]).toBeUndefined();
+	});
+});
+
+describe('paginationSchema', () => {
+	const query = paginationSchema.omit({ total: true });
+
+	test.for(['limit', 'offset'])('Rejects an empty %s', parameter => {
+		expect(query.validate({ [parameter]: '' })).toBe(false);
 	});
 });
