@@ -44,9 +44,13 @@ export const documentsWithSum = snakeCase
 				...getColumns(documents),
 				taxRegistration: config.taxRegistration,
 				currency: config.currency,
-				netTotal: coalesce(sum(itemsWithTax.netAmount), 0).mapWith(Number).as('net_total'),
+				netTotal: coalesce(sum(itemsWithTax.netAmount), 0)
+					.mapWith(lineItems.netAmount)
+					.as('net_total'),
 				/** @remarks This can safely be used regardless of tax registration. Unregistered taxes will not be applied. */
-				grossTotal: coalesce(sum(itemsWithTax.grossAmount), 0).mapWith(Number).as('gross_total'),
+				grossTotal: coalesce(sum(itemsWithTax.grossAmount), 0)
+					.mapWith(lineItems.netAmount)
+					.as('gross_total'),
 			})
 			.from(documents)
 			.innerJoin(config, eq(documents.configId, config.id))

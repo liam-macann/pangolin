@@ -63,8 +63,8 @@ describe('subtotalTable', () => {
 			invoiceDataBuilder({
 				config: { taxRegistration: false },
 				tax: taxes,
-				netTotal: 1000,
-				grossTotal: 1100,
+				netTotal: '1000',
+				grossTotal: '1100',
 			}),
 		);
 
@@ -155,8 +155,8 @@ describe('subtotalTable', () => {
 				{ name: 'GST', contribution: '45.5' },
 				{ name: 'LCT', contribution: '0' },
 			],
-			netTotal: 455,
-			grossTotal: 500.5,
+			netTotal: '455',
+			grossTotal: '500.5',
 		});
 
 		const table = getTable(invoice);

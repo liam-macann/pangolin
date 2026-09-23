@@ -113,8 +113,8 @@ export const columns = columnHelper.columns([
 		),
 		cell: ({ row }) => <FormatPrice className='text-right' row={row} />,
 		sortFn: (a, b) => {
-			const iA = a.original.grossTotal;
-			const iB = b.original.grossTotal;
+			const iA = Number(a.original.grossTotal);
+			const iB = Number(b.original.grossTotal);
 			return iA > iB ? 1 : iA < iB ? -1 : 0;
 		},
 		size: 150,

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { invoiceReference, seededRandom } from '@/lib/utils';
+import { NumericString } from '@/lib/utils/numeric';
 
 import { type Invoice } from './columns';
 
@@ -101,8 +102,8 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 				dueAt: dueAt.toISOString().slice(0, 10),
 				partition,
 				index,
-				netTotal: realisticAmount(config.currency, i * 3 + 2),
-				grossTotal: realisticAmount(config.currency, i * 3 + 2),
+				netTotal: NumericString.parse(realisticAmount(config.currency, i * 3 + 2).toString()),
+				grossTotal: NumericString.parse(realisticAmount(config.currency, i * 3 + 2).toString()),
 				config,
 				clientData: {
 					name: names[nameIndex],

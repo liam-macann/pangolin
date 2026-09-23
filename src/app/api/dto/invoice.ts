@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { NumericString } from '@/lib/utils/numeric';
+
 import { Config } from './config';
 
 export const Invoice = z
@@ -39,13 +41,11 @@ export const Invoice = z
 			.datetime({ precision: 3 })
 			.meta({ examples: ['2026-01-15T09:30:00.000Z'] })
 			.readonly(),
-		netTotal: z
-			.number()
-			.meta({ examples: [1200.99] })
+		netTotal: NumericString.max(32)
+			.meta({ examples: ['1200.9900'] })
 			.readonly(),
-		grossTotal: z
-			.number()
-			.meta({ examples: [1440.24] })
+		grossTotal: NumericString.max(32)
+			.meta({ examples: ['1440.2400'] })
 			.readonly(),
 		reference: z
 			.string()

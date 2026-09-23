@@ -175,8 +175,8 @@ describe('buildDocDefinition', () => {
 				},
 			],
 			tax: [{ name: 'GST', contribution: '75.0000' }],
-			netTotal: 870,
-			grossTotal: 945,
+			netTotal: '870.0000',
+			grossTotal: '945.0000',
 		});
 
 		const { footer, ...definition } = buildDocDefinition(invoice);

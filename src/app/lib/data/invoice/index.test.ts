@@ -137,8 +137,8 @@ describe('fetchInvoice', () => {
 			);
 
 			// No tax registration: gross must equal net
-			expect(invoice.netTotal).toBe(expected);
-			expect(invoice.grossTotal).toBe(expected);
+			expect(invoice.netTotal).toBe(expected.toFixed(4));
+			expect(invoice.grossTotal).toBe(expected.toFixed(4));
 		});
 
 		test('grossTotal does not overflow across the max item count', async () => {
@@ -152,7 +152,7 @@ describe('fetchInvoice', () => {
 
 			const invoice = await fetchInvoice(id);
 			expect(invoice.grossTotal).toBe(
-				Math.round(unitCostBounds.maximum * itemsBounds.maximum * 100) / 100,
+				(Math.round(unitCostBounds.maximum * itemsBounds.maximum * 100) / 100).toFixed(4),
 			);
 		});
 	});
@@ -189,7 +189,7 @@ describe('fetchInvoice', () => {
 			async ([, { unitCost, rates, expectedGross }]) => {
 				const invoice = await itemGrossAmount(unitCost, rates);
 				expect(invoice.items[0].grossAmount).toBe(expectedGross.toFixed(4));
-				expect(invoice.grossTotal).toBe(expectedGross);
+				expect(invoice.grossTotal).toBe(expectedGross.toFixed(4));
 			},
 		);
 
@@ -202,7 +202,7 @@ describe('fetchInvoice', () => {
 				itemsBounds.maximum,
 			);
 
-			expect(invoice.grossTotal).toBe(expectedItemGross * itemsBounds.maximum);
+			expect(invoice.grossTotal).toBe((expectedItemGross * itemsBounds.maximum).toFixed(4));
 		});
 	});
 
@@ -212,8 +212,8 @@ describe('fetchInvoice', () => {
 			const id = await insertTestInvoice({ clientDataId, items: [{ quantity: 1, unitCost: 100 }] });
 
 			const invoice = await fetchInvoice(id);
-			expect(invoice.netTotal).toBe(100);
-			expect(invoice.grossTotal).toBe(100);
+			expect(invoice.netTotal).toBe('100.0000');
+			expect(invoice.grossTotal).toBe('100.0000');
 		});
 
 		describe.for([true, false])('When taxRegistration is %s', taxRegistration => {
@@ -248,8 +248,8 @@ describe('fetchInvoice', () => {
 
 				const invoice = await fetchInvoice(invoiceId);
 
-				expect(invoice.netTotal).toBe(100);
-				expect(invoice.grossTotal).toBe(taxRegistration ? 110 : 100);
+				expect(invoice.netTotal).toBe('100.0000');
+				expect(invoice.grossTotal).toBe(taxRegistration ? '110.0000' : '100.0000');
 			});
 
 			test('Gross and net totals are equal when item is not linked to a tax', async () => {

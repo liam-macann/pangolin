@@ -2,7 +2,7 @@
 
 import { type SortingState, type TableState } from '@tanstack/react-table';
 import { toMerged } from 'es-toolkit';
-import { createContext, useMemo } from 'react';
+import { createContext } from 'react';
 
 import { type Config } from '@/api/dto/config';
 import { type Invoice } from '@/api/dto/invoice';
@@ -35,18 +35,9 @@ export function useInvoiceTable<TSelected = TableState<DataTableFeatures>>(
 	}: UseInvoiceTableOptions,
 	selector?: (state: TableState<DataTableFeatures>) => TSelected,
 ) {
-	const tableData = useMemo(
-		() =>
-			data.map(invoice => ({
-				...invoice,
-				...('grossTotal' in invoice ? { grossTotal: Number(invoice.grossTotal) } : {}),
-			})),
-		[data],
-	);
-
 	return useDataTable(
 		{
-			data: tableData,
+			data,
 			columns: invoiceColumns,
 			getRowId: invoice => invoice.id,
 			enableSortingRemoval: false,

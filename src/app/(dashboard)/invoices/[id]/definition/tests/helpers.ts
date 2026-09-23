@@ -16,8 +16,8 @@ export const invoiceDataBuilder = (data?: PartialDeep<InvoicePrintData>): Invoic
 		issuedAt: '2025-01-15',
 		dueAt: '2025-02-15',
 		reference: 'INV-001',
-		netTotal: 1000,
-		grossTotal: 1000,
+		netTotal: '1000.0000',
+		grossTotal: '1000.0000',
 		status: { isVoid: false },
 		clientData: { name: null, organization: null, address: null },
 		config: {

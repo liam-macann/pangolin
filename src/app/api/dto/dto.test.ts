@@ -105,6 +105,9 @@ const DTOs: DTOConfig[] = [
 		exempt: [
 			// Derived from partition + index, not persisted
 			'reference',
+			// Derived by the document_with_sum database view
+			'netTotal',
+			'grossTotal',
 			// db.config.timezone has no char_length check
 			'config.timezone',
 		],
