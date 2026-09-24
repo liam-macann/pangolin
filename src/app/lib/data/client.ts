@@ -6,7 +6,7 @@ import { notFound, unstable_rethrow } from 'next/navigation';
 import { type Client } from '@/api/dto/client';
 import { type FetchOptions } from '@/lib/data/helpers';
 import { fetchStats } from '@/lib/data/invoice/stats';
-import { crypto } from '@/lib/encrypt';
+import { withVault } from '@/lib/encrypt';
 import { fetchAddressMetadata, formatAddress } from '@/lib/utils/address';
 import { coalesce, mergeOrderBy } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
@@ -79,9 +79,9 @@ export async function fetchClients(
 				offset: opts.offset,
 			});
 
-			const vault = await crypto(session.user.id);
-			const decrypted = await Promise.all(res.map(el => vault.decryptObject(el)));
-			vault.destroy();
+			const decrypted = await withVault(vault =>
+				Promise.all(res.map(el => vault.decryptObject(el))),
+			);
 
 			const mapped: Client[] = await Promise.all(
 				decrypted.map(async client => {

@@ -7,7 +7,7 @@ import { type Invoice } from '@/api/dto/invoice';
 import { fetchConfig } from '@/lib/data';
 import { type ClientData } from '@/lib/data/client';
 import { type FetchOptions, query } from '@/lib/data/helpers';
-import { crypto } from '@/lib/encrypt';
+import { withVault } from '@/lib/encrypt';
 import { invoiceReference, type Simplify } from '@/lib/utils';
 import { coalesce, mergeOrderBy, withFilter } from '@/lib/utils/drizzle';
 import { type NumericString } from '@/lib/utils/numeric';
@@ -217,21 +217,20 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 				documentWithSum: { configId, ...document },
 				...invoice
 			} = res;
-			const config = await fetchConfig(configId);
 
-			const vault = await crypto(session.user.id);
-			const inv: DetailedInvoice = {
-				...document,
-				...invoice,
-				createdAt: document.createdAt.toISOString(),
-				reference: invoiceReference(invoice, config.numberingScheme),
-				config,
-				clientData: await vault.decryptObject(document.clientData),
-				tax,
-			};
-			vault.destroy();
+			return withVault(async (vault): Promise<DetailedInvoice> => {
+				const config = await fetchConfig(configId);
 
-			return inv;
+				return {
+					...document,
+					...invoice,
+					createdAt: document.createdAt.toISOString(),
+					reference: invoiceReference(invoice, config.numberingScheme),
+					config,
+					clientData: await vault.decryptObject(document.clientData),
+					tax,
+				};
+			});
 		});
 	} catch (error) {
 		unstable_rethrow(error);

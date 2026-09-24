@@ -2,7 +2,7 @@ import { updateTag } from 'next/cache';
 import { afterEach, assert, beforeEach, describe, expect, vi } from 'vitest';
 
 import * as actions from '@/lib/actions/utils';
-import { crypto } from '@/lib/encrypt';
+import { withVault } from '@/lib/encrypt';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
@@ -43,9 +43,7 @@ describe('updateUserConfig', () => {
 		});
 	});
 
-	test('Round-trips encrypted scalar and array columns through bytea storage', async ({
-		session,
-	}) => {
+	test('Round-trips encrypted scalar and array columns through bytea storage', async () => {
 		await updateUserConfig(
 			configBuilder({
 				email: 'billing@acme.example',
@@ -56,38 +54,28 @@ describe('updateUserConfig', () => {
 			}),
 		);
 
-		const config = await getUserConfig();
-		assert(config?.email, 'Active config should now exist with an email value');
-		assert(config.paymentDetails, 'Active config should now exist with payment details');
+		const { email, paymentDetails } = await getUserConfig();
+		assert(email, 'Active config should now exist with an email value');
+		assert(paymentDetails, 'Active config should now exist with payment details');
 
-		const vault = await crypto(session.user.id);
-		try {
-			expect(await vault.decrypt(config.email)).toBe('billing@acme.example');
-			expect(await vault.decrypt(config.paymentDetails)).toEqual([
-				'BSB: 062-000',
-				'Account: 1234 5678',
-			]);
-		} finally {
-			vault.destroy();
-		}
+		await withVault(async vault => {
+			expect(await vault.decrypt(email)).toBe('billing@acme.example');
+			expect(await vault.decrypt(paymentDetails)).toEqual(['BSB: 062-000', 'Account: 1234 5678']);
+		});
 	});
 
-	test('Inserts and associates a new address with config', async ({ session }) => {
+	test('Inserts and associates a new address with config', async () => {
 		await updateUserConfig(
 			configBuilder({ address: addressBuilder({ streetAddress: ['123 Main St'] }) }),
 		);
 
-		const config = await getUserConfig();
+		const { address: storedAddress } = await getUserConfig();
+		assert(storedAddress, 'Config should have associated address');
 
-		assert(config.address, 'Config should have associated address');
-		const vault = await crypto(session.user.id);
-
-		try {
-			const address = await vault.decryptObject(config.address);
+		await withVault(async vault => {
+			const address = await vault.decryptObject(storedAddress);
 			expect(address.streetAddress).toEqual(['123 Main St']);
-		} finally {
-			vault.destroy();
-		}
+		});
 	});
 
 	test('Reuses the previous address when unchanged', async ({ db }) => {
@@ -127,7 +115,7 @@ describe('updateUserConfig', () => {
 		).rejects.toThrow();
 	});
 
-	test('Trims whitespace from string values', async ({ session }) => {
+	test('Trims whitespace from string values', async () => {
 		await updateUserConfig(
 			configBuilder({
 				tradingName: '  Acme Pty Ltd  ',
@@ -140,16 +128,14 @@ describe('updateUserConfig', () => {
 		const config = await getUserConfig();
 		expect(config).toMatchObject({ tradingName: 'Acme Pty Ltd', taxes: [{ name: 'GST' }] });
 
-		assert(config?.email, 'Active config should now exist with an email value');
-		assert(config.paymentDetails, 'Active config should now exist with payment details');
+		const { email, paymentDetails } = config;
+		assert(email, 'Active config should now exist with an email value');
+		assert(paymentDetails, 'Active config should now exist with payment details');
 
-		const vault = await crypto(session.user.id);
-		try {
-			expect(await vault.decrypt(config.email)).toBe('billing@acme.example');
-			expect(await vault.decrypt(config.paymentDetails)).toEqual(['BSB: 062-000']);
-		} finally {
-			vault.destroy();
-		}
+		await withVault(async vault => {
+			expect(await vault.decrypt(email)).toBe('billing@acme.example');
+			expect(await vault.decrypt(paymentDetails)).toEqual(['BSB: 062-000']);
+		});
 	});
 
 	test('Empty string email, phone and header are recorded as null', async () => {

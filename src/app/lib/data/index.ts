@@ -4,7 +4,7 @@ import { notFound, unstable_rethrow } from 'next/navigation';
 import { cache } from 'react';
 
 import { type Config } from '@/api/dto/config';
-import { crypto } from '@/lib/encrypt';
+import { withVault } from '@/lib/encrypt';
 import { db, withRLS } from '@/db';
 import { type relations } from '@/db/relations';
 import { supportedTimezones, timezones } from '@/db/schema';
@@ -51,13 +51,10 @@ export const fetchConfig = cache(async function fetchConfig(id?: string): Promis
 
 			if (!res) notFound();
 
-			const vault = await crypto(session.user.id);
-			try {
+			return withVault(async vault => {
 				const { configTaxes, ...decrypted } = await vault.decryptObject(res);
 				return { ...decrypted, taxes: configTaxes.map(i => i.taxes) };
-			} finally {
-				vault.destroy();
-			}
+			});
 		});
 	} catch (error) {
 		unstable_rethrow(error);

@@ -5,7 +5,7 @@ import * as navigation from 'next/navigation';
 import { afterEach, assert, beforeEach, describe, expect, vi } from 'vitest';
 
 import * as actions from '@/lib/actions/utils';
-import { crypto } from '@/lib/encrypt';
+import { withVault } from '@/lib/encrypt';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
@@ -101,21 +101,15 @@ describe.for(Object.entries(saveClientVia))('Client insertion behaviour: %s', ([
 		});
 	});
 
-	test('Inserts and associates an address', async ({ session }) => {
+	test('Inserts and associates an address', async () => {
 		const address = addressBuilder({ streetAddress: ['Unit 4', '129 Main Av'] });
 		const clientId = await saveClient(clientBuilder({ address }));
 
-		const data = await getActiveClientData(clientId);
-		assert(data?.address, 'Client data should have an associated address');
+		const storedAddress = (await getActiveClientData(clientId))?.address;
+		assert(storedAddress, 'Client data should have an associated address');
 
-		const vault = await crypto(session.user.id);
-
-		try {
-			const decrypted = await vault.decryptObject(data.address);
-			expect(decrypted.streetAddress).toEqual(['Unit 4', '129 Main Av']);
-		} finally {
-			vault.destroy();
-		}
+		const decrypted = await withVault(vault => vault.decryptObject(storedAddress));
+		expect(decrypted.streetAddress).toEqual(['Unit 4', '129 Main Av']);
 	});
 
 	test('Rejects when neither name nor organization is provided', async () => {

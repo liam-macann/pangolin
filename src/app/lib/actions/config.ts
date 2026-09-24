@@ -7,7 +7,7 @@ import type z from 'zod';
 
 import { type Address } from '@/api/dto/address';
 import { cleanupAddresses, cleanupConfigs } from '@/lib/actions/utils';
-import { crypto, type Vault } from '@/lib/encrypt';
+import { type Vault, withVault } from '@/lib/encrypt';
 import { percentToRate } from '@/lib/utils';
 import { isAddressEqual } from '@/lib/utils/address';
 import { config as configInput } from '@/lib/validation/config';
@@ -20,28 +20,30 @@ export async function updateUserConfig(input: z.input<typeof configInput>) {
 	const data = await configInput.parseAsync(input);
 
 	return withRLS(async (db, session) => {
-		const vault = await crypto(session.user.id);
+		const { taxes, config, addressId } = await withVault(async vault => {
+			const { taxes, address, ...config } = await serializeConfig(data, vault, session.user.id);
 
-		const { taxes, address, ...config } = await serializeConfig(data, vault, session.user.id);
+			// Checks if the address has changed from the still-active previous config, and reuses the previous fkey if not.
+			// Must run before invalidating config. The lookup depends on the previous config still being active.
+			const addressId = await getAddressId(
+				db,
+				vault,
+				address
+					? {
+							...address,
+							streetAddress: address.streetAddress ?? null,
+							dependentLocality: address.dependentLocality ?? null,
+							city: address.city ?? null,
+							administrativeArea: address.administrativeArea ?? null,
+							postalCode: address.postalCode ?? null,
+							sortingCode: address.sortingCode ?? null,
+						}
+					: null,
+				session.user.id,
+			);
 
-		// Checks if the address has changed from the still-active previous config, and reuses the previous fkey if not.
-		// Must run before invalidating config. The lookup depends on the previous config still being active.
-		const addressId = await getAddressId(
-			db,
-			vault,
-			address
-				? {
-						...address,
-						streetAddress: address.streetAddress ?? null,
-						dependentLocality: address.dependentLocality ?? null,
-						city: address.city ?? null,
-						administrativeArea: address.administrativeArea ?? null,
-						postalCode: address.postalCode ?? null,
-						sortingCode: address.sortingCode ?? null,
-					}
-				: null,
-			session.user.id,
-		);
+			return { taxes, config, addressId };
+		});
 
 		// Void previously active config
 		await invalidateActiveScd(
@@ -60,8 +62,6 @@ export async function updateUserConfig(input: z.input<typeof configInput>) {
 			.insert(tables.config)
 			.values({ ...config, userId: session.user.id, addressId })
 			.returning({ id: tables.config.id });
-
-		vault.destroy();
 
 		if (taxes?.length > 0) await insertTaxes(db, taxes, insertedConfig.id, session.user.id);
 

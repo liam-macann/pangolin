@@ -2,18 +2,20 @@
 
 import { and, eq, isNull } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
-import { notFound } from 'next/navigation';
+import { notFound, unauthorized } from 'next/navigation';
 import { after } from 'next/server';
 import type z from 'zod/v4';
 
 import { type Address } from '@/api/dto/address';
 import { cleanupAddresses, cleanupClientData } from '@/lib/actions/utils';
-import { crypto } from '@/lib/encrypt';
+import { withVault } from '@/lib/encrypt';
 import { isAddressEqual } from '@/lib/utils/address';
 import { clientData, clientDataCreate } from '@/lib/validation/client';
 import { type AuthTransaction, withRLS } from '@/db';
 import * as schema from '@/db/schema';
 import { invalidateActiveScd } from '@/db/schema/data/_helpers';
+
+import { getSession } from '@/auth';
 
 export async function updateClientFavorite(clientId: string, status: boolean) {
 	await withRLS(async (db, session) => {
@@ -55,7 +57,7 @@ export async function createClient(input: z.infer<typeof clientDataCreate>) {
 			.values({ userId: session.user.id })
 			.returning({ id: schema.clients.id });
 
-		const scdId = await insertClientData(db, session.user.id, { ...data, clientId: id });
+		const scdId = await insertClientData(db, { ...data, clientId: id });
 
 		updateTag(`clients-${session.user.id}`);
 
@@ -75,7 +77,7 @@ export async function updateClient(input: z.infer<typeof clientData>) {
 
 		if (!client) notFound();
 
-		await insertClientData(db, session.user.id, data);
+		await insertClientData(db, data);
 
 		updateTag(`clients-${session.user.id}`);
 
@@ -93,9 +95,11 @@ export async function updateClient(input: z.infer<typeof clientData>) {
  * - inserts the new, active version */
 async function insertClientData(
 	db: AuthTransaction,
-	userId: string,
 	{ address, ...data }: z.infer<typeof clientData>,
 ) {
+	const session = await getSession();
+	if (!session) return unauthorized();
+
 	// Must run before invalidation
 	// The reuse lookup depends on the previous record still being active
 	const addressId = await getAddressId(
@@ -112,7 +116,6 @@ async function insertClientData(
 					sortingCode: address.sortingCode ?? null,
 				}
 			: null,
-		userId,
 	);
 
 	// Void previously active client data
@@ -126,7 +129,7 @@ async function insertClientData(
 				and(
 					isNull(schema.clientData.validTo),
 					eq(schema.clientData.clientId, data.clientId),
-					eq(schema.clientData.userId, userId),
+					eq(schema.clientData.userId, session.user.id),
 				),
 			)
 			.limit(1)
@@ -135,7 +138,7 @@ async function insertClientData(
 
 	const [{ id }] = await db
 		.insert(schema.clientData)
-		.values({ ...data, userId, addressId })
+		.values({ ...data, userId: session.user.id, addressId })
 		.returning({ id: schema.clientData.id });
 
 	return id;
@@ -143,21 +146,17 @@ async function insertClientData(
 
 /** Checks the previous clientData to see if the address has changed.
  * Returns the address ID if unchanged, otherwise inserts a new record and returns the new ID */
-async function getAddressId(
-	db: AuthTransaction,
-	clientId: string,
-	address: Address | null,
-	userId: string,
-) {
+async function getAddressId(db: AuthTransaction, clientId: string, address: Address | null) {
 	if (!address) return null;
 
-	const vault = await crypto(userId);
+	const session = await getSession();
+	if (!session) return unauthorized();
 
-	try {
+	return withVault(async vault => {
 		/** Returns the address recorded on the last clientData record and decrypts it */
 		const lastClientAddress = await db.query.clientData
 			.findFirst({
-				where: { validTo: { isNull: true }, userId, clientId },
+				where: { validTo: { isNull: true }, userId: session.user.id, clientId },
 				with: { address: { columns: { userId: false } } },
 				columns: { addressId: true },
 			})
@@ -173,13 +172,11 @@ async function getAddressId(
 			.values({
 				...address,
 				streetAddress: address.streetAddress && (await vault.encrypt([...address.streetAddress])),
-				userId,
+				userId: session.user.id,
 			})
 			.returning({ id: schema.address.id })
 			.then(([v]) => v);
 
 		return insertedAddress.id;
-	} finally {
-		vault.destroy();
-	}
+	});
 }
