@@ -1,7 +1,7 @@
 import { randomBytes } from '@noble/ciphers/utils.js';
-import { afterEach, aroundEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, aroundEach, assert, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { toBytes, toHex } from '@/lib/utils/encrypt';
+import { isEncrypted, toBytes, toHex } from '@/lib/utils/encrypt';
 
 import { sessionStorage } from '@/test/session';
 
@@ -59,6 +59,35 @@ describe('Encryption round-trip', () => {
 			await withVault(async vault => {
 				const hex = toHex(await vault.encrypt('string-form'));
 				expect(await vault.decrypt(hex)).toBe('string-form');
+			});
+		});
+
+		test('Decrypts uppercase hex', async () => {
+			await withVault(async vault => {
+				const upper = toHex(await vault.encrypt('upper-hex')).toUpperCase();
+				assert(isEncrypted(upper), 'Uppercase hex should still carry the header');
+
+				expect(await vault.decrypt(upper)).toBe('upper-hex');
+			});
+		});
+
+		test('Decrypts bytes that are a view into a larger buffer', async () => {
+			await withVault(async vault => {
+				const bytes = toBytes(await vault.encrypt('pooled-secret'));
+				const slice = Buffer.concat([Buffer.alloc(8), bytes]).subarray(8);
+				assert(slice.byteOffset > 0, 'Slice should be offset into its underlying buffer');
+				assert(isEncrypted(slice), 'Slice should carry the header');
+
+				expect(await vault.decrypt(slice)).toBe('pooled-secret');
+			});
+		});
+
+		test('Decrypts an array mixing hex and byte forms', async () => {
+			await withVault(async vault => {
+				const hex = toHex(await vault.encrypt('hex'));
+				const bytes = toBytes(await vault.encrypt('bytes'));
+
+				expect(await vault.decrypt([hex, bytes])).toEqual(['hex', 'bytes']);
 			});
 		});
 	});
