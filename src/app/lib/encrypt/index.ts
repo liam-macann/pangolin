@@ -1,8 +1,10 @@
 import 'server-only';
 
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { isPlainObject } from 'es-toolkit';
 import { forbidden, unauthorized } from 'next/navigation';
 
+import { type Brand } from '@/lib/utils';
 import { type Encrypted, isEncrypted, toHex } from '@/lib/utils/encrypt';
 
 import { getSession } from '@/auth';
@@ -20,8 +22,7 @@ import { retrieveDEK } from './internal/keys';
 export type { Decrypted };
 
 /** Encrypts a string using the provided Data Encryption Key (DEK)
- * @internal
- */
+ * @internal */
 function encrypt(value: string, DEK: Uint8Array): Encrypted<string> {
 	const data = encoder.encode(value);
 	const ciphertext = chacha(DEK).encrypt(data);
@@ -29,8 +30,7 @@ function encrypt(value: string, DEK: Uint8Array): Encrypted<string> {
 }
 
 /** Decrypts an Encrypted string using the provided Data Encryption Key (DEK)
- * @internal
- */
+ * @internal */
 function decrypt(value: Encrypted, DEK: Uint8Array): string {
 	try {
 		const ciphertext = stripHeader(value);
@@ -43,9 +43,6 @@ function decrypt(value: Encrypted, DEK: Uint8Array): string {
 		throw new Error('Failed to decrypt input');
 	}
 }
-
-/** A crypto vault handles encryption and decryption, retrieving and unwrapping the DEK for a given user */
-export type Vault = Awaited<ReturnType<typeof crypto>>;
 
 /** Retrieves and unwraps the Data Encryption Key (DEK) for an authenticated user */
 export async function crypto(uuid: string) {
@@ -61,6 +58,9 @@ export async function crypto(uuid: string) {
 			destroy();
 			forbidden();
 		}
+
+		// The vault may have been destroyed while awaiting the session, which would run crypto with a zeroed DEK
+		if (destroyed) throw new Error('DEK has been destroyed');
 
 		return fn();
 	};
@@ -156,7 +156,7 @@ export async function crypto(uuid: string) {
 		destroyed = true;
 	};
 
-	return {
+	const vault = {
 		/** Encrypts into array of ciphertext */
 		encrypt: _encrypt,
 		/** Decrypts ciphertext, returning an array of strings */
@@ -166,4 +166,52 @@ export async function crypto(uuid: string) {
 		/** Clear the internal DEK from memory */
 		destroy,
 	};
+
+	return vault as Brand<typeof vault, 'Vault'>;
+}
+
+/** A crypto vault handles encryption and decryption, retrieving and unwrapping the DEK for a given user.
+ * @remarks Unsafe, as the caller must manage `destroy()`. */
+export type UnsafeVault = Awaited<ReturnType<typeof crypto>>;
+
+/** A crypto vault passed to a {@link withVault()} callback.
+ * @remarks The DEK is automatically destroyed when the scope exits. */
+export type Vault = Omit<UnsafeVault, 'destroy'>;
+
+/** Allows any type except {@link Vault}
+ * @remarks This is just a fail-fast error that catches the basic case at compile time.
+ * The DEK will still be destroyed once the scope exits, so accessing the vault outside will throw. */
+type NoVault<T> = T extends Vault ? never : { [K in keyof T]: NoVault<T[K]> };
+
+/** Allows nested `withVault()` calls to reuse the outer vault instead of unwrapping the DEK again. */
+const vaultContext = new AsyncLocalStorage<{ vault: Vault; userId: string; open: boolean }>();
+
+/** Resolves the active session, then passes a crypto vault to the callback.
+ * The key is destroyed once the outermost callback settles. */
+export async function withVault<T>(
+	callback: (vault: Vault) => Promise<T & NoVault<T>>,
+): Promise<T> {
+	const inherited = vaultContext.getStore();
+	// Decide ownership before authentication yields, so a nested call is always inherited
+	const borrowed = inherited?.open ? inherited : undefined;
+	const session = (await getSession()) ?? unauthorized();
+
+	if (borrowed) {
+		// Only the outermost scope owns the DEK; a different user must never reuse it.
+		// Refused before the vault is handed out, so the outer scope remains valid.
+		if (borrowed.userId !== session.user.id) forbidden();
+		if (!borrowed.open) throw new Error('Vault scope has closed');
+		return callback(borrowed.vault);
+	}
+
+	// Work invoked after an outer scope closes inherits its context but owns a fresh vault.
+	const { destroy, ...vault } = await crypto(session.user.id);
+	const store = { vault, userId: session.user.id, open: true };
+
+	try {
+		return await vaultContext.run(store, () => callback(vault));
+	} finally {
+		store.open = false;
+		destroy();
+	}
 }
