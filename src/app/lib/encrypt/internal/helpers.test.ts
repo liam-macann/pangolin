@@ -3,7 +3,7 @@ import { describe, expect, expectTypeOf, test } from 'vitest';
 import { header, version } from '@/lib/encrypt/constants';
 import { isEncrypted, toHex } from '@/lib/utils/encrypt';
 
-import { concatHeader, stripHeader } from './helpers';
+import { concatHeader, decoder, stripHeader } from './helpers';
 
 describe('concatHeader', () => {
 	test.for<Uint8Array>([new Uint8Array(32), new Uint8Array(0), new Uint8Array([1, 2, 3, 252])])(
@@ -104,4 +104,10 @@ describe('stripHeader', () => {
 			expect(() => stripHeader(noHeader as any)).toThrow('Missing encryption header');
 		},
 	);
+});
+
+describe('decoder', () => {
+	test('Throws on invalid UTF-8 rather than substituting U+FFFD', () => {
+		expect(() => decoder.decode(new Uint8Array([0xff]))).toThrow();
+	});
 });

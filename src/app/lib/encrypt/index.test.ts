@@ -17,16 +17,35 @@ beforeEach(() => vi.spyOn(keys, 'retrieveDEK').mockImplementation(async () => ra
 afterEach(() => vi.restoreAllMocks());
 
 describe('Encryption round-trip', () => {
-	test.for(['Hello, World!', '日本語テスト 🔐', ''])(
-		'Encrypts a string and decrypts it back to the original: "%s"',
-		async plaintext => {
-			await withVault(async vault => {
-				const ciphertext = await vault.encrypt(plaintext);
-				const result = await vault.decrypt(ciphertext);
-				expect(result).toBe(plaintext);
-			});
-		},
-	);
+	test.for([
+		['ASCII', 'Hello, World!'],
+		['CJK and emoji', '日本語テスト 🔐'],
+		['an empty string', ''],
+		['NUL characters', 'a\0b\0'],
+		['NFD text', 'Cafe\u0301'],
+		['a ZWJ emoji sequence', '👩\u200D👩\u200D👧\u200D👦'],
+	])('Encrypts and decrypts %s: "%s"', async ([_, plaintext]) => {
+		await withVault(async vault => {
+			const ciphertext = await vault.encrypt(plaintext);
+			const result = await vault.decrypt(ciphertext);
+			expect(result).toBe(plaintext);
+		});
+	});
+
+	test('Preserves a leading byte order mark', async () => {
+		await withVault(async vault => {
+			const plaintext = '\uFEFFwith BOM';
+			expect(await vault.decrypt(await vault.encrypt(plaintext))).toBe(plaintext);
+		});
+	});
+
+	test('Replaces lone surrogates with �', async () => {
+		await withVault(async vault => {
+			// UTF-8 cannot encode an unpaired surrogate, so TextEncoder substitutes the replacement character
+			const plaintext = 'a\uD800b\uDC00c';
+			expect(await vault.decrypt(await vault.encrypt(plaintext))).toBe('a\uFFFDb\uFFFDc');
+		});
+	});
 
 	describe('Encryption generic variants', () => {
 		test('Decrypts Encrypted<Uint8Array> values (byte form)', async () => {

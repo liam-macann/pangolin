@@ -5,7 +5,9 @@ import { header, version } from '@/lib/encrypt/constants';
 import { type Encrypted, isEncrypted, toBytes } from '@/lib/utils/encrypt';
 
 export const encoder = new TextEncoder();
-export const decoder = new TextDecoder();
+// Keep a leading BOM, which would be part of the encrypted plaintext, not an encoding marker.
+// Throw on invalid UTF-8 rather than silently continuing.
+export const decoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
 /** @internal */
 export const chacha = managedNonce(xchacha20poly1305);
 
