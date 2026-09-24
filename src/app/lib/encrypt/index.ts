@@ -87,8 +87,8 @@ async function crypto(uuid: string) {
 		input: T,
 	): Promise<Decrypted<T>> =>
 		auth(() => {
-			// Prevent circular references
-			const seen = new WeakSet();
+			// Maps each visited object to decrypted output, to resolve shared and circular references
+			const seen = new WeakMap<object, unknown>();
 
 			async function walker(input: unknown): Promise<unknown> {
 				if (input === null || input === undefined || typeof input === 'function') return input;
@@ -99,12 +99,15 @@ async function crypto(uuid: string) {
 				}
 
 				if (typeof input === 'object') {
-					if (seen.has(input)) return input;
-					seen.add(input);
+					const visited = seen.get(input);
+					if (visited) return visited;
+
+					// Each output is registered before its children are walked, so a cycle can reach it
 
 					// Input is an array
 					if (Array.isArray(input)) {
 						const output = new Array(input.length);
+						seen.set(input, output);
 
 						await Promise.all(
 							input.map(async (value, index) => (output[index] = await walker(value))),
@@ -114,34 +117,64 @@ async function crypto(uuid: string) {
 					}
 
 					// Input is a Set
-					if (input instanceof Set)
-						return new Set(await Promise.all(Array.from(input).map(walker)));
+					if (input instanceof Set) {
+						const output = new Set();
+						seen.set(input, output);
+
+						const values = await Promise.all(Array.from(input).map(walker));
+						values.forEach(value => void output.add(value));
+
+						return output;
+					}
 
 					// Input is a Map
 					if (input instanceof Map) {
-						const entries = Array.from(input.entries()).map(
-							async ([key, value]) =>
-								[
-									key instanceof Promise ? key : await walker(key),
-									value instanceof Promise ? value : await walker(value),
-								] as const,
+						const output = new Map();
+						seen.set(input, output);
+
+						const entries = await Promise.all(
+							Array.from(input.entries()).map(
+								async ([key, value]) =>
+									[
+										key instanceof Promise ? key : await walker(key),
+										value instanceof Promise ? value : await walker(value),
+									] as const,
+							),
 						);
 
-						return new Map(await Promise.all(entries));
+						entries.forEach(([key, value]) => void output.set(key, value));
+
+						return output;
 					}
 
 					// Catches Date, RegExp, Error, URL, Buffers, Promise, BigInt, boxed primitives, Blob, etc.
 					if (!isPlainObject(input)) return input;
 
-					// Input is an object
-					return Object.fromEntries(
-						await Promise.all(
-							Object.entries(input).map(
-								async ([key, value]) =>
-									[key, value instanceof Promise ? value : await walker(value)] as const,
-							),
-						),
+					// Input is a plain object; respect input prototype (either Object.prototype or null)
+					const output: object = Object.create(Object.getPrototypeOf(input));
+					seen.set(input, output);
+
+					// Include all enumerable keys, including symbols (which Object.entries() skips)
+					const entries = await Promise.all(
+						Reflect.ownKeys(input)
+							.filter(key => Object.prototype.propertyIsEnumerable.call(input, key))
+							.map(async key => {
+								const value = Reflect.get(input, key);
+								return [key, value instanceof Promise ? value : await walker(value)] as const;
+							}),
 					);
+
+					// Object.defineProperty used so that __proto__ does not call prototype setter
+					entries.forEach(([key, value]) => {
+						Object.defineProperty(output, key, {
+							value,
+							enumerable: true,
+							writable: true,
+							configurable: true,
+						});
+					});
+
+					return output;
 				}
 
 				// Other values are returned as-is

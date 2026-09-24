@@ -233,13 +233,66 @@ describe('decryptObject()', () => {
 		});
 	});
 
-	test('Handles objects with null prototype', async () => {
+	test('Decrypts every occurrence of a shared reference', async () => {
+		await withVault(async vault => {
+			const shared = { secret: await vault.encrypt('secret') };
+
+			const result = await vault.decryptObject({ a: shared, b: [shared] });
+
+			expect(result).toEqual({ a: { secret: 'secret' }, b: [{ secret: 'secret' }] });
+			expect(result.b[0]).toBe(result.a); // Referential equality is preserved in the output
+		});
+	});
+
+	test('Decrypts circular references', async () => {
+		await withVault(async vault => {
+			const obj: Record<string, unknown> = { secret: await vault.encrypt('secret') };
+			obj.self = obj;
+
+			const result = await vault.decryptObject(obj);
+
+			expect(result.secret).toBe('secret');
+			expect(result.self).toBe(result);
+		});
+	});
+
+	test('Preserves a null prototype object', async () => {
 		await withVault(async vault => {
 			const obj = Object.create(null);
 			obj.secret = await vault.encrypt('secret');
 
 			const result = await vault.decryptObject(obj);
 			expect(result.secret).toBe('secret');
+			expect(Object.getPrototypeOf(result)).toBeNull();
+		});
+	});
+
+	test('Keeps a __proto__ key as an own property', async () => {
+		await withVault(async vault => {
+			const ciphertext = await vault.encrypt('secret');
+
+			// Object.fromEntries() creates a __proto__ key, whereas an object literal would set the prototype
+			const withString = Object.fromEntries([['__proto__', ciphertext]]);
+			const withObject = Object.fromEntries([['__proto__', { secret: ciphertext }]]);
+
+			expect(await vault.decryptObject(withString)).toHaveProperty('__proto__', 'secret');
+
+			const withDecryptedObject = await vault.decryptObject(withObject);
+			expect(withDecryptedObject).toHaveProperty('__proto__', { secret: 'secret' });
+			expect(Object.getPrototypeOf(withDecryptedObject)).toBe(Object.prototype);
+		});
+	});
+
+	test('Decrypts symbol-keyed values, skipping non-enumerable keys', async () => {
+		await withVault(async vault => {
+			const key = Symbol('key');
+			const hidden = Symbol('hidden');
+			const obj = { [key]: await vault.encrypt('secret') };
+			Object.defineProperty(obj, hidden, { value: 'hidden', enumerable: false });
+
+			const result = await vault.decryptObject(obj);
+			expect(result[key]).toBe('secret');
+			expect(Object.getOwnPropertySymbols(result)).toEqual([key]);
 		});
 	});
 
