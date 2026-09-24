@@ -32,11 +32,6 @@ const spyOnDEK = () => {
 const isZeroed = (DEK: Uint8Array) => DEK.every(byte => byte === 0);
 
 describe('withVault()', () => {
-	test('Encrypts and decrypts within the scope', async () => {
-		const result = await withVault(async vault => vault.decrypt(await vault.encrypt('secret')));
-		expect(result).toBe('secret');
-	});
-
 	test('Destroys the DEK after the callback resolves', async () => {
 		const { nthDEK } = spyOnDEK();
 

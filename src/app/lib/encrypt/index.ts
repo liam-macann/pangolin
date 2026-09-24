@@ -45,7 +45,7 @@ function decrypt(value: Encrypted, DEK: Uint8Array): string {
 }
 
 /** Retrieves and unwraps the Data Encryption Key (DEK) for an authenticated user */
-export async function crypto(uuid: string) {
+async function crypto(uuid: string) {
 	let destroyed = false;
 	const DEK = await retrieveDEK(uuid);
 
@@ -172,7 +172,7 @@ export async function crypto(uuid: string) {
 
 /** A crypto vault handles encryption and decryption, retrieving and unwrapping the DEK for a given user.
  * @remarks Unsafe, as the caller must manage `destroy()`. */
-export type UnsafeVault = Awaited<ReturnType<typeof crypto>>;
+type UnsafeVault = Awaited<ReturnType<typeof crypto>>;
 
 /** A crypto vault passed to a {@link withVault()} callback.
  * @remarks The DEK is automatically destroyed when the scope exits. */
