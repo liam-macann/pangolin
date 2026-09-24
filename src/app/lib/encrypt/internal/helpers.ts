@@ -1,5 +1,5 @@
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
-import { concatBytes, managedNonce } from '@noble/ciphers/utils.js';
+import { concatBytes, equalBytes, managedNonce } from '@noble/ciphers/utils.js';
 
 import { header, version } from '@/lib/encrypt/constants';
 import { type Encrypted, isEncrypted, toBytes } from '@/lib/utils/encrypt';
@@ -44,5 +44,13 @@ export const concatHeader = (ciphertext: Uint8Array): Encrypted<Uint8Array> =>
  * @internal */
 export const stripHeader = (ciphertext: Encrypted): Uint8Array => {
 	if (!isEncrypted(ciphertext)) throw new Error('Missing encryption header');
-	return toBytes(ciphertext).subarray(header.length + version.length);
+
+	const bytes = toBytes(ciphertext);
+	const offset = header.length + version.length;
+
+	// The version byte is not authenticated by the cipher, so it must be checked explicitly
+	if (!equalBytes(bytes.subarray(header.length, offset), version))
+		throw new Error('Unsupported encryption version');
+
+	return bytes.subarray(offset);
 };

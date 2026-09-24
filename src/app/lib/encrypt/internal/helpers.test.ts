@@ -1,4 +1,5 @@
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { concatBytes } from '@noble/ciphers/utils.js';
+import { assert, describe, expect, expectTypeOf, test } from 'vitest';
 
 import { header, version } from '@/lib/encrypt/constants';
 import { isEncrypted, toHex } from '@/lib/utils/encrypt';
@@ -95,6 +96,14 @@ describe('stripHeader', () => {
 		const encHex = toHex(encBytes);
 
 		expect(stripHeader(encHex)).toEqual(ciphertext);
+	});
+
+	test.for([0x00, 0x02, 0xff])('Throws on unknown version byte: %i', unknownVersion => {
+		const enc = concatBytes(header, new Uint8Array([unknownVersion]), new Uint8Array([1, 2, 3]));
+		assert(isEncrypted(enc), 'Input should carry the header');
+
+		expect(() => stripHeader(enc)).toThrow('Unsupported encryption version');
+		expect(() => stripHeader(toHex(enc))).toThrow('Unsupported encryption version');
 	});
 
 	test.for([new Uint8Array([0x01, 0x02, 0x03]), 'cry', 'CRY'])(

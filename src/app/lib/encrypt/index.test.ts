@@ -123,6 +123,20 @@ describe('encrypt()', () => {
 });
 
 describe('decrypt()', () => {
+	test('Rejects ciphertext with an unknown version byte', async () => {
+		await withVault(async vault => {
+			const enc = toBytes(await vault.encrypt('secret')).slice();
+			assert(isEncrypted(enc), 'Ciphertext should still carry the header');
+
+			expect(await vault.decrypt(enc)).toBe('secret'); // Positive control
+
+			enc[header.length] = 0x02; // Override version byte
+			assert(isEncrypted(enc), 'Ciphertext should still carry the header');
+
+			await expect(vault.decrypt(enc)).rejects.toThrow('Failed to decrypt input');
+		});
+	});
+
 	test('Preserves holes in sparse arrays', async () => {
 		await withVault(async vault => {
 			// biome-ignore lint/suspicious/noSparseArray: We are testing sparse array behavior
