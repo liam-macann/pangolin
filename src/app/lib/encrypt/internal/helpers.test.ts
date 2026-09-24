@@ -127,9 +127,9 @@ describe('concatHeader', () => {
 		expect(enc.slice(header.length + version.length)).toEqual(ciphertext);
 	});
 
-	test('Function is idempotent', () => {
-		const inp = new Uint8Array(32);
-		expect(concatHeader(concatHeader(inp))).toEqual(concatHeader(inp));
+	test('Preserves ciphertext beginning with the framing bytes', () => {
+		const ciphertext = concatBytes(header, version, new Uint8Array([0xde, 0xad]));
+		expect(stripHeader(concatHeader(ciphertext))).toEqual(ciphertext);
 	});
 });
 

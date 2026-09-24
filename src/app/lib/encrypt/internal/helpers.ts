@@ -42,12 +42,10 @@ export const isEncrypted = <T extends string | Uint8Array>(value: T): value is E
 	return hex.startsWith(HEADER_HEX);
 };
 
-/** Idempotent header and version concatenation
+/** Prepends the encryption header and version to raw ciphertext.
  * @internal */
 export const concatHeader = (ciphertext: Uint8Array): Encrypted<Uint8Array> =>
-	isEncrypted(ciphertext)
-		? ciphertext
-		: (concatBytes(header, version, ciphertext) as Encrypted<Uint8Array>);
+	concatBytes(header, version, ciphertext) as Encrypted<Uint8Array>;
 
 /** Header removal
  * @internal */
