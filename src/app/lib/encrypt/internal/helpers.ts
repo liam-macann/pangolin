@@ -7,7 +7,7 @@ import {
 	managedNonce,
 } from '@noble/ciphers/utils.js';
 
-import { header, version } from './constants';
+import { HEADER, MIN_LENGTH, VERSION } from './constants';
 import { type Encrypted } from './types';
 
 export const encoder = new TextEncoder();
@@ -34,30 +34,34 @@ export function toBytes(value: Encrypted | string | Uint8Array) {
 	return typeof value === 'string' ? hexToBytes(value) : value;
 }
 
-const HEADER_HEX = bytesToHex(header);
+const PREFIX = concatBytes(HEADER, VERSION);
+const PREFIX_HEX = bytesToHex(PREFIX).toLowerCase();
+const isHex = /^(?:[0-9a-f]{2})+$/i;
 
-/** Checks for the magic header, in either byte or hex form */
+/** Checks for well-formed ciphertext of the current version, in either byte or hex form. */
 export const isEncrypted = <T extends string | Uint8Array>(value: T): value is Encrypted<T> => {
-	const hex = typeof value === 'string' ? value : bytesToHex(value.subarray(0, header.length));
-	return hex.startsWith(HEADER_HEX);
+	if (typeof value !== 'string')
+		// Bytes are checked directly, rather than hex-encoding the whole buffer
+		return value.length >= MIN_LENGTH && equalBytes(value.subarray(0, PREFIX.length), PREFIX);
+
+	// Hex encodes each byte as 2 characters
+	const MIN_HEX_LENGTH = MIN_LENGTH * 2;
+
+	// Case-insensitive prefix. Lowercases only the prefix to avoid copying the whole string.
+	const prefix = value.slice(0, PREFIX_HEX.length).toLowerCase();
+
+	return value.length >= MIN_HEX_LENGTH && prefix === PREFIX_HEX && isHex.test(value);
 };
 
 /** Prepends the encryption header and version to raw ciphertext.
  * @internal */
 export const concatHeader = (ciphertext: Uint8Array): Encrypted<Uint8Array> =>
-	concatBytes(header, version, ciphertext) as Encrypted<Uint8Array>;
+	concatBytes(HEADER, VERSION, ciphertext) as Encrypted<Uint8Array>;
 
 /** Header removal
  * @internal */
 export const stripHeader = (ciphertext: Encrypted): Uint8Array => {
-	if (!isEncrypted(ciphertext)) throw new Error('Missing encryption header');
-
-	const bytes = toBytes(ciphertext);
-	const offset = header.length + version.length;
-
-	// The version byte is not authenticated by the cipher, so it must be checked explicitly
-	if (!equalBytes(bytes.subarray(header.length, offset), version))
-		throw new Error('Unsupported encryption version');
-
-	return bytes.subarray(offset);
+	// Also verifies the version byte, which the cipher does not authenticate
+	if (!isEncrypted(ciphertext)) throw new Error('Invalid ciphertext');
+	return toBytes(ciphertext).subarray(HEADER.length + VERSION.length);
 };

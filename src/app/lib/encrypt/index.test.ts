@@ -1,11 +1,11 @@
-import { randomBytes } from '@noble/ciphers/utils.js';
+import { bytesToHex, concatBytes, randomBytes } from '@noble/ciphers/utils.js';
 import { afterEach, aroundEach, assert, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { withVault } from '@/lib/encrypt';
 
 import { getSession, sessionStorage } from '@/test/session';
 
-import { header, version } from './internal/constants';
+import { HEADER, VERSION } from './internal/constants';
 import { isEncrypted, toBytes, toHex } from './internal/helpers';
 import * as keys from './internal/keys';
 
@@ -116,8 +116,8 @@ describe('encrypt()', () => {
 	test('Ciphertext starts with the magic header and version number', async () => {
 		await withVault(async vault => {
 			const ciphertext = toBytes(await vault.encrypt(''));
-			expect(ciphertext.slice(0, header.length)).toEqual(header); // magic header
-			expect(ciphertext.slice(header.length, header.length + version.length)).toEqual(version); // version
+			expect(ciphertext.slice(0, HEADER.length)).toEqual(HEADER); // magic header
+			expect(ciphertext.slice(HEADER.length, HEADER.length + VERSION.length)).toEqual(VERSION); // version
 		});
 	});
 });
@@ -130,8 +130,7 @@ describe('decrypt()', () => {
 
 			expect(await vault.decrypt(enc)).toBe('secret'); // Positive control
 
-			enc[header.length] = 0x02; // Override version byte
-			assert(isEncrypted(enc), 'Ciphertext should still carry the header');
+			enc[HEADER.length] = 0x02; // Override version byte
 
 			await expect(vault.decrypt(enc)).rejects.toThrow('Failed to decrypt input');
 		});
@@ -211,6 +210,18 @@ describe('decryptObject()', () => {
 			const bytea = new Uint8Array([1, 2, 3]);
 			const result = await vault.decryptObject({ raw: bytea });
 			expect(result.raw).toEqual(bytea);
+		});
+	});
+
+	test('Does not alter plaintext that starts with the framing hex', async () => {
+		await withVault(async vault => {
+			const row = {
+				id: `${bytesToHex(concatBytes(HEADER, VERSION))}-89ab-4cde-8f01-23456789abcd`,
+				name: `${bytesToHex(HEADER)} Holdings`,
+				secret: await vault.encrypt('secret'),
+			};
+
+			expect(await vault.decryptObject(row)).toEqual({ ...row, secret: 'secret' });
 		});
 	});
 
