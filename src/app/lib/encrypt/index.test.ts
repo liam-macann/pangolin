@@ -3,7 +3,7 @@ import { afterEach, aroundEach, assert, beforeEach, describe, expect, test, vi }
 
 import { withVault } from '@/lib/encrypt';
 
-import { sessionStorage } from '@/test/session';
+import { getSession, sessionStorage } from '@/test/session';
 
 import { header, version } from './internal/constants';
 import { isEncrypted, toBytes, toHex } from './internal/helpers';
@@ -360,6 +360,16 @@ describe('decryptObject()', () => {
 			// biome-ignore lint/suspicious/noSparseArray: We are testing sparse array behavior
 			expect(result).toEqual(['test a', , 'test b']);
 			expect(1 in result).toBe(false);
+		});
+	});
+
+	test('Checks the session once, not recursively per encrypted value', async () => {
+		await withVault(async vault => {
+			const obj = { a: await vault.encrypt('a'), b: [await vault.encrypt('b')] };
+			getSession.mockClear(); // Forget that withVault() and encrypt() already called it
+
+			await vault.decryptObject(obj);
+			expect(getSession).toHaveBeenCalledOnce();
 		});
 	});
 });

@@ -50,8 +50,17 @@ async function crypto(uuid: string) {
 	let destroyed = false;
 	const DEK = await retrieveDEK(uuid);
 
-	const auth = async <T>(fn: () => T) => {
+	const destroy = () => {
+		DEK.fill(0);
+		destroyed = true;
+	};
+
+	const checkDestroyed = () => {
 		if (destroyed) throw new Error('DEK has been destroyed');
+	};
+
+	const auth = async <T>(fn: () => T) => {
+		checkDestroyed();
 		const session = (await getSession()) ?? unauthorized();
 
 		// Explicit about which user DEK is requested
@@ -61,7 +70,7 @@ async function crypto(uuid: string) {
 		}
 
 		// The vault may have been destroyed while awaiting the session, which would run crypto with a zeroed DEK
-		if (destroyed) throw new Error('DEK has been destroyed');
+		checkDestroyed();
 
 		return fn();
 	};
@@ -91,12 +100,14 @@ async function crypto(uuid: string) {
 			// Maps each visited object to decrypted output, to resolve shared and circular references
 			const seen = new WeakMap<object, unknown>();
 
-			async function walker(input: unknown): Promise<unknown> {
+			function walker(input: unknown): unknown {
 				if (input === null || input === undefined || typeof input === 'function') return input;
 
 				// Input is a Uint8Array or string; decrypt if encrypted
 				if (input instanceof Uint8Array || typeof input === 'string') {
-					return isEncrypted(input) ? _decrypt(input) : input;
+					// Decrypts with DEK directly, rather than through _decrypt(), to prevent recursively calling auth().
+					// Authentication is handled once, in the enclosing auth().
+					return isEncrypted(input) ? decrypt(input, DEK) : input;
 				}
 
 				if (typeof input === 'object') {
@@ -110,11 +121,9 @@ async function crypto(uuid: string) {
 						const output = new Array(input.length);
 						seen.set(input, output);
 
-						await Promise.all(
-							input.map(async (value, index) => {
-								output[index] = value instanceof Promise ? value : await walker(value);
-							}),
-						);
+						input.forEach((value, index) => {
+							output[index] = walker(value);
+						});
 
 						return output;
 					}
@@ -124,12 +133,7 @@ async function crypto(uuid: string) {
 						const output = new Set();
 						seen.set(input, output);
 
-						const values = await Promise.all(
-							Array.from(input).map(
-								async value => [value instanceof Promise ? value : await walker(value)] as const,
-							),
-						);
-						values.forEach(([value]) => void output.add(value));
+						input.forEach(value => void output.add(walker(value)));
 
 						return output;
 					}
@@ -139,17 +143,7 @@ async function crypto(uuid: string) {
 						const output = new Map();
 						seen.set(input, output);
 
-						const entries = await Promise.all(
-							Array.from(input.entries()).map(
-								async ([key, value]) =>
-									[
-										key instanceof Promise ? key : await walker(key),
-										value instanceof Promise ? value : await walker(value),
-									] as const,
-							),
-						);
-
-						entries.forEach(([key, value]) => void output.set(key, value));
+						input.forEach((value, key) => void output.set(walker(key), walker(value)));
 
 						return output;
 					}
@@ -162,24 +156,17 @@ async function crypto(uuid: string) {
 					seen.set(input, output);
 
 					// Include all enumerable keys, including symbols (which Object.entries() skips)
-					const entries = await Promise.all(
-						Reflect.ownKeys(input)
-							.filter(key => Object.prototype.propertyIsEnumerable.call(input, key))
-							.map(async key => {
-								const value = Reflect.get(input, key);
-								return [key, value instanceof Promise ? value : await walker(value)] as const;
-							}),
-					);
-
-					// Object.defineProperty used so that __proto__ does not call prototype setter
-					entries.forEach(([key, value]) => {
-						Object.defineProperty(output, key, {
-							value,
-							enumerable: true,
-							writable: true,
-							configurable: true,
+					Reflect.ownKeys(input)
+						.filter(key => Object.prototype.propertyIsEnumerable.call(input, key))
+						.forEach(key => {
+							// Object.defineProperty used so that __proto__ does not call prototype setter
+							Object.defineProperty(output, key, {
+								value: walker(Reflect.get(input, key)),
+								enumerable: true,
+								writable: true,
+								configurable: true,
+							});
 						});
-					});
 
 					return output;
 				}
@@ -188,13 +175,8 @@ async function crypto(uuid: string) {
 				return input;
 			}
 
-			return walker(input) as Promise<Decrypted<T>>;
+			return walker(input) as Decrypted<T>;
 		});
-
-	const destroy = () => {
-		DEK.fill(0);
-		destroyed = true;
-	};
 
 	const vault = {
 		/** Encrypts into array of ciphertext */
