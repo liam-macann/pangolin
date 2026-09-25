@@ -17,10 +17,8 @@ export const encrypted = customType<{
 	fromDriver(value): Encrypted<string> {
 		// Conservatively handle DB driver behaviour with union type
 		const bytes = ((): Uint8Array => {
+			// Also matches Buffer, a Uint8Array subclass
 			if (value instanceof Uint8Array) return value;
-
-			// If returned as Buffer
-			if (Buffer.isBuffer(value)) return new Uint8Array(value);
 
 			// If hex encoded string
 			if (!value.startsWith('\\x')) throw new Error('String is not hex encoded');
@@ -28,7 +26,7 @@ export const encrypted = customType<{
 			return new Uint8Array(Buffer.from(value.slice(2), 'hex'));
 		})();
 
-		if (!isEncrypted(bytes)) throw new Error('Value is missing encryption header');
+		if (!isEncrypted(bytes)) throw new Error('Value is invalid ciphertext');
 
 		return toHex(bytes);
 	},
