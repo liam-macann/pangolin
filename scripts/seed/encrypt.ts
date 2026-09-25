@@ -1,7 +1,7 @@
 import { hexToBytes, randomBytes } from '@noble/ciphers/utils.js';
 
 import { chacha, concatHeader, encoder } from '@/lib/encrypt/internal/helpers';
-import { type Encrypted } from '@/lib/utils/encrypt';
+import { type Encrypted } from '@/lib/encrypt/internal/types';
 import * as schema from '@/db/schema';
 
 import { type Transaction } from '@/scripts/db';

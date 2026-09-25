@@ -5,21 +5,22 @@ import { isPlainObject } from 'es-toolkit';
 import { forbidden, unauthorized } from 'next/navigation';
 
 import { type Brand } from '@/lib/utils';
-import { type Encrypted, isEncrypted, toHex } from '@/lib/utils/encrypt';
 
 import { getSession } from '@/auth';
 
 import {
 	chacha,
 	concatHeader,
-	type Decrypted,
 	decoder,
 	encoder,
+	isEncrypted,
 	stripHeader,
+	toHex,
 } from './internal/helpers';
 import { retrieveDEK } from './internal/keys';
+import { type Decrypted, type Encrypted } from './internal/types';
 
-export type { Decrypted };
+export type { Encrypted };
 
 /** Encrypts a string using the provided Data Encryption Key (DEK)
  * @internal */

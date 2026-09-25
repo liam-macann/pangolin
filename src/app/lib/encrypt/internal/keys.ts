@@ -5,11 +5,11 @@ import { eq } from 'drizzle-orm';
 import { forbidden } from 'next/navigation';
 import { experimental_taintObjectReference } from 'react';
 
-import { type Encrypted } from '@/lib/utils/encrypt';
 import { withRLS } from '@/db';
 import { keychain } from '@/db/schema';
 
 import { chacha, concatHeader, stripHeader } from './helpers';
+import { type Encrypted } from './types';
 
 //
 //

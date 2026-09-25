@@ -1,12 +1,12 @@
 import * as navigation from 'next/navigation';
 import { afterEach, assert, describe, expect, expectTypeOf, vi } from 'vitest';
 
-import { type Encrypted } from '@/lib/utils/encrypt';
+import { type Vault, withVault } from '@/lib/encrypt';
 
 import { createTestSession, getSession, sessionStorage, asUser as test } from '@/test/session';
 
-import { type Vault, withVault } from './index';
 import * as keys from './internal/keys';
+import { type Encrypted } from './internal/types';
 
 afterEach(() => {
 	vi.clearAllMocks();

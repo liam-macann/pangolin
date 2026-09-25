@@ -1,6 +1,6 @@
 import { boolean, index, pgRole, snakeCase, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
-import { encrypted } from '@/lib/utils/drizzle';
+import { encrypted } from '@/lib/encrypt/drizzle';
 
 import { authUid, policy } from './data/_helpers';
 

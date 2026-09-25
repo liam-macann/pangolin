@@ -14,7 +14,7 @@ import {
 	uuid,
 } from 'drizzle-orm/pg-core';
 
-import { encrypted } from '@/lib/utils/drizzle';
+import { encrypted } from '@/lib/encrypt/drizzle';
 import { type NumericString } from '@/lib/utils/numeric';
 import { users } from '@/db/schema/auth';
 import { currencies, supportedTimezones } from '@/db/schema/i18n';

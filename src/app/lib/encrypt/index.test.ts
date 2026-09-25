@@ -1,12 +1,12 @@
 import { randomBytes } from '@noble/ciphers/utils.js';
 import { afterEach, aroundEach, assert, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { isEncrypted, toBytes, toHex } from '@/lib/utils/encrypt';
+import { withVault } from '@/lib/encrypt';
 
 import { sessionStorage } from '@/test/session';
 
-import { header, version } from './constants';
-import { withVault } from './index';
+import { header, version } from './internal/constants';
+import { isEncrypted, toBytes, toHex } from './internal/helpers';
 import * as keys from './internal/keys';
 
 aroundEach(

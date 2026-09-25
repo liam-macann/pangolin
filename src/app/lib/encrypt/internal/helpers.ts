@@ -1,37 +1,46 @@
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
-import { concatBytes, equalBytes, managedNonce } from '@noble/ciphers/utils.js';
+import {
+	bytesToHex,
+	concatBytes,
+	equalBytes,
+	hexToBytes,
+	managedNonce,
+} from '@noble/ciphers/utils.js';
 
-import { header, version } from '@/lib/encrypt/constants';
-import { type Encrypted, isEncrypted, toBytes } from '@/lib/utils/encrypt';
+import { header, version } from './constants';
+import { type Encrypted } from './types';
 
 export const encoder = new TextEncoder();
 // Keep a leading BOM, which would be part of the encrypted plaintext, not an encoding marker.
 // Throw on invalid UTF-8 rather than silently continuing.
 export const decoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true });
+
 /** @internal */
 export const chacha = managedNonce(xchacha20poly1305);
 
-type Passthrough =
-	| Date
-	| RegExp
-	| Error
-	| URL
-	| ArrayBuffer
-	| ArrayBufferView
-	| ((...args: never) => unknown);
+/** Allows idempotent encoding regardless of encryption status.
+ * @remarks Preserves branded {@link Encrypted} output if input is branded. */
+export function toHex(value: Encrypted): Encrypted<string>;
+export function toHex(value: string | Uint8Array): string;
+export function toHex(value: Encrypted | string | Uint8Array) {
+	return typeof value !== 'string' ? bytesToHex(value) : value;
+}
 
-// biome-ignore format: Nested conditions easier to read when flat
-/** @internal */
-export type Decrypted<T> =
-	T extends Encrypted ? string :
-	T extends Passthrough ? T :
-	T extends Promise<infer U> ? Promise<U> :
-	T extends ReadonlyArray<infer U> ? Decrypted<U>[] :
-	T extends Array<infer U> ? Decrypted<U>[] :
-	T extends Set<infer U> ? Set<Decrypted<U>> :
-	T extends Map<infer K, infer U> ? Map<Decrypted<K>, Decrypted<U>> :
-	T extends object ? { [K in keyof T]: Decrypted<T[K]> } :
-	T;
+/** Allows idempotent encoding regardless of encryption status.
+ * @remarks Preserves branded {@link Encrypted} output if input is branded. */
+export function toBytes(value: Encrypted): Encrypted<Uint8Array>;
+export function toBytes(value: string | Uint8Array): Uint8Array;
+export function toBytes(value: Encrypted | string | Uint8Array) {
+	return typeof value === 'string' ? hexToBytes(value) : value;
+}
+
+const HEADER_HEX = bytesToHex(header);
+
+/** Checks for the magic header, in either byte or hex form */
+export const isEncrypted = <T extends string | Uint8Array>(value: T): value is Encrypted<T> => {
+	const hex = typeof value === 'string' ? value : bytesToHex(value.subarray(0, header.length));
+	return hex.startsWith(HEADER_HEX);
+};
 
 /** Idempotent header and version concatenation
  * @internal */

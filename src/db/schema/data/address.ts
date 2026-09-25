@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm';
 import { check, index, snakeCase, text, unique, uuid } from 'drizzle-orm/pg-core';
 
 import { type Address } from '@/api/dto/address';
-import { encrypted } from '@/lib/utils/drizzle';
+import { encrypted } from '@/lib/encrypt/drizzle';
 import { users } from '@/db/schema/auth';
 
 import { authUid, policy } from './_helpers';
