@@ -1,7 +1,9 @@
 import { hexToBytes, randomBytes } from '@noble/ciphers/utils.js';
 
+// biome-ignore-start lint/plugin: Seeding wraps keys without a session, so needs the raw cipher primitives
 import { chacha, concatHeader, encoder } from '@/lib/encrypt/internal/helpers';
 import { type Encrypted } from '@/lib/encrypt/internal/types';
+// biome-ignore-end lint/plugin: Seeding wraps keys without a session, so needs the raw cipher primitives
 import * as schema from '@/db/schema';
 
 import { type Transaction } from '@/scripts/db';

@@ -1,0 +1,12 @@
+language js(typescript, jsx)
+
+// internal/ is private to its parent directory, reachable only by climbing (./internal, ../internal)
+or {
+	JsModuleSource() as $source,
+	`import($source)`,
+	`require($source)`,
+	TsImportTypeArguments(argument=$source)
+} where {
+	$source <: r"^['\"`](?:[^/]*/)*(?:[^/.'\"`][^/]*|\.[^/.][^/]*|\.\.[^/]+)/internal(?:/.*)?['\"`]$",
+	register_diagnostic(span=$source, message="internal/ is private to a module. Import it relatively from within that module, or use the public entry point.", severity="error")
+}

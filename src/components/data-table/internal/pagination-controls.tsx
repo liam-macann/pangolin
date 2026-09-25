@@ -1,8 +1,9 @@
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
 
-import { useInternalTableContext } from '@/components/data-table/internal/context';
 import { Button } from '@/ui/button';
 import { ButtonGroup } from '@/ui/button-group';
+
+import { useInternalTableContext } from './context';
 
 type DataTablePaginationControlsProps = {
 	/** Whether controls should be hidden when there is only one page */

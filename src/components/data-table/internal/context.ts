@@ -1,6 +1,6 @@
 import { createTableHookContexts } from '@tanstack/react-table';
 
-import { type DataTableFeatures } from '@/components/data-table/internal/features';
+import { type DataTableFeatures } from './features';
 
 export const {
 	tableContext,

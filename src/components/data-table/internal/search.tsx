@@ -1,8 +1,9 @@
 import { MagnifyingGlassIcon } from '@phosphor-icons/react';
 import { type ComponentProps, type KeyboardEvent } from 'react';
 
-import { useInternalTableContext } from '@/components/data-table/internal/context';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
+
+import { useInternalTableContext } from './context';
 
 export type DataTableSearchProps = Omit<ComponentProps<typeof InputGroup>, 'onKeyDown'> & {
 	onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;

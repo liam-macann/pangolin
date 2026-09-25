@@ -8,10 +8,11 @@ import {
 
 import { cn } from '@/lib/utils';
 
-import { useInternalTableContext } from '@/components/data-table/internal/context';
-import { type DataTableFeatures } from '@/components/data-table/internal/features';
 import { Button } from '@/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/ui/table';
+
+import { useInternalTableContext } from './context';
+import { type DataTableFeatures } from './features';
 
 export type DataTableContentProps<TData extends RowData, TSelected = never> = {
 	/** Set attributes according to row data
