@@ -249,8 +249,18 @@ describe('decryptObject()', () => {
 		['WeakSet', new WeakSet([{}, {}])],
 	])('Does not alter %s values', async ([_, val]) => {
 		await withVault(async vault => {
-			const result = await vault.decryptObject({ opaque: val });
-			expect(result.opaque).toBe(val);
+			const { plain, array, set, map } = await vault.decryptObject({
+				plain: val,
+				array: [val],
+				set: new Set([val]),
+				map: new Map([[val, val]]),
+			});
+
+			expect.soft(plain).toBe(val);
+			expect.soft(array[0]).toBe(val);
+			expect.soft([...set][0]).toBe(val);
+			expect.soft([...map.keys()][0]).toBe(val);
+			expect.soft([...map.values()][0]).toBe(val);
 		});
 	});
 

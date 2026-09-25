@@ -111,7 +111,9 @@ async function crypto(uuid: string) {
 						seen.set(input, output);
 
 						await Promise.all(
-							input.map(async (value, index) => (output[index] = await walker(value))),
+							input.map(async (value, index) => {
+								output[index] = value instanceof Promise ? value : await walker(value);
+							}),
 						);
 
 						return output;
@@ -122,8 +124,12 @@ async function crypto(uuid: string) {
 						const output = new Set();
 						seen.set(input, output);
 
-						const values = await Promise.all(Array.from(input).map(walker));
-						values.forEach(value => void output.add(value));
+						const values = await Promise.all(
+							Array.from(input).map(
+								async value => [value instanceof Promise ? value : await walker(value)] as const,
+							),
+						);
+						values.forEach(([value]) => void output.add(value));
 
 						return output;
 					}
