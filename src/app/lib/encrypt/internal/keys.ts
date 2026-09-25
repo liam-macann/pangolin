@@ -55,9 +55,7 @@ const unwrap = (DEK: Encrypted): Uint8Array => {
 //
 
 /** Generates a new DEK and wraps it with the KEK
- *
- * @internal
- */
+ * @internal */
 function generateWrappedDEK() {
 	const SECRET_DEK = randomBytes(32);
 	const key = wrap(SECRET_DEK);
@@ -67,9 +65,7 @@ function generateWrappedDEK() {
 }
 
 /** Retrieves the current DEK for the authenticated user, or creates one if none exists
- *
- * @internal
- */
+ * @internal */
 export async function retrieveDEK(uuid: string) {
 	const key = await withRLS(async (db, session) => {
 		// Explicit about which user DEK is requested
