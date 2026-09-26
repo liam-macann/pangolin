@@ -1,13 +1,13 @@
 import { bytesToHex, concatBytes, randomBytes } from '@noble/ciphers/utils.js';
 import { afterEach, aroundEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { withVault } from '@/lib/encrypt';
+import { type Vault, withVault } from '@/lib/encrypt';
 
 import { getSession, sessionStorage } from '@/test/session';
 
 import { HEADER, VERSION } from './internal/constants';
 import * as keys from './internal/keys';
-import { Encrypted } from './internal/types';
+import { type Decrypted, Encrypted } from './internal/types';
 
 aroundEach(
 	async run => await sessionStorage.run({ user: { id: 'user-123' } } as never, () => run()),
@@ -81,63 +81,47 @@ describe('decrypt()', () => {
 	});
 
 	test('Preserves holes in sparse arrays', async () => {
+		// biome-ignore-start lint/suspicious/noSparseArray: We are testing sparse array behavior
 		await withVault(async vault => {
-			// biome-ignore lint/suspicious/noSparseArray: We are testing sparse array behavior
 			const arr = [await vault.encrypt('test a'), , await vault.encrypt('test b')];
 
-			// biome-ignore lint/suspicious/noExplicitAny: We are lying about types to test sparse array
-			const result = await vault.decrypt(arr as any[]);
+			const result = await vault.decrypt(arr as Encrypted[]);
 
-			// biome-ignore lint/suspicious/noSparseArray: We are testing sparse array behavior
 			expect(result).toEqual(['test a', , 'test b']);
 			expect(1 in result).toBe(false);
 		});
+		// biome-ignore-end lint/suspicious/noSparseArray: We are testing sparse array behavior
 	});
 });
 
 describe('decryptDeep()', () => {
-	test('Decrypts encrypted values within a flat object', async () => {
-		await withVault(async vault => {
-			const obj = { name: await vault.encrypt('secret'), value: 42 };
+	/** Asserts output against an expected value (typed by {@link Decrypted}), ensuring the type and implementation agree */
+	async function expectDecrypted<T extends Parameters<Vault['decryptDeep']>[0]>(
+		vault: Vault,
+		input: T,
+		expected: NoInfer<Decrypted<T>>,
+	) {
+		const result = await vault.decryptDeep(input);
+		expect(result).toStrictEqual(expected);
+		return result;
+	}
 
-			const result = await vault.decryptDeep(obj);
-			expect(result).toEqual({ name: 'secret', value: 42 });
-		});
-	});
-
-	test('Decrypts nested encrypted values within an array', async () => {
-		await withVault(async vault => {
-			const arr = [
-				{ name: await vault.encrypt('secret'), value: 42 },
-				'test',
-				await vault.encrypt('🐙'),
-			];
-
-			const result = await vault.decryptDeep(arr);
-			expect(result).toEqual([{ name: 'secret', value: 42 }, 'test', '🐙']);
-		});
-	});
-
-	test('Decrypts deeply nested encrypted values', async () => {
+	test('Decrypts values within nested objects and arrays', async () => {
 		await withVault(async vault => {
 			const nested = {
-				top: {
-					inner: {
-						a: await vault.encrypt('deep-a'),
-						b: { secret: await vault.encrypt('deep-b') },
-						c: [await vault.encrypt('deep-c'), 'deep-d'],
-					},
-				},
+				name: await vault.encrypt('secret'),
+				value: 42,
+				children: [
+					'test',
+					{ name: await vault.encrypt('nested'), value: 7 },
+					{ deep: { secret: await vault.encrypt('🐙') } },
+				],
 			};
 
-			expect(await vault.decryptDeep(nested)).toMatchObject({
-				top: {
-					inner: {
-						a: 'deep-a',
-						b: { secret: 'deep-b' },
-						c: ['deep-c', 'deep-d'],
-					},
-				},
+			await expectDecrypted(vault, nested, {
+				name: 'secret',
+				value: 42,
+				children: ['test', { name: 'nested', value: 7 }, { deep: { secret: '🐙' } }],
 			});
 		});
 	});
@@ -147,34 +131,21 @@ describe('decryptDeep()', () => {
 			const encrypted = await vault.encrypt('secret');
 			const row = { hex: bytesToHex(encrypted.bytes), bytes: encrypted.bytes, class: encrypted };
 
-			expect(await vault.decryptDeep(row)).toEqual({ ...row, class: 'secret' });
-		});
-	});
-
-	test('Does not alter non-encrypted Uint8Array values', async () => {
-		await withVault(async vault => {
-			const bytea = new Uint8Array([1, 2, 3]);
-			const result = await vault.decryptDeep({ raw: bytea });
-			expect(result.raw).toEqual(bytea);
+			await expectDecrypted(vault, row, { ...row, class: 'secret' });
 		});
 	});
 
 	test('Does not alter plaintext that starts with the framing hex', async () => {
+		const PREFIX_HEX = bytesToHex(concatBytes(HEADER, Uint8Array.of(VERSION)));
+
 		await withVault(async vault => {
 			const row = {
-				id: `${bytesToHex(concatBytes(HEADER, Uint8Array.of(VERSION)))}-89ab-4cde-8f01-23456789abcd`,
-				name: `${bytesToHex(HEADER)} Holdings`,
+				id: `${PREFIX_HEX}-89ab-4cde-8f01-23456789abcd`,
+				name: `${PREFIX_HEX} Holdings`,
 				secret: await vault.encrypt('secret'),
 			};
 
-			expect(await vault.decryptDeep(row)).toEqual({ ...row, secret: 'secret' });
-		});
-	});
-
-	test('Does not alter null and undefined values', async () => {
-		await withVault(async vault => {
-			const result = await vault.decryptDeep({ a: null, b: undefined });
-			expect(result).toMatchObject({ a: null, b: undefined });
+			await expectDecrypted(vault, row, { ...row, secret: 'secret' });
 		});
 	});
 
@@ -183,12 +154,15 @@ describe('decryptDeep()', () => {
 	}
 
 	test.for([
+		['null', null],
+		['undefined', undefined],
 		['Date', new Date('2024-01-01T00:00:00Z')],
 		['RegExp', /foo/gi],
 		['Error', new Error('Test')],
 		['URL', new URL('http://localhost:3000')],
 		['Buffer', Buffer.from([8])],
 		['ArrayBuffer', new ArrayBuffer(8)],
+		['Uint8Array', new Uint8Array([1, 2, 3])],
 		['Int32Array', new Int32Array([1, 2, 3])],
 		['Float64Array', new Float64Array([1.1, 2.2])],
 		['DataView', new DataView(new ArrayBuffer(16), 0)],
@@ -204,6 +178,9 @@ describe('decryptDeep()', () => {
 		['Blob', new Blob(['test'], { type: 'text/plain' })],
 		['WeakMap', new WeakMap([[{}, {}]])],
 		['WeakSet', new WeakSet([{}, {}])],
+		['WeakRef', new WeakRef({})],
+		['Headers', new Headers({ key: 'value' })],
+		['Generator', (function* () {})()],
 	])('Does not alter %s values', async ([_, val]) => {
 		await withVault(async vault => {
 			const { plain, array, set, map } = await vault.decryptDeep({
@@ -221,16 +198,33 @@ describe('decryptDeep()', () => {
 		});
 	});
 
+	test('Does not decrypt within class instances', async () => {
+		class Box {
+			constructor(readonly secret: Encrypted) {}
+		}
+
+		await withVault(async vault => {
+			const box = new Box(await vault.encrypt('secret'));
+
+			const result = await expectDecrypted(vault, { box }, { box });
+			expect(result.box).toBe(box);
+			expect(result.box.secret).toBeInstanceOf(Encrypted);
+		});
+	});
+
 	test('Decrypts values within a Map', async () => {
 		await withVault(async vault => {
-			const map = new Map<unknown, unknown>([
+			const map = new Map<Encrypted | string, Encrypted | { secret: Encrypted }>([
 				[await vault.encrypt('key'), await vault.encrypt('val')],
 				['test', { secret: await vault.encrypt('deep-val') }],
 			]);
 
-			const result = await vault.decryptDeep(map);
-			expect(result.get('key')).toBe('val');
-			expect(result.get('test')).toEqual({ secret: 'deep-val' });
+			const expected = new Map<string, string | { secret: string }>([
+				['key', 'val'],
+				['test', { secret: 'deep-val' }],
+			]);
+
+			await expectDecrypted(vault, map, expected);
 		});
 	});
 
@@ -238,18 +232,19 @@ describe('decryptDeep()', () => {
 		await withVault(async vault => {
 			const set = new Set([await vault.encrypt('key'), { secret: await vault.encrypt('deep') }]);
 
-			const result = await vault.decryptDeep({ set: set });
-			expect([...result.set.values()]).toEqual(['key', { secret: 'deep' }]);
+			await expectDecrypted(vault, set, new Set(['key', { secret: 'deep' }]));
 		});
 	});
-
 	test('Decrypts every occurrence of a shared reference', async () => {
 		await withVault(async vault => {
 			const shared = { secret: await vault.encrypt('secret') };
 
-			const result = await vault.decryptDeep({ a: shared, b: [shared] });
+			const result = await expectDecrypted(
+				vault,
+				{ a: shared, b: [shared] },
+				{ a: { secret: 'secret' }, b: [{ secret: 'secret' }] },
+			);
 
-			expect(result).toEqual({ a: { secret: 'secret' }, b: [{ secret: 'secret' }] });
 			expect(result.b[0]).toBe(result.a); // Referential equality is preserved in the output
 		});
 	});
@@ -307,17 +302,16 @@ describe('decryptDeep()', () => {
 	});
 
 	test('Preserves holes in sparse arrays', async () => {
+		// biome-ignore-start lint/suspicious/noSparseArray: We are testing sparse array behavior
 		await withVault(async vault => {
-			// biome-ignore lint/suspicious/noSparseArray: We are testing sparse array behavior
 			const arr = [await vault.encrypt('test a'), , await vault.encrypt('test b')];
 
-			// biome-ignore lint/suspicious/noExplicitAny: We are lying about types to test sparse array
-			const result = await vault.decryptDeep(arr as any[]);
+			const result = await vault.decryptDeep(arr as Encrypted[]);
 
-			// biome-ignore lint/suspicious/noSparseArray: We are testing sparse array behavior
 			expect(result).toEqual(['test a', , 'test b']);
 			expect(1 in result).toBe(false);
 		});
+		// biome-ignore-end lint/suspicious/noSparseArray: We are testing sparse array behavior
 	});
 
 	test('Checks the session once, not recursively per encrypted value', async () => {

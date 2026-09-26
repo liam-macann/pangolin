@@ -1,4 +1,5 @@
 import { bytesToHex, concatBytes, equalBytes, hexToBytes } from '@noble/ciphers/utils.js';
+import { type Simplify, type UnknownRecord } from 'type-fest';
 
 import { HEADER, MIN_LENGTH, VERSION, type Version } from './cipher';
 
@@ -63,20 +64,24 @@ type Passthrough =
 	| RegExp
 	| Error
 	| URL
-	| ArrayBuffer
-	| ArrayBufferView
+	| URLSearchParams
+	| Headers
+	| Blob
 	| ((...args: never) => unknown);
 
 // biome-ignore format: Nested conditions easier to read when flat
-/** Deeply replaces {@link Encrypted} values with their decrypted string representation.
- * @internal */
-export type Decrypted<T> =
-	T extends Encrypted ? string :
-	T extends Passthrough ? T :
-	T extends Promise<infer U> ? Promise<U> :
-	T extends ReadonlyArray<infer U> ? Decrypted<U>[] :
-	T extends Array<infer U> ? Decrypted<U>[] :
-	T extends Set<infer U> ? Set<Decrypted<U>> :
-	T extends Map<infer K, infer U> ? Map<Decrypted<K>, Decrypted<U>> :
-	T extends object ? { [K in keyof T]: Decrypted<T[K]> } :
+type Decrypt<T, Data = string> =
+  T extends Encrypted ? Data :
+  T extends UnknownRecord ? { [K in keyof T]: Decrypt<T[K], Data> } :
+	T extends Passthrough ? T : // Before collections, as URLSearchParams structurally satisfies ReadonlyMap
+	T extends ReadonlyArray<unknown> ? { [K in keyof T]: Decrypt<T[K], Data> } :
+	T extends Set<infer U> ? Set<Decrypt<U, Data>> :
+	T extends ReadonlySet<infer U> ? ReadonlySet<Decrypt<U, Data>> :
+	T extends Map<infer K, infer U> ? Map<Decrypt<K, Data>, Decrypt<U, Data>> :
+	T extends ReadonlyMap<infer K, infer U> ? ReadonlyMap<Decrypt<K, Data>, Decrypt<U, Data>> :
+	T extends { readonly [Symbol.toStringTag]: string } ? T : // Mirrors isPlainObject() which checks tag
+	T extends object ? Simplify<T> extends T ? { [K in keyof T]: Decrypt<T[K], string | Encrypted> } : T :
 	T;
+
+/** Deeply replaces {@link Encrypted} values with their decrypted string representation. */
+export type Decrypted<T> = Decrypt<T, string>;

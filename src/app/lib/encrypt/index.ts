@@ -84,7 +84,13 @@ async function crypto(uuid: string) {
 	}
 
 	const _decryptDeep = async <
-		T extends Record<string, unknown> | Map<unknown, unknown> | unknown[],
+		T extends
+			| Record<string, unknown>
+			| Map<unknown, unknown>
+			| ReadonlyMap<unknown, unknown>
+			| Set<unknown>
+			| ReadonlySet<unknown>
+			| readonly unknown[],
 	>(
 		input: T,
 	): Promise<Decrypted<T>> =>
@@ -172,8 +178,8 @@ async function crypto(uuid: string) {
 		encrypt: _encrypt,
 		/** Decrypts Encrypted values, returning a string or array of strings */
 		decrypt: _decrypt,
-		/** Walks through a array, Map, or plain object; decrypting any encrypted values */
-		decryptObject: _decryptObject,
+		/** Walks through an array, Set, Map, or plain object; decrypting any encrypted values */
+		decryptDeep: _decryptDeep,
 		/** Clear the internal DEK from memory */
 		destroy,
 	};
