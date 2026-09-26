@@ -28,7 +28,7 @@
 		"openapi:generate": "nub ./scripts/generate-openapi.ts",
 		"openapi:lint": "nub run openapi:generate && spectral lint openapi.json --fail-severity=warn",
 		"test:fuzz": "vitest run --project fuzz --no-file-parallelism --reporter=tree",
-		"test": "vitest --project '!fuzz' --typecheck",
+		"test": "vitest --project '!fuzz'",
 		"test:run": "vitest run --project '!fuzz' --typecheck",
 		"test:browser": "vitest --project browser",
 		"test:flake": "for i in $(seq 1 ${RUNS:-10}); do echo \"Run $i/${RUNS:-10}\"; nub run test:run || exit 1; done",

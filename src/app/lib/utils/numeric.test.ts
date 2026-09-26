@@ -1,4 +1,4 @@
-import { assert, describe, expect, expectTypeOf, test } from 'vitest';
+import { assert, describe, expect, test } from 'vitest';
 
 import { formatNumeric, isNumericString, NumericString } from '@/lib/utils/numeric';
 
@@ -42,9 +42,6 @@ describe('NumericString', () => {
 		// Rejected values can sometimes match NumericString type;
 		// type is an ergonomic approximation, see TSDoc comment
 	] as const;
-
-	// Test that guard correctly narrows type
-	expectTypeOf(isNumericString).guards.toEqualTypeOf<NumericString>();
 
 	test.for(accepted)('Accepts numeric string: "%s"', value => {
 		expect(isNumericString(value)).toBe(true);

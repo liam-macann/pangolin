@@ -1,4 +1,4 @@
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { z } from 'zod';
 
 import { getBounds } from '@/lib/zod/bounds';
@@ -37,23 +37,6 @@ describe('getBounds()', () => {
 		expect(getBounds(z.number().max(-2), undefined, { minimum: undefined, maximum: null })).toEqual(
 			{ minimum: undefined, maximum: -2 },
 		);
-	});
-
-	test('Infers the return type from fallbacks', () => {
-		const defaults = getBounds(z.number().min(1));
-		expectTypeOf(defaults.minimum).toEqualTypeOf<number>();
-		expectTypeOf(defaults.maximum).toEqualTypeOf<number>();
-
-		const fallbacks = getBounds(z.number().max(1), undefined, {
-			minimum: 'unbounded',
-			maximum: null,
-		});
-		expectTypeOf(fallbacks.minimum).toEqualTypeOf<number | 'unbounded'>();
-		expectTypeOf(fallbacks.maximum).toEqualTypeOf<number | null>();
-
-		const explicitUndefined = getBounds(z.number().max(1), undefined, { minimum: undefined });
-		expectTypeOf(explicitUndefined.minimum).toEqualTypeOf<number | undefined>();
-		expect(explicitUndefined.minimum).toBeUndefined();
 	});
 
 	test('Combines constraints across both sides of a pipe', () => {

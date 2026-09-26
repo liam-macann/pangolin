@@ -1,12 +1,9 @@
 import { TZDate } from '@date-fns/tz';
-import { describe, expect, expectTypeOf, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
 import { formatDate, isoToTZDate } from '@/lib/utils/date';
 
 describe('isoToTZDate', () => {
-	test('Returns a TZDate', () =>
-		expectTypeOf(isoToTZDate('2026-01-15', 'UTC')).toEqualTypeOf<TZDate>());
-
 	describe('Set timeZone property of TZDate after transposition', () => {
 		test.for([{ timezone: 'UTC' }, { timezone: 'Asia/Kolkata' }, { timezone: 'America/New_York' }])(
 			'Sets .timeZone to $timezone',

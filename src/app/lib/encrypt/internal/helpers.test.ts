@@ -26,11 +26,6 @@ describe('toHex', () => {
 	});
 
 	test('Returns string unchanged', () => expect(toHex('435259')).toBe('435259'));
-
-	test('Preserves Encrypted brand on Encrypted input', () => {
-		const enc = new Uint8Array([...HEADER, 0x01]) as Encrypted<Uint8Array>;
-		expectTypeOf(toHex(enc)).toEqualTypeOf<Encrypted<string>>();
-	});
 });
 
 describe('toBytes', () => {
@@ -43,11 +38,6 @@ describe('toBytes', () => {
 		expect(toBytes(bytes)).toBe(bytes);
 	});
 
-	test('Preserves Encrypted brand on Encrypted input', () => {
-		const enc = bytesToHex(new Uint8Array([...HEADER, 0x01])) as Encrypted<string>;
-		expectTypeOf(toBytes(enc)).toEqualTypeOf<Encrypted<Uint8Array>>();
-	});
-
 	test('toBytes is the inverse of toHex', () => {
 		const bytes = new Uint8Array([0x43, 0x52, 0x59, 0x01]);
 		expect(toBytes(toHex(bytes))).toEqual(bytes);
@@ -55,8 +45,6 @@ describe('toBytes', () => {
 });
 
 describe('isEncrypted', () => {
-	expectTypeOf(isEncrypted).guards.toEqualTypeOf<Encrypted>();
-
 	/** Generate ciphertext with a random body */
 	const genCiphertext = ({ version = VERSION, length: len = MIN_LENGTH } = {}) =>
 		concatBytes(HEADER, version, randomBytes(len - HEADER.length - version.length));

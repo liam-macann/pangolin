@@ -21,6 +21,7 @@ const args = process.argv.slice(2);
 const isCoverage = args.includes('--coverage');
 const isRun = args.includes('run') || args.includes('--run');
 const isWatch = configDefaults.watch && !isRun;
+const isTypecheck = args.includes('--typecheck');
 
 const browserTestPatterns = ['src/**/*.test.tsx', 'src/**/*.browser.test.ts'];
 
@@ -86,6 +87,7 @@ export default defineConfig({
 		},
 	},
 	test: {
+		watch: isWatch, // Inherit watch flag in projects
 		silent: 'passed-only',
 		setupFiles: ['./src/test/setup.ts'],
 		clearMocks: true,
@@ -108,6 +110,7 @@ export default defineConfig({
 			],
 			exclude: [
 				...(configDefaults.coverage.exclude ?? []),
+				'src/app/**/*.test-d.ts',
 				'src/app/lib/auth.ts',
 				'src/app/ui/fonts.ts',
 				'src/app/ui/color-schemes.ts',
@@ -127,6 +130,11 @@ export default defineConfig({
 					sequence: { groupOrder: 2 },
 					include: ['src/**/*.test.ts'],
 					exclude: ['src/app/api/**/*.test.ts'],
+					typecheck: {
+						enabled: isTypecheck,
+						include: ['src/**/*.test-d.ts'],
+						exclude: [...configDefaults.typecheck.exclude, 'src/app/api/**/*.test-d.ts'],
+					},
 					setupFiles: ['./src/test/setup-server.ts'],
 				},
 			},
@@ -141,6 +149,7 @@ export default defineConfig({
 					maxWorkers: 2,
 					sequence: { groupOrder: 1 },
 					include: ['src/app/api/**/*.test.ts'],
+					typecheck: { enabled: isTypecheck, include: ['src/app/api/**/*.test-d.ts'] },
 					setupFiles: ['./src/test/setup-server.ts'],
 				},
 			},
