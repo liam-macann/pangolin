@@ -1,5 +1,8 @@
 import { type PartialDeepOptions, type PartialDeep as TypeFestPartialDeep } from 'type-fest';
 
+/** Accepts non-PromiseLike types */
+export type Synchronous<T> = T extends PromiseLike<unknown> ? never : T;
+
 export type PartialDeep<
 	T,
 	C extends PartialDeepOptions = { recurseIntoArrays: true },

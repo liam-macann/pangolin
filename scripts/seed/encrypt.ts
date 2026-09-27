@@ -10,9 +10,11 @@ import { type Transaction } from '@/scripts/db';
 
 function withKEK<T>(callback: (kek: Uint8Array) => T): T {
 	const kek = hexToBytes(process.env.DB_ENCRYPTION_SECRET as string);
-	const result = callback(kek);
-	kek.fill(0);
-	return result;
+	try {
+		return callback(kek);
+	} finally {
+		kek.fill(0);
+	}
 }
 
 export type SeedCrypto = {

@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { forbidden } from 'next/navigation';
 import { experimental_taintObjectReference } from 'react';
 
+import { type Synchronous } from '@/lib/utils';
 import { withRLS } from '@/db';
 import { keychain } from '@/db/schema';
 
@@ -25,13 +26,16 @@ import { type Encrypted } from './types';
  * @param callback - The function to execute with the KEK.
  * @returns The result of the callback function.
  */
-function withKEK<T>(callback: (KEK: Uint8Array) => T) {
+function withKEK<T>(callback: (KEK: Uint8Array) => Synchronous<T>) {
 	const SECRET_KEK = hexToBytes(process.env.DB_ENCRYPTION_SECRET as string);
 	experimental_taintObjectReference('KEK must never be sent to the client.', SECRET_KEK);
 
-	const val = callback(SECRET_KEK);
-	SECRET_KEK.fill(0);
-	return val;
+	try {
+		const val = callback(SECRET_KEK);
+		return val;
+	} finally {
+		SECRET_KEK.fill(0);
+	}
 }
 
 const wrap = (DEK: Uint8Array): Encrypted<Uint8Array> => {
@@ -58,10 +62,12 @@ const unwrap = (DEK: Encrypted): Uint8Array => {
  * @internal */
 function generateWrappedDEK() {
 	const SECRET_DEK = randomBytes(32);
-	const key = wrap(SECRET_DEK);
-	SECRET_DEK.fill(0);
 
-	return key;
+	try {
+		return wrap(SECRET_DEK);
+	} finally {
+		SECRET_DEK.fill(0);
+	}
 }
 
 /** Retrieves the current DEK for the authenticated user, or creates one if none exists
@@ -84,8 +90,8 @@ export async function retrieveDEK(uuid: string) {
 			return res?.key || fetchDEK();
 		};
 
-		const fetchDEK = async () =>
-			await db
+		const fetchDEK = () =>
+			db
 				.select({ key: keychain.key })
 				.from(keychain)
 				.where(eq(keychain.id, session.user.id))
