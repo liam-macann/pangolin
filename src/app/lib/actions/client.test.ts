@@ -108,7 +108,7 @@ describe.for(Object.entries(saveClientVia))('Client insertion behaviour: %s', ([
 		const storedAddress = (await getActiveClientData(clientId))?.address;
 		assert(storedAddress, 'Client data should have an associated address');
 
-		const decrypted = await withVault(vault => vault.decryptObject(storedAddress));
+		const decrypted = await withVault(vault => vault.decryptDeep(storedAddress));
 		expect(decrypted.streetAddress).toEqual(['Unit 4', '129 Main Av']);
 	});
 

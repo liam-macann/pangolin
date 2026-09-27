@@ -79,9 +79,7 @@ export async function fetchClients(
 				offset: opts.offset,
 			});
 
-			const decrypted = await withVault(vault =>
-				Promise.all(res.map(el => vault.decryptObject(el))),
-			);
+			const decrypted = await withVault(vault => Promise.all(res.map(el => vault.decryptDeep(el))));
 
 			const mapped: Client[] = await Promise.all(
 				decrypted.map(async client => {

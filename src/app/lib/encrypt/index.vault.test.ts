@@ -127,7 +127,7 @@ describe('withVault()', () => {
 			await expect(sessionStorage.exit(() => vault.decrypt(encrypted))).rejects.toThrow();
 
 			await expect(
-				sessionStorage.exit(() => vault.decryptObject({ secret: 'value' })),
+				sessionStorage.exit(() => vault.decryptDeep({ secret: 'value' })),
 			).rejects.toThrow();
 
 			expect(navigation.unauthorized).toHaveBeenCalledTimes(3);

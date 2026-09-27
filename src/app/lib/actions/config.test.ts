@@ -73,7 +73,7 @@ describe('updateUserConfig', () => {
 		assert(storedAddress, 'Config should have associated address');
 
 		await withVault(async vault => {
-			const address = await vault.decryptObject(storedAddress);
+			const address = await vault.decryptDeep(storedAddress);
 			expect(address.streetAddress).toEqual(['123 Main St']);
 		});
 	});

@@ -52,7 +52,7 @@ export const fetchConfig = cache(async function fetchConfig(id?: string): Promis
 			if (!res) notFound();
 
 			return withVault(async vault => {
-				const { configTaxes, ...decrypted } = await vault.decryptObject(res);
+				const { configTaxes, ...decrypted } = await vault.decryptDeep(res);
 				return { ...decrypted, taxes: configTaxes.map(i => i.taxes) };
 			});
 		});

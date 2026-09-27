@@ -95,12 +95,12 @@ describe('decrypt()', () => {
 	});
 });
 
-describe('decryptObject()', () => {
+describe('decryptDeep()', () => {
 	test('Decrypts encrypted values within a flat object', async () => {
 		await withVault(async vault => {
 			const obj = { name: await vault.encrypt('secret'), value: 42 };
 
-			const result = await vault.decryptObject(obj);
+			const result = await vault.decryptDeep(obj);
 			expect(result).toEqual({ name: 'secret', value: 42 });
 		});
 	});
@@ -113,7 +113,7 @@ describe('decryptObject()', () => {
 				await vault.encrypt('🐙'),
 			];
 
-			const result = await vault.decryptObject(arr);
+			const result = await vault.decryptDeep(arr);
 			expect(result).toEqual([{ name: 'secret', value: 42 }, 'test', '🐙']);
 		});
 	});
@@ -130,7 +130,7 @@ describe('decryptObject()', () => {
 				},
 			};
 
-			expect(await vault.decryptObject(nested)).toMatchObject({
+			expect(await vault.decryptDeep(nested)).toMatchObject({
 				top: {
 					inner: {
 						a: 'deep-a',
@@ -147,14 +147,14 @@ describe('decryptObject()', () => {
 			const encrypted = await vault.encrypt('secret');
 			const row = { hex: bytesToHex(encrypted.bytes), bytes: encrypted.bytes, class: encrypted };
 
-			expect(await vault.decryptObject(row)).toEqual({ ...row, class: 'secret' });
+			expect(await vault.decryptDeep(row)).toEqual({ ...row, class: 'secret' });
 		});
 	});
 
 	test('Does not alter non-encrypted Uint8Array values', async () => {
 		await withVault(async vault => {
 			const bytea = new Uint8Array([1, 2, 3]);
-			const result = await vault.decryptObject({ raw: bytea });
+			const result = await vault.decryptDeep({ raw: bytea });
 			expect(result.raw).toEqual(bytea);
 		});
 	});
@@ -167,13 +167,13 @@ describe('decryptObject()', () => {
 				secret: await vault.encrypt('secret'),
 			};
 
-			expect(await vault.decryptObject(row)).toEqual({ ...row, secret: 'secret' });
+			expect(await vault.decryptDeep(row)).toEqual({ ...row, secret: 'secret' });
 		});
 	});
 
 	test('Does not alter null and undefined values', async () => {
 		await withVault(async vault => {
-			const result = await vault.decryptObject({ a: null, b: undefined });
+			const result = await vault.decryptDeep({ a: null, b: undefined });
 			expect(result).toMatchObject({ a: null, b: undefined });
 		});
 	});
@@ -206,7 +206,7 @@ describe('decryptObject()', () => {
 		['WeakSet', new WeakSet([{}, {}])],
 	])('Does not alter %s values', async ([_, val]) => {
 		await withVault(async vault => {
-			const { plain, array, set, map } = await vault.decryptObject({
+			const { plain, array, set, map } = await vault.decryptDeep({
 				plain: val,
 				array: [val],
 				set: new Set([val]),
@@ -228,7 +228,7 @@ describe('decryptObject()', () => {
 				['test', { secret: await vault.encrypt('deep-val') }],
 			]);
 
-			const result = await vault.decryptObject(map);
+			const result = await vault.decryptDeep(map);
 			expect(result.get('key')).toBe('val');
 			expect(result.get('test')).toEqual({ secret: 'deep-val' });
 		});
@@ -238,7 +238,7 @@ describe('decryptObject()', () => {
 		await withVault(async vault => {
 			const set = new Set([await vault.encrypt('key'), { secret: await vault.encrypt('deep') }]);
 
-			const result = await vault.decryptObject({ set: set });
+			const result = await vault.decryptDeep({ set: set });
 			expect([...result.set.values()]).toEqual(['key', { secret: 'deep' }]);
 		});
 	});
@@ -247,7 +247,7 @@ describe('decryptObject()', () => {
 		await withVault(async vault => {
 			const shared = { secret: await vault.encrypt('secret') };
 
-			const result = await vault.decryptObject({ a: shared, b: [shared] });
+			const result = await vault.decryptDeep({ a: shared, b: [shared] });
 
 			expect(result).toEqual({ a: { secret: 'secret' }, b: [{ secret: 'secret' }] });
 			expect(result.b[0]).toBe(result.a); // Referential equality is preserved in the output
@@ -259,7 +259,7 @@ describe('decryptObject()', () => {
 			const obj: Record<string, unknown> = { secret: await vault.encrypt('secret') };
 			obj.self = obj;
 
-			const result = await vault.decryptObject(obj);
+			const result = await vault.decryptDeep(obj);
 
 			expect(result.secret).toBe('secret');
 			expect(result.self).toBe(result);
@@ -271,7 +271,7 @@ describe('decryptObject()', () => {
 			const obj = Object.create(null);
 			obj.secret = await vault.encrypt('secret');
 
-			const result = await vault.decryptObject(obj);
+			const result = await vault.decryptDeep(obj);
 			expect(result.secret).toBe('secret');
 			expect(Object.getPrototypeOf(result)).toBeNull();
 		});
@@ -285,9 +285,9 @@ describe('decryptObject()', () => {
 			const withEncrypted = Object.fromEntries([['__proto__', encrypted]]);
 			const withObject = Object.fromEntries([['__proto__', { secret: encrypted }]]);
 
-			expect(await vault.decryptObject(withEncrypted)).toHaveProperty('__proto__', 'secret');
+			expect(await vault.decryptDeep(withEncrypted)).toHaveProperty('__proto__', 'secret');
 
-			const withDecryptedObject = await vault.decryptObject(withObject);
+			const withDecryptedObject = await vault.decryptDeep(withObject);
 			expect(withDecryptedObject).toHaveProperty('__proto__', { secret: 'secret' });
 			expect(Object.getPrototypeOf(withDecryptedObject)).toBe(Object.prototype);
 		});
@@ -300,7 +300,7 @@ describe('decryptObject()', () => {
 			const obj = { [key]: await vault.encrypt('secret') };
 			Object.defineProperty(obj, hidden, { value: 'hidden', enumerable: false });
 
-			const result = await vault.decryptObject(obj);
+			const result = await vault.decryptDeep(obj);
 			expect(result[key]).toBe('secret');
 			expect(Object.getOwnPropertySymbols(result)).toEqual([key]);
 		});
@@ -312,7 +312,7 @@ describe('decryptObject()', () => {
 			const arr = [await vault.encrypt('test a'), , await vault.encrypt('test b')];
 
 			// biome-ignore lint/suspicious/noExplicitAny: We are lying about types to test sparse array
-			const result = await vault.decryptObject(arr as any[]);
+			const result = await vault.decryptDeep(arr as any[]);
 
 			// biome-ignore lint/suspicious/noSparseArray: We are testing sparse array behavior
 			expect(result).toEqual(['test a', , 'test b']);
@@ -325,7 +325,7 @@ describe('decryptObject()', () => {
 			const obj = { a: await vault.encrypt('a'), b: [await vault.encrypt('b')] };
 			getSession.mockClear(); // Forget that withVault() and encrypt() already called it
 
-			await vault.decryptObject(obj);
+			await vault.decryptDeep(obj);
 			expect(getSession).toHaveBeenCalledOnce();
 		});
 	});

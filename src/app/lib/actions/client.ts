@@ -160,7 +160,7 @@ async function getAddressId(db: AuthTransaction, clientId: string, address: Addr
 				with: { address: { columns: { userId: false } } },
 				columns: { addressId: true },
 			})
-			.then(async res => res?.address && (await vault.decryptObject(res.address)));
+			.then(async res => res?.address && (await vault.decryptDeep(res.address)));
 
 		// If the address is unchanged, reuse the existing address record to prevent duplicate rows
 		const isAddressUnchanged = isAddressEqual(address, lastClientAddress);

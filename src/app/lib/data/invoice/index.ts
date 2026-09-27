@@ -227,7 +227,7 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 					createdAt: document.createdAt.toISOString(),
 					reference: invoiceReference(invoice, config.numberingScheme),
 					config,
-					clientData: await vault.decryptObject(document.clientData),
+					clientData: await vault.decryptDeep(document.clientData),
 					tax,
 				};
 			});

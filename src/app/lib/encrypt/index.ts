@@ -83,7 +83,7 @@ async function crypto(uuid: string) {
 		);
 	}
 
-	const _decryptObject = async <
+	const _decryptDeep = async <
 		T extends Record<string, unknown> | Map<unknown, unknown> | unknown[],
 	>(
 		input: T,
