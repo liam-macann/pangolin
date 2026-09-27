@@ -1,5 +1,5 @@
 import { bytesToHex, hexToBytes } from '@noble/ciphers/utils.js';
-import { afterEach, assert, beforeEach, describe, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, vi } from 'vitest';
 
 import { withVault } from '@/lib/encrypt';
 import { withRLS } from '@/db';
@@ -7,8 +7,8 @@ import { keychain } from '@/db/schema';
 
 import { asUser as test } from '@/test/session';
 
-import { isEncrypted } from './internal/helpers';
 import * as keys from './internal/keys';
+import { Encrypted } from './internal/types';
 
 // Fixed ciphertext pinning the stored v1 format: a failure means existing data can no longer be read.
 // Never regenerate them.
@@ -28,24 +28,29 @@ describe('Version 1', () => {
 		const DEK = '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f';
 		vi.spyOn(keys, 'retrieveDEK').mockImplementation(async () => hexToBytes(DEK));
 
-		const ciphertext = [
+		const stored = [
 			'43525901a2e8463154e3e67febbc06af33dcf368ec7b457ba114815e8',
 			'1f3e845d867eebfd74a0062064793a1d0f683276e0a6cd85b6458b10c',
 		].join('');
 
-		assert(isEncrypted(ciphertext), 'Expected isEncrypted to recognize well-formed v1 ciphertext');
-		await withVault(async vault => expect(await vault.decrypt(ciphertext)).toBe('Hello, World!'));
+		// Throws if not recognized as well-formed ciphertext
+		const encrypted = Encrypted.deserialize(hexToBytes(stored));
+		expect(bytesToHex(encrypted.serialize())).toBe(stored); // Round-trips byte for byte
+
+		await withVault(async vault => expect(await vault.decrypt(encrypted)).toBe('Hello, World!'));
 	});
 
 	test('Unwraps stored DEK', async ({ session }) => {
 		const DEK = '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f';
 
-		const wrapped = [
+		const stored = [
 			'4352590180c3bda7c9c6533065f86a67facc99c2b135f49d97c48fc4c03788fdfd83934da542',
 			'65674c71ef7043f8b4c4ce0f0a5a74681e6f0867ac8e28bc8fc5b3f0bf6d4414f5376c5ee0f0',
 		].join('');
 
-		assert(isEncrypted(wrapped), 'Expected isEncrypted to recognize well-formed v1 ciphertext');
+		// Throws if not recognized as well-formed ciphertext
+		const wrapped = Encrypted.deserialize(hexToBytes(stored));
+		expect(bytesToHex(wrapped.serialize())).toBe(stored); // Round-trips byte for byte
 
 		await withRLS(db => db.insert(keychain).values({ id: session.user.id, key: wrapped }));
 		expect(bytesToHex(await keys.retrieveDEK(session.user.id))).toBe(DEK);

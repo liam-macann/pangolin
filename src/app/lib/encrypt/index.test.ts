@@ -1,13 +1,13 @@
 import { bytesToHex, concatBytes, randomBytes } from '@noble/ciphers/utils.js';
-import { afterEach, aroundEach, assert, beforeEach, describe, expect, test, vi } from 'vitest';
+import { afterEach, aroundEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { withVault } from '@/lib/encrypt';
 
 import { getSession, sessionStorage } from '@/test/session';
 
 import { HEADER, VERSION } from './internal/constants';
-import { isEncrypted, toBytes, toHex } from './internal/helpers';
 import * as keys from './internal/keys';
+import { Encrypted } from './internal/types';
 
 aroundEach(
 	async run => await sessionStorage.run({ user: { id: 'user-123' } } as never, () => run()),
@@ -26,8 +26,8 @@ describe('Encryption round-trip', () => {
 		['a ZWJ emoji sequence', '👩\u200D👩\u200D👧\u200D👦'],
 	])('Encrypts and decrypts %s: "%s"', async ([_, plaintext]) => {
 		await withVault(async vault => {
-			const ciphertext = await vault.encrypt(plaintext);
-			const result = await vault.decrypt(ciphertext);
+			const encrypted = await vault.encrypt(plaintext);
+			const result = await vault.decrypt(encrypted);
 			expect(result).toBe(plaintext);
 		});
 	});
@@ -47,57 +47,12 @@ describe('Encryption round-trip', () => {
 		});
 	});
 
-	describe('Encryption generic variants', () => {
-		test('Decrypts Encrypted<Uint8Array> values (byte form)', async () => {
-			await withVault(async vault => {
-				const bytes = toBytes(await vault.encrypt('byte-form'));
-				expect(await vault.decrypt(bytes)).toBe('byte-form');
-			});
-		});
-
-		test('Decrypts Encrypted<string> values (string form)', async () => {
-			await withVault(async vault => {
-				const hex = toHex(await vault.encrypt('string-form'));
-				expect(await vault.decrypt(hex)).toBe('string-form');
-			});
-		});
-
-		test('Decrypts uppercase hex', async () => {
-			await withVault(async vault => {
-				const upper = toHex(await vault.encrypt('upper-hex')).toUpperCase();
-				assert(isEncrypted(upper), 'Uppercase hex should still carry the header');
-
-				expect(await vault.decrypt(upper)).toBe('upper-hex');
-			});
-		});
-
-		test('Decrypts bytes that are a view into a larger buffer', async () => {
-			await withVault(async vault => {
-				const bytes = toBytes(await vault.encrypt('pooled-secret'));
-				const slice = Buffer.concat([Buffer.alloc(8), bytes]).subarray(8);
-				assert(slice.byteOffset > 0, 'Slice should be offset into its underlying buffer');
-				assert(isEncrypted(slice), 'Slice should carry the header');
-
-				expect(await vault.decrypt(slice)).toBe('pooled-secret');
-			});
-		});
-
-		test('Decrypts an array mixing hex and byte forms', async () => {
-			await withVault(async vault => {
-				const hex = toHex(await vault.encrypt('hex'));
-				const bytes = toBytes(await vault.encrypt('bytes'));
-
-				expect(await vault.decrypt([hex, bytes])).toEqual(['hex', 'bytes']);
-			});
-		});
-	});
-
 	test.for([['alpha', 'beta', 'gamma'], ['日本語テスト 🔐', 'beta', '🫀'], []])(
 		'Encrypts and decrypts an array of strings: ["%s", …]',
 		async inputs => {
 			await withVault(async vault => {
-				const ciphertext = await vault.encrypt(inputs);
-				const result = await vault.decrypt(ciphertext);
+				const encrypted = await vault.encrypt(inputs);
+				const result = await vault.decrypt(encrypted);
 				expect(result).toEqual(inputs);
 			});
 		},
@@ -112,27 +67,16 @@ describe('encrypt()', () => {
 			expect(a).not.toEqual(b);
 		});
 	});
-
-	test('Ciphertext starts with the magic header and version number', async () => {
-		await withVault(async vault => {
-			const ciphertext = toBytes(await vault.encrypt(''));
-			expect(ciphertext.slice(0, HEADER.length)).toEqual(HEADER); // magic header
-			expect(ciphertext.slice(HEADER.length, HEADER.length + VERSION.length)).toEqual(VERSION); // version
-		});
-	});
 });
 
 describe('decrypt()', () => {
-	test('Rejects ciphertext with an unknown version byte', async () => {
+	test('Rejects ciphertext with an unsupported version', async () => {
 		await withVault(async vault => {
-			const enc = toBytes(await vault.encrypt('secret')).slice();
-			assert(isEncrypted(enc), 'Ciphertext should still carry the header');
-
+			const enc = await vault.encrypt('secret');
 			expect(await vault.decrypt(enc)).toBe('secret'); // Positive control
 
-			enc[HEADER.length] = 0x02; // Override version byte
-
-			await expect(vault.decrypt(enc)).rejects.toThrow('Failed to decrypt input');
+			const unsupported = new Encrypted(enc.bytes, 2);
+			await expect(vault.decrypt(unsupported)).rejects.toThrow('Failed to decrypt input');
 		});
 	});
 
@@ -198,10 +142,12 @@ describe('decryptObject()', () => {
 		});
 	});
 
-	test('Decrypts Encrypted<Uint8Array> values within an object', async () => {
+	test('Does not alter ciphertext outside of Encrypted class', async () => {
 		await withVault(async vault => {
-			const obj = { name: toBytes(await vault.encrypt('byte-secret')) };
-			expect(await vault.decryptObject(obj)).toMatchObject({ name: 'byte-secret' });
+			const encrypted = await vault.encrypt('secret');
+			const row = { hex: bytesToHex(encrypted.bytes), bytes: encrypted.bytes, class: encrypted };
+
+			expect(await vault.decryptObject(row)).toEqual({ ...row, class: 'secret' });
 		});
 	});
 
@@ -216,7 +162,7 @@ describe('decryptObject()', () => {
 	test('Does not alter plaintext that starts with the framing hex', async () => {
 		await withVault(async vault => {
 			const row = {
-				id: `${bytesToHex(concatBytes(HEADER, VERSION))}-89ab-4cde-8f01-23456789abcd`,
+				id: `${bytesToHex(concatBytes(HEADER, Uint8Array.of(VERSION)))}-89ab-4cde-8f01-23456789abcd`,
 				name: `${bytesToHex(HEADER)} Holdings`,
 				secret: await vault.encrypt('secret'),
 			};
@@ -333,13 +279,13 @@ describe('decryptObject()', () => {
 
 	test('Keeps a __proto__ key as an own property', async () => {
 		await withVault(async vault => {
-			const ciphertext = await vault.encrypt('secret');
+			const encrypted = await vault.encrypt('secret');
 
 			// Object.fromEntries() creates a __proto__ key, whereas an object literal would set the prototype
-			const withString = Object.fromEntries([['__proto__', ciphertext]]);
-			const withObject = Object.fromEntries([['__proto__', { secret: ciphertext }]]);
+			const withEncrypted = Object.fromEntries([['__proto__', encrypted]]);
+			const withObject = Object.fromEntries([['__proto__', { secret: encrypted }]]);
 
-			expect(await vault.decryptObject(withString)).toHaveProperty('__proto__', 'secret');
+			expect(await vault.decryptObject(withEncrypted)).toHaveProperty('__proto__', 'secret');
 
 			const withDecryptedObject = await vault.decryptObject(withObject);
 			expect(withDecryptedObject).toHaveProperty('__proto__', { secret: 'secret' });

@@ -1,4 +1,4 @@
-import { randomBytes } from '@noble/ciphers/utils.js';
+import { bytesToHex, hexToBytes, randomBytes } from '@noble/ciphers/utils.js';
 import * as navigation from 'next/navigation';
 import { beforeEach, expect, vi } from 'vitest';
 
@@ -7,9 +7,9 @@ import { keychain } from '@/db/schema';
 
 import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
-import { MIN_LENGTH } from './constants';
-import { concatHeader, toHex } from './helpers';
+import { chacha, MIN_LENGTH } from './cipher';
 import { retrieveDEK } from './keys';
+import { Encrypted } from './types';
 
 // Mocks are shared with other files in this worker (isolate: false)
 beforeEach(() => vi.clearAllMocks());
@@ -24,12 +24,15 @@ test('Generates and stores a DEK when none exists', async ({ session }) => {
 	expect(DEK).toHaveLength(32);
 
 	// DEK should be wrapped before being stored in the keychain
-	expect(await fetchStoredKeys()).toEqual([{ key: expect.not.stringContaining(toHex(DEK)) }]);
+	const [stored, ...rest] = await fetchStoredKeys();
+	expect(rest).toEqual([]);
+	expect(stored.key).toBeInstanceOf(Encrypted);
+	expect(bytesToHex(stored.key.bytes)).not.toContain(bytesToHex(DEK));
 });
 
 test('Returns the stored DEK on later retrievals', async ({ session }) => {
-	const DEK = toHex(await retrieveDEK(session.user.id));
-	expect(toHex(await retrieveDEK(session.user.id))).toBe(DEK);
+	const DEK = bytesToHex(await retrieveDEK(session.user.id));
+	expect(bytesToHex(await retrieveDEK(session.user.id))).toBe(DEK);
 });
 
 test('Calls forbidden() when requesting DEK belonging to another tenant', async ({ db, auth }) => {
@@ -47,7 +50,17 @@ test('Calls forbidden() when requesting DEK belonging to another tenant', async 
 
 test('Throws a generic error when the stored DEK cannot be unwrapped', async ({ session }) => {
 	// Correctly framed, but not wrapped by the current KEK
-	const key = concatHeader(randomBytes(MIN_LENGTH));
+	const key = new Encrypted(randomBytes(MIN_LENGTH));
+	await withRLS(db => db.insert(keychain).values({ id: session.user.id, key }));
+
+	await expect(retrieveDEK(session.user.id)).rejects.toThrow('Failed to unwrap DEK');
+});
+
+test('Throws a generic error when the stored DEK has an unsupported version', async ({
+	session,
+}) => {
+	const KEK = hexToBytes(process.env.DB_ENCRYPTION_SECRET ?? '');
+	const key = new Encrypted(chacha(KEK).encrypt(randomBytes(32)), 2);
 	await withRLS(db => db.insert(keychain).values({ id: session.user.id, key }));
 
 	await expect(retrieveDEK(session.user.id)).rejects.toThrow('Failed to unwrap DEK');

@@ -1,7 +1,6 @@
 import { customType } from 'drizzle-orm/pg-core';
 
-import { isEncrypted, toBytes, toHex } from './internal/helpers';
-import { type Encrypted } from './internal/types';
+import { Encrypted } from './internal/types';
 
 export const encrypted = customType<{
 	data: Encrypted;
@@ -9,14 +8,14 @@ export const encrypted = customType<{
 }>({
 	dataType: () => 'bytea',
 	toDriver(value: Encrypted): Buffer {
-		if (!isEncrypted(value)) throw new Error('Value is not encrypted');
+		if (!(value instanceof Encrypted)) throw new Error('Value is not encrypted');
 
 		// Buffer necessary to support both Neon driver and PGLite
-		return Buffer.from(toBytes(value));
+		return Buffer.from(value.serialize());
 	},
-	fromDriver(value): Encrypted<string> {
+	fromDriver(value): Encrypted {
 		// Conservatively handle DB driver behaviour with union type
-		const bytes = ((): Uint8Array => {
+		const bytes = (): Uint8Array => {
 			// Also matches Buffer, a Uint8Array subclass
 			if (value instanceof Uint8Array) return value;
 
@@ -24,10 +23,8 @@ export const encrypted = customType<{
 			if (!value.startsWith('\\x')) throw new Error('String is not hex encoded');
 
 			return new Uint8Array(Buffer.from(value.slice(2), 'hex'));
-		})();
+		};
 
-		if (!isEncrypted(bytes)) throw new Error('Value is invalid ciphertext');
-
-		return toHex(bytes);
+		return Encrypted.deserialize(bytes());
 	},
 });

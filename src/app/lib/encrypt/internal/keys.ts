@@ -9,8 +9,8 @@ import { type Synchronous } from '@/lib/utils';
 import { withRLS } from '@/db';
 import { keychain } from '@/db/schema';
 
-import { chacha, concatHeader, stripHeader } from './helpers';
-import { type Encrypted } from './types';
+import { chacha, VERSION } from './cipher';
+import { Encrypted } from './types';
 
 //
 //
@@ -38,16 +38,14 @@ function withKEK<T>(callback: (KEK: Uint8Array) => Synchronous<T>) {
 	}
 }
 
-const wrap = (DEK: Uint8Array): Encrypted<Uint8Array> => {
-	const res = withKEK(KEK => concatHeader(chacha(KEK).encrypt(DEK)));
-
-	experimental_taintObjectReference('DEK must never be sent to the client.', res);
-	return res;
-};
+const wrap = (DEK: Uint8Array): Encrypted =>
+	withKEK(KEK => new Encrypted(chacha(KEK).encrypt(DEK)));
 
 const unwrap = (DEK: Encrypted): Uint8Array => {
-	const res = withKEK(KEK => chacha(KEK).decrypt(stripHeader(DEK)));
+	if (DEK.version !== VERSION) throw new Error('Unsupported encryption version');
+	const res = withKEK(KEK => chacha(KEK).decrypt(DEK.bytes));
 
+	// Reference taint only: taintUniqueValue keeps a string copy until React GC
 	experimental_taintObjectReference('DEK must never be sent to the client.', res);
 	return res;
 };

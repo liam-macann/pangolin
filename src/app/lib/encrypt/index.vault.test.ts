@@ -76,13 +76,13 @@ describe('withVault()', () => {
 
 		// Positive control
 		const allowed = await withVault(async vault => ({ id: 1, secret: await vault.encrypt('x') }));
-		expectTypeOf(allowed).toEqualTypeOf<{ id: number; secret: Encrypted<string> }>();
+		expectTypeOf(allowed).toEqualTypeOf<{ id: number; secret: Encrypted }>();
 	});
 
 	test('Rejects unawaited operations that outlive their scope', async () => {
 		// This test is important to ensure that crypto is never run with a zeroed DEK
 
-		const ciphertext = await withVault(async vault => vault.encrypt('secret'));
+		const encrypted = await withVault(async vault => vault.encrypt('secret'));
 		let inFlight: Promise<PromiseSettledResult<unknown>[]> | undefined;
 
 		// Hold each session check open until the scope has exited
@@ -97,7 +97,7 @@ describe('withVault()', () => {
 				.mockImplementationOnce(getDelayedSession)
 				.mockImplementationOnce(getDelayedSession);
 
-			inFlight = Promise.allSettled([vault.encrypt('secret'), vault.decrypt(ciphertext)]);
+			inFlight = Promise.allSettled([vault.encrypt('secret'), vault.decrypt(encrypted)]);
 		});
 
 		gate.resolve();
@@ -121,11 +121,10 @@ describe('withVault()', () => {
 
 	test('Calls unauthorized() when the session ends mid-scope', async () => {
 		await withVault(async vault => {
-			await expect(sessionStorage.exit(() => vault.encrypt('secret'))).rejects.toThrow();
+			const encrypted = await vault.encrypt('secret');
 
-			await expect(
-				sessionStorage.exit(() => vault.decrypt(new Uint8Array(32) as Encrypted)),
-			).rejects.toThrow();
+			await expect(sessionStorage.exit(() => vault.encrypt('secret'))).rejects.toThrow();
+			await expect(sessionStorage.exit(() => vault.decrypt(encrypted))).rejects.toThrow();
 
 			await expect(
 				sessionStorage.exit(() => vault.decryptObject({ secret: 'value' })),
@@ -137,17 +136,17 @@ describe('withVault()', () => {
 
 	test('Cannot decrypt ciphertext belonging to another user', async ({ db, auth }) => {
 		const other = await createTestSession(db, auth);
-		const ciphertext = await sessionStorage.run(other, () =>
+		const encrypted = await sessionStorage.run(other, () =>
 			withVault(async vault => vault.encrypt('secret')),
 		);
 
-		await expect(withVault(async vault => vault.decrypt(ciphertext))).rejects.toThrow(
+		await expect(withVault(async vault => vault.decrypt(encrypted))).rejects.toThrow(
 			'Failed to decrypt input',
 		);
 
 		// Positive control: the owner can decrypt it
 		expect(
-			await sessionStorage.run(other, () => withVault(async vault => vault.decrypt(ciphertext))),
+			await sessionStorage.run(other, () => withVault(async vault => vault.decrypt(encrypted))),
 		).toBe('secret');
 	});
 
