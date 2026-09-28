@@ -275,7 +275,10 @@ describe('AddressInput', () => {
 			await expect.element(option).toBeVisible();
 			await userEvent.click(option);
 
-			expect(useAddressMetadata.mock.lastCall?.[0]).toBe(testCountries.withSubregion);
+			await expect
+				.poll(() => useAddressMetadata.mock.lastCall?.[0])
+				.toBe(testCountries.withSubregion);
+
 			await expect.element(getAddressField(screen, 'administrativeArea')).toHaveValue('');
 		});
 

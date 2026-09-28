@@ -1,0 +1,102 @@
+name: CI
+
+"on":
+  push:
+  pull_request:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  biome:
+    name: Code quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+      - name: Run Biome
+        run: biome ci .
+
+  spectral:
+    name: OpenAPI lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Setup nub
+        uses: nubjs/setup-nub@v0
+      - name: Install dependencies
+        run: nub ci
+      - name: Lint OpenAPI document
+        run: nub run openapi:lint -f github-actions
+
+  schemathesis:
+    name: API fuzz test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Setup nub
+        uses: nubjs/setup-nub@v0
+      - name: Setup uv
+        uses: astral-sh/setup-uv@ae62891fec2bb8e7d6c99fc78c9fec3a63790f8d # v10.0.0
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: nub ci
+      - name: Run Schemathesis API fuzzing
+        run: nub run test:fuzz
+
+  vitest:
+    name: Unit test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Setup nub
+        uses: nubjs/setup-nub@v0
+      - name: Install dependencies
+        run: nub ci
+      - name: Run tests
+        run: nub exec next typegen && nub exec vitest run --project server --project API --typecheck
+
+  # One runner per browser: isolates flakes, improves performance, and lets each browser be re-run separately
+  vitest-browser:
+    name: Browser test (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser:
+          - chromium
+          - firefox
+          - webkit
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Setup nub
+        uses: nubjs/setup-nub@v0
+      - name: Install dependencies
+        run: nub ci
+      - name: Install Playwright browser
+        run: nub exec playwright install --with-deps ${{ matrix.browser }}
+      - name: Run tests
+        run: nub exec vitest run --project "browser (${{ matrix.browser }}*"
