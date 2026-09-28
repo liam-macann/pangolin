@@ -1,5 +1,7 @@
 import { isPlainObject } from 'es-toolkit';
 
+import { type Synchronous } from '@/lib/utils';
+
 import { type Decrypted, Encrypted } from './types';
 
 export type DeepDecryptable =
@@ -14,7 +16,7 @@ export type DeepDecryptable =
 export function decryptDeep<T extends DeepDecryptable>(
 	input: T,
 	decrypt: (value: Encrypted) => string,
-): Decrypted<T> {
+): Synchronous<Decrypted<T>> {
 	// Maps each visited object to decrypted output, to resolve shared and circular references
 	const seen = new WeakMap<object, unknown>();
 
@@ -84,5 +86,5 @@ export function decryptDeep<T extends DeepDecryptable>(
 		return input;
 	}
 
-	return walker(input) as Decrypted<T>;
+	return walker(input) as Synchronous<Decrypted<T>>;
 }

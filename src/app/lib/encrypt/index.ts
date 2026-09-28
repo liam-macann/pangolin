@@ -3,6 +3,8 @@ import 'server-only';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { forbidden, unauthorized } from 'next/navigation';
 
+import { type Synchronous } from '@/lib/utils';
+
 import { getSession } from '@/auth';
 
 import { chacha, decoder, encoder, VERSION } from './internal/cipher';
@@ -49,7 +51,7 @@ async function crypto(uuid: string) {
 		if (destroyed) throw new Error('DEK has been destroyed');
 	};
 
-	const auth = async <T>(fn: () => T) => {
+	const auth = async <T>(fn: () => Synchronous<T>) => {
 		checkDestroyed();
 		const session = (await getSession()) ?? unauthorized();
 
