@@ -23,11 +23,11 @@ const columnHelper = createDataTableColumnHelper<Invoice>();
 /** Column definitions for invoices */
 export const columns = columnHelper.columns([
 	columnHelper.accessor('reference', {
-		// Numeric sorting faster than alphanumeric, and works across all numbering schemes
+		// Creation order approximates allocation order, which is stable across numbering scheme switches
 		sortFn: (a, b) => {
-			const iA = a.original.index;
-			const iB = b.original.index;
-			return iA > iB ? 1 : iA < iB ? -1 : 0;
+			const cA = a.original.createdAt;
+			const cB = b.original.createdAt;
+			return cA > cB ? 1 : cA < cB ? -1 : 0;
 		},
 		sortDescFirst: true,
 		header: ({ column }) => (
