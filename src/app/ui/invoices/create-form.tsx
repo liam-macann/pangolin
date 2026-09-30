@@ -73,7 +73,7 @@ export function CreateInvoiceDialog({
 
 	const { mutateAsync } = useInvoiceMutation({ targetId: undefined, mutationFn: createInvoice });
 
-	const { control, reset, handleSubmit, getValues } = useForm({
+	const { control, reset, handleSubmit, getValues, formState } = useForm({
 		resolver: zodResolver(schema),
 		defaultValues: {
 			clientDataId: '',
@@ -105,14 +105,14 @@ export function CreateInvoiceDialog({
 					}
 				>
 					<form
-						onSubmit={handleSubmit(data => {
+						onSubmit={handleSubmit(async data => {
 							const promise = mutateAsync(data).then(() => {
 								setOpen(false);
 								setFormVersion(v => v + 1);
 								reset();
 							});
 
-							return toast.promise(promise, {
+							await toast.promise(promise, {
 								loading: 'Creating invoice…',
 								success: 'Invoice created',
 								error: 'Failed to create invoice',
@@ -198,7 +198,7 @@ export function CreateInvoiceDialog({
 						/>
 
 						<DialogFooter className='flex-row-reverse!'>
-							<Button variant='primary' type='submit'>
+							<Button variant='primary' type='submit' loading={formState.isSubmitting}>
 								Submit
 							</Button>
 							<DialogClose
