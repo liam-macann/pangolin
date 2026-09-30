@@ -397,7 +397,9 @@ function DueDateSubmenu({
 						<div className='grid'>
 							<span>Due date</span>
 							<span className='text-muted-foreground text-xs'>
-								{formatDate(new TZDate(field.value, timezone), { locale })}
+								{field.value
+									? formatDate(new TZDate(field.value, timezone), { locale })
+									: 'Not set'}
 							</span>
 							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
 						</div>
