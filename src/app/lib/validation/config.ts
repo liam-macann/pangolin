@@ -39,7 +39,7 @@ export const taxes = z
 
 		arr.forEach((item, index) => {
 			/** Composite key of name and rate */
-			const key = item.name + item.rate.toString();
+			const key = JSON.stringify([item.name, item.rate]);
 
 			if (seen.has(key)) {
 				// biome-ignore lint/style/noNonNullAssertion: Guarded in previous condition

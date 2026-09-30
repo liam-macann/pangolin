@@ -16,4 +16,13 @@ describe('taxes', () => {
 	test('Serializes validated percentages as decimal strings', () => {
 		expect(taxes.parse([{ name: 'GST', rate: 15.5 }])).toEqual([{ name: 'GST', rate: '15.50' }]);
 	});
+
+	test('Allows distinct labels and rates with the same concatenated key', () => {
+		expect(
+			taxes.safeParse([
+				{ name: 'AB1', rate: 2 },
+				{ name: 'AB', rate: 12 },
+			]).success,
+		).toBe(true);
+	});
 });
