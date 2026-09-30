@@ -14,7 +14,8 @@ export const invoice = document.extend({
 	...createInsertSchema(schema.invoiceStatus, {
 		notes: z
 			.string()
-			.transform(v => v.trim())
+			.trim()
+			.max(1000, 'Too long')
 			.transform(v => (v === '' ? undefined : v))
 			.optional(),
 	}).pick({ status: true, notes: true }).shape,

@@ -100,10 +100,12 @@ export async function voidInvoice(id: string) {
 }
 
 export async function setInvoiceNotes(id: string, notes: string) {
+	const parsed = await zodSchema.shape.notes.parseAsync(notes);
+
 	await withRLS(async (db, session) => {
 		await db
 			.update(schema.invoiceStatus)
-			.set({ notes: notes.trim() || null })
+			.set({ notes: parsed ?? null })
 			.where(
 				and(eq(schema.invoiceStatus.id, id), eq(schema.invoiceStatus.userId, session.user.id)),
 			);

@@ -6,10 +6,11 @@ import { intlNumber } from '@/lib/zod';
 import * as schema from '@/db/schema/data';
 
 const item = createInsertSchema(schema.lineItems, {
-	label: z => z.trim().min(1, 'Please enter a description'),
+	label: z => z.trim().min(1, 'Please enter a description').max(255, 'Too long'),
 	note: z
 		.string()
-		.transform(v => v.trim())
+		.trim()
+		.max(255, 'Too long')
 		.transform(v => (v === '' ? undefined : v))
 		.optional(),
 	quantity: s =>
@@ -60,7 +61,8 @@ export const document = createInsertSchema(schema.documents, {
 			.pipe(s.optional()),
 	description: z
 		.string()
-		.transform(v => v?.trim())
+		.trim()
+		.max(1000, 'Too long')
 		.transform(v => (v === '' ? undefined : v))
 		.optional(),
 })
