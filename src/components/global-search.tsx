@@ -167,6 +167,7 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 							key={invoice.id}
 							value={invoice.id}
 							keywords={[
+								invoice.reference,
 								invoice.clientData.name,
 								invoice.clientData.organization,
 								formatCurrency(invoice.grossTotal, invoice.config.currency, locale),
