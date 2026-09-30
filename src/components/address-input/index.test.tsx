@@ -382,7 +382,7 @@ describe('AddressInput', () => {
 		describe('"Add address line" button', () => {
 			test('Appends a new line', async () => {
 				const screen = await render(
-					<TestForm address={{ country: 'CA', streetAddress: ['One', 'Two', 'Three'] }} />,
+					<TestForm address={{ country: 'CA', streetAddress: ['One', 'Two'] }} />,
 				);
 
 				const street = getAddressField(screen, 'street');
@@ -391,7 +391,7 @@ describe('AddressInput', () => {
 				await expect.element(addLine).toBeEnabled();
 				await userEvent.click(addLine);
 
-				await expect.element(street).toHaveValue('One\nTwo\nThree\n');
+				await expect.element(street).toHaveValue('One\nTwo\n');
 				await expect.element(addLine).toBeDisabled();
 			});
 
@@ -413,27 +413,27 @@ describe('AddressInput', () => {
 			});
 		});
 
-		test('Limits street addresses to four lines when text is typed', async () => {
+		test('Limits street addresses to three lines when text is typed', async () => {
 			const screen = await render(<TestForm />);
 
 			const street = getAddressField(screen, 'street');
 
 			await userEvent.type(street, 'One{Enter}Two{Enter}Three{Enter}Four{Enter}Five');
 
-			await expect.element(street).toHaveValue('One\nTwo\nThree\nFourFive');
+			await expect.element(street).toHaveValue('One\nTwo\nThreeFourFive');
 			await expect
 				.element(screen.getByRole('button', { name: /add address line/i }))
 				.toBeDisabled();
 		});
 
-		test('Limits street address to four lines when multiple lines are inserted at once', async () => {
+		test('Limits street address to three lines when multiple lines are inserted at once', async () => {
 			const screen = await render(<TestForm />);
 
 			const street = getAddressField(screen, 'street');
 
 			await userEvent.fill(street, 'One\nTwo\nThree\nFour\nFive');
 
-			await expect.element(street).toHaveValue('One\nTwo\nThree\nFour');
+			await expect.element(street).toHaveValue('One\nTwo\nThree');
 			await expect
 				.element(screen.getByRole('button', { name: /add address line/i }))
 				.toBeDisabled();

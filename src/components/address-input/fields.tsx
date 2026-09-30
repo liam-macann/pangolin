@@ -105,7 +105,7 @@ const StreetAddress = ({ disabled }: FieldProps) => {
 					name='address.streetAddress'
 					render={({ field, fieldState }) => {
 						const numberOfLines = field.value?.length || 0;
-						const maxLines = 4;
+						const maxLines = 3;
 
 						return (
 							<AddressLabel htmlFor={id} className='relative basis-[200%]'>
