@@ -14,6 +14,7 @@ import { toast } from '@/ui/toast';
 
 export function FeedbackSubmenu({ name, email }: { name: string; email: string }) {
 	const [value, setValue] = useState('');
+	const message = value.trim();
 
 	return (
 		<DropdownMenuSub>
@@ -26,7 +27,7 @@ export function FeedbackSubmenu({ name, email }: { name: string; email: string }
 						onSubmit={e => {
 							e.preventDefault();
 
-							if (!value) {
+							if (!message) {
 								toast.error('Please enter a message');
 								return;
 							}
@@ -34,7 +35,7 @@ export function FeedbackSubmenu({ name, email }: { name: string; email: string }
 							Sentry.captureFeedback({
 								name: name,
 								email: email,
-								message: value,
+								message,
 							});
 
 							toast.success('Thank you for sharing your thoughts');
@@ -58,7 +59,7 @@ export function FeedbackSubmenu({ name, email }: { name: string; email: string }
 					}}
 				/>
 
-				<Button variant='primary' size='sm' type='submit' disabled={!value}>
+				<Button variant='primary' size='sm' type='submit' disabled={!message}>
 					Submit
 				</Button>
 			</DropdownMenuSubContent>
