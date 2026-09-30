@@ -1,7 +1,9 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
 import * as navigation from 'next/navigation';
+import { after } from 'next/server';
 import { afterEach, assert, beforeEach, describe, expect, vi } from 'vitest';
 
 import * as actions from '@/lib/actions/utils';
@@ -9,6 +11,7 @@ import { withVault } from '@/lib/encrypt';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
+import { getSession } from '@/auth';
 import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { createClient, updateClient, updateClientDeleted, updateClientFavorite } from './client';
@@ -24,9 +27,9 @@ const getActiveClientData = (clientId: string) =>
 		}),
 	);
 
-beforeEach(async () => {
-	vi.spyOn(actions, 'cleanupClientData').mockResolvedValue();
-	vi.spyOn(actions, 'cleanupAddresses').mockResolvedValue();
+beforeEach(() => {
+	vi.mocked(after).mockImplementation(() => undefined);
+	vi.mocked(after).mockClear();
 });
 
 afterEach(() => vi.restoreAllMocks());
@@ -197,14 +200,30 @@ describe('updateClient', () => {
 		expect(activeData).toMatchObject({ organization: 'Acme' });
 	});
 
+	test('Invalidates cache tags', async ({ session }) => {
+		const client = await insertTestClient();
+		await updateClient({ ...clientBuilder(), clientId: client.id });
+		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
+	});
+
 	test('Schedules cleanup and invalidates cache tags', async ({ session }) => {
 		const client = await insertTestClient();
+		vi.spyOn(actions, 'cleanupClientData');
+		vi.spyOn(actions, 'cleanupAddresses');
+		let deferred: (() => unknown) | undefined;
+		vi.mocked(after).mockImplementation(callback => {
+			if (typeof callback === 'function') deferred = AsyncLocalStorage.bind(callback);
+		});
 
 		await updateClient({ ...clientBuilder(), clientId: client.id });
 
+		vi.mocked(getSession).mockClear();
+		assert(deferred, 'Expected cleanup to be scheduled');
+		await deferred();
+
+		expect(getSession).toHaveBeenCalledTimes(1);
 		expect(actions.cleanupClientData).toHaveBeenCalledWith(session.user.id);
 		expect(actions.cleanupAddresses).toHaveBeenCalledWith(session.user.id);
-		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
 	});
 });
 

@@ -1,4 +1,6 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { updateTag } from 'next/cache';
+import { after } from 'next/server';
 import { afterEach, assert, beforeEach, describe, expect, vi } from 'vitest';
 
 import * as actions from '@/lib/actions/utils';
@@ -6,6 +8,7 @@ import { withVault } from '@/lib/encrypt';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
+import { getSession } from '@/auth';
 import { asUser as test } from '@/test/session';
 
 import { updateUserConfig } from './config';
@@ -13,8 +16,8 @@ import { addressBuilder, configBuilder } from './tests/builders';
 
 describe('updateUserConfig', () => {
 	beforeEach(() => {
-		vi.spyOn(actions, 'cleanupConfigs').mockResolvedValue();
-		vi.spyOn(actions, 'cleanupAddresses').mockResolvedValue();
+		vi.mocked(after).mockImplementation(() => undefined);
+		vi.mocked(after).mockClear();
 	});
 
 	afterEach(() => vi.restoreAllMocks());
@@ -173,11 +176,27 @@ describe('updateUserConfig', () => {
 		expect(activeConfig).toMatchObject({ tradingName: 'Acme Rebrand' });
 	});
 
-	test('Schedules cleanup and invalidates the config cache tag', async ({ session }) => {
+	test('Invalidates the config cache tag', async ({ session }) => {
+		await updateUserConfig(configBuilder());
+		expect(updateTag).toHaveBeenCalledWith(`config-${session.user.id}`);
+	});
+
+	test('Schedules cleanup', async ({ session }) => {
+		vi.spyOn(actions, 'cleanupConfigs');
+		vi.spyOn(actions, 'cleanupAddresses');
+		let deferred: (() => unknown) | undefined;
+		vi.mocked(after).mockImplementation(callback => {
+			if (typeof callback === 'function') deferred = AsyncLocalStorage.bind(callback);
+		});
+
 		await updateUserConfig(configBuilder());
 
+		vi.mocked(getSession).mockClear();
+		assert(deferred, 'Expected cleanup to be scheduled');
+		await deferred();
+
+		expect(getSession).toHaveBeenCalledTimes(1);
 		expect(actions.cleanupConfigs).toHaveBeenCalledWith(session.user.id);
 		expect(actions.cleanupAddresses).toHaveBeenCalledWith(session.user.id);
-		expect(updateTag).toHaveBeenCalledWith(`config-${session.user.id}`);
 	});
 });

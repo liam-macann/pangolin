@@ -19,7 +19,7 @@ export async function updateUserConfig(input: z.input<typeof configInput>) {
 	// Validate the input data
 	const data = await configInput.parseAsync(input);
 
-	return withRLS(async (db, session) => {
+	const userId = await withRLS(async (db, session) => {
 		const { taxes, config, addressId } = await withVault(async vault => {
 			const { taxes, address, ...config } = await serializeConfig(data, vault, session.user.id);
 
@@ -65,11 +65,17 @@ export async function updateUserConfig(input: z.input<typeof configInput>) {
 
 		if (taxes?.length > 0) await insertTaxes(db, taxes, insertedConfig.id, session.user.id);
 
-		// Useful to ensure consecutive insertions (eg. saving as progressing through form) do not produce redundant rows
-		after(() => Promise.all([cleanupConfigs(session.user.id), cleanupAddresses(session.user.id)]));
-
 		updateTag(`config-${session.user.id}`);
+		return session.user.id;
 	});
+
+	// Useful to ensure consecutive insertions do not produce redundant rows
+	after(() =>
+		withRLS(async () => {
+			await cleanupConfigs(userId);
+			await cleanupAddresses(userId);
+		}),
+	);
 }
 
 const serializeConfig = async (

@@ -69,7 +69,7 @@ export async function updateClient(input: z.infer<typeof clientData>) {
 	// Validate form using Zod
 	const data = await clientData.parseAsync(input);
 
-	await withRLS(async (db, session) => {
+	const userId = await withRLS(async (db, session) => {
 		const [client] = await db
 			.select({ id: schema.clients.id })
 			.from(schema.clients)
@@ -80,12 +80,16 @@ export async function updateClient(input: z.infer<typeof clientData>) {
 		await insertClientData(db, data);
 
 		updateTag(`clients-${session.user.id}`);
-
-		// Useful to ensure consecutive insertions do not produce redundant rows
-		after(() =>
-			Promise.all([cleanupClientData(session.user.id), cleanupAddresses(session.user.id)]),
-		);
+		return session.user.id;
 	});
+
+	// Useful to ensure consecutive insertions do not produce redundant rows
+	after(() =>
+		withRLS(async () => {
+			await cleanupClientData(userId);
+			await cleanupAddresses(userId);
+		}),
+	);
 }
 
 /** Inserts a new active clientData row for the given logical client
