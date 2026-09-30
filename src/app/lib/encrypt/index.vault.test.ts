@@ -3,7 +3,8 @@ import { afterEach, assert, describe, expect, expectTypeOf, vi } from 'vitest';
 
 import { type Vault, withVault } from '@/lib/encrypt';
 
-import { createTestSession, getSession, sessionStorage, asUser as test } from '@/test/session';
+import { getSession } from '@/auth';
+import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import * as keys from './internal/keys';
 import { type Encrypted } from './internal/types';
@@ -93,7 +94,7 @@ describe('withVault()', () => {
 		};
 
 		await withVault(async vault => {
-			getSession
+			vi.mocked(getSession)
 				.mockImplementationOnce(getDelayedSession)
 				.mockImplementationOnce(getDelayedSession);
 
@@ -186,7 +187,7 @@ describe('withVault()', () => {
 			let nested: Promise<unknown> | undefined;
 
 			await withVault(async () => {
-				getSession.mockImplementationOnce(async () => {
+				vi.mocked(getSession).mockImplementationOnce(async () => {
 					await gate.promise;
 					return sessionStorage.getStore() ?? null;
 				});

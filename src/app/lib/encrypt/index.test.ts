@@ -3,7 +3,8 @@ import { afterEach, aroundEach, beforeEach, describe, expect, test, vi } from 'v
 
 import { type Vault, withVault } from '@/lib/encrypt';
 
-import { getSession, sessionStorage } from '@/test/session';
+import { getSession } from '@/auth';
+import { sessionStorage } from '@/test/session';
 
 import * as keys from './internal/keys';
 import { type Decrypted, Encrypted } from './internal/types';
@@ -128,7 +129,7 @@ describe('decryptDeep()', () => {
 	test('Checks the session once, not recursively per encrypted value', async () => {
 		await withVault(async vault => {
 			const obj = { a: await vault.encrypt('a'), b: [await vault.encrypt('b')] };
-			getSession.mockClear(); // Forget that withVault() and encrypt() already called it
+			vi.mocked(getSession).mockClear(); // Forget that withVault() and encrypt() already called it
 
 			await vault.decryptDeep(obj);
 			expect(getSession).toHaveBeenCalledOnce();

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { registerCountry } from 'lib-address';
 import { vi } from 'vitest';
 
-import { asUser, getSession, sessionStorage, testConnection, warmClient } from './session';
+import { asUser, getSessionMock, sessionStorage, testConnection, warmClient } from './session';
 
 vi.hoisted(() => {
 	// Protect DB and OAuth from being contacted in tests
@@ -58,7 +58,7 @@ vi.mock('@/db/connection', () => ({
 // A test without the `session` fixture will hit the same unauthorized() path production code would
 vi.mock(import('@/auth'), async importOriginal => ({
 	...(await importOriginal()),
-	getSession,
+	getSession: getSessionMock,
 }));
 
 // This is what lets concurrently-running tests each see their own session
