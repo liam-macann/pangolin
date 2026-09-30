@@ -148,6 +148,15 @@ describe('subtotalTable', () => {
 		});
 	});
 
+	test('Generic tax disclaimer is shown when unregistered with no configured taxes', () => {
+		const disclaimers = getDisclaimers(
+			invoiceDataBuilder({ config: { taxRegistration: false }, tax: [] }),
+		);
+
+		expect(disclaimers).toHaveLength(1);
+		expect(renderText(disclaimers[0])).toBe('Tax not applicable');
+	});
+
 	test('Subtotal, tax, and total cells render the formatted currency amounts', () => {
 		const invoice = invoiceDataBuilder({
 			config: { taxRegistration: false, currency: 'AUD', locale: 'de' },

@@ -18,7 +18,9 @@ export function subtotalTable({ config, ...invoice }: InvoicePrintData): Content
 			{
 				stack: config.taxRegistration
 					? []
-					: [...(invoice.tax.map(t => `${t.name} not applicable`) || 'Tax not applicable')],
+					: invoice.tax.length
+						? invoice.tax.map(t => `${t.name} not applicable`)
+						: ['Tax not applicable'],
 				color: colors.accent,
 				fontSize: fontSize.base,
 				marginLeft: spacing(2),
