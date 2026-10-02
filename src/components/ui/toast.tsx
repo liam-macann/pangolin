@@ -132,6 +132,7 @@ function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
 	return (
 		<ToastPrimitive.Root
 			data-slot='toast'
+			swipeDirection='down'
 			className={cn(
 				'group/toast pointer-events-auto absolute right-0 bottom-0 z-[calc(1000-var(--toast-index))] w-full origin-bottom select-none rounded-md border bg-popover text-popover-foreground shadow-[0_4px_12px_rgba(0,0,0,.1)] outline-none will-change-transform focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50',
 				'[--gap:0.625rem] [--height:var(--toast-frontmost-height,var(--toast-height))] [--offset-y:calc(var(--toast-offset-y)*-1+calc(var(--toast-index)*var(--gap)*-1)+var(--toast-swipe-movement-y))] [--peek:0.65rem] [--scale:calc(max(0,1-(var(--toast-index)*0.05)))] [--shrink:calc(1-var(--scale))]',
