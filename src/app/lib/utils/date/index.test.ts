@@ -1,5 +1,4 @@
-import { TZDate } from '@date-fns/tz';
-import { describe, expect, test } from 'vitest';
+import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 
 import { formatDate, isoToTZDate } from '@/lib/utils/date';
 
@@ -12,7 +11,7 @@ describe('isoToTZDate', () => {
 	});
 
 	describe('Date-only string interpreted as midnight in timezone', () => {
-		// TZDate.toISOString() serialises with an explicit zone offset (not Z, which indicates UTC)
+		// TZDate.toISOString() serializes with an explicit zone offset (not Z, which indicates UTC)
 		test.for([
 			{ iso: '2026-01-15', timezone: 'UTC', expected: '2026-01-15T00:00:00.000+00:00' },
 			{ iso: '2026-01-15', timezone: 'Asia/Kolkata', expected: '2026-01-15T00:00:00.000+05:30' },
@@ -61,13 +60,22 @@ describe('isoToTZDate', () => {
 });
 
 describe('formatDate', () => {
-	test('String overload and TZDate overload produce the same result', () => {
-		const iso = '2026-01-15';
-		const timezone = 'America/New_York';
-		const options = { locale: 'en-US' };
-		expect(formatDate(iso, timezone, options)).toBe(
-			formatDate(isoToTZDate(iso, timezone), options),
+	describe('Date-only strings print the same calendar date in every timezone', () => {
+		test.for([
+			'UTC',
+			'Pacific/Pago_Pago',
+			'America/New_York',
+			'Australia/Sydney',
+			'Pacific/Kiritimati',
+			'Asia/Kathmandu',
+		])('%s', timezone =>
+			expect(formatDate('2025-02-15', timezone, { locale: 'en-AU' })).toBe('15 Feb 2025'),
 		);
+
+		test('On a day where DST skips midnight', () =>
+			expect(formatDate('2026-09-06', 'America/Santiago', { locale: 'en-US' })).toBe(
+				'Sep 6, 2026',
+			));
 	});
 
 	describe('options', () => {
@@ -91,6 +99,25 @@ describe('formatDate', () => {
 				expect(
 					formatDate('2025-01-15', 'UTC', { locale: 'en-US', printCurrentYear: false }),
 				).toContain('2025'));
+
+			describe('Current year is evaluated in the date timezone', () => {
+				// 07:00 on 1 Jan 2027 in Sydney; still 31 Dec 2026 in UTC and New York
+				beforeAll(() =>
+					vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-12-31T20:00:00Z') }),
+				);
+				afterAll(() => vi.useRealTimers());
+
+				test.for([
+					['2027-01-01', 'Australia/Sydney', '1 Jan'],
+					['2026-12-31', 'Australia/Sydney', '31 Dec 2026'],
+					['2026-12-31', 'America/New_York', '31 Dec'],
+					['2027-01-01', 'America/New_York', '1 Jan 2027'],
+				])('%s in %s → %s', ([iso, timezone, expected]) =>
+					expect(formatDate(iso, timezone, { locale: 'en-AU', printCurrentYear: false })).toBe(
+						expected,
+					),
+				);
+			});
 		});
 
 		describe('time', () => {
@@ -106,16 +133,9 @@ describe('formatDate', () => {
 		});
 	});
 
-	test('Throws when there is no timezone', () => {
-		const opts = { locale: 'en-AU' };
-
-		// @ts-expect-error: We are testing the error case
-		expect(() => formatDate('2026-01-15', opts)).toThrow('Timezone is required');
-		expect(() => formatDate(new TZDate(2026, 0, 15), opts)).toThrow('Timezone is required');
-	});
-
 	test('Formats date differently for different locales', () => {
-		const date = isoToTZDate('2026-01-15', 'UTC');
-		expect(formatDate(date, { locale: 'en-AU' })).not.toBe(formatDate(date, { locale: 'de' }));
+		expect(formatDate('2026-01-15', 'UTC', { locale: 'en-AU' })).not.toBe(
+			formatDate('2026-01-15', 'UTC', { locale: 'de' }),
+		);
 	});
 });

@@ -1,7 +1,4 @@
-import { TZDate } from '@date-fns/tz';
 import { assert, describe, expect, test } from 'vitest';
-
-import { formatDate } from '@/lib/utils/date';
 
 import { documentFooter } from './footer';
 import { type InvoicePrintData } from './index';
@@ -50,11 +47,26 @@ describe('documentFooter', () => {
 		});
 
 		const issuedCell = render(invoice).table.body[0][2];
-		const expected = formatDate(new TZDate(invoice.issuedAt, invoice.config.timezone), {
-			locale: invoice.config.locale,
-		});
 
-		expect(renderText(issuedCell)).toBe(`Issued ${expected}`);
+		expect(renderText(issuedCell)).toBe('Issued 1. Juni 2025');
+	});
+
+	describe('Issued date prints the stored calendar date', () => {
+		test.for([
+			'UTC',
+			'Pacific/Pago_Pago',
+			'America/New_York',
+			'Africa/Abidjan',
+			'Australia/Sydney',
+			'Pacific/Kiritimati',
+			'Asia/Kathmandu',
+		])('In %s', timezone => {
+			// Database stores calendar date in configured timezone
+			// This should never be interpreted as an instant, or cast between zones
+			const invoice = invoiceDataBuilder({ issuedAt: '2026-01-01', config: { timezone } });
+
+			expect(renderText(render(invoice).table.body[0][2])).toBe('Issued 1 Jan 2026');
+		});
 	});
 
 	test('Horizontal margins match page margins so the footer aligns with body content', () => {

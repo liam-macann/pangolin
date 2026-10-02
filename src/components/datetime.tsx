@@ -15,13 +15,15 @@ export function Datetime({
 	options?: Omit<FormatDateOptions, 'locale'>;
 }) {
 	const includeTime = options?.time ?? false;
+	const timezone = date.timeZone;
+	if (!timezone) throw new Error('Timezone is required. Ensure date is a TZDate');
 
 	return (
 		<time
 			dateTime={formatISO(date, { representation: includeTime ? 'complete' : 'date' })}
 			{...props}
 		>
-			{formatDate(date, { ...options, locale, time: includeTime })}
+			{formatDate(date.toISOString(), timezone, { ...options, locale, time: includeTime })}
 		</time>
 	);
 }

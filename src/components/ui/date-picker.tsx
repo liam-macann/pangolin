@@ -11,7 +11,6 @@ import {
 	type PropsRangeRequired,
 	type PropsSingle,
 	type PropsSingleRequired,
-	TZDate,
 } from 'react-day-picker';
 
 import { cn, type DistributedOmit, pluralize } from '@/lib/utils';
@@ -119,7 +118,7 @@ export function DatePicker({
 		<CalendarPopover
 			open={open}
 			onOpenChange={setOpen}
-			label={value && formatDate(new TZDate(value, timeZone), { locale })}
+			label={value && formatDate(value.toISOString(), timeZone, { locale })}
 			disabled={disabled}
 			onBlur={onBlur}
 			ref={ref}
@@ -208,7 +207,7 @@ export function DateRange({
 			label={
 				(value?.from &&
 					value?.to &&
-					`${formatDate(new TZDate(value.from, timeZone), { locale })} – ${formatDate(new TZDate(value.to, timeZone), { locale })}`) ||
+					`${formatDate(value.from.toISOString(), timeZone, { locale })} – ${formatDate(value.to.toISOString(), timeZone, { locale })}`) ||
 				'Select dates…'
 			}
 			disabled={disabled}

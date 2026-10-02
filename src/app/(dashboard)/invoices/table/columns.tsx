@@ -1,6 +1,5 @@
 'use client';
 
-import { TZDate } from '@date-fns/tz';
 import { type Row } from '@tanstack/react-table';
 import { type ComponentProps, useContext } from 'react';
 
@@ -66,7 +65,7 @@ export const columns = columnHelper.columns([
 					<div className='truncate'>{getValue()}</div>
 
 					<span className='text-muted-foreground text-xs group-data-void/row:text-muted-foreground/50 md:hidden'>
-						{formatDate(new TZDate(row.original.issuedAt, row.original.config.timezone), {
+						{formatDate(row.original.issuedAt, row.original.config.timezone, {
 							locale,
 							printCurrentYear: false,
 						})}

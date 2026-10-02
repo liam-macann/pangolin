@@ -1,4 +1,3 @@
-import { TZDate } from '@date-fns/tz';
 import { type DynamicContent } from 'pdfmake/interfaces';
 
 import { formatDate } from '@/lib/utils/date';
@@ -46,7 +45,7 @@ export function documentFooter(
 							verticalAlignment: 'bottom',
 						},
 						{
-							text: `Issued ${formatDate(new TZDate(invoice.issuedAt, invoice.config.timezone), { locale: invoice.config.locale })}`,
+							text: `Issued ${formatDate(invoice.issuedAt, invoice.config.timezone, { locale: invoice.config.locale })}`,
 							alignment: 'right',
 							verticalAlignment: 'bottom',
 						},

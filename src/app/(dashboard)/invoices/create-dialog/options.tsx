@@ -1,7 +1,8 @@
 'use client';
 
-import { TZDate } from '@date-fns/tz';
+import { TZDate, tz } from '@date-fns/tz';
 import { DotsThreeIcon } from '@phosphor-icons/react';
+import { formatISO } from 'date-fns';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { formatDate } from '@/lib/utils/date';
@@ -84,7 +85,11 @@ function IssueDateSubmenu({ timezone, locale }: { timezone: string; locale: stri
 							<span>Date of issue</span>
 							{field.value && (
 								<span className='text-muted-foreground text-xs'>
-									{formatDate(new TZDate(field.value, timezone), { locale })}
+									{formatDate(
+										formatISO(field.value, { representation: 'date', in: tz(timezone) }),
+										timezone,
+										{ locale },
+									)}
 								</span>
 							)}
 							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
@@ -125,7 +130,11 @@ function DueDateSubmenu({ timezone, locale }: { timezone: string; locale: string
 							<span>Due date</span>
 							<span className='text-muted-foreground text-xs'>
 								{field.value
-									? formatDate(new TZDate(field.value, timezone), { locale })
+									? formatDate(
+											formatISO(field.value, { representation: 'date', in: tz(timezone) }),
+											timezone,
+											{ locale },
+										)
 									: 'Not set'}
 							</span>
 							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}

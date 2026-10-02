@@ -73,4 +73,27 @@ describe('addresseeTable', () => {
 		expect(toOrg).toContainEqual(expect.objectContaining({ text: `Attn: ${name}` }));
 		expect(toOrg).not.toContainEqual(expect.objectContaining({ text: name }));
 	});
+
+	describe('Due date prints the stored calendar date', () => {
+		test.for([
+			'UTC',
+			'Pacific/Pago_Pago',
+			'America/New_York',
+			'Africa/Abidjan',
+			'Australia/Sydney',
+			'Pacific/Kiritimati',
+			'Asia/Kathmandu',
+		])('In %s', timezone => {
+			// Database stores calendar date in configured timezone
+			// This should never be interpreted as an instant, or cast between zones
+			const invoice = invoiceDataBuilder({
+				dueAt: '2026-01-01',
+				config: { timezone, locale: 'en-AU' },
+			});
+
+			expect(collector(invoice)).toContainEqual(
+				expect.objectContaining({ text: 'Due 1 Jan 2026' }),
+			);
+		});
+	});
 });

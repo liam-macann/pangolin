@@ -1,4 +1,3 @@
-import { TZDate } from '@date-fns/tz';
 import { type ContentTable } from 'pdfmake/interfaces';
 
 import { formatAddress } from '@/lib/utils/address';
@@ -20,7 +19,7 @@ export function addresseeTable({ config, ...invoice }: InvoicePrintData): Conten
 				[
 					{ text: invoice.title || '', bold: true },
 					{
-						text: `Due ${formatDate(new TZDate(invoice.dueAt, config.timezone), { locale: config.locale })}`,
+						text: `Due ${formatDate(invoice.dueAt, config.timezone, { locale: config.locale })}`,
 						alignment: 'right',
 						bold: true,
 					},
