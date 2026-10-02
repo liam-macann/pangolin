@@ -8,6 +8,7 @@ import { headers } from 'next/headers';
 import { connection } from 'next/server';
 import { cache } from 'react';
 
+import { getAllowedHosts } from '@/lib/environment';
 import { authRelations } from '@/db/relations';
 import * as schema from '@/db/schema/auth';
 
@@ -26,11 +27,7 @@ export const auth = betterAuth({
 	baseURL:
 		process.env.VERCEL_ENV === 'production' || process.env.VERCEL_ENV === 'preview'
 			? {
-					allowedHosts: [
-						process.env.VERCEL_URL,
-						process.env.VERCEL_BRANCH_URL,
-						process.env.VERCEL_PROJECT_PRODUCTION_URL,
-					].filter((v): v is string => typeof v === 'string'),
+					allowedHosts: getAllowedHosts(),
 					fallback: process.env.VERCEL_PROJECT_PRODUCTION_URL,
 				}
 			: process.env.BETTER_AUTH_URL,

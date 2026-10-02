@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 import { getSession } from '@/auth';
 import { type ErrorCodes, errorDetails } from '@/src/app/auth/error/error-details';
 
+import { internalURL } from './callback';
 import { LoginButton } from './ui';
 
 export const metadata: Metadata = {
@@ -71,7 +72,7 @@ export default function LoginPage({ searchParams }: { searchParams: SearchParams
 export async function LoginPanel({ searchParams }: { searchParams: SearchParams }) {
 	const { callbackUrl, error } = z
 		.object({
-			callbackUrl: z.url().catch('/invoices'),
+			callbackUrl: z.string().pipe(internalURL).catch('/invoices'),
 			error: z
 				.enum(Object.keys(errorDetails) as ErrorCodes[])
 				.catch('internal_server_error')
