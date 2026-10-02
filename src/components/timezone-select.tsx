@@ -113,11 +113,15 @@ function Item({ tz }: { tz: TimeZone }) {
 function formatUTC(tz: TimeZone) {
 	const m = tz.currentTimeOffsetInMinutes;
 	const sign = m > 0 ? '+' : m < 0 ? '−' : '';
-	const hours = Math.abs(m) / 60 || '';
+
+	const hours = Math.floor(Math.abs(m) / 60);
+	const minutes = Math.abs(m) % 60;
+
+	const offset = m ? `${hours}${minutes ? `:${minutes.toString().padStart(2, '0')}` : ''}` : '';
 	return (
 		<>
 			UTC<span className='mx-[0.25px]'>{sign}</span>
-			{hours}
+			{offset}
 		</>
 	);
 }
