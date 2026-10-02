@@ -27,6 +27,10 @@ import {
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
+	DropdownMenuSub,
+	DropdownMenuSubContent,
+	DropdownMenuSubContentTextarea,
+	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from '@/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/popover';
@@ -35,16 +39,38 @@ import { toast } from '@/ui/toast';
 
 import { type Invoice } from './../columns';
 
-export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) {
-	const invoice = row.original;
+/** Mirrors the notes limit in `@/lib/validation/invoice` */
+const NOTES_MAX_LENGTH = 1000;
 
-	const { mutate } = useInvoiceMutation({
-		targetId: invoice.id,
+const useNotesMutation = (invoiceId: string) =>
+	useInvoiceMutation({
+		targetId: invoiceId,
+		scope: { id: 'notes' },
+		mutationFn: ({ id, notes }: { id: string; notes: string }) => setInvoiceNotes(id, notes),
+		onError: (_error, { notes }) =>
+			toast.error({
+				title: 'Failed to update invoice notes',
+				// Allow rejected text to be recovered, as it has been rolled back
+				actionProps: notes
+					? { children: 'Copy unsaved', onClick: () => navigator.clipboard.writeText(notes) }
+					: undefined,
+			}),
+		optimisticFn: (curr, { notes }) => ({ ...curr, status: { ...curr.status, notes } }),
+	});
+
+const useVoidMutation = ({ id: invoiceId, reference }: Pick<Invoice, 'id' | 'reference'>) =>
+	useInvoiceMutation({
+		targetId: invoiceId,
 		scope: { id: 'void' },
 		mutationFn: ({ id }: { id: string }) => voidInvoice(id),
 		onError: () => toast.error('Failed to mark invoice as void'),
-		onSuccess: () => toast.success(`Voided invoice ${invoice.reference}`),
+		onSuccess: () => toast.success(`Voided invoice ${reference}`),
 	});
+
+export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) {
+	const invoice = row.original;
+	const { mutate: setNotes } = useNotesMutation(invoice.id);
+	const { mutate: setVoid } = useVoidMutation(invoice);
 
 	return (
 		<AlertDialog>
@@ -63,7 +89,24 @@ export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) 
 
 						<DropdownMenuItem render={<a href={`/invoices/${invoice.id}`}>View invoice</a>} />
 
-						<DropdownMenuItem disabled>Add notes</DropdownMenuItem>
+						<DropdownMenuSub>
+							<DropdownMenuSubTrigger>
+								{invoice.status.notes ? 'Edit notes' : 'Add notes'}
+							</DropdownMenuSubTrigger>
+							<DropdownMenuSubContent>
+								<DropdownMenuSubContentTextarea
+									label='Your private notes'
+									defaultValue={invoice.status.notes ?? ''}
+									maxLength={NOTES_MAX_LENGTH}
+									onBlur={e => {
+										// Skip the write when closing the submenu without changes
+										const input = e.target.value.trim();
+										const prev = invoice.status.notes?.trim() ?? '';
+										if (input !== prev) setNotes({ id: invoice.id, notes: input });
+									}}
+								/>
+							</DropdownMenuSubContent>
+						</DropdownMenuSub>
 
 						<DropdownMenuItem onClick={() => navigator.clipboard.writeText(invoice.reference)}>
 							Copy reference
@@ -93,7 +136,7 @@ export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) 
 				</AlertDialogHeader>
 				<AlertDialogFooter>
 					<AlertDialogCancel>Cancel</AlertDialogCancel>
-					<AlertDialogAction variant='destructive' onClick={() => void mutate({ id: invoice.id })}>
+					<AlertDialogAction variant='destructive' onClick={() => setVoid({ id: invoice.id })}>
 						Mark as void
 					</AlertDialogAction>
 				</AlertDialogFooter>
@@ -110,14 +153,7 @@ export function NotesButton({
 	invoiceId: string;
 	defaultValue?: string;
 }) {
-	const { mutateAsync } = useInvoiceMutation({
-		targetId: invoiceId,
-		scope: { id: 'notes' },
-		mutationFn: ({ id, notes }: { id: string; notes: string }) => setInvoiceNotes(id, notes),
-		onError: () => toast.error('Failed to update invoice notes'),
-		optimisticFn: (curr, { notes }) => ({ ...curr, status: { ...curr.status, notes } }),
-	});
-
+	const { mutate: setNotes } = useNotesMutation(invoiceId);
 	const fieldId = useId();
 
 	return (
@@ -139,10 +175,13 @@ export function NotesButton({
 					ref={el => el?.focus({ preventScroll: true })}
 					id={fieldId}
 					onBlur={e => {
-						const value = e.target.value;
-						void mutateAsync({ id: invoiceId, notes: value });
+						// Skip the write when closing the submenu without changes
+						const input = e.target.value.trim();
+						const prev = defaultValue ?? '';
+						if (input !== prev) setNotes({ id: invoiceId, notes: input });
 					}}
 					defaultValue={defaultValue}
+					maxLength={NOTES_MAX_LENGTH}
 					placeholder='Your private notes'
 					className='inset-shadow-xs rounded-sm border-border! shadow-none ring-0!'
 				/>
