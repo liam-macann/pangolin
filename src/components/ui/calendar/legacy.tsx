@@ -2,11 +2,35 @@
 
 import { CaretDownIcon, CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
 import * as React from 'react';
-import { type DayButton, DayPicker, getDefaultClassNames } from 'react-day-picker';
+import {
+	type DayButton,
+	DayPicker,
+	type DayPickerProps,
+	getDefaultClassNames,
+} from 'react-day-picker';
 
-import { cn } from '@/lib/utils';
+import { cn, type DistributedOmit } from '@/lib/utils';
 
 import { Button, buttonVariants } from '@/ui/button';
+
+/** Omits deprecated props from Calendar interface */
+type LibProps = DistributedOmit<
+	DayPickerProps,
+	| 'dateLib'
+	| 'fromDate'
+	| 'toDate'
+	| 'fromMonth'
+	| 'toMonth'
+	| 'onDayKeyUp'
+	| 'onDayKeyPress'
+	| 'onDayPointerEnter'
+	| 'onDayPointerLeave'
+	| 'onDayTouchCancel'
+	| 'onDayTouchEnd'
+	| 'onDayTouchMove'
+	| 'onDayTouchStart'
+	| 'onWeekNumberClick'
+>;
 
 function Calendar({
 	className,
@@ -17,8 +41,8 @@ function Calendar({
 	formatters,
 	components,
 	...props
-}: React.ComponentProps<typeof DayPicker> & {
-	timeZone: Required<React.ComponentProps<typeof DayPicker>['timeZone']>;
+}: LibProps & {
+	timeZone: string;
 	buttonVariant?: React.ComponentProps<typeof Button>['variant'];
 }) {
 	const defaultClassNames = getDefaultClassNames();
@@ -157,7 +181,7 @@ function CalendarDayButton({
 			ref={ref}
 			variant='ghost'
 			size='icon-sm'
-			data-day={day.date.toLocaleDateString()}
+			data-day={day.isoDate}
 			data-selected-single={
 				modifiers.selected &&
 				!modifiers.range_start &&
