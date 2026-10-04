@@ -119,18 +119,6 @@ describe('formatDate', () => {
 				);
 			});
 		});
-
-		describe('time', () => {
-			test.for([
-				['Omits time by default', undefined, false],
-				['Includes when time is true', true, true],
-				['Omits when time is false', false, false],
-			] as const)('%s', ([_, time, expected]) => {
-				const result = formatDate('2026-01-15T12:01:00Z', 'UTC', { locale: 'en-AU', time });
-
-				expected ? expect(result).toContain('12:01') : expect(result).not.toContain('12:01');
-			});
-		});
 	});
 
 	test('Formats date differently for different locales', () => {

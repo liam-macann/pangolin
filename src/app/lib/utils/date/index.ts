@@ -16,14 +16,12 @@ export type FormatDateOptions = {
 
 	/** Whether to include or omit the year when the printed date occurs this year */
 	printCurrentYear?: boolean;
-	/** Whether to include the time in the output string */
-	time?: boolean;
 };
 
-/** Accepts an ISO string and formats a printable string in the provided timezone and locale. */
+/** Accepts an ISO plain date string, and formats a printable string in the provided timezone and locale. */
 export function formatDate(iso: string, timezone: string, options: FormatDateOptions): string {
 	const date = isoToTZDate(iso, timezone);
-	const { locale, printCurrentYear = true, time = false } = options;
+	const { locale, printCurrentYear = true } = options;
 
 	const isDateThisYear = date.getFullYear() === new TZDate(new Date(), timezone).getFullYear();
 
@@ -34,8 +32,6 @@ export function formatDate(iso: string, timezone: string, options: FormatDateOpt
 			day: 'numeric',
 			month: 'short',
 			year: printCurrentYear || !isDateThisYear ? 'numeric' : undefined,
-			hour: time ? 'numeric' : undefined,
-			minute: time ? 'numeric' : undefined,
 		},
 		{ locale },
 	);
