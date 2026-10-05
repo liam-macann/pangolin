@@ -21,7 +21,7 @@ import {
 } from '@/ui/empty';
 import { createDialogHandle } from '@/ui/responsive-dialog';
 
-import { CreateInvoiceDialog } from '@/src/app/ui/invoices/create-form';
+import { CreateInvoiceDialog } from '@/src/app/(dashboard)/invoices/create-dialog';
 
 import {
 	DEFAULT_SORT,
