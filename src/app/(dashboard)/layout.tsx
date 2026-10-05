@@ -19,11 +19,16 @@ import {
 } from '@/ui/dropdown-menu';
 
 import { getSession, signOut } from '@/auth';
-import SideNav from '@/src/app/ui/dashboard/topnav';
 
-import { FeedbackSubmenu } from './layout-ui';
+import { FeedbackSubmenu, TopNav } from './layout-ui';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Map of links to display in the navigation
+const links = new Map([
+	['Invoices', '/invoices'],
+	['Clients', '/clients'],
+]);
 
 export default function Layout({ children }: { children: React.ReactNode }) {
 	return (
@@ -32,11 +37,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 				<div className='mx-auto flex max-w-5xl flex-col px-6'>
 					<div className='flex items-center gap-3 self-end'>
 						<GlobalSearch />
-						<Suspense fallback={<Trigger aria-disabled image={null} />}>
+						<Suspense fallback={<AccountMenuTrigger aria-disabled image={null} />}>
 							<AccountMenuContent />
 						</Suspense>
 					</div>
-					<SideNav />
+					<TopNav links={links} />
 				</div>
 			</header>
 			<main className='mx-auto max-w-5xl px-6 py-12 pb-24'>{children}</main>
@@ -50,9 +55,9 @@ async function AccountMenuContent() {
 
 	return (
 		// Menu is just disabled when an error occurs.
-		<ErrorBoundary fallback={<Trigger image={session.user.image} />}>
+		<ErrorBoundary fallback={<AccountMenuTrigger image={session.user.image} />}>
 			<DropdownMenu>
-				<DropdownMenuTrigger render={<Trigger image={session.user.image} />} />
+				<DropdownMenuTrigger render={<AccountMenuTrigger image={session.user.image} />} />
 				<DropdownMenuContent sideOffset={10} className='w-auto' align='end'>
 					<DropdownMenuGroup>
 						<DropdownMenuLabel>
@@ -86,7 +91,7 @@ async function AccountMenuContent() {
 	);
 }
 
-const Trigger = ({
+const AccountMenuTrigger = ({
 	image,
 	...props
 }: { image?: string | null } & React.ComponentProps<typeof Button>) => (

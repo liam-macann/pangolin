@@ -1,7 +1,11 @@
 'use client';
 
 import * as Sentry from '@sentry/nextjs';
-import { useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Suspense, useState } from 'react';
+
+import { cn } from '@/lib/utils';
 
 import { Button } from '@/ui/button';
 import {
@@ -11,6 +15,44 @@ import {
 	DropdownMenuSubTrigger,
 } from '@/ui/dropdown-menu';
 import { toast } from '@/ui/toast';
+
+export function TopNav({ links, className }: { links: Map<string, string>; className?: string }) {
+	return (
+		<nav className={cn('-mx-3 -my-1.5 flex items-baseline', className)}>
+			{links.entries().map(([name, href]) => (
+				<Suspense key={name} fallback={<NavLink name={name} href={href} active={false} />}>
+					<ActiveNavLink name={name} href={href} />
+				</Suspense>
+			))}
+		</nav>
+	);
+}
+
+function ActiveNavLink({ name, href }: { name: string; href: string }) {
+	const pathname = usePathname();
+	return <NavLink name={name} href={href} active={pathname === href} />;
+}
+
+function NavLink({ name, href, active }: { name: string; href: string; active: boolean }) {
+	return (
+		<Button
+			variant='ghost'
+			size='sm'
+			className={cn(
+				'relative focus:z-10',
+				active
+					? 'after:pointer-events-none after:absolute after:-bottom-2.5 after:left-0 after:block after:h-0.5 after:w-full after:translate-y-full after:bg-accent-foreground'
+					: 'text-muted-foreground',
+			)}
+			nativeButton={false}
+			render={
+				<Link href={href} prefetch>
+					{name}
+				</Link>
+			}
+		/>
+	);
+}
 
 export function FeedbackSubmenu({ name, email }: { name: string; email: string }) {
 	const [value, setValue] = useState('');
