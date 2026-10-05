@@ -1,4 +1,5 @@
 import { describe, expect } from 'vitest';
+import { z } from 'zod';
 
 import { currencies as localCurrencies } from '@/lib/utils/currencies';
 import * as tables from '@/db/schema';
@@ -6,6 +7,15 @@ import * as tables from '@/db/schema';
 import { asUser as test } from '@/test/session';
 
 describe('currencies', () => {
+	test('Zod recognizes every selectable currency code', () => {
+		// Zod matcher should be superset of the local currency list
+		const unsupported = localCurrencies
+			.map(currency => currency.iso)
+			.filter(iso => !z.currencyCode().validate(iso));
+
+		expect(unsupported, 'Update Zod to support the current currency list').toEqual([]);
+	});
+
 	test('Local currency list matches active currencies in the reference table', async ({ db }) => {
 		const dbCurrencies = await db
 			.select({

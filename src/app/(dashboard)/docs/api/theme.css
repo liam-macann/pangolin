@@ -221,6 +221,7 @@
 			.property-pattern-popup {
 				gap: 0;
 				@apply p-1 no-underline;
+				align-items: flex-start;
 
 				.property-example-value,
 				.property-default-value,

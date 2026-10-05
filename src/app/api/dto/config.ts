@@ -66,10 +66,12 @@ export const Config = z
 			.meta({ description: 'IETF BCP 47 language tag', examples: ['en-GB'] })
 			.readonly(),
 		currency: z
-			.string()
-			.normalize()
+			.currencyCode()
 			.length(3)
-			.meta({ description: 'ISO 4217 currency code.', examples: ['GBP'] }),
+			.meta({
+				description: 'ISO 4217 currency code.',
+				examples: ['GBP', 'AUD', 'JPY'],
+			}),
 		address: Address.nullable(),
 		taxRegistration: z.boolean(),
 		paymentDetails: z
