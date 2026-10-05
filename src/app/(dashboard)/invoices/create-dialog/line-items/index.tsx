@@ -1,6 +1,12 @@
 'use client';
 
-import { type Control, type UseFormGetValues, useFieldArray, useFormState } from 'react-hook-form';
+import {
+	type Control,
+	type UseFormGetValues,
+	useFieldArray,
+	useFormContext,
+	useFormState,
+} from 'react-hook-form';
 
 import { cn } from '@/lib/utils';
 
@@ -24,20 +30,14 @@ function createLineItem(config: LineItemsConfig): LineItemsFormValues['items'][n
 	};
 }
 
-export function LineItemsField<T extends LineItemsFormValues>({
+export function LineItemsField({
 	className,
-	control: _control,
-	getValues: _getValues,
 	config,
 }: {
 	className?: string;
-	control: Control<T>;
-	getValues: UseFormGetValues<T>;
 	config: LineItemsConfig;
 }) {
-	// Necessary, as RHF can't extract typings from the generic
-	const control = _control as unknown as Control<LineItemsFormValues>;
-	const getValues = _getValues as unknown as UseFormGetValues<LineItemsFormValues>;
+	const { control, getValues } = useFormContext<LineItemsFormValues>();
 
 	return (
 		<FieldSet className={cn('gap-0', className)}>

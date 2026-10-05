@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { expect, test } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { type RenderResult, render } from 'vitest-browser-react';
@@ -19,8 +19,12 @@ const config: LineItemsConfig = {
 };
 
 function TestForm({ items }: { items: LineItemsFormValues['items'] }) {
-	const { control, getValues } = useForm<LineItemsFormValues>({ defaultValues: { items } });
-	return <LineItemsField control={control} getValues={getValues} config={config} />;
+	const form = useForm<LineItemsFormValues>({ defaultValues: { items } });
+	return (
+		<FormProvider {...form}>
+			<LineItemsField config={config} />
+		</FormProvider>
+	);
 }
 
 const locators = (screen: RenderResult) => ({

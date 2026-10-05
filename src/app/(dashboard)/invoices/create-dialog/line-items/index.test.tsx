@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { MotionGlobalConfig } from 'motion/react';
-import { useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
@@ -56,16 +56,18 @@ function TestForm({
 	items?: LineItemsFormValues['items'];
 	config?: LineItemsConfig;
 }) {
-	const { control, getValues, handleSubmit } = useForm({
+	const form = useForm({
 		resolver: zodResolver(lineItemsSchema),
 		defaultValues: { items },
 	});
 
 	return (
-		<form onSubmit={handleSubmit(values => onSubmit(values))}>
-			<LineItemsField control={control} getValues={getValues} config={config} />
-			<button type='submit'>Submit</button>
-		</form>
+		<FormProvider {...form}>
+			<form onSubmit={form.handleSubmit(values => onSubmit(values))}>
+				<LineItemsField config={config} />
+				<button type='submit'>Submit</button>
+			</form>
+		</FormProvider>
 	);
 }
 
