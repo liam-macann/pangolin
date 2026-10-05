@@ -1,4 +1,4 @@
-@reference "../../../ui/global.css";
+@reference "../../../../styles/global.css";
 
 /* Scalar injects its full stylesheet during hydration. ID selector is required to over-specify */
 #scalar-api-reference,

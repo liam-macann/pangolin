@@ -2,7 +2,7 @@ import { type ContentTable } from 'pdfmake/interfaces';
 
 import { formatAddress } from '@/lib/utils/address';
 
-import schemes from '@/src/app/ui/color-schemes';
+import schemes from '@/src/styles/color-schemes';
 
 import { type InvoicePrintData } from './index';
 import { spacing } from './styles';

@@ -4,7 +4,7 @@ import { type Content, type TDocumentDefinitions } from 'pdfmake/interfaces';
 import { type DetailedInvoice } from '@/lib/data/invoice';
 import { type ElementType } from '@/lib/utils';
 
-import schemes from '@/src/app/ui/color-schemes';
+import schemes from '@/src/styles/color-schemes';
 
 import { addresseeTable } from './addressee';
 import { documentFooter } from './footer';

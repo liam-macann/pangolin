@@ -3,7 +3,7 @@ import { type ContentColumns } from 'pdfmake/interfaces';
 
 import { formatCurrency } from '@/lib/utils/currencies';
 
-import schemes from '@/src/app/ui/color-schemes';
+import schemes from '@/src/styles/color-schemes';
 
 import { type InvoicePrintData } from './index';
 import { fontSize, spacing } from './styles';

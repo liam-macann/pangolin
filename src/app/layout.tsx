@@ -1,4 +1,4 @@
-import '@/src/app/ui/global.css';
+import '@/src/styles/global.css';
 
 import { TanStackDevtools } from '@tanstack/react-devtools';
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
@@ -14,7 +14,7 @@ import { DisableThemeTransitions } from '@/components/disable-theme-transitions'
 import { Toaster } from '@/ui/toast';
 import { TooltipProvider } from '@/ui/tooltip';
 
-import { InstrumentSans } from '@/src/app/ui/fonts';
+import { InstrumentSans } from '@/src/styles/fonts';
 
 export const metadata: Metadata = {
 	title: {

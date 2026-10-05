@@ -6,7 +6,7 @@ import { formatCurrency } from '@/lib/utils/currencies';
 import { type Enum } from '@/lib/utils/drizzle';
 import { type unitEnum } from '@/db/schema/data/line-items';
 
-import schemes from '@/src/app/ui/color-schemes';
+import schemes from '@/src/styles/color-schemes';
 
 import { type InvoicePrintData } from './index';
 import { fontSize, spacing } from './styles';
