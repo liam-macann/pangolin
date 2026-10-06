@@ -213,13 +213,10 @@ describe('fetchStats', () => {
 			);
 		});
 
-		// Helper to keep DB noise out of test bodies
+		/** Privileged escape-hatch to set the createdAt column */
 		async function setDocumentCreatedAt(db: TestTX, id: string, createdAt: string) {
 			await db.execute(sql`SET LOCAL ROLE neondb_owner`);
-			await db
-				.update(tables.documents)
-				.set({ createdAt: new Date(createdAt) })
-				.where(eq(tables.documents.id, id));
+			await db.update(tables.documents).set({ createdAt }).where(eq(tables.documents.id, id));
 			await db.execute(sql`SET LOCAL ROLE authenticated`);
 		}
 
@@ -227,15 +224,15 @@ describe('fetchStats', () => {
 			{
 				expected: ['AUD', 'USD'],
 				invoices: [
-					{ currency: 'AUD', createdAt: '2026-02-01' },
-					{ currency: 'USD', createdAt: '2026-01-01' },
+					{ currency: 'AUD', createdAt: '2026-02-01T00:00:00Z' },
+					{ currency: 'USD', createdAt: '2026-01-01T00:00:00Z' },
 				],
 			},
 			{
 				expected: ['USD', 'AUD'],
 				invoices: [
-					{ currency: 'AUD', createdAt: '2026-01-01' },
-					{ currency: 'USD', createdAt: '2026-02-01' },
+					{ currency: 'AUD', createdAt: '2026-01-01T00:00:00Z' },
+					{ currency: 'USD', createdAt: '2026-02-01T00:00:00Z' },
 				],
 			},
 		])(

@@ -36,12 +36,12 @@ import { authenticated } from '@/db/schema/auth';
 // Slowly changing dimension (SCD) — history table necessary for stable invoice references
 
 const scdDates = {
-	validFrom: timestamp('valid_from', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+	validFrom: timestamp('valid_from', { withTimezone: true, mode: 'string' }).notNull().defaultNow(),
 	/** Date that the record ceased to be active (`null` indicates the record is still active)
 	 *
 	 * Use the {@link invalidateActiveScd()} function to invalidate the active SCD row.
 	 */
-	validTo: timestamp('valid_to', { withTimezone: true, mode: 'date' }),
+	validTo: timestamp('valid_to', { withTimezone: true, mode: 'string' }),
 };
 
 type SCDFields = { [K in keyof typeof scdDates]: Column };

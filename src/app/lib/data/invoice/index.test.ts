@@ -4,6 +4,7 @@ import * as navigation from 'next/navigation';
 import { assert, describe, expect } from 'vitest';
 import { z } from 'zod';
 
+import { Invoice } from '@/api/dto/invoice';
 import {
 	setUpConfigAndClient as insertConfigAndClient,
 	insertTestClient,
@@ -75,6 +76,57 @@ const setInvoiceDates = async (
 		await db.execute(sql`SET LOCAL ROLE authenticated`);
 	}
 };
+
+describe('fetchInvoice() and fetchInvoices()', () => {
+	const fetchBoth = async (id: string) => [
+		await fetchInvoice(id),
+		...(await fetchInvoices({ limit: 200 })),
+	];
+
+	describe('Dates', () => {
+		/** Reads the creation timestamp as Postgres prints it. */
+		const storedCreatedAt = async () => {
+			const [document] = await withRLS(tx =>
+				tx.select({ createdAt: tables.documents.createdAt }).from(tables.documents),
+			);
+			return document.createdAt;
+		};
+
+		/** Returns the invoice and invoice list from both read paths. */
+		const fetchDates = (id: string) =>
+			fetchBoth(id).then(arr =>
+				arr.map(v => ({ createdAt: v.createdAt, issuedAt: v.issuedAt, dueAt: v.dueAt })),
+			);
+
+		test('Serializes createdAt in UTC with millisecond precision', async ({ db }) => {
+			const id = await insertTestInvoice({ clientDataId: await setUpConfigAndClient() });
+
+			// Microseconds must be dropped, and trailing zeros kept
+			await db.execute(sql`SET LOCAL ROLE neondb_owner`);
+			await db
+				.update(tables.documents)
+				.set({ createdAt: '2026-01-15T20:30:00.100209760+11:00' })
+				.where(eq(tables.documents.id, id));
+			await db.execute(sql`SET LOCAL ROLE authenticated`);
+
+			const createdAt = (await fetchDates(id)).map(date => date.createdAt);
+
+			expect(createdAt).toEqual(['2026-01-15T09:30:00.100Z', '2026-01-15T09:30:00.100Z']);
+			await z.array(Invoice.shape.createdAt).parseAsync(createdAt);
+		});
+
+		test('Are unaffected by the database session timezone', async ({ db }) => {
+			const id = await insertTestInvoice({ clientDataId: await setUpConfigAndClient() });
+			const dates = await fetchDates(id);
+
+			// Postgres prints timestamptz in the session timezone, so the raw value changes offset
+			await db.execute(sql`SET LOCAL TimeZone = 'Pacific/Kiritimati'`);
+			expect(await storedCreatedAt()).toMatch(/\+14$/);
+
+			expect(await fetchDates(id)).toEqual(dates);
+		});
+	});
+});
 
 describe('fetchInvoice', () => {
 	test('Throws notFound() for a nonexistent invoice id', async () => {

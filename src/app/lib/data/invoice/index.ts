@@ -1,6 +1,7 @@
 import { and, asc, count, eq, min, sql, sum } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
 import { notFound, unstable_rethrow } from 'next/navigation';
+import { Temporal } from 'temporal-polyfill';
 
 import { type Config } from '@/api/dto/config';
 import { type Invoice } from '@/api/dto/invoice';
@@ -16,6 +17,11 @@ import { type relations } from '@/db/relations';
 import * as schema from '@/db/schema';
 
 import { type Session } from '@/auth';
+
+/** Serializes a stored instant to the millisecond-precision UTC form of the API contract */
+const toISOString = (instant: Temporal.InstantLike) =>
+	Temporal.Instant.from(instant).toString({ fractionalSecondDigits: 3 });
+
 /** A billed line item, joined with the tax rows applied to it */
 export type LineItem = Simplify<
 	Omit<
@@ -89,7 +95,7 @@ async function _fetchInvoices(
 				res.map(({ documentWithSum, ...inv }) => ({
 					...documentWithSum,
 					...inv,
-					createdAt: documentWithSum.createdAt.toISOString(),
+					createdAt: toISOString(documentWithSum.createdAt),
 					reference: invoiceReference(inv, documentWithSum.config.numberingScheme),
 				})),
 			),
@@ -224,7 +230,7 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 				return {
 					...document,
 					...invoice,
-					createdAt: document.createdAt.toISOString(),
+					createdAt: toISOString(document.createdAt),
 					reference: invoiceReference(invoice, config.numberingScheme),
 					config,
 					clientData: await vault.decryptDeep(document.clientData),

@@ -14,6 +14,7 @@ import {
 	unique,
 	uuid,
 } from 'drizzle-orm/pg-core';
+import { Temporal } from 'temporal-polyfill';
 
 import { users } from '@/db/schema/auth';
 
@@ -104,7 +105,7 @@ export const documents = snakeCase.table(
 		description: text(),
 
 		/** Timestamp instant of record creation: do not use for invoice display */
-		createdAt: timestamp({ withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+		createdAt: timestamp({ withTimezone: true, mode: 'string' }).notNull().defaultNow(),
 
 		configId: uuid()
 			.notNull()
@@ -196,9 +197,9 @@ export const sequencer = snakeCase.table(
 		count: integer().notNull().default(0),
 
 		/** Logs the when the count was last modified */
-		updatedAt: timestamp({ withTimezone: true, mode: 'date' })
+		updatedAt: timestamp({ withTimezone: true, mode: 'string' })
 			.defaultNow()
-			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.$onUpdate(() => /* @__PURE__ */ Temporal.Now.instant().toString())
 			.notNull(),
 	},
 

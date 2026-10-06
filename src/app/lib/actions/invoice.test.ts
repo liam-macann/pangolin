@@ -121,7 +121,7 @@ describe('createInvoice', () => {
 					.innerJoin(tables.documents, eq(tables.documents.id, tables.invoices.id)),
 			);
 
-			const expected = Temporal.Instant.from(invoice.createdAt.toISOString())
+			const expected = Temporal.Instant.from(invoice.createdAt)
 				.toZonedDateTimeISO(timezone)
 				.toPlainDate()
 				.toString();
