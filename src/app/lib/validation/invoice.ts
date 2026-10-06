@@ -7,8 +7,8 @@ import { document } from './document';
 
 export const invoice = document.extend({
 	...createInsertSchema(schema.invoices, {
-		issuedAt: z.date({ error: 'Please enter an issue date' }).optional(),
-		dueAt: z.date({ error: 'Please enter a due date' }),
+		issuedAt: z.iso.date({ error: 'Please enter an issue date' }).optional(),
+		dueAt: z.iso.date({ error: 'Please enter a due date' }),
 	}).pick({ issuedAt: true, dueAt: true }).shape,
 
 	...createInsertSchema(schema.invoiceStatus, {

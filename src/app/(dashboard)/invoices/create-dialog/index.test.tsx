@@ -1,5 +1,6 @@
 import { MotionGlobalConfig } from 'motion/react';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { Temporal } from 'temporal-polyfill';
+import { afterEach, beforeEach, expect, onTestFinished, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { type RenderResult, render } from 'vitest-browser-react';
 
@@ -119,4 +120,22 @@ test('Submits a draft, then closes and resets', async () => {
 	await expect.element(locators.title).toHaveValue('');
 	await expect.element(locators.billTo).toHaveValue('');
 	await expect.element(locators.emptyItems).toBeVisible();
+});
+
+test('Defaults due date to a fortnight after issuance in the config timezone', async () => {
+	// 14 Jun in Pago Pago;
+	// 15 Jun in UTC
+	const now = Temporal.Instant.from('2026-06-15T10:30:00Z');
+	const today = vi
+		.spyOn(Temporal.Now, 'plainDateISO')
+		.mockImplementation((zone = 'UTC') => now.toZonedDateTimeISO(zone).toPlainDate());
+	onTestFinished(() => today.mockRestore());
+
+	const { screen, locators } = await renderDialog({ timezone: 'Pacific/Pago_Pago' });
+	await fillDraft({ screen, locators });
+	await locators.submit.click();
+
+	await expect
+		.poll(() => mutateAsync)
+		.toHaveBeenCalledWith(expect.objectContaining({ dueAt: '2026-06-28' }));
 });

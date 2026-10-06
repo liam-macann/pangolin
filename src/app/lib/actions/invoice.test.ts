@@ -48,7 +48,7 @@ describe('createInvoice', () => {
 			await createInvoice(
 				invoiceBuilder({
 					clientDataId: client.data.scdId,
-					issuedAt: new Date(`${'2026-03-01'}T00:00:00Z`),
+					issuedAt: '2026-03-01',
 				}),
 			);
 
@@ -75,15 +75,15 @@ describe('createInvoice', () => {
 			await createInvoice(
 				invoiceBuilder({
 					clientDataId: client.data.scdId,
-					issuedAt: new Date('2024-12-31T00:00:00Z'),
-					dueAt: new Date('2024-12-31T00:00:00Z'),
+					issuedAt: '2024-12-31',
+					dueAt: '2024-12-31',
 				}),
 			);
 			await createInvoice(
 				invoiceBuilder({
 					clientDataId: client.data.scdId,
-					issuedAt: new Date('2025-01-01T00:00:00Z'),
-					dueAt: new Date('2025-01-01T00:00:00Z'),
+					issuedAt: '2025-01-01',
+					dueAt: '2025-01-01',
 				}),
 			);
 
@@ -122,6 +122,26 @@ describe('createInvoice', () => {
 		expect(record?.items[0]).toMatchObject({ label: 'Consulting services', quantity: '2.00' });
 	});
 
+	test.for(['America/Phoenix', 'Australia/Perth'])(
+		'Preserves calendar date values in %s',
+		async timezone => {
+			const { client } = await setUpConfigAndClient({ timezone });
+
+			await createInvoice(
+				invoiceBuilder({
+					clientDataId: client.data.scdId,
+					issuedAt: '2026-01-01',
+					dueAt: '2026-01-15',
+				}),
+			);
+
+			expect(withRLS(db => db.select().from(tables.invoices))).resolves.toMatchObject({
+				issuedAt: '2026-01-01',
+				dueAt: '2026-01-15',
+			});
+		},
+	);
+
 	test('Links items to taxes when the config is tax-registered', async ({ session }) => {
 		const { configId, client } = await setUpConfigAndClient({
 			taxRegistration: true,
@@ -149,7 +169,10 @@ describe('createInvoice', () => {
 	});
 
 	test('Does not link taxes when the config is not tax-registered', async () => {
-		const { client } = await setUpConfigAndClient();
+		const { client } = await setUpConfigAndClient({
+			taxRegistration: false,
+			taxes: [{ name: 'GST', rate: 10 }],
+		});
 		await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
 
 		const itemTaxes = await withRLS(db => db.select().from(tables.itemTaxes));
@@ -215,8 +238,8 @@ describe('createInvoice', () => {
 			createInvoice(
 				invoiceBuilder({
 					clientDataId: client.data.scdId,
-					issuedAt: new Date('2026-06-15T00:00:00Z'),
-					dueAt: new Date('2026-06-01T00:00:00Z'),
+					issuedAt: '2026-06-15',
+					dueAt: '2026-06-01',
 				}),
 			),
 		).rejects.toThrow('Database Error: failed to create invoice');

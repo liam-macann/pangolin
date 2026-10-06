@@ -393,12 +393,12 @@ describe('fetchInvoices()', () => {
 			const clientDataId = await setUpConfigAndClient();
 			const first = await insertTestInvoice({
 				clientDataId,
-				issuedAt: new Date('2026-01-01'),
+				issuedAt: '2026-01-01',
 				items: [{ quantity: 1, unitCost: 100 }],
 			});
 			const second = await insertTestInvoice({
 				clientDataId,
-				issuedAt: new Date('2026-01-02'),
+				issuedAt: '2026-01-02',
 				items: [{ quantity: 1, unitCost: 100 }],
 			});
 
@@ -410,11 +410,11 @@ describe('fetchInvoices()', () => {
 			const clientDataId = await setUpConfigAndClient();
 			const first = await insertTestInvoice({
 				clientDataId,
-				issuedAt: new Date('2026-01-01'),
+				issuedAt: '2026-01-01',
 			});
 			const second = await insertTestInvoice({
 				clientDataId,
-				issuedAt: new Date('2026-01-02'),
+				issuedAt: '2026-01-02',
 			});
 
 			const invoicesDefault = await fetchInvoices({ limit: 200 });
@@ -440,23 +440,23 @@ describe('fetchInvoices()', () => {
 
 			const first = await insertTestInvoice({
 				clientDataId,
-				issuedAt: new Date('2026-01-01'),
-				dueAt: new Date('2026-02-03'),
+				issuedAt: '2026-01-01',
+				dueAt: '2026-02-03',
 			});
 			const second = await insertTestInvoice({
 				clientDataId,
-				issuedAt: new Date('2026-01-02'),
-				dueAt: new Date('2026-02-02'),
+				issuedAt: '2026-01-02',
+				dueAt: '2026-02-02',
 			});
 			const third = await insertTestInvoice({
 				clientDataId,
-				issuedAt: new Date('2026-01-03'),
-				dueAt: new Date('2026-02-03'),
+				issuedAt: '2026-01-03',
+				dueAt: '2026-02-03',
 			});
 			const fourth = await insertTestInvoice({
 				clientDataId,
-				issuedAt: new Date('2026-01-04'),
-				dueAt: new Date('2026-02-03'),
+				issuedAt: '2026-01-04',
+				dueAt: '2026-02-03',
 			});
 
 			const invoices = await fetchInvoices({ limit: 200, orderBy });

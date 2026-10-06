@@ -1,14 +1,12 @@
 'use client';
 
-import { TZDate } from '@date-fns/tz';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { addDays } from 'date-fns';
 import { useState } from 'react';
 import { FormProvider, useForm, useFormState } from 'react-hook-form';
+import { Temporal } from 'temporal-polyfill';
 
 import { createInvoice } from '@/lib/actions/invoice';
 import { useInvoiceMutation } from '@/lib/hooks';
-import { invoice as schema } from '@/lib/validation/invoice';
 
 import { Button } from '@/ui/button';
 import { FieldSeparator } from '@/ui/field';
@@ -18,27 +16,26 @@ import { toast } from '@/ui/toast';
 import { InvoiceDetails } from './details';
 import { LineItemsField } from './line-items';
 import { InvoiceOptions } from './options';
-import { type CreateInvoiceConfig, type CreateInvoiceFormValues } from './types';
+import { type CreateInvoiceDraft, schema } from './schema';
+import { type CreateInvoiceConfig } from './types';
 
 /** Controls the form state for {@link CreateInvoiceForm}. */
 // Called above the dialog component, which unmounts on close, so that a draft outlives open state
 export function useCreateInvoiceForm(config: Pick<CreateInvoiceConfig, 'timezone'>) {
 	const [version, setVersion] = useState(0);
+	const today = Temporal.Now.plainDateISO(config.timezone);
 
-	const defaultValues = {
+	const defaultValues: CreateInvoiceDraft = {
 		clientDataId: '',
 		items: [],
 		title: '',
 		description: '',
-		status: 'unpaid' as const,
-		issuedAt: TZDate.tz(config.timezone),
-		dueAt: addDays(TZDate.tz(config.timezone), 14),
+		status: 'unpaid',
+		issuedAt: today,
+		dueAt: today.add({ days: 14 }),
 	};
 
-	const { reset, ...form } = useForm<CreateInvoiceFormValues>({
-		resolver: zodResolver(schema),
-		defaultValues,
-	});
+	const { reset, ...form } = useForm({ resolver: zodResolver(schema), defaultValues });
 
 	const triggerReset: typeof reset = (values = defaultValues, ...args) => {
 		setVersion(version => version + 1);

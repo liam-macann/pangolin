@@ -22,10 +22,10 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/ui/field';
 import { Input } from '@/ui/input';
 import { Textarea } from '@/ui/textarea';
 
-import { type CreateInvoiceFormValues } from './types';
+import { type CreateInvoiceDraft } from './schema';
 
 export function InvoiceDetails() {
-	const { control } = useFormContext<CreateInvoiceFormValues>();
+	const { control } = useFormContext<CreateInvoiceDraft>();
 
 	return (
 		<>
@@ -101,7 +101,7 @@ export function InvoiceDetails() {
 }
 
 function BillTo() {
-	const { control } = useFormContext<CreateInvoiceFormValues>();
+	const { control } = useFormContext<CreateInvoiceDraft>();
 	const { data: clientsResponse } = useClients();
 	const items = clientsResponse.data.map(client => ({
 		value: client.data.scdId,

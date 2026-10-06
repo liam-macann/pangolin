@@ -1,13 +1,13 @@
 'use client';
 
-import { TZDate } from '@date-fns/tz';
 import { DotsThreeIcon } from '@phosphor-icons/react';
 import { Controller, useFormContext } from 'react-hook-form';
+import { Temporal } from 'temporal-polyfill';
 
-import { formatDate, toTemporal } from '@/lib/utils/date';
+import { formatDate } from '@/lib/utils/date';
 
 import { Button } from '@/ui/button';
-import { Calendar } from '@/ui/calendar/legacy';
+import { Calendar } from '@/ui/calendar';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -21,7 +21,7 @@ import {
 } from '@/ui/dropdown-menu';
 import { FieldError } from '@/ui/field';
 
-import { type CreateInvoiceFormValues } from './types';
+import { type CreateInvoiceDraft } from './schema';
 
 export function InvoiceOptions({ timezone, locale }: { timezone: string; locale: string }) {
 	return (
@@ -46,7 +46,7 @@ export function InvoiceOptions({ timezone, locale }: { timezone: string; locale:
 }
 
 function NotesSubmenu() {
-	const { control } = useFormContext<CreateInvoiceFormValues>();
+	const { control } = useFormContext<CreateInvoiceDraft>();
 
 	return (
 		<Controller
@@ -71,7 +71,7 @@ function NotesSubmenu() {
 }
 
 function IssueDateSubmenu({ timezone, locale }: { timezone: string; locale: string }) {
-	const { control } = useFormContext<CreateInvoiceFormValues>();
+	const { control } = useFormContext<CreateInvoiceDraft>();
 
 	return (
 		<Controller
@@ -84,10 +84,7 @@ function IssueDateSubmenu({ timezone, locale }: { timezone: string; locale: stri
 							<span>Date of issue</span>
 							{field.value && (
 								<span className='text-muted-foreground text-xs'>
-									{formatDate(
-										toTemporal.decode(field.value).toZonedDateTimeISO(timezone).toPlainDate(),
-										{ locale },
-									)}
+									{formatDate(field.value, timezone, { locale })}
 								</span>
 							)}
 							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
@@ -115,7 +112,8 @@ function IssueDateSubmenu({ timezone, locale }: { timezone: string; locale: stri
 }
 
 function DueDateSubmenu({ timezone, locale }: { timezone: string; locale: string }) {
-	const { control } = useFormContext<CreateInvoiceFormValues>();
+	const { control } = useFormContext<CreateInvoiceDraft>();
+	const today = Temporal.Now.plainDateISO(timezone);
 
 	return (
 		<Controller
@@ -127,12 +125,7 @@ function DueDateSubmenu({ timezone, locale }: { timezone: string; locale: string
 						<div className='grid'>
 							<span>Due date</span>
 							<span className='text-muted-foreground text-xs'>
-								{field.value
-									? formatDate(
-											toTemporal.decode(field.value).toZonedDateTimeISO(timezone).toPlainDate(),
-											{ locale },
-										)
-									: 'Not set'}
+								{field.value ? formatDate(field.value, timezone, { locale }) : 'Not set'}
 							</span>
 							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
 						</div>
@@ -146,10 +139,10 @@ function DueDateSubmenu({ timezone, locale }: { timezone: string; locale: string
 								mode='single'
 								selected={field.value}
 								defaultMonth={field.value}
-								startMonth={TZDate.tz(timezone)}
+								startMonth={today}
 								timeZone={timezone}
 								{...field}
-								disabled={field.disabled || [{ before: TZDate.tz(timezone) }, TZDate.tz(timezone)]}
+								disabled={field.disabled || [{ before: today }, today]}
 								onSelect={v => field.onChange(v)}
 							/>
 						</DropdownMenuSubContent>

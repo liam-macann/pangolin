@@ -1,5 +1,5 @@
-import { addDays } from 'date-fns';
 import { toMerged } from 'es-toolkit/object';
+import { Temporal } from 'temporal-polyfill';
 
 import { type createClient } from '@/lib/actions/client';
 import { type updateUserConfig } from '@/lib/actions/config';
@@ -74,7 +74,9 @@ export const invoiceBuilder = (
 		title: undefined,
 		description: undefined,
 		// Ensure chk_due_after_issued is safe by default
-		dueAt: addDays(overrides.issuedAt ?? new Date(), 14),
+		dueAt: Temporal.PlainDate.from(overrides.issuedAt ?? Temporal.Now.plainDateISO())
+			.add({ days: 14 })
+			.toString(),
 		status: 'unpaid',
 		notes: undefined,
 	};
