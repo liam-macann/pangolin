@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { match } from 'ts-pattern';
 
 import { invoiceReference, seededRandom } from '@/lib/utils';
 import { NumericString } from '@/lib/utils/numeric';
@@ -87,8 +88,15 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 			const issueYear = issueYears[i];
 			const dueAt = new Date(issuedAt.getTime() + 14 * day);
 
-			const partition = config.numberingScheme === 'annual' ? String(issueYear) : null;
-			const index = config.numberingScheme === 'annual' ? yearIndexes[i] : count - i;
+			const partition = match(config.numberingScheme)
+				.with('sequential', () => null)
+				.with('annual', () => String(issueYear))
+				.exhaustive();
+
+			const index = match(config.numberingScheme)
+				.with('sequential', () => count - i)
+				.with('annual', () => yearIndexes[i])
+				.exhaustive();
 
 			return {
 				reference: invoiceReference({ index, partition }, config.numberingScheme),

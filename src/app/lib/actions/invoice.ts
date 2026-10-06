@@ -3,6 +3,7 @@
 import { and, eq, sql } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
 import { unstable_rethrow } from 'next/navigation';
+import { match } from 'ts-pattern';
 import type z from 'zod';
 
 import { allocateSequence } from '@/lib/sequencer';
@@ -29,10 +30,10 @@ export async function createInvoice(input: z.input<typeof zodSchema>) {
 		const issuedAt =
 			invoice.issuedAt?.toISOString() || sql`transaction_timestamp() AT TIME ZONE ${timezone}`;
 
-		const partition =
-			numberingScheme === 'annual'
-				? sql<string>`extract(year from (${issuedAt})::date)::text`
-				: null;
+		const partition = match(numberingScheme)
+			.with('sequential', () => null)
+			.with('annual', () => sql<string>`extract(year from (${issuedAt})::date)::text`)
+			.exhaustive();
 
 		const count = await allocateSequence(tx, {
 			userId: session.user.id,

@@ -21,7 +21,7 @@ export const percentToRate = (percent: Numeric) =>
 	NumericString.parse((Math.round(Number(percent) * 100) / 10_000).toFixed(4));
 
 /** Converts a fractional rate as stored in the database to user-facing percentage: 0.155 → 15.5.
- * @remarks Rounding to the storage scale avoids floating-point artefacts. */
+ * @remarks Rounding to the storage scale avoids floating-point artifacts. */
 export const rateToPercent = (rate: Numeric) => Math.round(Number(rate) * 10_000) / 100;
 
 export const invoiceReference = (
@@ -39,7 +39,7 @@ export const invoiceReference = (
 			if (!invoice.partition) throw new Error('Invoice with annual scheme is lacking partition');
 			return `${invoice.partition}-${index}`;
 		default:
-			throw new Error(`Undefined scheme: ${scheme}`);
+			throw new Error(`Undefined scheme: ${scheme satisfies never}`);
 	}
 };
 
@@ -52,7 +52,7 @@ export function seededRandom(seed: number) {
 	return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
 
-// Localisation is irrelevant as we only target English
+// Localization is irrelevant as we only target English
 const pluralRules = new Intl.PluralRules('en-GB');
 /** Accepts a number, and returns either singular or plural form */
 export function pluralize(count: Numeric, singular: string, plural: string) {
