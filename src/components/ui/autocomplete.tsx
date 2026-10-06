@@ -24,7 +24,7 @@ function AutocompletePopup({ className, ...props }: AutocompletePrimitive.Popup.
 		<AutocompletePrimitive.Popup
 			data-slot='autocomplete-popup'
 			className={cn(
-				'max-h-[min(var(--available-height),23rem)] w-(--anchor-width) max-w-(--available-width) scroll-pt-2 scroll-pb-2 overflow-y-auto overscroll-contain rounded-md bg-popover text-popover-foreground shadow-md outline-1 outline-border dark:shadow-none',
+				'max-h-[min(var(--available-height),23rem)] w-(--anchor-width) max-w-(--available-width) scroll-pt-2 scroll-pb-2 overflow-y-auto overscroll-contain rounded-md bg-popover text-popover-foreground shadow-md outline-1 outline-border ring-0! dark:shadow-none',
 				className,
 			)}
 			{...props}
