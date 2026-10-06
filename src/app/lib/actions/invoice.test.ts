@@ -8,7 +8,7 @@ import { type Enum } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
-import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
+import { bypassRLS, createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { createInvoice, setInvoiceNotes, updateInvoiceStatus, voidInvoice } from './invoice';
 import { invoiceBuilder } from './tests/builders';
@@ -31,21 +31,38 @@ const getInvoice = (id: string) =>
 			}),
 	);
 
+/** Updates `transaction_timestamp()` for the rest of the test transaction, by shadowing the built-in.
+ *  @remarks Column defaults and constraints were bound at migration time, and keep the real clock. */
+const setTransactionTimestamp = async (instant: Temporal.InstantLike) => {
+	await bypassRLS(async tx => {
+		await tx.execute(sql`SET LOCAL search_path = public, pg_catalog`);
+		await tx.execute(
+			sql`CREATE FUNCTION public.transaction_timestamp() RETURNS timestamptz LANGUAGE sql STABLE
+			AS ${sql.raw(`$$ SELECT '${Temporal.Instant.from(instant)}'::timestamptz $$`)}`,
+		);
+	});
+};
+
 describe('createInvoice', () => {
 	describe('Sequencing', () => {
 		test.for<[Enum<typeof tables.numberingScheme>, string | null]>([
 			['sequential', null],
-			['annual', '2026'],
-		])('Allocates only the active %s counter', async ([scheme, partition], { session }) => {
+			['annual', '2023'],
+		])('Allocates only the active %s counter', async ([scheme, expectedPartition], { session }) => {
+			await setTransactionTimestamp('2023-06-15T00:00:00Z');
+			const timezone = 'Asia/Seoul';
+			const thisYear = '2023';
+			const lastYear = '2022';
+
 			const seed: (typeof tables.sequencer.$inferInsert)[] = [
 				{ userId: session.user.id, namespace: 'invoice', partition: null, count: 1 },
-				{ userId: session.user.id, namespace: 'invoice', partition: '2025', count: 1 },
-				{ userId: session.user.id, namespace: 'invoice', partition: '2026', count: 1 },
+				{ userId: session.user.id, namespace: 'invoice', partition: lastYear, count: 1 },
+				{ userId: session.user.id, namespace: 'invoice', partition: thisYear, count: 1 },
 			];
 
 			await withRLS(tx => tx.insert(tables.sequencer).values(seed));
 
-			const { client } = await setUpConfigAndClient({ numberingScheme: scheme });
+			const { client } = await setUpConfigAndClient({ numberingScheme: scheme, timezone });
 			await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
 
 			const sequencer = await withRLS(db =>
@@ -59,14 +76,14 @@ describe('createInvoice', () => {
 			expect(sequencer).toEqual(
 				seed.map(v => ({
 					partition: v.partition,
-					count: v.partition === partition ? 2 : v.count,
+					count: v.partition === expectedPartition ? 2 : v.count,
 				})),
 			);
 
 			const invoice = await withRLS(db =>
 				db.query.invoices.findFirst({ columns: { index: true, partition: true } }),
 			);
-			expect(invoice).toEqual({ partition, index: 2 });
+			expect(invoice).toEqual({ partition: expectedPartition, index: 2 });
 		});
 	});
 
