@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Temporal } from 'temporal-polyfill';
 import { match } from 'ts-pattern';
 
 import { invoiceReference, seededRandom } from '@/lib/utils';
@@ -60,37 +61,34 @@ function realisticAmount(currency: string, seed: number): number {
 	return Math.round(raw / step) * step;
 }
 
-const now = new Date();
-const day = 24 * 60 * 60 * 1000;
-
 type Config = Pick<Invoice['config'], 'timezone' | 'currency' | 'numberingScheme'>;
 
 /** Generate deterministic fake invoices */
 export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 	return useMemo(() => {
-		const offsets = Array.from(
-			{ length: count },
-			(_, i) => Math.round(7 + seededRandom(i * 3 + 1) * 21) * day,
+		const today = Temporal.Now.plainDateISO(config.timezone);
+
+		const offsets = Array.from({ length: count }, (_, i) =>
+			Math.round(7 + seededRandom(i * 3 + 1) * 21),
 		).reduce<number[]>((acc, interval) => {
 			acc.push((acc.at(-1) ?? 0) + interval);
 			return acc;
 		}, []);
 
-		const issueYears = offsets.map(offset => new Date(now.getTime() - offset).getFullYear());
-		const yearIndexes = issueYears.map(
-			(year, i) => issueYears.slice(i).filter(y => y === year).length,
+		const issueDates = offsets.map(offset => today.subtract({ days: offset }));
+		const yearIndexes = issueDates.map(
+			({ year }, i) => issueDates.slice(i).filter(y => y.year === year).length,
 		);
 
 		return Array.from({ length: count }, (_, i) => {
 			const nameIndex = Math.floor(seededRandom(i * 3 + 3) * names.length);
 
-			const issuedAt = new Date(now.getTime() - offsets[i]);
-			const issueYear = issueYears[i];
-			const dueAt = new Date(issuedAt.getTime() + 14 * day);
+			const issuedAt = issueDates[i];
+			const dueAt = issuedAt.add({ days: 14 });
 
 			const partition = match(config.numberingScheme)
 				.with('sequential', () => null)
-				.with('annual', () => String(issueYear))
+				.with('annual', () => String(issuedAt.year))
 				.exhaustive();
 
 			const index = match(config.numberingScheme)
@@ -101,13 +99,16 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 			return {
 				reference: invoiceReference({ index, partition }, config.numberingScheme),
 				id: `placeholder-${i}`,
-				createdAt: issuedAt.toISOString(),
+				createdAt: issuedAt
+					.toZonedDateTime({ timeZone: config.timezone, plainTime: { hour: 12 } })
+					.toInstant()
+					.toString({ fractionalSecondDigits: 3 }),
 				currency: config.currency,
 				taxRegistration: false,
 				title: null,
 				description: null,
-				issuedAt: issuedAt.toISOString().slice(0, 10),
-				dueAt: dueAt.toISOString().slice(0, 10),
+				issuedAt: issuedAt.toString(),
+				dueAt: dueAt.toString(),
 				partition,
 				index,
 				netTotal: NumericString.parse(realisticAmount(config.currency, i * 3 + 2).toString()),

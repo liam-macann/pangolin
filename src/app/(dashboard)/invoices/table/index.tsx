@@ -15,7 +15,7 @@ import {
 } from '@/components/data-table';
 
 import { columns } from './columns';
-import { usePlaceholderInvoices } from './placeholder-data';
+import { usePlaceholderInvoices } from './placeholder';
 
 export const DEFAULT_SORT: SortingState = [{ id: 'reference', desc: true }];
 
