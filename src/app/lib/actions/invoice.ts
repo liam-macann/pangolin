@@ -26,8 +26,8 @@ export async function createInvoice(input: z.input<typeof zodSchema>) {
 			.from(schema.config)
 			.where(eq(schema.config.id, insertedDocument.configId));
 
-		/** When the invoice is set to be issued — either the supplied date, or the current time */
-		const issuedAt = invoice.issuedAt || sql`transaction_timestamp() AT TIME ZONE ${timezone}`;
+		/** When the invoice is set to be issued: the time the transaction opened */
+		const issuedAt = sql`transaction_timestamp() AT TIME ZONE ${timezone}`;
 
 		const partition = match(numberingScheme)
 			.with('sequential', () => null)

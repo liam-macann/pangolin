@@ -6,10 +6,7 @@ import * as schema from '@/db/schema/data';
 import { document } from './document';
 
 export const invoice = document.extend({
-	...createInsertSchema(schema.invoices, {
-		issuedAt: z.iso.date({ error: 'Please enter an issue date' }).optional(),
-		dueAt: z.iso.date({ error: 'Please enter a due date' }),
-	}).pick({ issuedAt: true, dueAt: true }).shape,
+	dueAt: z.iso.date({ error: 'Please enter a due date' }),
 
 	...createInsertSchema(schema.invoiceStatus, {
 		notes: z

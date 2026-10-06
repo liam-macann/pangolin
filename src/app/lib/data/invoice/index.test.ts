@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { type DBQueryConfigOrderBy, eq, type GetTableViewFieldSelection } from 'drizzle-orm';
+import { type DBQueryConfigOrderBy, eq, type GetTableViewFieldSelection, sql } from 'drizzle-orm';
 import * as navigation from 'next/navigation';
 import { assert, describe, expect } from 'vitest';
 import { z } from 'zod';
@@ -17,6 +17,7 @@ import { getBounds } from '@/lib/zod';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
+import { type TestTX } from '@/test/pglite';
 import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { fetchInvoice, fetchInvoices, fetchInvoicesForClient } from './index';
@@ -60,6 +61,20 @@ const getTaxIds = (names: string[]) =>
 			return row.id;
 		});
 	});
+
+/** Sets persisted dates for deterministic invoice ordering tests. */
+const setInvoiceDates = async (
+	db: TestTX,
+	id: string,
+	dates: Partial<Pick<typeof tables.invoices.$inferInsert, 'issuedAt' | 'dueAt'>>,
+) => {
+	await db.execute(sql`SET LOCAL ROLE neondb_owner`);
+	try {
+		await db.update(tables.invoices).set(dates).where(eq(tables.invoices.id, id));
+	} finally {
+		await db.execute(sql`SET LOCAL ROLE authenticated`);
+	}
+};
 
 describe('fetchInvoice', () => {
 	test('Throws notFound() for a nonexistent invoice id', async () => {
@@ -389,33 +404,28 @@ describe('fetchInvoice', () => {
 
 describe('fetchInvoices()', () => {
 	describe('orderBy', () => {
-		test('Orders invoices by issued date (descending) by default', async () => {
-			const clientDataId = await setUpConfigAndClient();
+		test('Orders invoices by issued date (descending) by default', async ({ db }) => {
 			const first = await insertTestInvoice({
-				clientDataId,
-				issuedAt: '2026-01-01',
+				clientDataId: await setUpConfigAndClient(),
 				items: [{ quantity: 1, unitCost: 100 }],
 			});
 			const second = await insertTestInvoice({
-				clientDataId,
-				issuedAt: '2026-01-02',
+				clientDataId: await setUpConfigAndClient(),
 				items: [{ quantity: 1, unitCost: 100 }],
 			});
+			await setInvoiceDates(db, first, { issuedAt: '2026-01-01' });
+			await setInvoiceDates(db, second, { issuedAt: '2026-01-02' });
 
 			const invoices = await fetchInvoices({ limit: 200 });
 			expect(invoices.map(i => i.id)).toEqual([second, first]);
 		});
 
-		test('Allows overriding the orderBy defaults', async () => {
+		test('Allows overriding the orderBy defaults', async ({ db }) => {
 			const clientDataId = await setUpConfigAndClient();
-			const first = await insertTestInvoice({
-				clientDataId,
-				issuedAt: '2026-01-01',
-			});
-			const second = await insertTestInvoice({
-				clientDataId,
-				issuedAt: '2026-01-02',
-			});
+			const first = await insertTestInvoice({ clientDataId });
+			const second = await insertTestInvoice({ clientDataId });
+			await setInvoiceDates(db, first, { issuedAt: '2026-01-01' });
+			await setInvoiceDates(db, second, { issuedAt: '2026-01-02' });
 
 			const invoicesDefault = await fetchInvoices({ limit: 200 });
 			expect(invoicesDefault.map(i => i.id)).toEqual([second, first]);
@@ -435,29 +445,17 @@ describe('fetchInvoices()', () => {
 		>([
 			['object', { dueAt: 'asc' }],
 			['callback', (invoice, { asc }) => asc(invoice.dueAt)],
-		])('Allows extending the orderBy defaults with %s-form', async ([_, orderBy]) => {
+		])('Allows extending the orderBy defaults with %s-form', async ([_, orderBy], { db }) => {
 			const clientDataId = await setUpConfigAndClient();
 
-			const first = await insertTestInvoice({
-				clientDataId,
-				issuedAt: '2026-01-01',
-				dueAt: '2026-02-03',
-			});
-			const second = await insertTestInvoice({
-				clientDataId,
-				issuedAt: '2026-01-02',
-				dueAt: '2026-02-02',
-			});
-			const third = await insertTestInvoice({
-				clientDataId,
-				issuedAt: '2026-01-03',
-				dueAt: '2026-02-03',
-			});
-			const fourth = await insertTestInvoice({
-				clientDataId,
-				issuedAt: '2026-01-04',
-				dueAt: '2026-02-03',
-			});
+			const first = await insertTestInvoice({ clientDataId });
+			const second = await insertTestInvoice({ clientDataId });
+			const third = await insertTestInvoice({ clientDataId });
+			const fourth = await insertTestInvoice({ clientDataId });
+			await setInvoiceDates(db, first, { issuedAt: '2026-01-01', dueAt: '2026-02-03' });
+			await setInvoiceDates(db, second, { issuedAt: '2026-01-02', dueAt: '2026-02-02' });
+			await setInvoiceDates(db, third, { issuedAt: '2026-01-03', dueAt: '2026-02-03' });
+			await setInvoiceDates(db, fourth, { issuedAt: '2026-01-04', dueAt: '2026-02-03' });
 
 			const invoices = await fetchInvoices({ limit: 200, orderBy });
 			// second has earliest due date, and so places first.

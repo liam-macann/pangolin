@@ -10,9 +10,19 @@ const plainDateToISO = (error: string) =>
 	});
 
 export const schema = invoice.extend({
-	issuedAt: plainDateToISO('Please enter a valid issue date').optional(),
 	dueAt: plainDateToISO('Please enter a due date'),
 });
+
+export const createSchema = (timezone: string) =>
+	schema.superRefine(({ dueAt }, ctx) => {
+		if (dueAt <= Temporal.Now.plainDateISO(timezone).toString()) {
+			ctx.addIssue({
+				code: 'custom',
+				path: ['dueAt'],
+				message: 'Due date must be after today',
+			});
+		}
+	});
 
 /** Input type for the form {@link schema}. */
 export type CreateInvoiceDraft = z.input<typeof schema>;

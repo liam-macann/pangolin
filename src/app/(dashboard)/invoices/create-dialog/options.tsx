@@ -11,6 +11,7 @@ import { Calendar } from '@/ui/calendar';
 import {
 	DropdownMenu,
 	DropdownMenuContent,
+	DropdownMenuItem,
 	DropdownMenuPortal,
 	DropdownMenuSeparator,
 	DropdownMenuSub,
@@ -38,7 +39,14 @@ export function InvoiceOptions({ timezone, locale }: { timezone: string; locale:
 			<DropdownMenuContent side='left' align='end' className='w-auto'>
 				<NotesSubmenu />
 				<DropdownMenuSeparator />
-				<IssueDateSubmenu timezone={timezone} locale={locale} />
+				<DropdownMenuItem disabled className='opacity-100!'>
+					<div className='grid'>
+						<span>Date of issue</span>
+						<span className='text-muted-foreground text-xs'>
+							{formatDate(Temporal.Now.plainDateISO(timezone), { locale })}
+						</span>
+					</div>
+				</DropdownMenuItem>
 				<DueDateSubmenu timezone={timezone} locale={locale} />
 			</DropdownMenuContent>
 		</DropdownMenu>
@@ -70,47 +78,6 @@ function NotesSubmenu() {
 	);
 }
 
-function IssueDateSubmenu({ timezone, locale }: { timezone: string; locale: string }) {
-	const { control } = useFormContext<CreateInvoiceDraft>();
-
-	return (
-		<Controller
-			name='issuedAt'
-			control={control}
-			render={({ field, fieldState }) => (
-				<DropdownMenuSub disabled>
-					<DropdownMenuSubTrigger disabled>
-						<div className='grid'>
-							<span>Date of issue</span>
-							{field.value && (
-								<span className='text-muted-foreground text-xs'>
-									{formatDate(field.value, timezone, { locale })}
-								</span>
-							)}
-							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
-						</div>
-					</DropdownMenuSubTrigger>
-					<DropdownMenuPortal>
-						<DropdownMenuSubContent>
-							<Calendar
-								id='issuedAt'
-								className='min-w-0 p-1'
-								mode='single'
-								selected={field.value}
-								defaultMonth={field.value}
-								timeZone={timezone}
-								{...field}
-								onSelect={v => field.onChange(v)}
-								disabled
-							/>
-						</DropdownMenuSubContent>
-					</DropdownMenuPortal>
-				</DropdownMenuSub>
-			)}
-		/>
-	);
-}
-
 function DueDateSubmenu({ timezone, locale }: { timezone: string; locale: string }) {
 	const { control } = useFormContext<CreateInvoiceDraft>();
 	const today = Temporal.Now.plainDateISO(timezone);
@@ -125,7 +92,7 @@ function DueDateSubmenu({ timezone, locale }: { timezone: string; locale: string
 						<div className='grid'>
 							<span>Due date</span>
 							<span className='text-muted-foreground text-xs'>
-								{field.value ? formatDate(field.value, timezone, { locale }) : 'Not set'}
+								{field.value ? formatDate(field.value, { locale }) : 'Not set'}
 							</span>
 							{fieldState.invalid && <FieldError className='text-xs' errors={[fieldState.error]} />}
 						</div>

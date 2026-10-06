@@ -1,6 +1,7 @@
 import { eq, sql } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
 import * as navigation from 'next/navigation';
+import { Temporal } from 'temporal-polyfill';
 import { describe, expect, vi } from 'vitest';
 
 import { type Enum } from '@/lib/utils/drizzle';
@@ -45,12 +46,7 @@ describe('createInvoice', () => {
 			await withRLS(tx => tx.insert(tables.sequencer).values(seed));
 
 			const { client } = await setUpConfigAndClient({ numberingScheme: scheme });
-			await createInvoice(
-				invoiceBuilder({
-					clientDataId: client.data.scdId,
-					issuedAt: '2026-03-01',
-				}),
-			);
+			await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
 
 			const sequencer = await withRLS(db =>
 				db
@@ -59,6 +55,7 @@ describe('createInvoice', () => {
 					.orderBy(sql`${tables.sequencer.partition} nulls first`),
 			);
 
+			expect(sequencer.length).toBe(3);
 			expect(sequencer).toEqual(
 				seed.map(v => ({
 					partition: v.partition,
@@ -66,37 +63,10 @@ describe('createInvoice', () => {
 				})),
 			);
 
-			expect(sequencer.length).toBe(3);
-		});
-
-		test('Resets the yearly index per issue year', async () => {
-			const { client } = await setUpConfigAndClient({ numberingScheme: 'annual' });
-
-			await createInvoice(
-				invoiceBuilder({
-					clientDataId: client.data.scdId,
-					issuedAt: '2024-12-31',
-					dueAt: '2024-12-31',
-				}),
+			const invoice = await withRLS(db =>
+				db.query.invoices.findFirst({ columns: { index: true, partition: true } }),
 			);
-			await createInvoice(
-				invoiceBuilder({
-					clientDataId: client.data.scdId,
-					issuedAt: '2025-01-01',
-					dueAt: '2025-01-01',
-				}),
-			);
-
-			const invoices = await withRLS(db =>
-				db
-					.select({ partition: tables.invoices.partition, index: tables.invoices.index })
-					.from(tables.invoices),
-			);
-
-			expect(invoices).toEqual([
-				{ partition: '2024', index: 1 },
-				{ partition: '2025', index: 1 },
-			]);
+			expect(invoice).toEqual({ partition, index: 2 });
 		});
 	});
 
@@ -123,22 +93,40 @@ describe('createInvoice', () => {
 	});
 
 	test.for(['America/Phoenix', 'Australia/Perth'])(
-		'Preserves calendar date values in %s',
+		'Preserves calendar due date value for %s',
 		async timezone => {
 			const { client } = await setUpConfigAndClient({ timezone });
+			const dueAt = Temporal.Now.plainDateISO().add({ days: 14 }).toString();
 
-			await createInvoice(
-				invoiceBuilder({
-					clientDataId: client.data.scdId,
-					issuedAt: '2026-01-01',
-					dueAt: '2026-01-15',
-				}),
+			await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId, dueAt }));
+
+			const invoices = await withRLS(db => db.select().from(tables.invoices));
+			expect(invoices).toMatchObject([{ dueAt }]);
+		},
+	);
+
+	test.for(['Pacific/Kiritimati', 'Pacific/Pago_Pago'])(
+		'Stores the issue date in timezone %s',
+		async timezone => {
+			const { client } = await setUpConfigAndClient({ timezone });
+			await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
+
+			const [invoice] = await withRLS(db =>
+				db
+					.select({
+						createdAt: tables.documents.createdAt,
+						issuedAt: tables.invoices.issuedAt,
+					})
+					.from(tables.invoices)
+					.innerJoin(tables.documents, eq(tables.documents.id, tables.invoices.id)),
 			);
 
-			expect(withRLS(db => db.select().from(tables.invoices))).resolves.toMatchObject({
-				issuedAt: '2026-01-01',
-				dueAt: '2026-01-15',
-			});
+			const expected = Temporal.Instant.from(invoice.createdAt.toISOString())
+				.toZonedDateTimeISO(timezone)
+				.toPlainDate()
+				.toString();
+
+			expect(invoice.issuedAt).toBe(expected);
 		},
 	);
 
@@ -235,13 +223,7 @@ describe('createInvoice', () => {
 		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 		await expect(
-			createInvoice(
-				invoiceBuilder({
-					clientDataId: client.data.scdId,
-					issuedAt: '2026-06-15',
-					dueAt: '2026-06-01',
-				}),
-			),
+			createInvoice(invoiceBuilder({ clientDataId: client.data.scdId, dueAt: '2026-06-01' })),
 		).rejects.toThrow('Database Error: failed to create invoice');
 
 		consoleError.mockRestore();

@@ -73,10 +73,7 @@ export const invoiceBuilder = (
 	const base: Minimized<Omit<InvoiceInput, 'clientDataId' | 'items'>> = {
 		title: undefined,
 		description: undefined,
-		// Ensure chk_due_after_issued is safe by default
-		dueAt: Temporal.PlainDate.from(overrides.issuedAt ?? Temporal.Now.plainDateISO())
-			.add({ days: 14 })
-			.toString(),
+		dueAt: Temporal.Now.plainDateISO().add({ days: 14 }).toString(),
 		status: 'unpaid',
 		notes: undefined,
 	};

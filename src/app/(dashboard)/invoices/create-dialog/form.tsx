@@ -16,7 +16,7 @@ import { toast } from '@/ui/toast';
 import { InvoiceDetails } from './details';
 import { LineItemsField } from './line-items';
 import { InvoiceOptions } from './options';
-import { type CreateInvoiceDraft, schema } from './schema';
+import { type CreateInvoiceDraft, createSchema } from './schema';
 import { type CreateInvoiceConfig } from './types';
 
 /** Controls the form state for {@link CreateInvoiceForm}. */
@@ -31,11 +31,13 @@ export function useCreateInvoiceForm(config: Pick<CreateInvoiceConfig, 'timezone
 		title: '',
 		description: '',
 		status: 'unpaid',
-		issuedAt: today,
 		dueAt: today.add({ days: 14 }),
 	};
 
-	const { reset, ...form } = useForm({ resolver: zodResolver(schema), defaultValues });
+	const { reset, ...form } = useForm({
+		resolver: zodResolver(createSchema(config.timezone)),
+		defaultValues,
+	});
 
 	const triggerReset: typeof reset = (values = defaultValues, ...args) => {
 		setVersion(version => version + 1);
