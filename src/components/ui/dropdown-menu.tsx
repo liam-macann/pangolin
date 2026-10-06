@@ -92,7 +92,7 @@ function DropdownMenuItem({
 			data-inset={inset}
 			data-variant={variant}
 			className={cn(
-				'group/dropdown-menu-item relative flex w-full cursor-default select-none items-center gap-2 rounded-sm px-2 py-1 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-inset:pl-8 data-disabled:opacity-50',
+				'group/dropdown-menu-item relative flex w-full cursor-default select-none items-center gap-2 rounded-sm px-2 py-1 text-sm outline-hidden focus:bg-highlighted focus:text-highlighted-foreground data-disabled:pointer-events-none data-inset:pl-8 data-disabled:opacity-50',
 				"[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
 				'data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive-background data-[variant=destructive]:focus:text-destructive-foreground',
 				className,
@@ -119,7 +119,9 @@ function DropdownMenuSubTrigger({
 			data-slot='dropdown-menu-sub-trigger'
 			data-inset={inset}
 			className={cn(
-				"group/dropdown-menu-sub-trigger flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-open:bg-accent data-popup-open:bg-accent data-inset:pl-8 data-open:text-accent-foreground data-popup-open:text-accent-foreground data-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+				"group/dropdown-menu-sub-trigger flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1 text-sm outline-hidden data-disabled:pointer-events-none data-inset:pl-8 data-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+				'data-open:bg-accent data-popup-open:bg-accent data-open:text-accent-foreground data-popup-open:text-accent-foreground',
+				'hocus:bg-highlighted hocus:text-highlighted-foreground hocus:**:text-highlighted-foreground',
 				className,
 			)}
 			{...props}

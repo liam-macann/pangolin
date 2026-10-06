@@ -16,6 +16,8 @@
 	--muted-foreground: var(--color-gray-11);
 	--accent: var(--color-gray-a-3);
 	--accent-foreground: var(--secondary-foreground);
+	--highlighted: var(--color-gray-11); /* Used for highlighted menu items */
+	--highlighted-foreground: var(--color-gray-1);
 	--destructive: var(--color-red-11); /* Used for destructive text */
 	--destructive-background: var(--color-red-9); /* Used for destructive background (eg. buttons) */
 	--destructive-foreground: white; /* Used for text on destructive background */
@@ -45,6 +47,8 @@
 		--card: var(--color-gray-3);
 		--popover: var(--color-gray-4);
 		--accent: var(--color-gray-a-3);
+		--highlighted: var(--color-gray-9);
+		--highlighted-foreground: var(--color-gray-12);
 		--destructive-background: var(--color-red-8);
 
 		--chart-1: oklch(0.488 0.243 264.376);
@@ -88,6 +92,8 @@
 	--color-muted-foreground: var(--muted-foreground);
 	--color-accent: var(--accent);
 	--color-accent-foreground: var(--accent-foreground);
+	--color-highlighted: var(--highlighted);
+	--color-highlighted-foreground: var(--highlighted-foreground);
 	--color-destructive: var(--destructive);
 	--color-destructive-background: var(--destructive-background);
 	--color-destructive-foreground: var(--destructive-foreground);

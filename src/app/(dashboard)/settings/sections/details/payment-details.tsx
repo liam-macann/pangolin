@@ -130,13 +130,13 @@ function Item({
 									<AutocompleteList>
 										{(label: Label) => (
 											<AutocompleteItem
-												className='flex justify-between'
+												className='group flex justify-between'
 												key={label.id}
 												value={label}
 												onClick={() => setScheme(label.placeholder || null)}
 											>
 												{label.value}
-												<span className='text-right text-muted-foreground text-xs'>
+												<span className='text-right not-group-data-highlighted:text-muted-foreground text-xs'>
 													{label.region}
 												</span>
 											</AutocompleteItem>
