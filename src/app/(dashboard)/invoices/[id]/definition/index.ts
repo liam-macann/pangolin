@@ -1,4 +1,3 @@
-import { TZDate } from '@date-fns/tz';
 import { type Content, type TDocumentDefinitions } from 'pdfmake/interfaces';
 
 import { type DetailedInvoice } from '@/lib/data/invoice';
@@ -46,6 +45,7 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 	];
 
 	const title = `${invoice.config.taxRegistration ? 'Tax ' : ''}Invoice ${invoice.reference}`;
+	const createdAt = new Date(invoice.createdAt);
 
 	return {
 		version: '1.5',
@@ -57,8 +57,8 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 			author: invoice.config.tradingName,
 			creator: 'Invoicer',
 			producer: 'Invoicer',
-			creationDate: new TZDate(invoice.createdAt),
-			modDate: new TZDate(invoice.createdAt),
+			creationDate: createdAt,
+			modDate: createdAt,
 		},
 		pageSize: 'A4',
 		defaultStyle: {

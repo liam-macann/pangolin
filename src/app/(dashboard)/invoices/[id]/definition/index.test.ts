@@ -1,3 +1,4 @@
+import { Temporal } from 'temporal-polyfill';
 import { assert, describe, expect, test } from 'vitest';
 
 import { buildDocDefinition, type InvoicePrintData } from './index';
@@ -17,6 +18,20 @@ describe('buildDocDefinition', () => {
 	});
 
 	describe('Document metadata', () => {
+		test.for([
+			['UTC', '2026-01-15T00:30:00.000Z'],
+			['offset', '2026-10-07T11:21:00+11:00'],
+		])('PDF dates preserve the creation instant for %s ISO', ([_, createdAt]) => {
+			const { info } = buildDocDefinition(invoiceDataBuilder({ createdAt }));
+			const epoch = Temporal.Instant.from(createdAt).epochMilliseconds;
+
+			expect(info?.creationDate?.constructor).toBe(Date);
+			expect(info?.creationDate?.getTime()).toBe(epoch);
+
+			expect(info?.modDate?.constructor).toBe(Date);
+			expect(info?.modDate?.getTime()).toBe(epoch);
+		});
+
 		test('Document title includes the invoice reference number', () => {
 			const inv = invoiceDataBuilder({ reference: 'INV-002' });
 			expect(buildDocDefinition(inv).info?.title).toContain(inv.reference);
