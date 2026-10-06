@@ -18,7 +18,7 @@
 	--accent-foreground: var(--secondary-foreground);
 	--destructive: var(--color-red-11); /* Used for destructive text */
 	--destructive-background: var(--color-red-9); /* Used for destructive background (eg. buttons) */
-	--destructive-foreground: white; /* Used for text on  destructive background */
+	--destructive-foreground: white; /* Used for text on destructive background */
 	--border: var(--color-gray-6);
 	--input: var(--border); /* Input borders (eg. textarea, checkbox; not buttons like combobox) */
 	--ring: var(--color-gray-7); /* Focus ring */

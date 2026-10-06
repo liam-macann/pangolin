@@ -41,7 +41,7 @@ function NavLink({ name, href, active }: { name: string; href: string; active: b
 			className={cn(
 				'relative focus:z-10',
 				active
-					? 'after:pointer-events-none after:absolute after:-bottom-2.5 after:left-0 after:block after:h-0.5 after:w-full after:translate-y-full after:bg-accent-foreground'
+					? 'after:pointer-events-none after:absolute after:-bottom-2.5 after:left-0 after:block after:h-0.5 after:w-full after:translate-y-full after:bg-primary dark:after:bg-foreground'
 					: 'text-muted-foreground',
 			)}
 			nativeButton={false}

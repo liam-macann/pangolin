@@ -93,7 +93,7 @@ export function ToggleHeader<TData extends RowData, TValue>({
 			onClick={column.getToggleSortingHandler()}
 			variant='ghost'
 			size='sm'
-			className={cn('-mx-2! h-7 gap-1 bg-transparent! px-2!', className)}
+			className={cn('-mx-2! h-7 gap-1 bg-transparent! px-2! text-foreground!', className)}
 		>
 			<span>{children || title}</span>
 			{(() => {

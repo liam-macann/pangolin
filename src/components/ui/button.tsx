@@ -25,17 +25,17 @@ const buttonVariants = cva(
 					'inset-ring-[0.5px] inset-ring-white/8 inset-shadow-white/10 inset-shadow-xs', // Highlight
 				],
 				outline: [
-					'border not-disabled:hover:text-accent-foreground focus-visible:border-ring',
+					'border text-foreground focus-visible:border-ring',
 					'bg-background bg-linear-to-b from-80% from-transparent to-black/2 dark:bg-linear-to-t dark:bg-secondary dark:from-15% dark:to-white/1',
-					'not-disabled:hover:bg-accent/70 not-disabled:active:motion-safe:scale-[98%] dark:not-disabled:hover:bg-gray-4', // Interaction states
-					'aria-expanded:bg-accent/70 aria-expanded:dark:bg-gray-4',
+					'not-disabled:hover:bg-muted/70 not-disabled:active:motion-safe:scale-[98%] dark:not-disabled:hover:bg-gray-4', // Interaction states
+					'aria-expanded:bg-muted/70 aria-expanded:dark:bg-gray-4',
 				],
 				secondary: [
 					'border border-secondary-foreground/2 bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary-2 focus-visible:border-ring not-disabled:active:motion-safe:scale-[98%]',
 					'aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
 				],
 				ghost:
-					'border border-transparent text-accent-foreground not-disabled:hover:bg-accent focus-visible:border-ring aria-expanded:bg-muted aria-expanded:text-foreground',
+					'border border-transparent text-foreground not-disabled:hover:bg-accent not-disabled:hover:text-accent-foreground focus-visible:border-ring aria-expanded:bg-muted aria-expanded:text-foreground',
 				link: 'text-primary underline-offset-4 not-disabled:hover:underline',
 			},
 			size: {
