@@ -11,7 +11,7 @@ import { NumericString } from '@/lib/utils/numeric';
 
 import { createBuilder } from '@/test/builders';
 
-import { InvoiceTableContent, LocaleContext, useInvoiceTable } from './index';
+import { InvoiceTableContent, useInvoiceTable } from './index';
 
 // Row controls bind Server Actions, which can't be loaded in the browser
 vi.mock('./components/actions', () => ({ NotesButton: () => null, OverflowMenu: () => null }));
@@ -60,11 +60,9 @@ function TestTable({ data }: { data: Invoice[] }) {
 	const table = useInvoiceTable({ data }, () => null);
 
 	return (
-		<LocaleContext value='en-AU'>
-			<table.AppTable>
-				<InvoiceTableContent table={table} />
-			</table.AppTable>
-		</LocaleContext>
+		<table.AppTable>
+			<InvoiceTableContent table={table} />
+		</table.AppTable>
 	);
 }
 

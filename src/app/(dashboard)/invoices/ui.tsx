@@ -7,7 +7,6 @@ import { useSearchParams } from 'next/navigation';
 import { type ComponentProps, Suspense, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { type Config } from '@/api/dto/config';
 import { useConfig, useInvoices } from '@/lib/hooks';
 
 import { Button } from '@/ui/button';
@@ -26,7 +25,6 @@ import { CreateInvoiceDialog } from '@/src/app/(dashboard)/invoices/create-dialo
 import {
 	DEFAULT_SORT,
 	InvoiceTableContent,
-	LocaleContext,
 	PlaceholderTable,
 	type UseInvoiceTableOptions,
 	useInvoiceTable,
@@ -65,17 +63,13 @@ function serializeSortParam(sorting: SortingState): string | null {
 
 export function Table() {
 	const {
-		data: { data: config },
-	} = useConfig();
-
-	const {
 		data: { data: invoices },
 	} = useInvoices();
 
 	const searchParams = useSearchParams();
 
 	// Params are used to set initial state, not as controlled table state.
-	// Allowing Tanstack to control state internally greatly improves performance, compared to reading URL.
+	// Allowing TanStack to control state internally greatly improves performance, compared to reading URL.
 	const pageParam = Number(searchParams.get('page'));
 	const clientParam = searchParams.get('client');
 
@@ -103,7 +97,7 @@ export function Table() {
 		const query = params.toString();
 		window.history.replaceState(null, '', query ? `?${query}` : window.location.pathname);
 
-		// Capture the resulting URL immediately so we can recognise our own writes
+		// Capture the resulting URL immediately so we can recognize our own writes
 		internalState.current = query;
 	}
 
@@ -111,8 +105,6 @@ export function Table() {
 		<InvoiceTable
 			key={resetCount}
 			data={invoices}
-			locale={config.locale}
-			config={config}
 			initialState={{
 				sorting: parseSortParam(searchParams.get('sort')),
 				pagination: { pageIndex: pageParam > 1 ? pageParam - 1 : 0 },
@@ -128,15 +120,7 @@ export function Table() {
 	);
 }
 
-function InvoiceTable({
-	data,
-	locale,
-	config,
-	...options
-}: UseInvoiceTableOptions & {
-	locale: string;
-	config: Config;
-}) {
+function InvoiceTable({ data, ...options }: UseInvoiceTableOptions) {
 	const table = useInvoiceTable({ data, ...options }, state => ({
 		columnFilters: state.columnFilters,
 	}));
@@ -153,39 +137,39 @@ function InvoiceTable({
 		: null;
 
 	return (
-		<LocaleContext value={locale}>
-			<table.AppTable>
-				<div className='my-4 mb-6 flex items-center justify-between gap-3 md:mt-8'>
-					<Dialog />
-					<table.Search
-						className='h-10 grow shadow-none'
-						value={clientName ?? undefined}
-						placeholder='Search invoices…'
-					/>
-				</div>
+		<table.AppTable>
+			<div className='my-4 mb-6 flex items-center justify-between gap-3 md:mt-8'>
+				<Dialog />
+				<table.Search
+					className='h-10 grow shadow-none'
+					value={clientName ?? undefined}
+					placeholder='Search invoices…'
+				/>
+			</div>
 
-				{!isEmpty ? (
-					<>
-						<InvoiceTableContent table={table} />
-						<div className='flex items-center justify-end gap-2 py-4'>
-							<table.PaginationControls />
-						</div>
-					</>
-				) : (
-					<EmptyState config={config} />
-				)}
-			</table.AppTable>
-		</LocaleContext>
+			{!isEmpty ? (
+				<>
+					<InvoiceTableContent table={table} />
+					<div className='flex items-center justify-end gap-2 py-4'>
+						<table.PaginationControls />
+					</div>
+				</>
+			) : (
+				<EmptyState />
+			)}
+		</table.AppTable>
 	);
 }
 
 const createDialog = createDialogHandle();
 
-function EmptyState({ config }: { config: Config }) {
+function EmptyState() {
+	const { data: config } = useConfig();
+
 	return (
 		<>
 			<div className='scrim-b-24 scrim-background max-h-44 overflow-clip'>
-				<PlaceholderTable config={config} />
+				<PlaceholderTable config={config.data} />
 			</div>
 
 			<Empty
@@ -234,11 +218,10 @@ function Trigger(props: ComponentProps<typeof Button>) {
 }
 
 function DialogContent() {
-	const { data: response } = useConfig();
-	const data = response.data;
+	const { data: config } = useConfig();
 
 	return (
-		<CreateInvoiceDialog handle={createDialog} config={data}>
+		<CreateInvoiceDialog handle={createDialog} config={config.data}>
 			<Trigger />
 		</CreateInvoiceDialog>
 	);

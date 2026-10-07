@@ -8,13 +8,13 @@ import {
 } from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
 
-import { useClient, useClientInvoices, useConfig } from '@/lib/hooks';
+import { useClient, useClientInvoices } from '@/lib/hooks';
 import { pluralize } from '@/lib/utils';
 
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 
-import { InvoiceTableContent, LocaleContext, useInvoiceTable } from './../../invoices/table';
+import { InvoiceTableContent, useInvoiceTable } from './../../invoices/table';
 import { UpdateClientDialog } from './../ui/dialogs';
 import { OverflowMenu } from './../ui/menu';
 
@@ -26,9 +26,6 @@ export function Table({ clientId }: { clientId: string }) {
 	const {
 		data: { data: invoices },
 	} = useClientInvoices(clientId);
-	const {
-		data: { data: config },
-	} = useConfig();
 
 	const table = useInvoiceTable(
 		{
@@ -40,11 +37,9 @@ export function Table({ clientId }: { clientId: string }) {
 
 	return (
 		<>
-			<LocaleContext value={config.locale}>
-				<table.AppTable>
-					<InvoiceTableContent table={table} />
-				</table.AppTable>
-			</LocaleContext>
+			<table.AppTable>
+				<InvoiceTableContent table={table} />
+			</table.AppTable>
 
 			{client.invoiceCount > Math.min(invoices.length, LIMIT) && (
 				<Link

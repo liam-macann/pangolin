@@ -2,7 +2,6 @@
 
 import { type SortingState, type TableState } from '@tanstack/react-table';
 import { toMerged } from 'es-toolkit';
-import { createContext } from 'react';
 
 import { type Config } from '@/api/dto/config';
 import { type Invoice } from '@/api/dto/invoice';
@@ -18,7 +17,6 @@ import {
 import { columns } from './columns';
 import { usePlaceholderInvoices } from './placeholder-data';
 
-export const LocaleContext = createContext<string>('en-AU');
 export const DEFAULT_SORT: SortingState = [{ id: 'reference', desc: true }];
 
 export type UseInvoiceTableOptions = Omit<DataTableOptions<Invoice>, 'columns'> & {
@@ -102,23 +100,21 @@ export function PlaceholderTable({ config, count }: { config: Config; count?: nu
 	const table = useInvoiceTable({ data }, () => null);
 
 	return (
-		<LocaleContext value={config.locale}>
-			<table.AppTable>
-				<InvoiceTableContent
-					table={table}
-					inert
-					className='pointer-events-none border-separate border-spacing-0 select-none opacity-40'
-					getRowAttr={(_, i) => ({
-						style: {
-							scale: (0.98 ** i).toFixed(2),
-							opacity: (0.8 ** i).toFixed(2),
-							translate: `0 -${1.1 ** i - 1}rem`,
-							// filter: `blur(${1.06 ** i - 1}px)`,
-						},
-					})}
-				/>
-			</table.AppTable>
-		</LocaleContext>
+		<table.AppTable>
+			<InvoiceTableContent
+				table={table}
+				inert
+				className='pointer-events-none border-separate border-spacing-0 select-none opacity-40'
+				getRowAttr={(_, i) => ({
+					style: {
+						scale: (0.98 ** i).toFixed(2),
+						opacity: (0.8 ** i).toFixed(2),
+						translate: `0 -${1.1 ** i - 1}rem`,
+						// filter: `blur(${1.06 ** i - 1}px)`,
+					},
+				})}
+			/>
+		</table.AppTable>
 	);
 }
 
