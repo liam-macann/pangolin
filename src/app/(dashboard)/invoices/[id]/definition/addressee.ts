@@ -19,7 +19,7 @@ export function addresseeTable({ config, ...invoice }: InvoicePrintData): Conten
 				[
 					{ text: invoice.title || '', bold: true },
 					{
-						text: `Due ${formatDate(invoice.dueAt, config.timezone, { locale: config.locale })}`,
+						text: `Due ${formatDate(invoice.dueAt, { locale: config.locale })}`,
 						alignment: 'right',
 						bold: true,
 					},

@@ -1,111 +1,84 @@
+import { Temporal } from 'temporal-polyfill';
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 
-import { formatDate, isoToTZDate } from '@/lib/utils/date';
+import { formatDate, toTemporal } from '@/lib/utils/date';
 
-describe('isoToTZDate', () => {
-	describe('Set timeZone property of TZDate after transposition', () => {
-		test.for([{ timezone: 'UTC' }, { timezone: 'Asia/Kolkata' }, { timezone: 'America/New_York' }])(
-			'Sets .timeZone to $timezone',
-			({ timezone }) => expect(isoToTZDate('2026-01-15', timezone).timeZone).toBe(timezone),
-		);
-	});
+describe('toTemporal', () => {
+	describe('decode', () => {
+		test('Converts a Date to the same Temporal.Instant', () => {
+			const result = toTemporal.decode(new Date('2026-01-15T00:30:00Z'));
 
-	describe('Date-only string interpreted as midnight in timezone', () => {
-		// TZDate.toISOString() serializes with an explicit zone offset (not Z, which indicates UTC)
-		test.for([
-			{ iso: '2026-01-15', timezone: 'UTC', expected: '2026-01-15T00:00:00.000+00:00' },
-			{ iso: '2026-01-15', timezone: 'Asia/Kolkata', expected: '2026-01-15T00:00:00.000+05:30' },
-			{
-				iso: '2026-01-15',
-				timezone: 'America/New_York',
-				expected: '2026-01-15T00:00:00.000-05:00',
-			},
-			{
-				iso: '2026-01-01',
-				timezone: 'Australia/Sydney',
-				expected: '2026-01-01T00:00:00.000+11:00',
-			},
-		])('$iso in $timezone', ({ iso, timezone, expected }) =>
-			expect(isoToTZDate(iso, timezone).toISOString()).toBe(expected),
-		);
-
-		test('Same date-only string in different zones produce different instants', () => {
-			const utc = isoToTZDate('2026-01-15', 'UTC');
-			const kolkata = isoToTZDate('2026-01-15', 'Asia/Kolkata');
-			expect(utc.getTime()).not.toBe(kolkata.getTime());
+			expect(result).toBeInstanceOf(Temporal.Instant);
+			expect(result.toString()).toBe('2026-01-15T00:30:00Z');
 		});
 	});
 
-	describe('Datetime string with timezone is converted to target timezone', () => {
-		test.for([
-			{
-				iso: '2026-01-15T00:00:00Z',
-				timezone: 'America/New_York',
-				expected: '2026-01-14T19:00:00.000-05:00',
-			},
-			{
-				iso: '2026-01-15T12:00:00+05:30',
-				timezone: 'UTC',
-				expected: '2026-01-15T06:30:00.000+00:00',
-			},
-		])('$iso in $timezone → $expected', ({ iso, timezone, expected }) =>
-			expect(isoToTZDate(iso, timezone).toISOString()).toBe(expected),
-		);
+	describe('encode', () => {
+		test('Converts a Temporal.Instant to the same instant as a Date', () => {
+			const temporal = Temporal.Instant.from('2026-01-15T00:30:00Z');
+			expect(toTemporal.encode(temporal)).toEqual(new Date('2026-01-15T00:30:00Z'));
+		});
+	});
 
-		test('Set timeZone property of TZDate after conversion', () =>
-			expect(isoToTZDate('2026-01-15T00:00:00Z', 'America/New_York').timeZone).toBe(
-				'America/New_York',
-			));
+	test('Round-trips without losing millisecond precision', () => {
+		const date = new Date('1969-12-31T23:59:59.123Z');
+		expect(toTemporal.encode(toTemporal.decode(date))).toEqual(date);
 	});
 });
 
 describe('formatDate', () => {
-	describe('Date-only strings print the same calendar date in every timezone', () => {
+	describe('Accepts compatible date-like inputs', () => {
 		test.for([
-			'UTC',
-			'Pacific/Pago_Pago',
-			'America/New_York',
-			'Australia/Sydney',
-			'Pacific/Kiritimati',
-			'Asia/Kathmandu',
-		])('%s', timezone =>
-			expect(formatDate('2025-02-15', timezone, { locale: 'en-AU' })).toBe('15 Feb 2025'),
-		);
+			['ISO string', '2025-02-15'],
+			['PlainDate', Temporal.PlainDate.from('2025-02-15')],
+			['PlainDateTime', Temporal.PlainDateTime.from('2025-02-15T00:00:00')],
+			['DateLikeObject', { day: 15, month: 2, year: 2025 } satisfies Temporal.DateLikeObject],
+			['ZonedDateTime', Temporal.ZonedDateTime.from('2025-02-15T10:15:30+11:00[Australia/Sydney]')],
+		])('%s', ([_, input]) => {
+			expect(formatDate(input, { locale: 'en-AU' })).toBe('15 Feb 2025');
+		});
+	});
 
-		test('On a day where DST skips midnight', () =>
-			expect(formatDate('2026-09-06', 'America/Santiago', { locale: 'en-US' })).toBe(
-				'Sep 6, 2026',
-			));
+	describe('Rejects anything other than a calendar date', () => {
+		test.for([
+			['UTC instant', '2026-01-01T00:00:00Z'],
+			['Date-time with numeric offset', '2026-01-01T00:00:00+00:00'],
+			['Postgres timestamptz output', '2026-01-01 00:00:00+00'],
+			['Zoned date-time', '2026-01-01T00:00:00+11:00[Australia/Sydney]'],
+			['Date-time without offset', '2026-01-01T00:00:00'],
+			['Nonexistent date', '2026-02-30'],
+			['Empty string', ''],
+		])('%s', ([_, input]) => {
+			expect(() => formatDate(input, { locale: 'en-AU' })).toThrow();
+		});
 	});
 
 	describe('options', () => {
-		describe('printCurrentYear', () => {
-			const now = isoToTZDate(new Date().toISOString(), 'UTC');
-			const currentYear = now.getUTCFullYear();
-			const nowISO = now.toISOString();
+		describe('omitCurrentYearIn', () => {
+			const today = Temporal.Now.plainDateISO('UTC');
 
-			test.for([
-				['Includes year by default', undefined, true],
-				['Includes year when true', true, true],
-				['Omits year when false and date is current year', false, false],
-			] as const)('%s', ([_, printCurrentYear, expected]) => {
-				const result = formatDate(nowISO, 'UTC', { locale: 'en-AU', printCurrentYear });
-				expected
-					? expect(result).toContain(currentYear)
-					: expect(result).not.toContain(currentYear);
-			});
+			test('Includes the current year by default', () =>
+				expect(formatDate(today, { locale: 'en-AU' })).toContain(today.year));
 
-			test('Includes year when false and date is not current year', () =>
-				expect(
-					formatDate('2025-01-15', 'UTC', { locale: 'en-US', printCurrentYear: false }),
-				).toContain('2025'));
+			test('Omits the current year when a timezone is given', () =>
+				expect(formatDate(today, { locale: 'en-AU', omitCurrentYearIn: 'UTC' })).not.toContain(
+					today.year,
+				));
 
-			describe('Current year is evaluated in the date timezone', () => {
-				// 07:00 on 1 Jan 2027 in Sydney; still 31 Dec 2026 in UTC and New York
-				beforeAll(() =>
-					vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-12-31T20:00:00Z') }),
-				);
-				afterAll(() => vi.useRealTimers());
+			test('Includes the year when the date is not in the current year', () =>
+				expect(formatDate('2025-01-15', { locale: 'en-US', omitCurrentYearIn: 'UTC' })).toContain(
+					'2025',
+				));
+
+			describe('Current year is evaluated in the given timezone', () => {
+				afterAll(() => vi.restoreAllMocks());
+				beforeAll(() => {
+					vi.spyOn(Temporal.Now, 'plainDateISO').mockImplementation((zone = 'UTC') => {
+						// 07:00 on 1 Jan 2027 in Sydney; still 31 Dec 2026 in New York
+						const now = Temporal.Instant.from('2026-12-31T20:00:00Z');
+						return now.toZonedDateTimeISO(zone).toPlainDate();
+					});
+				});
 
 				test.for([
 					['2027-01-01', 'Australia/Sydney', '1 Jan'],
@@ -113,17 +86,15 @@ describe('formatDate', () => {
 					['2026-12-31', 'America/New_York', '31 Dec'],
 					['2027-01-01', 'America/New_York', '1 Jan 2027'],
 				])('%s in %s → %s', ([iso, timezone, expected]) =>
-					expect(formatDate(iso, timezone, { locale: 'en-AU', printCurrentYear: false })).toBe(
-						expected,
-					),
+					expect(formatDate(iso, { locale: 'en-AU', omitCurrentYearIn: timezone })).toBe(expected),
 				);
 			});
 		});
 	});
 
 	test('Formats date differently for different locales', () => {
-		expect(formatDate('2026-01-15', 'UTC', { locale: 'en-AU' })).not.toBe(
-			formatDate('2026-01-15', 'UTC', { locale: 'de' }),
-		);
+		const AU = formatDate('2026-01-15', { locale: 'en-AU' });
+		const DE = formatDate('2026-01-15', { locale: 'de' });
+		expect(AU).not.toBe(DE);
 	});
 });

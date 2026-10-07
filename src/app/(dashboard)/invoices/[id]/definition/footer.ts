@@ -45,7 +45,7 @@ export function documentFooter(
 							verticalAlignment: 'bottom',
 						},
 						{
-							text: `Issued ${formatDate(invoice.issuedAt, invoice.config.timezone, { locale: invoice.config.locale })}`,
+							text: `Issued ${formatDate(invoice.issuedAt, { locale: invoice.config.locale })}`,
 							alignment: 'right',
 							verticalAlignment: 'bottom',
 						},

@@ -4,6 +4,7 @@ import { type Row } from '@tanstack/react-table';
 import { type ComponentProps, useContext } from 'react';
 
 import { type Invoice } from '@/api/dto/invoice';
+import { useConfig } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
 import { formatDate } from '@/lib/utils/date';
@@ -18,6 +19,9 @@ import { StatusSelect } from './components/status';
 export type { Invoice };
 
 const columnHelper = createDataTableColumnHelper<Invoice>();
+
+/** Timezone of the current config, which decides which year is now */
+const useCurrentTimezone = () => useConfig({ select: res => res.data.timezone }).data;
 
 /** Column definitions for invoices */
 export const columns = columnHelper.columns([
@@ -60,15 +64,13 @@ export const columns = columnHelper.columns([
 		maxSize: 400,
 		cell: ({ row, getValue }) => {
 			const locale = useContext(LocaleContext);
+			const timezone = useCurrentTimezone();
 			return (
 				<div className='grid gap-1 py-1'>
 					<div className='truncate'>{getValue()}</div>
 
 					<span className='text-muted-foreground text-xs group-data-void/row:text-muted-foreground/50 md:hidden'>
-						{formatDate(row.original.issuedAt, row.original.config.timezone, {
-							locale,
-							printCurrentYear: false,
-						})}
+						{formatDate(row.original.issuedAt, { locale, omitCurrentYearIn: timezone })}
 					</span>
 
 					<div className='mt-2 sm:hidden'>
@@ -92,12 +94,10 @@ export const columns = columnHelper.columns([
 		meta: { className: 'max-md:hidden' },
 		cell: ({ row }) => {
 			const locale = useContext(LocaleContext);
+			const timezone = useCurrentTimezone();
 			return (
 				<span className='text-muted-foreground group-data-void/row:text-muted-foreground/50'>
-					{formatDate(row.original.issuedAt, row.original.config.timezone, {
-						locale,
-						printCurrentYear: false,
-					})}
+					{formatDate(row.original.issuedAt, { locale, omitCurrentYearIn: timezone })}
 				</span>
 			);
 		},

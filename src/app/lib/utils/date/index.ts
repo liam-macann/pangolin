@@ -1,38 +1,34 @@
-import { TZDate, tz } from '@date-fns/tz';
-import { intlFormat, parseISO } from 'date-fns';
-
-// date-fns can both convert (for this instant in time zone A, what time was it in time zone B)
-// and transpose (alter the time zone without changing the wall time)
-
-// This utility should transpose when no timezone is specified (ie. assume string is provided in correct local time)
-// and convert when a timezone is specified (ie. assume that the string is not lying)
-
-/** Accepts an ISO string and returns a TZDate */
-export const isoToTZDate = (iso: string, timezone: string): TZDate =>
-	parseISO(iso, { in: tz(timezone) });
+import { Temporal } from 'temporal-polyfill';
+import z from 'zod';
 
 export type FormatDateOptions = {
 	locale: string;
 
-	/** Whether to include or omit the year when the printed date occurs this year */
-	printCurrentYear?: boolean;
+	/** Omits the year when the date falls within the current year of this timezone. */
+	omitCurrentYearIn?: string;
 };
 
-/** Accepts an ISO plain date string, and formats a printable string in the provided timezone and locale. */
-export function formatDate(iso: string, timezone: string, options: FormatDateOptions): string {
-	const date = isoToTZDate(iso, timezone);
-	const { locale, printCurrentYear = true } = options;
+/** Convert between `Date` and `Temporal.Instant`. */
+export const toTemporal = z.codec(z.date(), z.instanceof(Temporal.Instant), {
+	decode: date => Temporal.Instant.fromEpochMilliseconds(date.getTime()),
+	encode: temporal => new Date(temporal.epochMilliseconds),
+});
 
-	const isDateThisYear = date.getFullYear() === new TZDate(new Date(), timezone).getFullYear();
+/** Accepts an ISO plain date string, and formats a printable string in the provided locale. */
+export function formatDate(iso: Temporal.PlainDateLike, options: FormatDateOptions): string {
+	const { locale, omitCurrentYearIn } = options;
 
-	return intlFormat(
-		date,
-		{
-			timeZone: timezone,
-			day: 'numeric',
-			month: 'short',
-			year: printCurrentYear || !isDateThisYear ? 'numeric' : undefined,
-		},
-		{ locale },
-	);
+	// Throw unless string is plain date format
+	if (typeof iso === 'string') z.iso.date().parse(iso);
+
+	const date = Temporal.PlainDate.from(iso);
+
+	return date.toLocaleString(locale, {
+		day: 'numeric',
+		month: 'short',
+		year:
+			omitCurrentYearIn && date.year === Temporal.Now.plainDateISO(omitCurrentYearIn).year
+				? undefined
+				: 'numeric',
+	});
 }

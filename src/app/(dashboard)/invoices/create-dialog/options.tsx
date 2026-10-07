@@ -1,11 +1,10 @@
 'use client';
 
-import { TZDate, tz } from '@date-fns/tz';
+import { TZDate } from '@date-fns/tz';
 import { DotsThreeIcon } from '@phosphor-icons/react';
-import { formatISO } from 'date-fns';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { formatDate } from '@/lib/utils/date';
+import { formatDate, toTemporal } from '@/lib/utils/date';
 
 import { Button } from '@/ui/button';
 import { Calendar } from '@/ui/calendar';
@@ -86,8 +85,7 @@ function IssueDateSubmenu({ timezone, locale }: { timezone: string; locale: stri
 							{field.value && (
 								<span className='text-muted-foreground text-xs'>
 									{formatDate(
-										formatISO(field.value, { representation: 'date', in: tz(timezone) }),
-										timezone,
+										toTemporal.decode(field.value).toZonedDateTimeISO(timezone).toPlainDate(),
 										{ locale },
 									)}
 								</span>
@@ -131,8 +129,7 @@ function DueDateSubmenu({ timezone, locale }: { timezone: string; locale: string
 							<span className='text-muted-foreground text-xs'>
 								{field.value
 									? formatDate(
-											formatISO(field.value, { representation: 'date', in: tz(timezone) }),
-											timezone,
+											toTemporal.decode(field.value).toZonedDateTimeISO(timezone).toPlainDate(),
 											{ locale },
 										)
 									: 'Not set'}
@@ -149,10 +146,10 @@ function DueDateSubmenu({ timezone, locale }: { timezone: string; locale: string
 								mode='single'
 								selected={field.value}
 								defaultMonth={field.value}
-								disabled={[{ before: TZDate.tz(timezone) }, TZDate.tz(timezone)]}
 								startMonth={TZDate.tz(timezone)}
 								timeZone={timezone}
 								{...field}
+								disabled={field.disabled || [{ before: TZDate.tz(timezone) }, TZDate.tz(timezone)]}
 								onSelect={v => field.onChange(v)}
 							/>
 						</DropdownMenuSubContent>
