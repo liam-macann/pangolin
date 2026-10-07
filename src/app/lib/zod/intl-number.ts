@@ -22,9 +22,7 @@ export function intlNumber(arg1?: z.ZodNumber | ErrorParam, arg2?: ErrorParam) {
 function buildIntlNumber({ schema, error }: { schema?: z.ZodNumber; error?: ErrorParam }) {
 	return (
 		z
-			.union([z.string(), z.number()])
-			// Ensure input is not blank (this will otherwise be coerced to `0`)
-			.refine(val => val !== '', error)
+			.union([z.string().trim(), z.number()])
 			// Sanitize the string based on the position of separators
 			.transform(val => {
 				if (typeof val === 'string') {
@@ -69,6 +67,8 @@ function buildIntlNumber({ schema, error }: { schema?: z.ZodNumber; error?: Erro
 
 				return val;
 			})
+			// Ensure normalized input is not blank (this will otherwise be coerced to `0`)
+			.refine(val => val !== '', error)
 			.pipe(z.coerce.number(error))
 			.pipe(schema || z.number())
 	);

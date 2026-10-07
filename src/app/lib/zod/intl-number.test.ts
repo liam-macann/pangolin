@@ -67,7 +67,15 @@ describe('intlNumber', () => {
 		expect(() => schema.parse(input)).toThrow(),
 	);
 
-	test('Rejects empty string', () => expect(() => schema.parse('')).toThrow());
+	test.for(['', ' ', '\t\n', '\u00a0', '\u2001', " ' "])(
+		'Rejects empty string after normalization (case %$)',
+		async input => {
+			const message = 'Please enter a number';
+			const result = await intlNumber(message).safeParseAsync(input);
+			expect(result.success).toBe(false);
+			expect(result.error?.issues[0].message).toBe(message);
+		},
+	);
 
 	describe('Number inputs', () => {
 		test.for([42, 3.14, 0, -4398])('Passes through %s unchanged', n =>
