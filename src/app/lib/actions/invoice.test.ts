@@ -236,9 +236,9 @@ describe('createInvoice', () => {
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
 	});
 
-	test('Rejects invoice referencing a client belonging to another user', async ({ db, auth }) => {
+	test('Rejects invoice referencing a client belonging to another user', async ({ auth }) => {
 		await setUpConfigAndClient();
-		const other = await createTestSession(db, auth);
+		const other = await createTestSession(auth);
 		const otherClient = await sessionStorage.run(other, () => insertTestClient());
 
 		await expect(
@@ -249,13 +249,13 @@ describe('createInvoice', () => {
 		expect(await withRLS(db => db.select().from(tables.documents))).toHaveLength(0);
 	});
 
-	test('Rejects an item tax referencing tax belonging to another user', async ({ db, auth }) => {
+	test('Rejects an item tax referencing tax belonging to another user', async ({ auth }) => {
 		const { client } = await setUpConfigAndClient({
 			taxRegistration: true,
 			taxes: [{ name: 'GST', rate: 10 }],
 		});
 
-		const other = await createTestSession(db, auth);
+		const other = await createTestSession(auth);
 		const otherTax = await sessionStorage.run(other, async () => {
 			await setUpConfigAndClient({ taxRegistration: true, taxes: [{ name: 'VAT', rate: 20 }] });
 			const [tax] = await withRLS(db => db.select({ id: tables.taxes.id }).from(tables.taxes));
@@ -299,8 +299,8 @@ describe('updateInvoiceStatus', () => {
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
 	});
 
-	test('Does not mutate an invoice owned by another user', async ({ db, auth }) => {
-		const other = await createTestSession(db, auth);
+	test('Does not mutate an invoice owned by another user', async ({ auth }) => {
+		const other = await createTestSession(auth);
 		const invoiceId = await sessionStorage.run(other, () => setUpInvoice());
 
 		await updateInvoiceStatus(invoiceId, 'paid');
@@ -335,8 +335,8 @@ describe('voidInvoice', () => {
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
 	});
 
-	test('Does not mutate an invoice owned by another user', async ({ db, auth }) => {
-		const other = await createTestSession(db, auth);
+	test('Does not mutate an invoice owned by another user', async ({ auth }) => {
+		const other = await createTestSession(auth);
 		const invoiceId = await sessionStorage.run(other, () => setUpInvoice());
 
 		await voidInvoice(invoiceId);
@@ -397,8 +397,8 @@ describe('setInvoiceNotes', () => {
 		expect(status.notes).toBeNull();
 	});
 
-	test('Does not mutate an invoice owned by another user', async ({ db, auth }) => {
-		const other = await createTestSession(db, auth);
+	test('Does not mutate an invoice owned by another user', async ({ auth }) => {
+		const other = await createTestSession(auth);
 		const invoiceId = await sessionStorage.run(other, () => setUpInvoice());
 
 		await setInvoiceNotes(invoiceId, 'Hijacked note');

@@ -44,8 +44,8 @@ describe('GET /invoices/[id]', () => {
 	});
 
 	// We use notFound() rather than forbidden() to avoid leaking resource existence
-	asUser('Propagates notFound() for an invoice belonging to another user', async ({ db, auth }) => {
-		const otherSession = await createTestSession(db, auth);
+	asUser('Propagates notFound() for an invoice belonging to another user', async ({ auth }) => {
+		const otherSession = await createTestSession(auth);
 		const { client } = await setUpConfigAndClient();
 		const id = await insertTestInvoice({
 			clientDataId: client.data.scdId,

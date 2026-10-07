@@ -35,8 +35,8 @@ test('Returns the stored DEK on later retrievals', async ({ session }) => {
 	expect(bytesToHex(await retrieveDEK(session.user.id))).toBe(DEK);
 });
 
-test('Calls forbidden() when requesting DEK belonging to another tenant', async ({ db, auth }) => {
-	const other = await createTestSession(db, auth);
+test('Calls forbidden() when requesting DEK belonging to another tenant', async ({ auth }) => {
+	const other = await createTestSession(auth);
 
 	await expect(retrieveDEK(other.user.id)).rejects.toThrow();
 	expect(navigation.forbidden).toHaveBeenCalled();

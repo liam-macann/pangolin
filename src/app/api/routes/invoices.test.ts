@@ -44,8 +44,8 @@ describe('GET /api/invoices', () => {
 		expect(body.meta).toEqual({ total: 1, limit: 200 });
 	});
 
-	asUser('No cross-tenant leakage when filtering with a client UUID', async ({ db, auth }) => {
-		const otherSession = await createTestSession(db, auth);
+	asUser('No cross-tenant leakage when filtering with a client UUID', async ({ auth }) => {
+		const otherSession = await createTestSession(auth);
 		const otherClientId = await sessionStorage.run(otherSession, async () => {
 			const { client } = await setUpConfigAndClient();
 			await insertTestInvoice({ clientDataId: client.data.scdId });

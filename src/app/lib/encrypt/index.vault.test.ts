@@ -135,8 +135,8 @@ describe('withVault()', () => {
 		});
 	});
 
-	test('Cannot decrypt ciphertext belonging to another user', async ({ db, auth }) => {
-		const other = await createTestSession(db, auth);
+	test('Cannot decrypt ciphertext belonging to another user', async ({ auth }) => {
+		const other = await createTestSession(auth);
 		const encrypted = await sessionStorage.run(other, () =>
 			withVault(async vault => vault.encrypt('secret')),
 		);
@@ -152,10 +152,9 @@ describe('withVault()', () => {
 	});
 
 	test('Throws forbidden() and destroys DEK when the session changes mid-scope', async ({
-		db,
 		auth,
 	}) => {
-		const other = await createTestSession(db, auth);
+		const other = await createTestSession(auth);
 		const { nthDEK } = spyOnDEK();
 
 		await withVault(async vault => {
@@ -223,8 +222,8 @@ describe('withVault()', () => {
 			expect(spy).toHaveBeenCalledTimes(2);
 		});
 
-		test('Throws forbidden() when nested scope is a different user', async ({ db, auth }) => {
-			const other = await createTestSession(db, auth);
+		test('Throws forbidden() when nested scope is a different user', async ({ auth }) => {
+			const other = await createTestSession(auth);
 			const { spy } = spyOnDEK();
 
 			await withVault(async outer => {

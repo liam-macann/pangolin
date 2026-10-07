@@ -151,8 +151,8 @@ describe('updateClient', () => {
 		expect(navigation.notFound).toHaveBeenCalled();
 	});
 
-	test('Does not mutate a client owned by another user', async ({ db, auth }) => {
-		const other = await createTestSession(db, auth);
+	test('Does not mutate a client owned by another user', async ({ auth }) => {
+		const other = await createTestSession(auth);
 		const otherClient = await sessionStorage.run(other, () =>
 			insertTestClient({ organization: null }),
 		);
@@ -249,8 +249,8 @@ describe('updateClientFavorite', () => {
 		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
 	});
 
-	test('Does not mutate a client owned by another user', async ({ db, auth }) => {
-		const other = await createTestSession(db, auth);
+	test('Does not mutate a client owned by another user', async ({ auth }) => {
+		const other = await createTestSession(auth);
 		const otherClient = await sessionStorage.run(other, () => insertTestClient());
 
 		// notFound() rather than forbidden() to avoid leaking resource existence
@@ -293,8 +293,8 @@ describe('updateClientDeleted', () => {
 		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
 	});
 
-	test('Does not mutate a client owned by another user', async ({ db, auth }) => {
-		const other = await createTestSession(db, auth);
+	test('Does not mutate a client owned by another user', async ({ auth }) => {
+		const other = await createTestSession(auth);
 		const otherClient = await sessionStorage.run(other, () => insertTestClient());
 
 		// notFound() rather than forbidden() to avoid leaking resource existence

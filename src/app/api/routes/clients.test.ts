@@ -26,8 +26,8 @@ describe('GET /api/clients', () => {
 		expect(body.meta).toEqual({ total: 2, limit: 1, offset: 0 });
 	});
 
-	asUser('Never returns clients belonging to another user', async ({ db, auth }) => {
-		const otherSession = await createTestSession(db, auth);
+	asUser('Never returns clients belonging to another user', async ({ auth }) => {
+		const otherSession = await createTestSession(auth);
 		await sessionStorage.run(otherSession, () => insertTestClient({ name: 'Other User' }));
 
 		await insertTestClient({ name: 'My Client' });
@@ -57,9 +57,9 @@ describe('GET /api/clients/{id}', () => {
 		expect(res.status).toBe(404);
 	});
 
-	asUser('Returns 404 for a client belonging to another user', async ({ db, auth }) => {
+	asUser('Returns 404 for a client belonging to another user', async ({ auth }) => {
 		// Prevents leaking resource existence
-		const otherSession = await createTestSession(db, auth);
+		const otherSession = await createTestSession(auth);
 		const { id } = await sessionStorage.run(otherSession, () => insertTestClient());
 
 		const res = await app.request(`/api/clients/${id}`);

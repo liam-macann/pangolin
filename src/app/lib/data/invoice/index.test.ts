@@ -135,11 +135,8 @@ describe('fetchInvoice', () => {
 	});
 
 	// We use notFound() rather than forbidden() to avoid leaking resource existence
-	test('Throws notFound() when fetching an invoice with incorrect ownership', async ({
-		db,
-		auth,
-	}) => {
-		const otherSession = await createTestSession(db, auth);
+	test('Throws notFound() when fetching an invoice with incorrect ownership', async ({ auth }) => {
+		const otherSession = await createTestSession(auth);
 
 		const id = await insertTestInvoice({
 			clientDataId: await setUpConfigAndClient(),
@@ -534,11 +531,11 @@ describe('fetchInvoices()', () => {
 		expect(invoice.reference).toBe('INV-001');
 	});
 
-	test('Only returns invoices belonging to the authenticated user', async ({ db, auth }) => {
+	test('Only returns invoices belonging to the authenticated user', async ({ auth }) => {
 		const clientDataId = await setUpConfigAndClient();
 		await insertTestInvoice({ clientDataId, items: [{ quantity: 1, unitCost: 100 }] });
 
-		const otherSession = await createTestSession(db, auth);
+		const otherSession = await createTestSession(auth);
 		const otherInvoices = await sessionStorage.run(otherSession, () =>
 			fetchInvoices({ limit: 200 }),
 		);

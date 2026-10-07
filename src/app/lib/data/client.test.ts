@@ -26,11 +26,8 @@ describe('fetchClients', () => {
 		expect(navigation.notFound).toHaveBeenCalled();
 	});
 
-	test('Throws notFound() when fetching a client with incorrect ownership', async ({
-		db,
-		auth,
-	}) => {
-		const otherSession = await createTestSession(db, auth);
+	test('Throws notFound() when fetching a client with incorrect ownership', async ({ auth }) => {
+		const otherSession = await createTestSession(auth);
 		const client = await insertTestClient();
 
 		await expect(sessionStorage.run(otherSession, () => fetchClient(client.id))).rejects.toThrow();

@@ -46,10 +46,10 @@ describe('withRLS()', () => {
 
 	asUser(
 		'Trusted-session overload scopes RLS to the passed session, not the ambient one',
-		async ({ db, auth }) => {
+		async ({ auth }) => {
 			const { id } = await insertTestClient();
 
-			const otherSession = await createTestSession(db, auth);
+			const otherSession = await createTestSession(auth);
 			const rows = await withRLS(otherSession, async tx => tx.select().from(schema.clients));
 
 			expect(rows.map(row => row.id)).not.toContain(id);
@@ -117,8 +117,8 @@ describe('withRLS()', () => {
 
 		asUser(
 			'Nesting a trusted-session overload with session that does not match enclosing context will throw',
-			async ({ db, auth, session }) => {
-				const otherSession = await createTestSession(db, auth);
+			async ({ auth, session }) => {
+				const otherSession = await createTestSession(auth);
 
 				// Trusted-session within callback overload
 				await expect(

@@ -23,11 +23,8 @@ describe('fetchConfig', () => {
 		expect(navigation.notFound).toHaveBeenCalled();
 	});
 
-	test('Throws notFound() when fetching a config with incorrect ownership', async ({
-		db,
-		auth,
-	}) => {
-		const otherSession = await createTestSession(db, auth);
+	test('Throws notFound() when fetching a config with incorrect ownership', async ({ auth }) => {
+		const otherSession = await createTestSession(auth);
 		const configId = await insertTestConfig();
 
 		await expect(sessionStorage.run(otherSession, () => fetchConfig(configId))).rejects.toThrow();

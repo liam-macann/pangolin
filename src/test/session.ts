@@ -40,11 +40,14 @@ export function createTestAuth(db: TestTX) {
 	});
 }
 
-/** Creates and logs in a fresh user within the current fixture transaction.
- *
- *  @remarks Better Auth writes as neondb_owner in production (a separate, superuser connection), bypassing RLS */
-export async function createTestSession(db: TestTX, auth: ReturnType<typeof createTestAuth>) {
+/** Creates and logs in a fresh user within the current test transaction.
+ *  @remarks Better Auth writes as neondb_owner in production (a separate, superuser connection), bypassing RLS
+ *  @throws When called without a test transaction. */
+export async function createTestSession(auth: ReturnType<typeof createTestAuth>) {
 	const { test: helpers } = await auth.$context;
+
+	const db = testConnection.getStore();
+	if (!db) throw new Error('createTestSession() called without a test database: use `asUser`');
 
 	await db.execute(sql`SET LOCAL ROLE neondb_owner;`);
 
@@ -93,4 +96,5 @@ export const asUser = test
 		],
 	})
 	.extend('auth', ({ db }) => createTestAuth(db))
-	.extend('session', ({ db, auth }) => createTestSession(db, auth));
+	// A fixture runs before the test transaction is bound for the test, so binds it here
+	.extend('session', ({ db, auth }) => testConnection.run(db, () => createTestSession(auth)));
