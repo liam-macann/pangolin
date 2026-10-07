@@ -4,10 +4,10 @@ import { assert, describe, expect, test, vi } from 'vitest';
 
 import { insertTestClient } from '@/lib/actions/tests/fixtures';
 import { withRLS } from '@/db';
-import * as schema from '@/db/schema';
+import * as tables from '@/db/schema';
 
 import { getSession } from '@/auth';
-import { asUser, createTestSession } from '@/test/session';
+import { asUser, bypassRLS, createTestSession } from '@/test/session';
 
 describe('withRLS()', () => {
 	test('Single-argument overload calls unauthorized() when there is no session', async () => {
@@ -50,7 +50,7 @@ describe('withRLS()', () => {
 			const { id } = await insertTestClient();
 
 			const otherSession = await createTestSession(auth);
-			const rows = await withRLS(otherSession, async tx => tx.select().from(schema.clients));
+			const rows = await withRLS(otherSession, async tx => tx.select().from(tables.clients));
 
 			expect(rows.map(row => row.id)).not.toContain(id);
 		},
@@ -143,13 +143,11 @@ describe('withRLS()', () => {
 			// The asUser fixture is run in a transaction context, which withRLS() consumes.
 			// Calling insertTestClient() would trigger a nested withRLS() call, setting the app.user_id variable.
 			// This would not be reset until the enclosing transaction is committed.
-			await db.execute(sql`SET LOCAL ROLE neondb_owner`);
-			await db.insert(schema.clients).values({ userId: session.user.id });
-			await db.execute(sql`SET LOCAL ROLE authenticated`);
+			await bypassRLS(() => db.insert(tables.clients).values({ userId: session.user.id }));
 
 			const err = await db
 				.select()
-				.from(schema.clients)
+				.from(tables.clients)
 				.catch(err => err);
 
 			assert(err instanceof Error, 'Expected the query to reject');
@@ -169,7 +167,7 @@ describe('withRLS()', () => {
 		asUser('The same query succeeds through withRLS()', async () => {
 			const { id } = await insertTestClient();
 
-			const rows = await withRLS(async db => await db.select().from(schema.clients));
+			const rows = await withRLS(async db => await db.select().from(tables.clients));
 			expect(rows.map(row => row.id)).toContain(id);
 		});
 	});

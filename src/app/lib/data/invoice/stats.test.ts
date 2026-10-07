@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { describe, expect } from 'vitest';
 import { z } from 'zod';
 
@@ -14,7 +14,7 @@ import { getBounds } from '@/lib/zod';
 import * as tables from '@/db/schema';
 
 import { type TestTX } from '@/test/pglite';
-import { asUser as test } from '@/test/session';
+import { bypassRLS, asUser as test } from '@/test/session';
 
 import { fetchStats } from './stats';
 
@@ -215,9 +215,9 @@ describe('fetchStats', () => {
 
 		/** Privileged escape-hatch to set the createdAt column */
 		async function setDocumentCreatedAt(db: TestTX, id: string, createdAt: string) {
-			await db.execute(sql`SET LOCAL ROLE neondb_owner`);
-			await db.update(tables.documents).set({ createdAt }).where(eq(tables.documents.id, id));
-			await db.execute(sql`SET LOCAL ROLE authenticated`);
+			await bypassRLS(() =>
+				db.update(tables.documents).set({ createdAt }).where(eq(tables.documents.id, id)),
+			);
 		}
 
 		test.for([

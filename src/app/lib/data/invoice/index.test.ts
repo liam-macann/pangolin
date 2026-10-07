@@ -19,7 +19,7 @@ import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
 import { type TestTX } from '@/test/pglite';
-import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
+import { bypassRLS, createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { fetchInvoice, fetchInvoices, fetchInvoicesForClient } from './index';
 
@@ -69,12 +69,7 @@ const setInvoiceDates = async (
 	id: string,
 	dates: Partial<Pick<typeof tables.invoices.$inferInsert, 'issuedAt' | 'dueAt'>>,
 ) => {
-	await db.execute(sql`SET LOCAL ROLE neondb_owner`);
-	try {
-		await db.update(tables.invoices).set(dates).where(eq(tables.invoices.id, id));
-	} finally {
-		await db.execute(sql`SET LOCAL ROLE authenticated`);
-	}
+	await bypassRLS(() => db.update(tables.invoices).set(dates).where(eq(tables.invoices.id, id)));
 };
 
 describe('fetchInvoice() and fetchInvoices()', () => {
@@ -102,12 +97,12 @@ describe('fetchInvoice() and fetchInvoices()', () => {
 			const id = await insertTestInvoice({ clientDataId: await setUpConfigAndClient() });
 
 			// Microseconds must be dropped, and trailing zeros kept
-			await db.execute(sql`SET LOCAL ROLE neondb_owner`);
-			await db
-				.update(tables.documents)
-				.set({ createdAt: '2026-01-15T20:30:00.100209760+11:00' })
-				.where(eq(tables.documents.id, id));
-			await db.execute(sql`SET LOCAL ROLE authenticated`);
+			await bypassRLS(() =>
+				db
+					.update(tables.documents)
+					.set({ createdAt: '2026-01-15T20:30:00.100209760+11:00' })
+					.where(eq(tables.documents.id, id)),
+			);
 
 			const createdAt = (await fetchDates(id)).map(date => date.createdAt);
 

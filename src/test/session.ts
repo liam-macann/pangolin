@@ -15,6 +15,51 @@ import { createTestDB, type TestTX } from './pglite';
 /** Stores the current test transaction separately according to each calling async context */
 export const testConnection = new AsyncLocalStorage<TestTX>();
 
+/** Runs a `callback` against the current test transaction as the superuser role, bypassing RLS.
+ *  @remarks RLS stays bypassed inside any `withRLS()` the callback reaches, leaving only application checks.
+ *  @throws When called outside of a test environment, or without a test transaction. */
+export async function bypassRLS<T>(callback: (tx: TestTX) => PromiseLike<T>): Promise<T> {
+	if (process.env.NODE_ENV !== 'test') throw new Error('bypassRLS() is only available in tests');
+
+	const tx = testConnection.getStore();
+	if (!tx) throw new Error('bypassRLS() called without a test database: use the `asUser` fixture');
+
+	// A nested call finds the bypass already granted by the outer one, and must leave it in place
+	const [{ role, isNested }] = await tx
+		.select({
+			role: sql<string>`current_setting('role')`,
+			isNested: sql<boolean>`rolbypassrls`,
+		})
+		.from(sql`pg_roles`)
+		.where(sql`rolname = 'authenticated'`);
+
+	const becomeSuperuser = () => tx.execute(sql`SET LOCAL ROLE neondb_owner`);
+
+	await becomeSuperuser();
+	await tx.execute(sql`ALTER ROLE authenticated BYPASSRLS`);
+
+	const restore = async () => {
+		// Only a superuser may alter roles, and withRLS() may have switched away
+		await becomeSuperuser();
+
+		// If no longer under a withRLS() scope, return that role to default
+		if (!isNested) await tx.execute(sql`ALTER ROLE authenticated NOBYPASSRLS`);
+
+		// Restores the role it was called under, so bypassRLS() may be nested
+		await tx.execute(sql`SELECT set_config('role', ${role}, true)`);
+	};
+
+	try {
+		const result = await callback(tx);
+		await restore();
+		return result;
+	} catch (err) {
+		// A failed statement aborts the transaction, so restoration may also fail.
+		await restore().catch(() => {});
+		throw err;
+	}
+}
+
 /** Memoized worker-scoped PGlite instance, kicked off eagerly during file setup */
 let clientPromise: ReturnType<typeof createTestDB> | undefined;
 export const warmClient = async () => (clientPromise ??= createTestDB());
@@ -41,23 +86,17 @@ export function createTestAuth(db: TestTX) {
 }
 
 /** Creates and logs in a fresh user within the current test transaction.
- *  @remarks Better Auth writes as neondb_owner in production (a separate, superuser connection), bypassing RLS
- *  @throws When called without a test transaction. */
+ *  @remarks Better Auth writes as neondb_owner in production (a separate, superuser connection), bypassing RLS */
 export async function createTestSession(auth: ReturnType<typeof createTestAuth>) {
 	const { test: helpers } = await auth.$context;
 
-	const db = testConnection.getStore();
-	if (!db) throw new Error('createTestSession() called without a test database: use `asUser`');
+	return bypassRLS(async () => {
+		// Better Auth helper does not generate UUID id by default
+		const user = await helpers.saveUser(helpers.createUser({ id: randomUUID() }));
+		const { session } = await helpers.login({ userId: user.id });
 
-	await db.execute(sql`SET LOCAL ROLE neondb_owner;`);
-
-	// Better Auth helper does not generate UUID id by default
-	const user = await helpers.saveUser(helpers.createUser({ id: randomUUID() }));
-	const { session } = await helpers.login({ userId: user.id });
-
-	await db.execute(sql`SET LOCAL ROLE authenticated;`);
-
-	return { user, session };
+		return { user, session };
+	});
 }
 
 /** Sentinel error used to force a rollback */
