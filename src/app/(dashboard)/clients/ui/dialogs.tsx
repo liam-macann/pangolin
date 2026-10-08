@@ -136,13 +136,14 @@ export function UpdateClientDialog({
 		<ClientDialog
 			title='Update client'
 			form={form}
-			onSubmit={async data =>
-				toast.promise(mutateAsync(data), {
+			onSubmit={async data => {
+				await toast.promise(mutateAsync(data), {
 					loading: 'Updating client details…',
 					success: 'Client updated',
 					error: 'Failed to update client',
-				})
-			}
+				});
+				form.reset(form.getValues());
+			}}
 			{...props}
 		>
 			{children}
@@ -202,7 +203,7 @@ function ClientDialog<TForm extends UseFormReturn<any, unknown, any>>({
 							onSubmit={handleSubmit(data =>
 								onSubmit(data, form).then(() => {
 									setOpen(false);
-									setTimeout(() => reset(data), 200);
+									setTimeout(() => reset(), 200);
 								}),
 							)}
 						>
