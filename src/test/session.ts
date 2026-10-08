@@ -122,6 +122,11 @@ export const asUser = test
 					.transaction(tx =>
 						testConnection.run(tx, async () => {
 							await use(tx);
+							// A rollback skips commit-time checks, so run them here
+							await tx.execute(sql`SET CONSTRAINTS ALL IMMEDIATE`).catch(err => {
+								// 25P02: the test left the transaction aborted, so nothing is pending
+								if (err?.cause?.code !== '25P02') throw err;
+							});
 							throw ROLLBACK;
 						}),
 					)

@@ -6,6 +6,7 @@ import path from 'node:path';
 import { registerCountry } from 'lib-address';
 import { vi } from 'vitest';
 
+import { checkDeferredConstraints } from './pglite';
 import { asUser, getSessionMock, sessionStorage, testConnection, warmClient } from './session';
 
 vi.hoisted(() => {
@@ -50,7 +51,7 @@ vi.mock('@/db/connection', () => ({
 				'@/db accessed without a test database initialized. Use the `asUser` fixture from @/test/session',
 			);
 		}
-		return connection;
+		return checkDeferredConstraints(connection);
 	},
 }));
 
