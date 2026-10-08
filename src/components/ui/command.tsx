@@ -74,7 +74,7 @@ function CommandList({ className, ...props }: React.ComponentProps<typeof Comman
 		<CommandPrimitive.List
 			data-slot='command-list'
 			className={cn(
-				'no-scrollbar max-h-84 scroll-py-2 overflow-y-auto overflow-x-hidden outline-none',
+				'no-scrollbar max-h-84 scroll-py-2 overflow-y-auto overflow-x-hidden py-2 outline-none',
 				className,
 			)}
 			{...props}
@@ -89,7 +89,7 @@ function CommandEmpty({
 	return (
 		<CommandPrimitive.Empty
 			data-slot='command-empty'
-			className={cn('py-6 text-center text-sm', className)}
+			className={cn('py-5.5 text-center text-sm', className)}
 			{...props}
 		/>
 	);
@@ -103,7 +103,7 @@ function CommandGroup({
 		<CommandPrimitive.Group
 			data-slot='command-group'
 			className={cn(
-				'overflow-hidden p-3 text-foreground **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:py-2 **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground **:[[cmdk-group-heading]]:text-xs',
+				'overflow-hidden px-3 text-foreground **:[[cmdk-group-heading]]:px-2 **:[[cmdk-group-heading]]:pt-3 **:[[cmdk-group-heading]]:pb-1 **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:text-muted-foreground **:[[cmdk-group-heading]]:text-xs',
 				className,
 			)}
 			{...props}

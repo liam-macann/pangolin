@@ -70,6 +70,7 @@ export default defineConfig({
 			'@phosphor-icons/react',
 			'class-variance-authority',
 			'clsx',
+			'cmdk',
 			'motion/react',
 			'react-is',
 			'tailwind-merge',
