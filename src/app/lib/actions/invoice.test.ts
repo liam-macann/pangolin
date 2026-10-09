@@ -2,20 +2,19 @@ import { eq, sql } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
 import * as navigation from 'next/navigation';
 import { Temporal } from 'temporal-polyfill';
-import { describe, expect, vi } from 'vitest';
+import { assert, describe, expect, vi } from 'vitest';
 
 import { type Enum } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
-import { bypassRLS, createTestSession, sessionStorage, asUser as test } from '@/test/session';
+import { bypassRLS, createTestSession, asUser as test } from '@/test/session';
 
 import { createInvoice, setInvoiceNotes, updateInvoiceStatus, voidInvoice } from './invoice';
 import { invoiceBuilder } from './tests/builders';
-import { insertTestClient, insertTestInvoice, setUpConfigAndClient } from './tests/fixtures';
 
-const getInvoice = (id: string) =>
-	withRLS(async (db, session) =>
+const getInvoice = async (id: string) => {
+	const res = await withRLS(async (db, session) =>
 		db.query.invoices
 			.findFirst({
 				where: { id, userId: session.user.id },
@@ -30,6 +29,10 @@ const getInvoice = (id: string) =>
 				return { ...document, ...inv };
 			}),
 	);
+
+	assert(res, 'Expected an invoice at the supplied ID');
+	return res;
+};
 
 /** Updates `transaction_timestamp()` for the rest of the test transaction, by shadowing the built-in.
  *  @remarks Column defaults and constraints were bound at migration time, and keep the real clock. */
@@ -48,148 +51,147 @@ describe('createInvoice', () => {
 		test.for<[Enum<typeof tables.numberingScheme>, string | null]>([
 			['sequential', null],
 			['annual', '2023'],
-		])('Allocates only the active %s counter', async ([scheme, expectedPartition], { session }) => {
-			await setTransactionTimestamp('2023-06-15T00:00:00Z');
-			const timezone = 'Asia/Seoul';
-			const thisYear = '2023';
-			const lastYear = '2022';
+		])(
+			'Allocates only the active %s counter',
+			async ([scheme, expectedPartition], { session, seed }) => {
+				await setTransactionTimestamp('2023-06-15T00:00:00Z');
+				const timezone = 'Asia/Seoul';
+				const thisYear = '2023';
+				const lastYear = '2022';
 
-			const seed: (typeof tables.sequencer.$inferInsert)[] = [
-				{ userId: session.user.id, namespace: 'invoice', partition: null, count: 1 },
-				{ userId: session.user.id, namespace: 'invoice', partition: lastYear, count: 1 },
-				{ userId: session.user.id, namespace: 'invoice', partition: thisYear, count: 1 },
-			];
+				await seed.config({ overrides: [{ numberingScheme: scheme, timezone }] });
+				const [client] = await seed.clients({ count: 1, versions: 1 });
 
-			await withRLS(tx => tx.insert(tables.sequencer).values(seed));
+				const watermarks: (typeof tables.sequencer.$inferInsert)[] = [
+					{ userId: session.user.id, namespace: 'invoice', partition: null, count: 1 },
+					{ userId: session.user.id, namespace: 'invoice', partition: lastYear, count: 1 },
+					{ userId: session.user.id, namespace: 'invoice', partition: thisYear, count: 1 },
+				];
 
-			const { client } = await setUpConfigAndClient({ numberingScheme: scheme, timezone });
-			await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
+				await withRLS(tx => tx.insert(tables.sequencer).values(watermarks));
 
-			const sequencer = await withRLS(db =>
-				db
-					.select({ partition: tables.sequencer.partition, count: tables.sequencer.count })
-					.from(tables.sequencer)
-					.orderBy(sql`${tables.sequencer.partition} nulls first`),
-			);
+				await createInvoice(invoiceBuilder({ clientDataId: client.versions[0].id }));
 
-			expect(sequencer.length).toBe(3);
-			expect(sequencer).toEqual(
-				seed.map(v => ({
-					partition: v.partition,
-					count: v.partition === expectedPartition ? 2 : v.count,
-				})),
-			);
+				const sequencer = await withRLS(db =>
+					db
+						.select({ partition: tables.sequencer.partition, count: tables.sequencer.count })
+						.from(tables.sequencer)
+						.orderBy(sql`${tables.sequencer.partition} nulls first`),
+				);
 
-			const invoice = await withRLS(db =>
-				db.query.invoices.findFirst({ columns: { index: true, partition: true } }),
-			);
-			expect(invoice).toEqual({ partition: expectedPartition, index: 2 });
-		});
+				expect(sequencer).toEqual(
+					watermarks.map(v => ({
+						partition: v.partition,
+						count: v.partition === expectedPartition ? 2 : v.count,
+					})),
+				);
+
+				const invoice = await withRLS(db =>
+					db.query.invoices.findFirst({ columns: { index: true, partition: true } }),
+				);
+				expect(invoice).toEqual({ partition: expectedPartition, index: 2 });
+			},
+		);
 	});
 
-	test('Inserts an invoice with its items and status', async ({ session }) => {
-		const { client } = await setUpConfigAndClient();
+	test('Inserts an invoice with relational dependencies', async ({ session, seed }) => {
+		await seed.config();
+		const [client] = await seed.clients({ count: 1, versions: 1 });
 
-		await createInvoice(
+		const id = await createInvoice(
 			invoiceBuilder({
-				clientDataId: client.data.scdId,
+				clientDataId: client.versions[0].id,
 				items: [{ label: 'Consulting services', quantity: 2 }],
 			}),
 		);
 
-		const [invoice] = await withRLS(db => db.select().from(tables.invoices));
-		const record = await getInvoice(invoice.id);
+		const record = await getInvoice(id);
 
 		expect(record).toMatchObject({
 			userId: session.user.id,
 			index: 1,
-			status: { status: 'unpaid', isVoid: false },
+			status: { status: 'unpaid', isVoid: false }, // `invoice_status` table
 		});
-		expect(record?.items).toHaveLength(1);
+		expect(record?.items).toHaveLength(1); // `document` and `line_item` table
 		expect(record?.items[0]).toMatchObject({ label: 'Consulting services', quantity: '2.00' });
+
+		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
 	});
 
 	test.for(['America/Phoenix', 'Australia/Perth'])(
 		'Preserves calendar due date value for %s',
-		async timezone => {
-			const { client } = await setUpConfigAndClient({ timezone });
+		async (timezone, { seed }) => {
+			await seed.config({ overrides: [{ timezone }] });
+			const [client] = await seed.clients({ count: 1, versions: 1 });
 			const dueAt = Temporal.Now.plainDateISO().add({ days: 14 }).toString();
 
-			await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId, dueAt }));
+			const id = await createInvoice(
+				invoiceBuilder({ clientDataId: client.versions[0].id, dueAt }),
+			);
 
-			const invoices = await withRLS(db => db.select().from(tables.invoices));
-			expect(invoices).toMatchObject([{ dueAt }]);
+			await expect(getInvoice(id)).resolves.toMatchObject({ dueAt });
 		},
 	);
 
 	test.for(['Pacific/Kiritimati', 'Pacific/Pago_Pago'])(
 		'Stores the issue date in timezone %s',
-		async timezone => {
-			const { client } = await setUpConfigAndClient({ timezone });
-			await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
+		async (timezone, { seed }) => {
+			await seed.config({ overrides: [{ timezone }] });
+			const [client] = await seed.clients({ count: 1, versions: 1 });
 
-			const [invoice] = await withRLS(db =>
-				db
-					.select({
-						createdAt: tables.documents.createdAt,
-						issuedAt: tables.invoices.issuedAt,
-					})
-					.from(tables.invoices)
-					.innerJoin(tables.documents, eq(tables.documents.id, tables.invoices.id)),
-			);
+			const id = await createInvoice(invoiceBuilder({ clientDataId: client.versions[0].id }));
 
-			const expected = Temporal.Instant.from(invoice.createdAt)
+			const record = await getInvoice(id);
+
+			const expected = Temporal.Instant.from(record.createdAt)
 				.toZonedDateTimeISO(timezone)
 				.toPlainDate()
 				.toString();
 
-			expect(invoice.issuedAt).toBe(expected);
+			expect(record.issuedAt).toBe(expected);
 		},
 	);
 
-	test('Links items to taxes when the config is tax-registered', async ({ session }) => {
-		const { configId, client } = await setUpConfigAndClient({
-			taxRegistration: true,
-			taxes: [{ name: 'GST', rate: 10 }],
-		});
+	test('Links items to taxes when the config is tax-registered', async ({ seed }) => {
+		const [tax] = await seed.taxes({ overrides: [{ name: 'GST' }] });
+		await seed.config({ overrides: [{ taxRegistration: true }] });
+		const [client] = await seed.clients({ count: 1, versions: 1 });
 
-		const [tax] = await withRLS(db =>
-			db
-				.select({ id: tables.taxes.id })
-				.from(tables.configTaxes)
-				.innerJoin(tables.taxes, eq(tables.taxes.id, tables.configTaxes.taxId))
-				.where(eq(tables.configTaxes.configId, configId)),
+		const id = await createInvoice(
+			invoiceBuilder({
+				clientDataId: client.versions[0].id,
+				items: [{ taxes: new Set([tax.id]) }],
+			}),
 		);
 
-		await createInvoice(
-			invoiceBuilder({ clientDataId: client.data.scdId, items: [{ taxes: new Set([tax.id]) }] }),
-		);
-
-		const [invoice] = await withRLS(db =>
-			db.select().from(tables.invoices).where(eq(tables.invoices.userId, session.user.id)),
-		);
-		const record = await getInvoice(invoice.id);
+		const record = await getInvoice(id);
 
 		expect(record?.items[0].taxes).toEqual([expect.objectContaining({ id: tax.id, name: 'GST' })]);
 	});
 
-	test('Does not link taxes when the config is not tax-registered', async () => {
-		const { client } = await setUpConfigAndClient({
-			taxRegistration: false,
-			taxes: [{ name: 'GST', rate: 10 }],
-		});
-		await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
+	test('Does not link taxes when the config is not tax-registered', async ({ seed }) => {
+		const [tax] = await seed.taxes({ count: 1 });
+		await seed.config({ overrides: [{ taxRegistration: false }] });
+		const [client] = await seed.clients({ count: 1, versions: 1 });
+
+		await createInvoice(
+			invoiceBuilder({
+				clientDataId: client.versions[0].id,
+				items: [{ taxes: new Set([tax.id]) }],
+			}),
+		);
 
 		const itemTaxes = await withRLS(db => db.select().from(tables.itemTaxes));
 		expect(itemTaxes).toHaveLength(0);
 	});
 
-	test('Empty string title, description, notes and item note are recorded as null', async () => {
-		const { client } = await setUpConfigAndClient();
+	test('Empty strings are recorded as null', async ({ seed }) => {
+		await seed.config();
+		const [client] = await seed.clients({ count: 1, versions: 1 });
 
-		await createInvoice(
+		const id = await createInvoice(
 			invoiceBuilder({
-				clientDataId: client.data.scdId,
+				clientDataId: client.versions[0].id,
 				title: '',
 				description: '',
 				notes: '',
@@ -197,19 +199,19 @@ describe('createInvoice', () => {
 			}),
 		);
 
-		const [invoice] = await withRLS(db => db.select().from(tables.invoices));
-		const record = await getInvoice(invoice.id);
+		const record = await getInvoice(id);
 
 		expect(record).toMatchObject({ title: null, description: null, status: { notes: null } });
 		expect(record?.items[0].note).toBeNull();
 	});
 
-	test('Trims whitespace from string values', async () => {
-		const { client } = await setUpConfigAndClient();
+	test('Trims whitespace from string values', async ({ seed }) => {
+		await seed.config();
+		const [client] = await seed.clients({ count: 1, versions: 1 });
 
-		await createInvoice(
+		const id = await createInvoice(
 			invoiceBuilder({
-				clientDataId: client.data.scdId,
+				clientDataId: client.versions[0].id,
 				title: '  Website work  ',
 				description: '  June retainer  ',
 				notes: '  Check hours  ',
@@ -217,74 +219,62 @@ describe('createInvoice', () => {
 			}),
 		);
 
-		const [invoice] = await withRLS(db => db.select().from(tables.invoices));
-		const record = await getInvoice(invoice.id);
-
-		expect(record).toMatchObject({
+		await expect(getInvoice(id)).resolves.toMatchObject({
 			title: 'Website work',
 			description: 'June retainer',
 			status: { notes: 'Check hours' },
+			items: [{ label: 'Consulting services', note: 'Discounted' }],
 		});
-		expect(record?.items[0]).toMatchObject({ label: 'Consulting services', note: 'Discounted' });
 	});
 
-	test('Rejects when the invoice has no items', async () => {
-		const { client } = await setUpConfigAndClient();
-		await expect(
-			createInvoice(invoiceBuilder({ clientDataId: client.data.scdId, items: [] })),
-		).rejects.toThrow();
+	test('Rejects when the invoice has no items', async ({ seed }) => {
+		await seed.config();
+		const [client] = await seed.clients({ count: 1, versions: 1 });
+
+		const input = invoiceBuilder({ clientDataId: client.versions[0].id, items: [] });
+		await expect(createInvoice(input)).rejects.toThrow();
 	});
 
-	test('Rejects when the due date is before the issue date', async () => {
-		const { client } = await setUpConfigAndClient();
+	test('Rejects when the due date is before the issue date', async ({ seed }) => {
+		await seed.config();
+		const [client] = await seed.clients({ count: 1, versions: 1 });
 		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-		await expect(
-			createInvoice(invoiceBuilder({ clientDataId: client.data.scdId, dueAt: '2026-06-01' })),
-		).rejects.toThrow('Database Error: failed to create invoice');
+		const input = invoiceBuilder({ clientDataId: client.versions[0].id, dueAt: '2026-06-01' });
+		await expect(createInvoice(input)).rejects.toThrow('Database Error: failed to create invoice');
 
 		consoleError.mockRestore();
 	});
 
-	test('Invalidates the invoices cache tag', async ({ session }) => {
-		const { client } = await setUpConfigAndClient();
-
-		await createInvoice(invoiceBuilder({ clientDataId: client.data.scdId }));
-		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
-	});
-
-	test('Rejects invoice referencing a client belonging to another user', async ({ auth }) => {
-		await setUpConfigAndClient();
+	test('Rejects invoice referencing client owned by another user', async ({ auth, seed }) => {
+		await seed.config();
 		const other = await createTestSession(auth);
-		const otherClient = await sessionStorage.run(other, () => insertTestClient());
+		const [otherClient] = await seed({ userId: other.user.id }).clients({ count: 1 });
+
+		const otherClientData = otherClient.versions.find(version => version.validTo === null);
+		assert(otherClientData, 'Seeded client should have an active version');
 
 		await expect(
-			createInvoice(invoiceBuilder({ clientDataId: otherClient.data.scdId })),
+			createInvoice(invoiceBuilder({ clientDataId: otherClientData.id })),
 		).rejects.toThrow();
 		expect(navigation.notFound).toHaveBeenCalled();
 
 		expect(await withRLS(db => db.select().from(tables.documents))).toHaveLength(0);
 	});
 
-	test('Rejects an item tax referencing tax belonging to another user', async ({ auth }) => {
-		const { client } = await setUpConfigAndClient({
-			taxRegistration: true,
-			taxes: [{ name: 'GST', rate: 10 }],
-		});
+	test('Rejects an item referencing tax belonging to another user', async ({ auth, seed }) => {
+		await seed.config({ overrides: [{ taxRegistration: true }] });
+		const [client] = await seed.clients({ count: 1, versions: 1 });
 
 		const other = await createTestSession(auth);
-		const otherTax = await sessionStorage.run(other, async () => {
-			await setUpConfigAndClient({ taxRegistration: true, taxes: [{ name: 'VAT', rate: 20 }] });
-			const [tax] = await withRLS(db => db.select({ id: tables.taxes.id }).from(tables.taxes));
-			return tax;
-		});
+		const [otherTax] = await seed({ userId: other.user.id }).taxes();
 
 		const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 		await expect(
 			createInvoice(
 				invoiceBuilder({
-					clientDataId: client.data.scdId,
+					clientDataId: client.versions[0].id,
 					items: [{ taxes: new Set([otherTax.id]) }],
 				}),
 			),
@@ -296,141 +286,99 @@ describe('createInvoice', () => {
 	});
 });
 
-/** Creates a config, client and invoice, returning the invoice id */
-const setUpInvoice = async () => {
-	const { client } = await setUpConfigAndClient();
-	return insertTestInvoice({ clientDataId: client.data.scdId });
-};
-
-describe('updateInvoiceStatus', () => {
-	test('Updates the payment status, scoped to the owning user', async ({ db, session }) => {
-		const invoiceId = await setUpInvoice();
-
-		await updateInvoiceStatus(invoiceId, 'paid');
-
-		const [status] = await db
+const getInvoiceStatus = (id: string) =>
+	bypassRLS(db =>
+		db
 			.select()
 			.from(tables.invoiceStatus)
-			.where(eq(tables.invoiceStatus.id, invoiceId));
-		expect(status.status).toBe('paid');
+			.where(eq(tables.invoiceStatus.id, id))
+			.then(res => res[0]),
+	);
+
+describe('updateInvoiceStatus', () => {
+	const getPaymentStatus = (id: string) => getInvoiceStatus(id).then(res => res.status);
+
+	test('Updates the payment status', async ({ session, seed }) => {
+		const [seeded] = await seed.invoices({ overrides: [{ status: { status: 'unpaid' } }] });
+
+		await updateInvoiceStatus(seeded.id, 'paid');
+
+		await expect(getPaymentStatus(seeded.id)).resolves.toBe('paid');
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
 	});
 
-	test('Does not mutate an invoice owned by another user', async ({ auth }) => {
+	test('Does not mutate an invoice owned by another user', async ({ auth, seed }) => {
 		const other = await createTestSession(auth);
-		const invoiceId = await sessionStorage.run(other, () => setUpInvoice());
+		const [seeded] = await seed({ userId: other.user.id }).invoices({
+			overrides: [{ status: { status: 'unpaid' } }],
+		});
 
-		await updateInvoiceStatus(invoiceId, 'paid');
+		await bypassRLS(() => updateInvoiceStatus(seeded.id, 'paid')); // Checks that withRLS is not the only protection
 
-		const getStatus = () =>
-			sessionStorage.run(other, () =>
-				withRLS(db =>
-					db.select().from(tables.invoiceStatus).where(eq(tables.invoiceStatus.id, invoiceId)),
-				),
-			);
-
-		expect((await getStatus())[0].status).toBe('unpaid');
-
-		// Positive control: the same call succeeds for the owning user
-		await sessionStorage.run(other, () => updateInvoiceStatus(invoiceId, 'paid'));
-		expect((await getStatus())[0].status).toBe('paid');
+		await expect(getPaymentStatus(seeded.id)).resolves.toBe('unpaid');
 	});
 });
 
 describe('voidInvoice', () => {
-	test('Marks an invoice as void without deleting it', async ({ db, session }) => {
-		const invoiceId = await setUpInvoice();
+	const getVoidStatus = (id: string) => getInvoiceStatus(id).then(res => res.isVoid);
 
-		await voidInvoice(invoiceId);
+	test('Marks an invoice as void', async ({ session, seed }) => {
+		const [seeded] = await seed.invoices({ overrides: [{ status: { isVoid: false } }] });
 
-		const [status] = await db
-			.select()
-			.from(tables.invoiceStatus)
-			.where(eq(tables.invoiceStatus.id, invoiceId));
+		await voidInvoice(seeded.id);
 
-		expect(status.isVoid).toBe(true);
+		expect(await getVoidStatus(seeded.id)).toBe(true);
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
 	});
 
-	test('Does not mutate an invoice owned by another user', async ({ auth }) => {
+	test('Does not mutate an invoice owned by another user', async ({ auth, seed }) => {
 		const other = await createTestSession(auth);
-		const invoiceId = await sessionStorage.run(other, () => setUpInvoice());
+		const [seeded] = await seed({ userId: other.user.id }).invoices({
+			overrides: [{ status: { isVoid: false } }],
+		});
 
-		await voidInvoice(invoiceId);
+		await bypassRLS(() => voidInvoice(seeded.id)); // Checks that withRLS is not the only protection
 
-		const getStatus = () =>
-			sessionStorage.run(other, () =>
-				withRLS(db =>
-					db.select().from(tables.invoiceStatus).where(eq(tables.invoiceStatus.id, invoiceId)),
-				),
-			);
-
-		expect((await getStatus())[0].isVoid).toBe(false);
-
-		// Positive control: the same call succeeds for the owning user
-		await sessionStorage.run(other, () => voidInvoice(invoiceId));
-		expect((await getStatus())[0].isVoid).toBe(true);
+		expect(await getVoidStatus(seeded.id)).toBe(false);
 	});
 });
 
 describe('setInvoiceNotes', () => {
-	test('Updates private notes on the invoice status row', async ({ db, session }) => {
-		const invoiceId = await setUpInvoice();
+	const getInvoiceNotes = (id: string) => getInvoiceStatus(id).then(res => res.notes);
+
+	test('Updates private notes on the invoice status row', async ({ session, seed }) => {
+		const [{ id: invoiceId }] = await seed.invoices({ count: 1 });
 
 		await setInvoiceNotes(invoiceId, 'Follow up next month');
 
-		const [status] = await db
-			.select()
-			.from(tables.invoiceStatus)
-			.where(eq(tables.invoiceStatus.id, invoiceId));
-
-		expect(status.notes).toBe('Follow up next month');
+		await expect(getInvoiceNotes(invoiceId)).resolves.toBe('Follow up next month');
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
 	});
 
-	test('Trims whitespace from notes', async ({ db }) => {
-		const invoiceId = await setUpInvoice();
+	test('Trims whitespace from notes', async ({ seed }) => {
+		const [{ id: invoiceId }] = await seed.invoices({ count: 1 });
 
 		await setInvoiceNotes(invoiceId, '  Follow up next month  ');
 
-		const [status] = await db
-			.select()
-			.from(tables.invoiceStatus)
-			.where(eq(tables.invoiceStatus.id, invoiceId));
-
-		expect(status.notes).toBe('Follow up next month');
+		await expect(getInvoiceNotes(invoiceId)).resolves.toBe('Follow up next month');
 	});
 
-	test('Empty string notes are recorded as null', async ({ db }) => {
-		const invoiceId = await setUpInvoice();
+	test('Empty string notes are recorded as null', async ({ seed }) => {
+		const [{ id: invoiceId }] = await seed.invoices({ count: 1 });
 
 		await setInvoiceNotes(invoiceId, '');
 
-		const [status] = await db
-			.select()
-			.from(tables.invoiceStatus)
-			.where(eq(tables.invoiceStatus.id, invoiceId));
-
-		expect(status.notes).toBeNull();
+		await expect(getInvoiceNotes(invoiceId)).resolves.toBeNull();
 	});
 
-	test('Does not mutate an invoice owned by another user', async ({ auth }) => {
+	test('Does not mutate an invoice owned by another user', async ({ auth, seed }) => {
 		const other = await createTestSession(auth);
-		const invoiceId = await sessionStorage.run(other, () => setUpInvoice());
+		const [{ id: invoiceId }] = await seed({ userId: other.user.id }).invoices({ count: 1 });
 
-		await setInvoiceNotes(invoiceId, 'Hijacked note');
+		const seeded = await getInvoiceNotes(invoiceId); // Capture what was seeded
 
-		const getStatus = () =>
-			sessionStorage.run(other, () =>
-				withRLS(db =>
-					db.select().from(tables.invoiceStatus).where(eq(tables.invoiceStatus.id, invoiceId)),
-				),
-			);
+		await bypassRLS(() => setInvoiceNotes(invoiceId, 'Hijacked note')); // Checks that withRLS is not the only protection
 
-		expect((await getStatus())[0].notes).toBeNull();
-
-		// Positive control: the same call succeeds for the owning user
-		await sessionStorage.run(other, () => setInvoiceNotes(invoiceId, 'Follow up next month'));
-		expect((await getStatus())[0].notes).toBe('Follow up next month');
+		expect(await getInvoiceNotes(invoiceId)).toBe(seeded);
 	});
 });

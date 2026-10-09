@@ -1,10 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import { describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vitest';
 
 import app from '@/api/hono';
-import { insertTestClient } from '@/lib/actions/tests/fixtures';
 
-import { asUser, createTestSession, sessionStorage } from '@/test/session';
+import { asUser, bypassRLS, createTestSession } from '@/test/session';
 
 describe('GET /api/clients', () => {
 	test('Returns 401 when there is no session', async () => {
@@ -14,9 +13,8 @@ describe('GET /api/clients', () => {
 		await expect(res.json()).resolves.toMatchObject({ status: 401, code: 'unauthorized' });
 	});
 
-	asUser('Returns clients with pagination metadata', async () => {
-		await insertTestClient({ name: 'Hamish Heckathorn' });
-		await insertTestClient({ name: 'Marshun Defina' });
+	asUser('Returns clients with pagination metadata', async ({ seed }) => {
+		await seed.clients({ count: 2, overrides: { isDeleted: false } });
 
 		const res = await app.request('/api/clients?limit=1&offset=0');
 		expect(res.status).toBe(200);
@@ -26,17 +24,18 @@ describe('GET /api/clients', () => {
 		expect(body.meta).toEqual({ total: 2, limit: 1, offset: 0 });
 	});
 
-	asUser('Never returns clients belonging to another user', async ({ auth }) => {
-		const otherSession = await createTestSession(auth);
-		await sessionStorage.run(otherSession, () => insertTestClient({ name: 'Other User' }));
+	asUser('Never returns clients belonging to another user', async ({ auth, seed }) => {
+		const other = await createTestSession(auth);
+		await seed({ userId: other.user.id }).clients({ count: 1, overrides: { isDeleted: false } });
 
-		await insertTestClient({ name: 'My Client' });
+		const [mine] = await seed.clients({ count: 1, overrides: { isDeleted: false } });
 
-		const res = await app.request('/api/clients');
+		// Checks that withRLS is not the only protection
+		const res = await bypassRLS(async () => app.request('/api/clients'));
 		const body = await res.json();
 
-		expect(body.data).toHaveLength(1);
-		expect(body.data[0].data.name).toBe('My Client');
+		expect(body.data, 'Should only include single invoice for user').toHaveLength(1);
+		expect(body.data[0].id).toBe(mine.id);
 		expect(body.meta.total).toBe(1);
 	});
 });
@@ -57,23 +56,27 @@ describe('GET /api/clients/{id}', () => {
 		expect(res.status).toBe(404);
 	});
 
-	asUser('Returns 404 for a client belonging to another user', async ({ auth }) => {
+	asUser('Returns 404 for a client belonging to another user', async ({ auth, seed }) => {
 		// Prevents leaking resource existence
-		const otherSession = await createTestSession(auth);
-		const { id } = await sessionStorage.run(otherSession, () => insertTestClient());
+		const { user } = await createTestSession(auth);
+		const [{ id }] = await seed({ userId: user.id }).clients({ count: 1 });
 
-		const res = await app.request(`/api/clients/${id}`);
+		// Checks that withRLS is not the only protection
+		const res = await bypassRLS(async () => app.request(`/api/clients/${id}`));
 		expect(res.status).toBe(404);
 	});
 
-	asUser('Returns a single client', async () => {
-		const { id } = await insertTestClient({ name: 'Ada Lovelace' });
+	asUser('Returns a single client', async ({ seed }) => {
+		const [client] = await seed.clients({ count: 1 });
 
-		const res = await app.request(`/api/clients/${id}`);
+		const active = client.versions.find(version => version.validTo === null);
+		assert(active, 'Seeded client should have an active version');
+
+		const res = await app.request(`/api/clients/${client.id}`);
 		expect(res.status).toBe(200);
 
 		const body = await res.json();
-		expect(body.data.id).toBe(id);
-		expect(body.data.data.name).toBe('Ada Lovelace');
+		expect(body.data.id).toBe(client.id);
+		expect(body.data.data).toMatchObject({ name: active.name, organization: active.organization });
 	});
 });

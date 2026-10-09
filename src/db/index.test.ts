@@ -2,7 +2,6 @@ import { sql } from 'drizzle-orm';
 import * as navigation from 'next/navigation';
 import { assert, describe, expect, test, vi } from 'vitest';
 
-import { insertTestClient } from '@/lib/actions/tests/fixtures';
 import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
@@ -46,8 +45,8 @@ describe('withRLS()', () => {
 
 	asUser(
 		'Trusted-session overload scopes RLS to the passed session, not the ambient one',
-		async ({ auth }) => {
-			const { id } = await insertTestClient();
+		async ({ auth, seed }) => {
+			const [{ id }] = await seed.clients({ count: 1 });
 
 			const otherSession = await createTestSession(auth);
 			const rows = await withRLS(otherSession, async tx => tx.select().from(tables.clients));
@@ -141,7 +140,7 @@ describe('withRLS()', () => {
 	describe('withRLS() is what makes RLS-protected queries work', () => {
 		asUser('The same query fails outside withRLS()', async ({ db, session }) => {
 			// The asUser fixture is run in a transaction context, which withRLS() consumes.
-			// Calling insertTestClient() would trigger a nested withRLS() call, setting the app.user_id variable.
+			// Calling createClient() would trigger a nested withRLS() call, setting the app.user_id variable.
 			// This would not be reset until the enclosing transaction is committed.
 			await bypassRLS(() => db.insert(tables.clients).values({ userId: session.user.id }));
 
@@ -164,8 +163,8 @@ describe('withRLS()', () => {
 			expect(['42704', '22P02']).toContain(err.cause.code);
 		});
 
-		asUser('The same query succeeds through withRLS()', async () => {
-			const { id } = await insertTestClient();
+		asUser('The same query succeeds through withRLS()', async ({ seed }) => {
+			const [{ id }] = await seed.clients({ count: 1 });
 
 			const rows = await withRLS(async db => await db.select().from(tables.clients));
 			expect(rows.map(row => row.id)).toContain(id);

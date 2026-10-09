@@ -1,14 +1,11 @@
-import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { type AnyPgColumn, PgNumeric } from 'drizzle-orm/pg-core';
 import { assert, describe, expect } from 'vitest';
 
-import { insertTestClient, insertTestConfig } from '@/lib/actions/tests/fixtures';
-import { type Numeric, NumericString } from '@/lib/utils/numeric';
 import { withRLS } from '@/db';
-import * as schema from '@/db/schema';
+import * as tables from '@/db/schema';
 
-import { asUser as test } from '@/test/session';
+import { bypassRLS, asUser as test } from '@/test/session';
 
 /** Largest absolute value a Drizzle NUMERIC column can store, read off its own precision and scale */
 function numericColumnBounds(column: AnyPgColumn<{ dataType: 'number' | 'string numeric' }>) {
@@ -20,68 +17,31 @@ function numericColumnBounds(column: AnyPgColumn<{ dataType: 'number' | 'string 
 	return { maxValue: 10 ** (column.precision - scale) - 10 ** -scale };
 }
 
-const quantityBounds = numericColumnBounds(schema.lineItems.quantity);
-const unitCostBounds = numericColumnBounds(schema.lineItems.unitCost);
-
-/** Bypasses app-level validation to directly insert a config, a client, and invoice with items */
-async function createTestInvoice({ items }: { items: { quantity: Numeric; unitCost: Numeric }[] }) {
-	const configId = await insertTestConfig();
-
-	return withRLS(async (db, session) => {
-		const [document] = await db
-			.insert(schema.documents)
-			.values({
-				userId: session.user.id,
-				clientDataId: (await insertTestClient()).data.scdId,
-				configId,
-			})
-			.returning({ id: schema.documents.id });
-
-		const [invoice] = await db
-			.insert(schema.invoices)
-			.values({
-				id: document.id,
-				userId: session.user.id,
-				issuedAt: new Date().toISOString(),
-				dueAt: new Date().toISOString(),
-				partition: null,
-				index: 0,
-			})
-			.returning({ id: schema.invoices.id });
-
-		await db
-			.insert(schema.invoiceStatus)
-			.values({ id: invoice.id, userId: session.user.id, status: 'unpaid' });
-
-		await db.insert(schema.lineItems).values(
-			items.map(item => ({
-				id: randomUUID(),
-				documentId: invoice.id,
-				label: 'Item',
-				quantity: NumericString.parse(item.quantity.toString()),
-				unitCost: NumericString.parse(item.unitCost.toString()),
-				configId,
-				userId: session.user.id,
-			})),
-		);
-
-		return invoice.id;
-	});
-}
+const quantityBounds = numericColumnBounds(tables.lineItems.quantity);
+const unitCostBounds = numericColumnBounds(tables.lineItems.unitCost);
 
 describe('Invoice item numeric bounds', () => {
-	test('netAmount does not overflow when quantity and unit cost are both at max', async () => {
-		const invoiceId = await createTestInvoice({
-			items: [{ quantity: quantityBounds.maxValue, unitCost: unitCostBounds.maxValue }],
-		});
+	test('netAmount does not overflow when quantity and cost are maximum', async ({ db, seed }) => {
+		const [invoice] = await seed.invoices({ count: 1 });
+
+		await bypassRLS(() =>
+			db
+				.update(tables.lineItems)
+				.set({
+					quantity: `${quantityBounds.maxValue}`,
+					unitCost: `${unitCostBounds.maxValue}`,
+				})
+				.where(eq(tables.lineItems.documentId, invoice.id)),
+		);
 
 		const [item] = await withRLS(db =>
 			db
-				.select({ netAmount: schema.itemsWithTax.netAmount })
-				.from(schema.itemsWithTax)
-				.where(eq(schema.itemsWithTax.documentId, invoiceId)),
+				.select({ netAmount: tables.itemsWithTax.netAmount })
+				.from(tables.itemsWithTax)
+				.where(eq(tables.itemsWithTax.documentId, invoice.id)),
 		);
 
-		expect(item.netAmount).toBe((quantityBounds.maxValue * unitCostBounds.maxValue).toFixed(4));
+		const expected = (quantityBounds.maxValue * unitCostBounds.maxValue).toFixed(4);
+		expect(item.netAmount).toEqual(expected);
 	});
 });

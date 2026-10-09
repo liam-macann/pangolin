@@ -12,11 +12,10 @@ import { withRLS } from '@/db';
 import * as tables from '@/db/schema';
 
 import { getSession } from '@/auth';
-import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
+import { bypassRLS, createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { createClient, updateClient, updateClientDeleted, updateClientFavorite } from './client';
 import { addressBuilder, clientBuilder } from './tests/builders';
-import { insertTestClient } from './tests/fixtures';
 
 /** Fetch the active clientData row (and associated address) for a given client */
 const getActiveClientData = (clientId: string) =>
@@ -151,24 +150,27 @@ describe('updateClient', () => {
 		expect(navigation.notFound).toHaveBeenCalled();
 	});
 
-	test('Does not mutate a client owned by another user', async ({ auth }) => {
+	test('Does not mutate a client owned by another user', async ({ auth, seed }) => {
 		const other = await createTestSession(auth);
-		const otherClient = await sessionStorage.run(other, () =>
-			insertTestClient({ organization: null }),
-		);
+		const [otherClient] = await seed({ userId: other.user.id }).clients({ count: 1 });
 
-		await expect(
-			updateClient({ ...clientBuilder({ organization: 'Hijacked' }), clientId: otherClient.id }),
-		).rejects.toThrow();
+		const getOtherData = () => sessionStorage.run(other, () => getActiveClientData(otherClient.id));
+		const seeded = await getOtherData(); // Capture what was seeded
+
+		const input = { ...clientBuilder({ organization: 'Hijacked' }), clientId: otherClient.id };
+		await expect(bypassRLS(() => updateClient(input))).rejects.toThrow(); // Checks that withRLS is not the only protection
 		expect(navigation.notFound).toHaveBeenCalled();
 
-		const otherData = await sessionStorage.run(other, () => getActiveClientData(otherClient.id));
-		expect(otherData).toMatchObject({ organization: null });
+		expect(await getOtherData()).toEqual(seeded);
 	});
 
-	test('Reuses the previous address when unchanged', async ({ db }) => {
+	test('Reuses the previous address when unchanged', async ({ db, seed }) => {
 		const address = addressBuilder();
-		const client = await insertTestClient({ address });
+		const [client] = await seed.clients({
+			count: 1,
+			versions: 1, // Each version is seeded with its own address row
+			overrides: { data: { address } },
+		});
 
 		const first = await getActiveClientData(client.id);
 		assert(first?.address, 'Address should have been inserted');
@@ -182,8 +184,11 @@ describe('updateClient', () => {
 		expect(second?.address?.id).toBe(first.address.id);
 	});
 
-	test('Invalidates the previous version and leaves exactly one active row', async ({ db }) => {
-		const client = await insertTestClient();
+	test('Invalidates the previous version and leaves exactly one active row', async ({
+		db,
+		seed,
+	}) => {
+		const [client] = await seed.clients({ count: 1, versions: 1 });
 
 		await updateClient({ ...clientBuilder({ organization: 'Acme' }), clientId: client.id });
 
@@ -192,7 +197,7 @@ describe('updateClient', () => {
 			.from(tables.clientData)
 			.where(eq(tables.clientData.clientId, client.id));
 
-		// createTestClient inserted a row, and then we updated it
+		// One version was seeded, and then we updated it
 		expect(allData.length).toBe(2);
 		expect(allData.filter(d => d.validTo === null)).toHaveLength(1);
 
@@ -200,14 +205,14 @@ describe('updateClient', () => {
 		expect(activeData).toMatchObject({ organization: 'Acme' });
 	});
 
-	test('Invalidates cache tags', async ({ session }) => {
-		const client = await insertTestClient();
+	test('Invalidates cache tags', async ({ session, seed }) => {
+		const [client] = await seed.clients({ count: 1 });
 		await updateClient({ ...clientBuilder(), clientId: client.id });
 		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
 	});
 
-	test('Schedules cleanup and invalidates cache tags', async ({ session }) => {
-		const client = await insertTestClient();
+	test('Schedules cleanup and invalidates cache tags', async ({ session, seed }) => {
+		const [client] = await seed.clients({ count: 1 });
 		vi.spyOn(actions, 'cleanupClientData');
 		vi.spyOn(actions, 'cleanupAddresses');
 		let deferred: (() => unknown) | undefined;
@@ -228,8 +233,8 @@ describe('updateClient', () => {
 });
 
 describe('updateClientFavorite', () => {
-	test('Mutates favorite status', async ({ db }) => {
-		const client = await insertTestClient();
+	test('Mutates favorite status', async ({ db, seed }) => {
+		const [client] = await seed.clients({ count: 1 });
 
 		await updateClientFavorite(client.id, true);
 
@@ -242,38 +247,34 @@ describe('updateClientFavorite', () => {
 		expect(res2.isFavorite).toBe(false);
 	});
 
-	test('Invalidates client cache, scoped to the owning user', async ({ session }) => {
-		const client = await insertTestClient();
+	test('Invalidates client cache, scoped to the owning user', async ({ session, seed }) => {
+		const [client] = await seed.clients({ count: 1 });
 
 		await updateClientFavorite(client.id, true);
 		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
 	});
 
-	test('Does not mutate a client owned by another user', async ({ auth }) => {
+	test('Does not mutate a client owned by another user', async ({ auth, seed }) => {
 		const other = await createTestSession(auth);
-		const otherClient = await sessionStorage.run(other, () => insertTestClient());
+		const [otherClient] = await seed({ userId: other.user.id }).clients({
+			overrides: [{ isFavorite: false }],
+		});
 
-		// notFound() rather than forbidden() to avoid leaking resource existence
-		await expect(updateClientFavorite(otherClient.id, true)).rejects.toThrow();
+		// notFound() rather than forbidden() to avoid leaking resource existence.
+		// Bypassing RLS checks that withRLS is not the only protection
+		await expect(bypassRLS(() => updateClientFavorite(otherClient.id, true))).rejects.toThrow();
 		expect(navigation.notFound).toHaveBeenCalled();
 
-		const [stillUnfavorited] = await sessionStorage.run(other, () =>
+		const [unchanged] = await sessionStorage.run(other, () =>
 			withRLS(db => db.select().from(tables.clients).where(eq(tables.clients.id, otherClient.id))),
 		);
-		expect(stillUnfavorited.isFavorite).toBe(false);
-
-		// Positive control: the same call succeeds for the owning user
-		await sessionStorage.run(other, () => updateClientFavorite(otherClient.id, true));
-		const [nowFavorited] = await sessionStorage.run(other, () =>
-			withRLS(db => db.select().from(tables.clients).where(eq(tables.clients.id, otherClient.id))),
-		);
-		expect(nowFavorited.isFavorite).toBe(true);
+		expect(unchanged.isFavorite).toBe(false);
 	});
 });
 
 describe('updateClientDeleted', () => {
-	test('Mutates deleted status', async ({ db }) => {
-		const client = await insertTestClient();
+	test('Mutates deleted status', async ({ db, seed }) => {
+		const [client] = await seed.clients({ count: 1 });
 
 		await updateClientDeleted(client.id, true);
 
@@ -286,31 +287,27 @@ describe('updateClientDeleted', () => {
 		expect(res2.isDeleted).toBe(false);
 	});
 
-	test('Invalidates client cache, scoped to the owning user', async ({ session }) => {
-		const client = await insertTestClient();
+	test('Invalidates client cache, scoped to the owning user', async ({ session, seed }) => {
+		const [client] = await seed.clients({ count: 1 });
 
 		await updateClientDeleted(client.id, true);
 		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
 	});
 
-	test('Does not mutate a client owned by another user', async ({ auth }) => {
+	test('Does not mutate a client owned by another user', async ({ auth, seed }) => {
 		const other = await createTestSession(auth);
-		const otherClient = await sessionStorage.run(other, () => insertTestClient());
+		const [otherClient] = await seed({ userId: other.user.id }).clients({
+			overrides: [{ isDeleted: false }],
+		});
 
-		// notFound() rather than forbidden() to avoid leaking resource existence
-		await expect(updateClientDeleted(otherClient.id, true)).rejects.toThrow();
+		// notFound() rather than forbidden() to avoid leaking resource existence.
+		// Bypassing RLS checks that withRLS is not the only protection
+		await expect(bypassRLS(() => updateClientDeleted(otherClient.id, true))).rejects.toThrow();
 		expect(navigation.notFound).toHaveBeenCalled();
 
-		const [stillPresent] = await sessionStorage.run(other, () =>
+		const [unchanged] = await sessionStorage.run(other, () =>
 			withRLS(db => db.select().from(tables.clients).where(eq(tables.clients.id, otherClient.id))),
 		);
-		expect(stillPresent.isDeleted).toBe(false);
-
-		// Positive control: the same call succeeds for the owning user
-		await sessionStorage.run(other, () => updateClientDeleted(otherClient.id, true));
-		const [nowDeleted] = await sessionStorage.run(other, () =>
-			withRLS(db => db.select().from(tables.clients).where(eq(tables.clients.id, otherClient.id))),
-		);
-		expect(nowDeleted.isDeleted).toBe(true);
+		expect(unchanged.isDeleted).toBe(false);
 	});
 });

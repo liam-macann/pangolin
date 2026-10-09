@@ -1,83 +1,68 @@
-import { after } from 'next/server';
-import { afterAll, describe, expect, vi } from 'vitest';
+import { describe, expect } from 'vitest';
 
 import * as tables from '@/db/schema';
 
 import { asUser as test } from '@/test/session';
 
-import { updateClient } from './client';
-import { addressBuilder, clientBuilder } from './tests/builders';
-import { insertTestClient, insertTestConfig, insertTestInvoice } from './tests/fixtures';
 import { cleanupAddresses, cleanupClientData, cleanupConfigs } from './utils';
 
-const testAddress = addressBuilder({ streetAddress: ['123 Main St'] });
-
-// Prevent seeding calls from running cleanup
-vi.mocked(after).mockImplementation(() => undefined);
-afterAll(() => vi.mocked(after).mockReset());
-
 describe('cleanupConfigs', () => {
-	test('Removes an invalidated config not referenced by any invoice', async ({ db, session }) => {
-		await insertTestConfig();
-		await insertTestConfig({ tradingName: 'Rebrand' });
-
+	test('Preserves the active config', async ({ db, session, seed }) => {
+		await seed.config({ versions: 1 });
 		await cleanupConfigs(session.user.id);
-
 		expect(await db.select().from(tables.config)).toHaveLength(1);
 	});
 
-	test('Preserves an invalidated config referenced by an invoice', async ({ db, session }) => {
-		const {
-			data: { scdId: clientDataId },
-		} = await insertTestClient();
-		await insertTestConfig();
-		await insertTestInvoice({ clientDataId });
+	test('Removes invalidated and unreferenced configs', async ({ db, session, seed }) => {
+		await seed.config({ versions: 4 });
+		await cleanupConfigs(session.user.id);
+		expect(await db.select().from(tables.config)).toHaveLength(1);
+	});
 
-		// Invalidates the config the invoice above still references
-		await insertTestConfig({ tradingName: 'Rebrand' });
+	test('Preserves invalidated config referenced by an invoice', async ({ db, session, seed }) => {
+		const [invalidated] = await seed.config({ versions: 2 });
+
+		// Created while the first version was active, so the invoice still references it
+		await seed.invoices({ overrides: [{ createdAt: invalidated.validFrom }] });
 
 		await cleanupConfigs(session.user.id);
 
 		expect(await db.select().from(tables.config)).toHaveLength(2);
 	});
-
-	test('Preserves the active config', async ({ db, session }) => {
-		await insertTestConfig();
-
-		await cleanupConfigs(session.user.id);
-
-		expect(await db.select().from(tables.config)).toHaveLength(1);
-	});
 });
 
 describe('cleanupClientData', () => {
-	test('Removes invalidated client data not referenced by any invoice', async ({ db, session }) => {
-		const { id: clientId } = await insertTestClient();
-		await updateClient({ ...clientBuilder({ name: 'Jane Rebrand' }), clientId });
+	test('Removes invalidated client data not referenced by any invoice', async ({
+		db,
+		session,
+		seed,
+	}) => {
+		await seed.clients({ count: 1, versions: 2 });
 
 		await cleanupClientData(session.user.id);
 
 		expect(await db.select().from(tables.clientData)).toHaveLength(1);
 	});
 
-	test('Preserves invalidated client data referenced by an invoice', async ({ db, session }) => {
-		await insertTestConfig();
-		const { id: clientId } = await insertTestClient();
-		const [{ id: clientDataId }] = await db
-			.select({ id: tables.clientData.id })
-			.from(tables.clientData);
-		await insertTestInvoice({ clientDataId });
+	test('Preserves invalidated client data referenced by an invoice', async ({
+		db,
+		session,
+		seed,
+	}) => {
+		const [client] = await seed.clients({ count: 1, versions: 2 });
+		const invalidated = client.versions[0];
+		expect(invalidated.validTo, 'First version should have been superseded').not.toBeNull();
 
-		// Invalidates the client data the invoice above still references
-		await updateClient({ ...clientBuilder({ name: 'Jane Rebrand' }), clientId });
+		// Created while the first version was active, so the invoice still references it
+		await seed.invoices({ overrides: [{ createdAt: invalidated.validFrom }] });
 
 		await cleanupClientData(session.user.id);
 
 		expect(await db.select().from(tables.clientData)).toHaveLength(2);
 	});
 
-	test('Preserves the active client data', async ({ db, session }) => {
-		await insertTestClient();
+	test('Preserves the active client data', async ({ db, session, seed }) => {
+		await seed.clients({ count: 1, versions: 1 });
 
 		await cleanupClientData(session.user.id);
 
@@ -86,10 +71,9 @@ describe('cleanupClientData', () => {
 });
 
 describe('cleanupAddresses', () => {
-	test('Removes an address once nothing references it', async ({ db, session }) => {
-		await insertTestConfig({ address: testAddress });
-		// Invalidates the first config, which still references the address
-		await insertTestConfig({ tradingName: 'Rebrand', address: null });
+	test('Removes an address once nothing references it', async ({ db, session, seed }) => {
+		// Only the first version has an address, and the second invalidates it
+		await seed.config({ overrides: [{ address: {} }, { address: null }] });
 
 		// Clears the invalidated config row so nothing references the address anymore
 		await cleanupConfigs(session.user.id);
@@ -98,8 +82,8 @@ describe('cleanupAddresses', () => {
 		expect(await db.select().from(tables.address)).toHaveLength(0);
 	});
 
-	test('Preserves an address referenced by the active config', async ({ db, session }) => {
-		await insertTestConfig({ address: testAddress });
+	test('Preserves an address referenced by the active config', async ({ db, session, seed }) => {
+		await seed.config({ overrides: [{ address: {} }] });
 
 		await cleanupAddresses(session.user.id);
 
@@ -109,19 +93,17 @@ describe('cleanupAddresses', () => {
 	test('Preserves an address referenced by an invalidated, uncleaned config', async ({
 		db,
 		session,
+		seed,
 	}) => {
-		await insertTestConfig({ address: testAddress });
-		await insertTestConfig({ tradingName: 'Rebrand', address: null });
+		await seed.config({ overrides: [{ address: {} }, { address: null }] });
 
 		await cleanupAddresses(session.user.id);
 
 		expect(await db.select().from(tables.address)).toHaveLength(1);
 	});
 
-	test('Preserves an address referenced by client data', async ({ db, session }) => {
-		// createClient does not persist an address; use updateClient to associate one
-		const { id: clientId } = await insertTestClient();
-		await updateClient({ ...clientBuilder({ address: testAddress }), clientId });
+	test('Preserves an address referenced by client data', async ({ db, session, seed }) => {
+		await seed.clients({ count: 1, versions: 1, overrides: { data: { address: {} } } });
 
 		await cleanupAddresses(session.user.id);
 

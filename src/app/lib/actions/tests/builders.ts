@@ -8,10 +8,10 @@ import { type ElementType, type Minimized, type PartialDeep } from '@/lib/utils/
 
 import { createBuilder } from '@/test/builders';
 
-export type ClientInput = Parameters<typeof createClient>[0];
+type ClientInput = Parameters<typeof createClient>[0];
 type AddressInput = NonNullable<ClientInput['address']>;
-export type ConfigInput = Parameters<typeof updateUserConfig>[0];
-export type InvoiceInput = Parameters<typeof createInvoice>[0];
+type ConfigInput = Parameters<typeof updateUserConfig>[0];
+type InvoiceInput = Parameters<typeof createInvoice>[0];
 type InvoiceItemInput = ElementType<InvoiceInput['items']>;
 
 /** Builds an address with optional overrides, merged onto a complete base. */

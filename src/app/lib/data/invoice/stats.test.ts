@@ -2,18 +2,11 @@ import { eq } from 'drizzle-orm';
 import { describe, expect } from 'vitest';
 import { z } from 'zod';
 
-import { voidInvoice } from '@/lib/actions/invoice';
-import {
-	insertTestConfig,
-	insertTestInvoice,
-	setUpConfigAndClient,
-} from '@/lib/actions/tests/fixtures';
 import { type Enum } from '@/lib/utils/drizzle';
 import { invoice as invoiceSchema } from '@/lib/validation/invoice';
 import { getBounds } from '@/lib/zod';
 import * as tables from '@/db/schema';
 
-import { type TestTX } from '@/test/pglite';
 import { bypassRLS, asUser as test } from '@/test/session';
 
 import { fetchStats } from './stats';
@@ -38,18 +31,6 @@ describe('fetchStats', () => {
 		grossSum: number;
 		grossOutstanding: number;
 	};
-
-	/** Creates each invoice in sequence (voiding it afterwards, when requested) */
-	async function seedInvoices(clientDataId: string, invoices: InvoiceCase[]) {
-		for (const invoice of invoices) {
-			const id = await insertTestInvoice({
-				clientDataId,
-				items: invoice.items,
-				status: invoice.status,
-			});
-			if (invoice.void) await voidInvoice(id);
-		}
-	}
 
 	test.for<[string, { invoices: InvoiceCase[]; expected: ExpectedStats }]>([
 		[
@@ -156,9 +137,18 @@ describe('fetchStats', () => {
 				},
 			},
 		],
-	])('Calculates dashboard stats correctly: %s', async ([, { invoices, expected }]) => {
-		const { client } = await setUpConfigAndClient();
-		await seedInvoices(client.data.scdId, invoices);
+	])('Calculates dashboard stats correctly: %s', async ([, { invoices, expected }], { seed }) => {
+		await seed.config({ overrides: [{ currency: 'AUD' }] });
+		await seed.invoices({
+			overrides: invoices.map(invoice => ({
+				status: { status: invoice.status, isVoid: invoice.void ?? false },
+				items: invoice.items.map(item => ({
+					quantity: `${item.quantity}`,
+					unitCost: `${item.unitCost}`,
+					taxes: [],
+				})),
+			})),
+		});
 
 		const stats = await fetchStats();
 		expect(stats.validCount).toBe(expected.validCount);
@@ -178,18 +168,25 @@ describe('fetchStats', () => {
 	});
 
 	describe('Mixed currencies', () => {
-		test('Aggregates totals separately per currency, instead of merging them together', async () => {
-			const { client } = await setUpConfigAndClient({ currency: 'AUD' });
-			await insertTestInvoice({
-				clientDataId: client.data.scdId,
-				items: [{ quantity: 1, unitCost: 100 }],
+		test('Aggregates separate totals per currency, instead of merging them', async ({ seed }) => {
+			const [aud, usd] = await seed.config({
+				overrides: [{ currency: 'AUD' }, { currency: 'USD' }],
 			});
 
-			// A later config change to a new currency must not merge into the earlier AUD total
-			await insertTestConfig({ currency: 'USD' });
-			await insertTestInvoice({
-				clientDataId: client.data.scdId,
-				items: [{ quantity: 1, unitCost: 50 }],
+			// Each invoice is created as an above config version takes effect, so references that version
+			await seed.invoices({
+				overrides: [
+					{
+						createdAt: aud.validFrom,
+						status: { status: 'unpaid', isVoid: false },
+						items: [{ quantity: '1', unitCost: '100', taxes: [] }],
+					},
+					{
+						createdAt: usd.validFrom,
+						status: { status: 'unpaid', isVoid: false },
+						items: [{ quantity: '1', unitCost: '50', taxes: [] }],
+					},
+				],
 			});
 
 			const stats = await fetchStats();
@@ -213,43 +210,32 @@ describe('fetchStats', () => {
 			);
 		});
 
-		/** Privileged escape-hatch to set the createdAt column */
-		async function setDocumentCreatedAt(db: TestTX, id: string, createdAt: string) {
+		test('Orders currency totals by most recent invoice', async ({ db, seed }) => {
+			const [aud, usd] = await seed.config({
+				overrides: [{ currency: 'AUD' }, { currency: 'USD' }],
+			});
+
+			const invoices = await seed.invoices({
+				overrides: [
+					{ createdAt: aud.validFrom, status: { isVoid: false } },
+					{ createdAt: usd.validFrom, status: { isVoid: false } },
+				],
+			});
+
+			const getCurrencies = async () => (await fetchStats()).totals?.map(t => t.currency);
+
+			// The USD config is active, so its invoice is the most recent
+			expect(await getCurrencies()).toEqual(['USD', 'AUD']);
+
+			// Only the date changes, so the reorder can only come from createdAt
 			await bypassRLS(() =>
-				db.update(tables.documents).set({ createdAt }).where(eq(tables.documents.id, id)),
+				db
+					.update(tables.documents)
+					.set({ createdAt: '2030-01-01T00:00:00Z' })
+					.where(eq(tables.documents.id, invoices[0].id)),
 			);
-		}
 
-		test.for([
-			{
-				expected: ['AUD', 'USD'],
-				invoices: [
-					{ currency: 'AUD', createdAt: '2026-02-01T00:00:00Z' },
-					{ currency: 'USD', createdAt: '2026-01-01T00:00:00Z' },
-				],
-			},
-			{
-				expected: ['USD', 'AUD'],
-				invoices: [
-					{ currency: 'AUD', createdAt: '2026-01-01T00:00:00Z' },
-					{ currency: 'USD', createdAt: '2026-02-01T00:00:00Z' },
-				],
-			},
-		])(
-			'Orders currency totals by most recent invoice: $expected',
-			async ({ invoices, expected }, { db }) => {
-				const { client } = await setUpConfigAndClient();
-
-				// Insert in fixed order so sorting relies strictly on createdAt
-				for (const { currency, createdAt } of invoices) {
-					await insertTestConfig({ currency });
-					const id = await insertTestInvoice({ clientDataId: client.data.scdId });
-					await setDocumentCreatedAt(db, id, createdAt);
-				}
-
-				const stats = await fetchStats();
-				expect(stats.totals?.map(t => t.currency)).toEqual(expected);
-			},
-		);
+			expect(await getCurrencies()).toEqual(['AUD', 'USD']);
+		});
 	});
 });

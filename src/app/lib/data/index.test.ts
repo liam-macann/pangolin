@@ -1,14 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import * as navigation from 'next/navigation';
-import { describe, expect } from 'vitest';
+import { assert, describe, expect } from 'vitest';
 
-import {
-	insertTestConfig,
-	insertTestInvoice,
-	setUpConfigAndClient,
-} from '@/lib/actions/tests/fixtures';
-
-import { createTestSession, sessionStorage, asUser as test } from '@/test/session';
+import { bypassRLS, createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { fetchConfig } from './index';
 
@@ -23,54 +17,51 @@ describe('fetchConfig', () => {
 		expect(navigation.notFound).toHaveBeenCalled();
 	});
 
-	test('Throws notFound() when fetching a config with incorrect ownership', async ({ auth }) => {
+	test('Throws notFound() when fetching a config with incorrect ownership', async ({
+		auth,
+		seed,
+	}) => {
 		const otherSession = await createTestSession(auth);
-		const configId = await insertTestConfig();
+		const [{ id: configId }] = await seed.config({ versions: 1 });
 
-		await expect(sessionStorage.run(otherSession, () => fetchConfig(configId))).rejects.toThrow();
+		// Checks that withRLS is not the only protection
+		await expect(
+			bypassRLS(() => sessionStorage.run(otherSession, () => fetchConfig(configId))),
+		).rejects.toThrow();
 		expect(navigation.notFound).toHaveBeenCalled();
 
 		await expect(fetchConfig(configId)).resolves.not.toThrow();
 	});
 
-	test('Fetches the current active config by default', async () => {
-		await insertTestConfig({ tradingName: 'Acme A' });
-		await insertTestConfig({ tradingName: 'Acme B' });
+	test('Fetches the current active config by default', async ({ seed }) => {
+		const active = (await seed.config({ versions: 4 })).at(-1);
+		assert(active?.validTo === null, 'The last seeded config should be valid');
 
 		const config = await fetchConfig();
-		expect(config.tradingName).toBe('Acme B');
+		expect(config).toMatchObject({ id: active.id, tradingName: active.tradingName });
 	});
 
-	test('Fetches a specific historical version by id', async () => {
-		// Pin the first config so cleanup does not hard-delete it once invalidated
-		const { configId: firstId, client } = await setUpConfigAndClient({ tradingName: 'Acme A' });
-		await insertTestInvoice({
-			clientDataId: client.data.scdId,
-			items: [{ quantity: 1, unitCost: 100 }],
-		});
+	test('Fetches a specific historical version by id', async ({ seed }) => {
+		const [first, active] = await seed.config({ versions: 2 });
+		expect(first.validTo, 'Expected first config to be superseded').not.toBeNull();
+		expect(active.validTo, 'Expected last config to be valid').toBeNull();
 
-		await insertTestConfig({ tradingName: 'Acme B' });
-
-		const config = await fetchConfig(firstId);
-		expect(config.tradingName).toBe('Acme A');
+		const config = await fetchConfig(first.id);
+		expect(config.id).not.toBe(active.id);
+		expect(config.tradingName).toBe(first.tradingName);
 	});
 
-	test('Decrypts scalar fields', async () => {
-		await insertTestConfig({ email: 'billing@acme.example' });
+	test('Decrypts scalar fields', async ({ seed }) => {
+		await seed.config({ overrides: [{ email: 'billing@acme.example' }] });
 
 		const config = await fetchConfig();
 		expect(config.email).toBe('billing@acme.example');
 	});
 
-	test('Maps taxes from configTaxes, ordered by configured tax order', async () => {
-		await insertTestConfig({
-			taxRegistration: true,
-			// Alphabetically, 'ATAX' would sort before 'ZTAX' — the opposite of configured order
-			taxes: [
-				{ name: 'ZTAX', rate: 10 },
-				{ name: 'ATAX', rate: 5 },
-			],
-		});
+	test('Maps taxes from configTaxes, ordered by configured tax order', async ({ seed }) => {
+		// 'ATAX' sorts first both alphabetically and by insertion — the opposite of configured order
+		const [atax, ztax] = await seed.taxes({ overrides: [{ name: 'ATAX' }, { name: 'ZTAX' }] });
+		await seed.config({ overrides: [{ taxRegistration: true, taxes: [ztax.id, atax.id] }] });
 
 		const config = await fetchConfig();
 		expect(config.taxes.map(t => t.name)).toEqual(['ZTAX', 'ATAX']);

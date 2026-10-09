@@ -66,6 +66,8 @@ export async function createInvoice(input: z.input<typeof zodSchema>) {
 		});
 
 		updateTag(`invoices-${session.user.id}`);
+
+		return insertedInvoice.id;
 	}).catch(err => {
 		unstable_rethrow(err);
 		console.error(err);

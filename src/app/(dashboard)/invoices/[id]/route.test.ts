@@ -3,10 +3,9 @@ import * as navigation from 'next/navigation';
 import { NextRequest } from 'next/server';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { insertTestInvoice, setUpConfigAndClient } from '@/lib/actions/tests/fixtures';
 import * as invoiceData from '@/lib/data/invoice';
 
-import { asUser, createTestSession, sessionStorage } from '@/test/session';
+import { asUser, bypassRLS, createTestSession, sessionStorage } from '@/test/session';
 
 import { GET } from './route';
 
@@ -44,19 +43,19 @@ describe('GET /invoices/[id]', () => {
 	});
 
 	// We use notFound() rather than forbidden() to avoid leaking resource existence
-	asUser('Propagates notFound() for an invoice belonging to another user', async ({ auth }) => {
-		const otherSession = await createTestSession(auth);
-		const { client } = await setUpConfigAndClient();
-		const id = await insertTestInvoice({
-			clientDataId: client.data.scdId,
-			items: [{ quantity: 1, unitCost: 100 }],
-		});
+	asUser(
+		'Propagates notFound() for an invoice belonging to another user',
+		async ({ auth, seed }) => {
+			const otherSession = await createTestSession(auth);
+			const [{ id }] = await seed.invoices({ count: 1 });
 
-		await expect(
-			sessionStorage.run(otherSession, () => GET(request(id), ctx(id))),
-		).rejects.toThrow();
-		expect(navigation.notFound).toHaveBeenCalled();
-	});
+			// Checks that withRLS is not the only protection
+			await expect(
+				bypassRLS(() => sessionStorage.run(otherSession, () => GET(request(id), ctx(id)))),
+			).rejects.toThrow();
+			expect(navigation.notFound).toHaveBeenCalled();
+		},
+	);
 
 	asUser(
 		'Returns 500 without leaking error details when PDF generation fails unexpectedly',
@@ -72,12 +71,8 @@ describe('GET /invoices/[id]', () => {
 		},
 	);
 
-	asUser('Returns the invoice as a PDF with hardened response headers', async () => {
-		const { client } = await setUpConfigAndClient();
-		const id = await insertTestInvoice({
-			clientDataId: client.data.scdId,
-			items: [{ quantity: 1, unitCost: 100 }],
-		});
+	asUser('Returns the invoice as a PDF with hardened response headers', async ({ seed }) => {
+		const [{ id }] = await seed.invoices({ count: 1 });
 
 		const response = await GET(request(id), ctx(id));
 

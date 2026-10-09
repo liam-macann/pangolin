@@ -1,8 +1,6 @@
 import { headers } from 'next/headers';
 import { expect, test, vi } from 'vitest';
 
-import { insertTestConfig } from '@/lib/actions/tests/fixtures';
-
 import { asUser } from '@/test/session';
 
 import { rpc } from './index.server';
@@ -25,13 +23,13 @@ test('Rejects an unauthenticated in-memory RPC request', async () => {
 	await expect(res.json()).resolves.toMatchObject({ status: 401 });
 });
 
-asUser('Executes an authenticated in-memory RPC request', async () => {
-	await insertTestConfig({ tradingName: 'Acme Holdings' });
+asUser('Executes an authenticated in-memory RPC request', async ({ seed }) => {
+	const [config] = await seed.config({ versions: 1 });
 
 	const res = await rpc.config.$get();
 	expect(res.ok).toBe(true);
 
-	await expect(res.json()).resolves.toMatchObject({ data: { tradingName: 'Acme Holdings' } });
+	await expect(res.json()).resolves.toMatchObject({ data: { id: config.id } });
 });
 
 test('Handlers see the real external origin, not the placeholder RPC base', async () => {

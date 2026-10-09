@@ -31,7 +31,7 @@ test('Deletes the data of one user only', async ({ db, auth, session, seed }) =>
 	const other = await createTestSession(auth);
 
 	await bypassRLS(async () => {
-		await seed().all();
+		await seed.all();
 		await seed({ userId: other.user.id }).all();
 
 		const untouched = await countRows(db, other.user.id);
@@ -51,7 +51,7 @@ test('Refuses to reset database not marked as seedable', async ({ db, session, s
 	const userId = session.user.id;
 
 	await bypassRLS(async () => {
-		await seed().all();
+		await seed.all();
 		const seeded = await countRows(db, userId);
 
 		await db.execute(sql`COMMENT ON DATABASE postgres IS NULL`);

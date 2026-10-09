@@ -1,7 +1,6 @@
-import { describe, expect, test } from 'vitest';
+import { assert, describe, expect, test } from 'vitest';
 
 import app from '@/api/hono';
-import { insertTestConfig } from '@/lib/actions/tests/fixtures';
 
 import { asUser } from '@/test/session';
 
@@ -12,15 +11,14 @@ describe('GET /api/config', () => {
 		await expect(res.json()).resolves.toMatchObject({ status: 401, code: 'unauthorized' });
 	});
 
-	asUser('Returns the currently active config', async () => {
-		await insertTestConfig({ tradingName: 'Acme Pty Ltd' });
-		// Supersede it with a second version
-		await insertTestConfig({ tradingName: 'Acme Holdings' });
+	asUser('Returns the currently active config', async ({ seed }) => {
+		const active = (await seed.config({ versions: 4 })).at(-1);
+		assert(active?.validTo === null, 'The last seeded config should be valid');
 
 		const res = await app.request('/api/config');
 		expect(res.status).toBe(200);
 
 		const body = await res.json();
-		expect(body.data.tradingName).toBe('Acme Holdings');
+		expect(body.data).toMatchObject({ id: active.id });
 	});
 });
