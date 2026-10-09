@@ -25,7 +25,6 @@
 		{
 			"includes": [
 				"src/**",
-				"auth.ts",
 				"!src/test/**",
 				"!src/db/seed/**",
 				"!**/tests/**",
