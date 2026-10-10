@@ -3,6 +3,12 @@
 	"plugins": ["./biome/internal-imports.grit"],
 	"overrides": [
 		{
+			"includes": ["**/*.test.ts", "**/*.test.tsx"],
+			"linter": {
+				"rules": { "performance": { "noDynamicNamespaceImportAccess": "off" } }
+			}
+		},
+		{
 			"includes": [
 				"src/app/**/route.ts",
 				"src/app/lib/data/**",

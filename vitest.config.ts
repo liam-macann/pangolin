@@ -129,7 +129,7 @@ export default defineConfig({
 					// Increased parallelism may make sense with a larger volume of tests.
 					maxWorkers: 2,
 					sequence: { groupOrder: 2 },
-					include: ['src/**/*.test.ts'],
+					include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
 					exclude: ['src/app/api/**/*.test.ts'],
 					typecheck: {
 						enabled: isTypecheck,

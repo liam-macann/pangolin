@@ -4,6 +4,8 @@ import { drizzle } from 'drizzle-orm/pglite';
 
 import { relations } from '@/db/relations';
 
+import { SEEDABLE } from '@/scripts/seed/shared/guard';
+
 /** Indicates a Drizzle instance that points to a disposable database */
 // PgliteDatabase does not match production driver, and so types are not compatible
 export interface TestDB extends ReturnType<typeof drizzle<typeof relations>> {}
@@ -47,6 +49,9 @@ async function applyMigrations(db: TestDB) {
 	for (const migration of migrations) {
 		for (const statement of migration.sql) await db.$client.exec(statement);
 	}
+
+	// A disposable database is always safe to reset and seed: see `assertSeedable()`
+	await db.execute(sql`COMMENT ON DATABASE postgres IS '${sql.raw(SEEDABLE)}'`);
 
 	await db.execute(sql`SET ROLE authenticated;`);
 }

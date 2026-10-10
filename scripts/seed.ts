@@ -1,97 +1,76 @@
-import { faker } from '@faker-js/faker';
-import { reset } from 'drizzle-seed';
+import { createInterface } from 'node:readline/promises';
+import { styleText } from 'node:util';
+import { Pool } from '@neondatabase/serverless';
+import { eq } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import { parse } from 'pg-connection-string';
+import { Temporal } from 'temporal-polyfill';
 
-import * as schema from './../src/db/schema';
-import { db } from './db';
+import { relations } from '@/db/relations';
+import * as tables from '@/db/schema';
 
-// Only pass actual user-data tables to reset — exclude views, reference data, enums, and roles
-const {
-	timezones,
-	currencies,
-	supportedTimezones,
-	keychain,
-	verifications,
-	itemsWithTax,
-	documentsWithSum,
-	authenticated,
-	statusEnum,
-	unitEnum,
-	colorEnum,
-	numberingScheme,
-	...tables
-} = schema;
+import { createSeeder } from './seed/orchestrator';
+import { resetUser } from './seed/reset';
+import { assertSeedable } from './seed/shared/guard';
 
-import { seedClients } from './seed/clients';
-import { seedConfig } from './seed/config';
-import { seedKeychain } from './seed/encrypt';
-import { seedInvoiceCounters, seedInvoices } from './seed/invoices';
-import { seedTaxes } from './seed/taxes';
-import { seedUser } from './seed/user';
+process.on('uncaughtException', error => {
+	// Drizzle error message is the whole query, so print the cause
+	const { message } = error.cause instanceof Error ? error.cause : error;
 
-// Deterministic seed for reproducible data
-faker.seed(42);
+	// Continuation lines are indented to line up with the text after the cross
+	const lines = message.replaceAll('\n', '\n   ');
 
-// Invoice distribution: last 3 complete years with faker-generated counts
-const currentYear = new Date().getFullYear();
-const yearCounts = Object.fromEntries(
-	Array.from({ length: 3 }, (_, i) => [
-		currentYear - 3 + i,
-		faker.number.int({ min: 40, max: 100 }),
-	]),
-) as Record<number, number>;
-const totalInvoices = Object.values(yearCounts).reduce((a, b) => a + b, 0);
+	console.error(styleText('red', `\n×  ${lines}\n`, { stream: process.stderr }));
+	process.exit(1);
+});
 
-async function main(uuid?: string) {
-	if (process.env.NODE_ENV) {
-		throw new Error('Database seeding may not be executed within application');
-	}
+if (process.env.NODE_ENV) throw new Error('Seeding may not be executed within application');
+if (!process.stdin.isTTY) throw new Error('Seeding must be confirmed from an interactive terminal');
 
-	await db.transaction(async tx => {
-		const attachedUser = uuid
-			? await tx.query.users.findFirst({
-					where: { id: uuid },
-					with: { accounts: true, sessions: true },
-				})
-			: undefined;
+const [userId] = process.argv.slice(2);
 
-		if (uuid && !attachedUser) throw new Error(`User ${uuid} not found`);
+if (userId === undefined)
+	throw new Error('You must provide a UUID to scope seed to an existing account');
 
-		await reset(tx, tables);
+// Superuser connection, which bypasses RLS
+const db = drizzle({ relations, client: new Pool({ connectionString: process.env.DATABASE_URL }) });
 
-		if (attachedUser) {
-			await tx.insert(schema.users).values({
-				id: attachedUser.id,
-				name: attachedUser.name,
-				email: attachedUser.email,
-				emailVerified: attachedUser.emailVerified,
-				image: attachedUser.image,
-			});
+// Fails on any database that was not marked as seedable, production included
+await assertSeedable(db);
 
-			await tx.insert(schema.accounts).values(attachedUser.accounts);
-			await tx.insert(schema.sessions).values(attachedUser.sessions);
-		}
+const [user] = await db
+	.select({ email: tables.users.email })
+	.from(tables.users)
+	.where(eq(tables.users.id, userId));
 
-		const userId = attachedUser?.id || (await seedUser(tx));
-		const crypto = await seedKeychain(tx, userId);
+if (!user) throw new Error(`User ${userId} not found`);
 
-		const taxes = (await seedTaxes(tx, userId)).map(t => t.id);
-		const configs = await seedConfig(tx, userId, taxes, yearCounts, crypto);
-		const clients = await seedClients(tx, userId, yearCounts, crypto);
+const { host, database } = parse(process.env.DATABASE_URL ?? '');
+const terminal = createInterface({ input: process.stdin, output: process.stdout });
+const answer = await terminal.question(
+	[
+		`This overwrites all data for ${user.email}.`,
+		`  Host      ${host}`,
+		`  Database  ${database}`,
+		``,
+		'Type their email to continue: ',
+	].join('\n'),
+);
+terminal.close();
 
-		await seedInvoiceCounters(tx, userId, totalInvoices, yearCounts);
-		await seedInvoices(tx, userId, configs, clients, taxes, yearCounts);
-	});
-}
+if (answer.trim() !== user.email) throw new Error("Confirmation didn't match: nothing was changed");
 
-(async () => {
-	const input = process.argv.slice(2)[0];
+// Replaces all data of the user with a seeded history
+const { invoices } = await db.transaction(async tx => {
+	await resetUser(tx, userId);
 
-	if (input === undefined)
-		throw new Error(
-			'Input UUID to link seeded data to an existing account — else enter explicit "false"',
-		);
+	// History covers the three calendar years before this one, up to the present
+	const now = Temporal.Now.zonedDateTimeISO('UTC');
+	const from = now.subtract({ years: 3 }).with({ month: 1, day: 1 }).startOfDay();
 
-	await main(input === 'false' ? '' : input);
-	console.log(`Seeded ${totalInvoices} invoices successfully.`);
-	process.exit(0);
-})();
+	return createSeeder({ tx, userId, from: from.toInstant(), to: now.toInstant() }).all();
+});
+
+console.log(`Seeded ${invoices.length} invoices successfully.`);
+
+await db.$client.end();
