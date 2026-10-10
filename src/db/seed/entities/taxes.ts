@@ -1,7 +1,12 @@
 import { sql } from 'drizzle-orm';
 
+import type * as DTO from '@/api/dto/config';
 import * as tables from '@/db/schema';
 import { type SeedContext, type SeedOptions } from '@/db/seed/shared/context';
+import { overrideAt } from '@/db/seed/shared/utils';
+
+/** What may be overridden for a seeded tax. */
+type TaxShape = Pick<DTO.Config['taxes'][number], 'name' | 'rate'>;
 
 /** Familiar tax names, used before faker makes up the rest */
 const names = ['GST', 'VAT', 'EXP', 'LCT', 'WET'];
@@ -10,7 +15,7 @@ const names = ['GST', 'VAT', 'EXP', 'LCT', 'WET'];
  * @remarks Like in production, taxes already incidentally extant will be reused. */
 export async function seedTaxes(
 	{ tx, userId, faker }: SeedContext,
-	{ count = names.length }: SeedOptions = {},
+	{ count = names.length, overrides }: SeedOptions<TaxShape> = {},
 ) {
 	const taxes = faker.helpers.multiple(
 		(_, i) =>
@@ -19,6 +24,7 @@ export async function seedTaxes(
 				userId,
 				name: names[i] ?? faker.string.alpha({ length: { min: 3, max: 4 }, casing: 'upper' }),
 				rate: `${faker.number.float({ min: 0.01, max: 0.5, fractionDigits: 4 })}`,
+				...overrideAt(overrides, i),
 			}) satisfies typeof tables.taxes.$inferInsert,
 		{ count },
 	);

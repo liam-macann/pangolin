@@ -1,16 +1,36 @@
-import * as tables from '@/db/schema';
-import { type SeedContext, type SeedOptions, type VersionOptions } from '@/db/seed/shared/context';
-import { versionIntervals } from '@/db/seed/shared/utils';
+import { type NumberOrRange } from '@faker-js/faker';
 
-import { buildAddress } from './address';
+import type * as DTO from '@/api/dto/client';
+import * as tables from '@/db/schema';
+import {
+	type Overrides,
+	type SeedContext,
+	type SeedOptions,
+	type VersionOptions,
+} from '@/db/seed/shared/context';
+import { inBuiltOrder, overrideAt, versionIntervals } from '@/db/seed/shared/utils';
+
+import { type AddressShape, buildAddress, insertAddresses } from './address';
 
 /** A logical client with every version of its data. */
 export type ClientRecord = typeof tables.clients.$inferSelect & {
 	versions: (typeof tables.clientData.$inferSelect)[];
 };
 
+/** What may be overridden for a seeded client; data overrides apply to every version */
+type ClientShape = Pick<DTO.Client, 'isFavorite' | 'isDeleted'> & {
+	data: Pick<DTO.Client['data'], 'name' | 'organization' | 'email' | 'notes'> & AddressShape;
+};
+
 /** Builds one client with consecutive versions of its details, each at its own address. */
-function buildClient(ctx: SeedContext, versions: NonNullable<VersionOptions['versions']>) {
+function buildClient(
+	ctx: SeedContext,
+	versions: NumberOrRange,
+	{
+		data: { address: addressOverrides, addressId, ...dataOverrides } = {},
+		...overrides
+	}: Overrides<ClientShape> = {},
+) {
 	const { faker, userId } = ctx;
 
 	const client = {
@@ -18,37 +38,46 @@ function buildClient(ctx: SeedContext, versions: NonNullable<VersionOptions['ver
 		userId,
 		isFavorite: faker.datatype.boolean({ probability: 0.2 }),
 		isDeleted: faker.datatype.boolean({ probability: 0.1 }),
+		...overrides,
 	} satisfies typeof tables.clients.$inferInsert;
 
 	// The person stays the same across versions, even where a version omits their name
 	const person = pickName(ctx);
 
 	const history = versionIntervals(ctx, versions).map(validity => {
-		const address = buildAddress(ctx);
+		// An address referenced by id already exists, so none is built
+		const address = addressId === undefined ? buildAddress(ctx, addressOverrides) : null;
 
 		// A client is always identified by a name, an organization, or both.
 		// Each is therefore certain where the other is absent, or overridden to nothing.
 		const org = faker.helpers.maybe(() => faker.company.name(), {
-			probability: 0.6,
+			probability: dataOverrides.name === null ? 1 : 0.6,
 		});
 		const name = faker.helpers.maybe(() => person, {
-			probability: org ? 0.8 : 1,
+			probability: org && dataOverrides.organization !== null ? 0.8 : 1,
 		});
 
 		const data = {
 			id: faker.string.uuid(),
 			userId,
 			clientId: client.id,
-			addressId: address.id,
+			addressId: addressId ?? address?.id,
 			...validity,
 
 			name,
 			organization: org,
 			email: faker.internet.email(),
 			notes: faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.3 }),
+			...dataOverrides,
 		} satisfies typeof tables.clientData.$inferInsert;
 
-		return { address, data };
+		return {
+			/** Returns new addresses to be inserted.
+			 * @remarks Explicit id overrides do not build addresses. */
+			address,
+			/** Represents a clientData object */
+			data,
+		};
 	});
 
 	return { client, history };
@@ -56,9 +85,16 @@ function buildClient(ctx: SeedContext, versions: NonNullable<VersionOptions['ver
 
 export async function seedClients(
 	ctx: SeedContext,
-	{ count = { min: 8, max: 42 }, versions = { min: 1, max: 3 } }: SeedOptions & VersionOptions = {},
+	{
+		count = { min: 8, max: 42 },
+		versions = { min: 1, max: 3 },
+		overrides,
+	}: SeedOptions<ClientShape> & VersionOptions = {},
 ): Promise<ClientRecord[]> {
-	const built = ctx.faker.helpers.multiple(() => buildClient(ctx, versions), { count });
+	const built = ctx.faker.helpers.multiple(
+		(_, i) => buildClient(ctx, versions, overrideAt(overrides, i)),
+		{ count },
+	);
 
 	const history = built.flatMap(b => b.history);
 
@@ -67,16 +103,25 @@ export async function seedClients(
 		.values(built.map(b => b.client))
 		.returning();
 
-	await ctx.tx.insert(tables.address).values(history.map(v => v.address));
+	await insertAddresses(ctx, history);
 
 	const clientData = await ctx.tx
 		.insert(tables.clientData)
 		.values(history.map(v => v.data))
 		.returning();
 
-	return clients.map(client => ({
+	// Versions are built oldest first, so each client lists its history in that order
+	const chronological = inBuiltOrder(
+		clientData,
+		history.map(v => v.data),
+	);
+
+	return inBuiltOrder(
+		clients,
+		built.map(b => b.client),
+	).map(client => ({
 		...client,
-		versions: clientData.filter(version => version.clientId === client.id),
+		versions: chronological.filter(version => version.clientId === client.id),
 	}));
 }
 

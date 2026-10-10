@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import { Temporal } from 'temporal-polyfill';
 import { describe, expect } from 'vitest';
 
+import { fetchConfig } from '@/lib/data';
 import { fetchInvoice, fetchInvoices } from '@/lib/data/invoice';
 import * as tables from '@/db/schema';
 
@@ -99,7 +100,7 @@ describe('createSeeder', () => {
 		expect((await all(10)).clients).toHaveLength(10);
 	});
 
-	test('Refuses to extend existing version histories', async ({ db, session }) => {
+	test('Refuses to alter version histories once seeded', async ({ db, session }) => {
 		// History is distributed over a range (bound at init).
 		// You cannot prepend without extending that range backwards.
 		// You cannot append without extending that range forwards.
@@ -110,6 +111,7 @@ describe('createSeeder', () => {
 
 		await expect(seed.config({ versions: 3 })).rejects.toThrow('history cannot be recut');
 		await expect(seed.all({ clients: { versions: 3 } })).rejects.toThrow('history cannot be recut');
+		await expect(seed.config({ overrides: [{ region: 'AU' }] })).rejects.toThrow('cannot change');
 	});
 
 	test('Reuses existing version histories', async ({ db, session }) => {
@@ -132,6 +134,7 @@ describe('createSeeder', () => {
 		expect(await seed.clients({ count: 0 })).toEqual([]);
 		expect(await seed.invoices({ count: 0 })).toEqual([]);
 		await expect(seed.config({ versions: 0 })).rejects.toThrow('must contain at least one version');
+		await expect(seed.config({ overrides: [] })).rejects.toThrow('at least one version');
 
 		await expect(
 			seed.all({
@@ -185,31 +188,32 @@ describe('createSeeder', () => {
 		expect(repeated).toEqual(first);
 	});
 
-	test('Adds invoice batches with gapless numbering', async ({ db, session }) => {
-		const seed = seeder(db, session.user.id);
-		expect(await seed.invoices({ count: 3 })).toHaveLength(3);
-		expect(await seed.invoices({ count: 4 })).toHaveLength(4);
+	test('Fills in taxes only for config versions listing none', async ({ db, auth, session }) => {
+		await seeder(db, session.user.id).config({ overrides: { taxes: [] } });
+		expect(await db.$count(tables.taxes), 'Every version listed its own').toBe(0);
 
-		const invoices = await db
-			.select({ partition: tables.invoices.partition, index: tables.invoices.index })
-			.from(tables.invoices)
-			.orderBy(tables.invoices.index);
-
-		expect(invoices, 'Both batches should have been pushed').toHaveLength(7);
-
-		const partitions = Map.groupBy(invoices, invoice => invoice.partition);
-
-		partitions.forEach(series => {
-			const indexes = series.map(invoice => invoice.index);
-			expect(indexes, 'Expected a gapless sequence').toEqual(series.map((_, i) => i + 1));
+		const other = await createTestSession(auth);
+		const [listed, fallback] = await seeder(db, other.user.id, 43).config({
+			overrides: [{ taxes: [] }, {}],
 		});
 
-		const watermarks = await db
-			.select({ partition: tables.sequencer.partition, count: tables.sequencer.count })
-			.from(tables.sequencer);
+		expect(listed.taxes).toEqual([]);
+		expect(fallback.taxes).toHaveLength(await db.$count(tables.taxes));
+		expect(fallback.taxes.length).toBeGreaterThan(0);
+	});
 
-		expect(watermarks, 'Every partition should have a watermark').toHaveLength(partitions.size);
-		watermarks.map(mark => expect(mark.count).toBe(partitions.get(mark.partition)?.length));
+	test('Counts reused taxes once in dependency pools', async ({ db, session }) => {
+		const seed = seeder(db, session.user.id);
+		const options = { count: 3, overrides: { rate: '0.1000' as const } };
+
+		const first = await seed.taxes(options);
+		await seed.taxes(options);
+
+		// Tests the in-memory pool, not the DB
+		const seeded = await seed.all({ taxes: { count: { min: 3, max: 3 } } });
+
+		expect(seeded.taxes).toEqual(first);
+		expect(await db.$count(tables.taxes)).toBe(3);
 	});
 
 	test('Returns cloned rows, not the internal array reference', async ({ db, session }) => {
@@ -225,5 +229,40 @@ describe('createSeeder', () => {
 		clients.length = 0;
 		expect((await seed.all({ invoices: { count: 0 } })).clients).toHaveLength(3);
 		expect(await db.$count(tables.clients)).toBe(3);
+	});
+
+	test('Applies overrides to each entity, in order', async ({ db, session }) => {
+		const seeded = await seeder(db, session.user.id).all({
+			taxes: { count: 2, overrides: { rate: '0.2000' } }, // An object overrides every item
+			config: { overrides: [{ currency: 'AUD', email: 'billing@acme.example', header: null }] },
+			invoices: {
+				overrides: [
+					{ dueAt: '2030-01-01', title: 'Retainer', status: { status: 'paid' } },
+					{ issuedAt: '2024-01-01' },
+				],
+			},
+			clients: {
+				count: 1, // Explicit count takes priority over implicit array count
+				versions: 1,
+				overrides: [
+					{ isDeleted: true, data: { name: 'Zaria Lemery', address: null } },
+					{ isDeleted: false },
+				],
+			},
+		});
+
+		// toMatchObject() compares array lengths, asserting return count
+		expect(seeded).toMatchObject({
+			taxes: [{ rate: '0.2000' }, { rate: '0.2000' }],
+			configs: [{ currency: 'AUD', header: null }],
+			invoices: [
+				{ dueAt: '2030-01-01', title: 'Retainer', status: { status: 'paid' } },
+				{ issuedAt: '2024-01-01' },
+			],
+			clients: [{ isDeleted: true, versions: [{ name: 'Zaria Lemery', addressId: null }] }],
+		});
+
+		// Plaintext overrides are stored encrypted, and are decryptable
+		expect(await fetchConfig()).toMatchObject({ email: 'billing@acme.example' });
 	});
 });

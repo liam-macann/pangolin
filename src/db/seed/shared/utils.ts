@@ -20,6 +20,23 @@ export function activeAt<T extends Validity>(versions: T[], instant: Temporal.In
 	return version;
 }
 
+/** Finds overridden properties at an index position.
+ *
+ * @remarks Seeders may accept either:
+ * - a root array, which maps over seeded entities
+ * - a root object, which applies to every seeded entity */
+export const overrideAt = <T extends object>(
+	overrides: T | T[] | undefined,
+	position: number,
+): T | undefined => (Array.isArray(overrides) ? overrides[position] : overrides);
+
+/** Lines returned rows up with the order they were built in, so each matches its override.
+ *  @remarks `RETURNING` does not guarantee insertion order. */
+export const inBuiltOrder = <Row extends { id: string }>(rows: Row[], built: { id: string }[]) => {
+	const position = new Map(built.map((row, i) => [row.id, i]));
+	return rows.toSorted((a, b) => (position.get(a.id) ?? 0) - (position.get(b.id) ?? 0));
+};
+
 /** The span of time that seeded data is dated within, and the random source to place it */
 type HistoryContext = Pick<SeedContext, 'faker' | 'from' | 'to'>;
 

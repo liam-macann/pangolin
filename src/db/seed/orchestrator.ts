@@ -6,7 +6,7 @@ import { seedConfig } from './entities/config';
 import { seedKeychain } from './entities/encrypt';
 import { seedInvoices } from './entities/invoices';
 import { seedTaxes } from './entities/taxes';
-import { type SeedContext, type SeedOptions, type VersionOptions } from './shared/context';
+import { type SeedContext, type SeedOptions } from './shared/context';
 import { assertSeedable } from './shared/guard';
 
 /** Options for each entity that a full seed fills in. */
@@ -69,7 +69,11 @@ export function createSeeder({ run = task => task(), seed, ...base }: SeederInit
 
 		/** Adds new logical entities, each with its own history where versioned. */
 		const add = async (opts?: Opts) => {
-			const count = opts?.count && faker.helpers.rangeToNumber(opts.count);
+			const { overrides } = opts ?? {};
+
+			// If given an override array, default to row count matching length
+			const want = opts?.count ?? (Array.isArray(overrides) ? overrides.length : undefined);
+			const count = want && faker.helpers.rangeToNumber(want);
 
 			// Prevents building dependencies if no entities were requested
 			if (count === 0) {
@@ -89,6 +93,7 @@ export function createSeeder({ run = task => task(), seed, ...base }: SeederInit
 			validate?.([...rows.values()], opts);
 			if (!initialized) await add(opts);
 			else if (opts) {
+				if (opts.overrides) throw new Error('Overrides cannot change rows once seeded');
 				const count = shortfall(rows.size, opts.count);
 				if (count !== undefined) await add({ ...opts, count });
 			}
@@ -114,12 +119,29 @@ export function createSeeder({ run = task => task(), seed, ...base }: SeederInit
 
 	/** The one config of the user, pooled as the versions of its history. */
 	const config = pool(
-		async (ctx, options?: SeedOptions & VersionOptions) =>
-			seedConfig(ctx, options, { taxes: await taxes.ensure() }),
+		async (ctx, options?: EntityOptions['config']) => {
+			const { overrides, versions } = options ?? {};
+			const listed = [overrides].flat(); // Treat object-root and array-root the same way
+
+			// A shortfall of overrides leaves later versions to fall back on the pool
+			const max = typeof versions === 'object' ? versions.max : (versions ?? listed.length);
+			const hasEnough = !Array.isArray(overrides) || max <= overrides.length;
+
+			// Taxes are only filled in for a version that lists none of its own
+			const needsTaxPool = !hasEnough || listed.some(version => version?.taxes === undefined);
+
+			return seedConfig(ctx, options, {
+				taxes: needsTaxPool ? await taxes.ensure() : taxes.list(),
+			});
+		},
 
 		(rows, options) => {
-			const { versions = 1 } = options ?? {};
-			if ((typeof versions === 'number' ? versions : versions.min) < 1)
+			const { overrides, versions = 1 } = options ?? {};
+
+			// An empty overrides array is an implicit zero versions count
+			const isEmptyOverrides = Array.isArray(overrides) && overrides.length === 0;
+
+			if (isEmptyOverrides || (typeof versions === 'number' ? versions : versions.min) < 1)
 				throw new Error('History must contain at least one version');
 
 			if (rows.length > 0) assertHistory([rows.length], options?.versions);
@@ -159,18 +181,12 @@ export function createSeeder({ run = task => task(), seed, ...base }: SeederInit
 		};
 	};
 
-	/** Public handles for each entity */
-	const handles = {
+	return {
 		taxes: taxes.add,
+		/** Seeded on first use and returned as-is afterwards, as a user has only one config. */
 		config: config.ensure,
 		clients: clients.add,
 		invoices: invoices.add,
+		all,
 	};
-
-	/** Ensure entity options are inherited from public interface, not the pooler */
-	const entities: {
-		[K in keyof typeof handles]: (options?: EntityOptions[K]) => ReturnType<(typeof handles)[K]>;
-	} = handles;
-
-	return { ...entities, all };
 }

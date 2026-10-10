@@ -1,7 +1,7 @@
 import { allLocales, base, en, Faker, FakerError } from '@faker-js/faker';
 
 import { type Address, country as countries } from '@/api/dto/address';
-import type * as tables from '@/db/schema';
+import * as tables from '@/db/schema';
 import { type SeedContext } from '@/db/seed/shared/context';
 
 const isLocaleKey = (key: string): key is keyof typeof allLocales => key in allLocales;
@@ -33,17 +33,35 @@ function safe<T>(generate: () => T) {
 	}
 }
 
-/** Builds an address row, in a random country unless one is given */
+/** How a seeded entity comes by its address: built around given values, or one that exists already. */
+export type AddressShape =
+	| { address: Address | null; addressId?: never }
+	| { addressId: string | null; address?: never };
+
+/** Builds an address row around any given values, or no address where they are `null`.
+ *  @param fallbackCountry Used where no country is given, instead of a random one. */
 export function buildAddress(
-	{ faker, userId, encrypt }: SeedContext,
-	country = faker.helpers.arrayElement(countries.options),
+	ctx: SeedContext,
+	overrides?: Partial<Address> | null,
+	fallbackCountry?: Address['country'],
 ) {
+	const { faker, userId, encrypt } = ctx;
+
+	if (overrides === null) return null;
+	if (overrides === undefined && !faker.datatype.boolean({ probability: 0.6 })) return null;
+
+	const { country = fallbackCountry ?? faker.helpers.arrayElement(countries.options), ...fields } =
+		overrides ?? {};
+
 	const f = fakerForCountry(country, faker.number.int());
 
-	const streetAddress = [
+	const generated = [
 		faker.helpers.maybe(() => safe(() => f.location.secondaryAddress()), { probability: 0.3 }),
 		faker.helpers.maybe(() => safe(() => f.location.streetAddress()), { probability: 0.9 }),
 	].filter(line => line !== undefined);
+
+	// Default streetAddress to generated value if not explicitly overridden
+	const { streetAddress = generated } = fields;
 
 	return {
 		id: faker.string.uuid(),
@@ -53,6 +71,17 @@ export function buildAddress(
 		administrativeArea:
 			safe(() => f.location.state({ abbreviated: true })) ?? safe(() => f.location.state()),
 		postalCode: safe(() => f.location.zipCode()),
-		streetAddress: streetAddress.length ? streetAddress.map(encrypt) : null,
+
+		...fields,
+		streetAddress: streetAddress?.length ? streetAddress.map(encrypt) : null,
 	} satisfies typeof tables.address.$inferInsert;
+}
+
+/** Inserts the addresses a batch of rows refers to, which must exist before those rows do. */
+export async function insertAddresses(
+	{ tx }: SeedContext,
+	built: { address: ReturnType<typeof buildAddress> }[],
+) {
+	const addresses = built.flatMap(b => b.address ?? []);
+	if (addresses.length > 0) await tx.insert(tables.address).values(addresses);
 }
