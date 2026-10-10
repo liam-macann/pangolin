@@ -23,6 +23,20 @@
 			]
 		},
 		{
+			"includes": [
+				"src/**",
+				"auth.ts",
+				"!src/test/**",
+				"!src/db/seed/**",
+				"!**/tests/**",
+				"!**/*.test.ts",
+				"!**/*.test.tsx",
+				"!**/*.test-d.ts",
+				"!**/*.fuzz.ts"
+			],
+			"plugins": ["./biome/seed-imports.grit"]
+		},
+		{
 			"includes": ["src/app/lib/hooks/data/**"],
 			"linter": {
 				"rules": {

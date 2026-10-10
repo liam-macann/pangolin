@@ -1,0 +1,12 @@
+language js(typescript, jsx)
+
+// Application code must never load seed files: by alias, the root alias, or a relative path
+or {
+	JsModuleSource() as $source,
+	`import($source)`,
+	`require($source)`,
+	TsImportTypeArguments(argument=$source)
+} where {
+	$source <: r"^['\"`](?:@/(?:src/)?db/seed|\./seed|(?:\.{1,2}/)+(?:.*/)?db/seed)(?:/.*)?['\"`]$",
+	register_diagnostic(span=$source, message="Seeders are for scripts and tests only. Application code must not import @/db/seed.", severity="error")
+}

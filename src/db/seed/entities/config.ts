@@ -1,7 +1,7 @@
 import * as tables from '@/db/schema';
+import { type SeedContext, type VersionOptions } from '@/db/seed/shared/context';
+import { versionIntervals } from '@/db/seed/shared/utils';
 
-import { type SeedContext, type VersionOptions } from './../shared/context';
-import { versionIntervals } from './../shared/utils';
 import { buildAddress } from './address';
 
 const locales = [

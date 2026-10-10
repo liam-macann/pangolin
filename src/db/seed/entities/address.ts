@@ -2,8 +2,7 @@ import { allLocales, base, en, Faker, FakerError } from '@faker-js/faker';
 
 import { type Address, country as countries } from '@/api/dto/address';
 import type * as tables from '@/db/schema';
-
-import { type SeedContext } from './../shared/context';
+import { type SeedContext } from '@/db/seed/shared/context';
 
 const isLocaleKey = (key: string): key is keyof typeof allLocales => key in allLocales;
 

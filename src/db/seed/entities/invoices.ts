@@ -3,9 +3,8 @@ import { type Temporal } from 'temporal-polyfill';
 import { match } from 'ts-pattern';
 
 import * as tables from '@/db/schema';
-
-import { type SeedContext, type SeedOptions } from './../shared/context';
-import { activeAt, instantsBetween, type Validity } from './../shared/utils';
+import { type SeedContext, type SeedOptions } from '@/db/seed/shared/context';
+import { activeAt, instantsBetween, type Validity } from '@/db/seed/shared/utils';
 
 /** A pool of relational entities that an invoice may reference. */
 type Dependencies = {

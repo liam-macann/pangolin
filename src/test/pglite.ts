@@ -3,8 +3,7 @@ import { readMigrationFiles } from 'drizzle-orm/migrator';
 import { drizzle } from 'drizzle-orm/pglite';
 
 import { relations } from '@/db/relations';
-
-import { SEEDABLE } from '@/scripts/seed/shared/guard';
+import { SEEDABLE } from '@/db/seed/shared/guard';
 
 /** Indicates a Drizzle instance that points to a disposable database */
 // PgliteDatabase does not match production driver, and so types are not compatible

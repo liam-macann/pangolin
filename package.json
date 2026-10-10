@@ -18,7 +18,7 @@
 		"lint": "biome lint",
 		"format": "biome format --write",
 		"check": "biome check --write",
-		"typecheck": "next typegen && tsc --noEmit && tsc --noEmit -p scripts",
+		"typecheck": "next typegen && tsc --noEmit",
 		"prepare": "husky",
 		"db:seed": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" nub --env-file=.env.local ./scripts/seed.ts",
 		"db:view": "NODE_OPTIONS=\"--dns-result-order=ipv6first\" nubx drizzle-kit studio",

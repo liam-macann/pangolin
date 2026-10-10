@@ -5,10 +5,8 @@ import { chacha, encoder } from '@/lib/encrypt/internal/cipher';
 import { Encrypted } from '@/lib/encrypt/internal/types';
 // biome-ignore-end lint/plugin: Seeding wraps keys without a session, so needs the raw cipher primitives
 import * as tables from '@/db/schema';
-
-import { type Encrypt, type SeedDatabase } from './../shared/context';
-
-import { assertSeedable } from './../shared/guard';
+import { type Encrypt, type SeedDatabase } from '@/db/seed/shared/context';
+import { assertSeedable } from '@/db/seed/shared/guard';
 
 function withKEK<T>(callback: (kek: Uint8Array) => T): T {
 	const secret = process.env.DB_ENCRYPTION_SECRET;

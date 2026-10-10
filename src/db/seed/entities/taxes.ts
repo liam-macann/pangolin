@@ -1,8 +1,7 @@
 import { sql } from 'drizzle-orm';
 
 import * as tables from '@/db/schema';
-
-import { type SeedContext, type SeedOptions } from './../shared/context';
+import { type SeedContext, type SeedOptions } from '@/db/seed/shared/context';
 
 /** Familiar tax names, used before faker makes up the rest */
 const names = ['GST', 'VAT', 'EXP', 'LCT', 'WET'];

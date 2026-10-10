@@ -8,10 +8,8 @@ import { Temporal } from 'temporal-polyfill';
 
 import { relations } from '@/db/relations';
 import * as tables from '@/db/schema';
-
-import { createSeeder } from './seed/orchestrator';
-import { resetUser } from './seed/reset';
-import { assertSeedable } from './seed/shared/guard';
+import { assertSeedable, createSeeder } from '@/db/seed';
+import { resetUser } from '@/db/seed/reset';
 
 process.on('uncaughtException', error => {
 	// Drizzle error message is the whole query, so print the cause
