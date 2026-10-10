@@ -4,9 +4,11 @@ import { drizzleAdapter } from '@better-auth/drizzle-adapter/relations-v2';
 import { betterAuth } from 'better-auth/minimal';
 import { testUtils } from 'better-auth/plugins';
 import { sql } from 'drizzle-orm';
+import { Temporal } from 'temporal-polyfill';
 import { test, vi } from 'vitest';
 
 import * as schema from '@/db/schema/auth';
+import { createSeeder, type SeederInit } from '@/db/seed';
 
 import { type Session } from '@/auth';
 
@@ -99,6 +101,13 @@ export async function createTestSession(auth: ReturnType<typeof createTestAuth>)
 	});
 }
 
+type Seeder = ReturnType<typeof createSeeder>;
+
+/** Seeds the session user when accessed as a namespace, or binds a seeder when called. */
+interface SeedFixture extends Seeder {
+	(init?: Partial<SeederInit>): Seeder;
+}
+
 /** Sentinel error used to force a rollback */
 const ROLLBACK = new Error('rollback');
 
@@ -141,4 +150,45 @@ export const asUser = test
 	})
 	.extend('auth', ({ db }) => createTestAuth(db))
 	// A fixture runs before the test transaction is bound for the test, so binds it here
-	.extend('session', ({ db, auth }) => testConnection.run(db, () => createTestSession(auth)));
+	.extend('session', ({ db, auth }) => testConnection.run(db, () => createTestSession(auth)))
+	.extend('seed', ({ db, session }): SeedFixture => {
+		/** One seeder per user, as a user can only be bound once */
+		const bound = new Map<string, Seeder>();
+
+		/** Seeds the database with reproducible data.
+		 *  @remarks Repeated calls for a user share one seeder, so continue the same history.
+		 *  @throws When options are provided for a user whose seeder is already bound. */
+		const seed = ({ userId = session.user.id, ...options }: Partial<SeederInit> = {}) => {
+			const existing = bound.get(userId);
+
+			// Options configure a seeder as it is bound, so cannot apply to one that exists
+			if (existing && Object.keys(options).length > 0)
+				throw new Error(`User ${userId} has already bound a seeder: pass options on first use`);
+
+			const seeder =
+				existing ??
+				createSeeder({
+					tx: db,
+					userId,
+					from: Temporal.Instant.from('2023-01-01T00:00:00Z'),
+					to: Temporal.Instant.from('2026-03-15T02:30:00Z'),
+
+					run: task => bypassRLS(() => task()), // Seeding writes as a superuser, as the seed script does
+					seed: [42, bound.size], // The same on every run, but distinct per seeder
+
+					...options,
+				});
+
+			bound.set(userId, seeder);
+			return seeder;
+		};
+
+		// `seed.entity()` is shorthand for `seed().entity()`
+		return Object.assign(seed, {
+			taxes: (...args) => seed().taxes(...args),
+			config: (...args) => seed().config(...args),
+			clients: (...args) => seed().clients(...args),
+			invoices: (...args) => seed().invoices(...args),
+			all: (...args) => seed().all(...args),
+		} satisfies Seeder);
+	});

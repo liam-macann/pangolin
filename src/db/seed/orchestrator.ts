@@ -37,6 +37,9 @@ function assertHistory(history: number[], versions?: NumberOrRange) {
 }
 
 export interface SeederInit extends Omit<SeedContext, 'encrypt' | 'faker'> {
+	/** Wraps each write action with a callback. */
+	run?: <T>(task: () => Promise<T>) => Promise<T>;
+
 	/** Makes the data reproducible. Defaults to the user, so that parallel users never collide PKs. */
 	seed?: number | number[];
 }
@@ -44,7 +47,7 @@ export interface SeederInit extends Omit<SeedContext, 'encrypt' | 'faker'> {
 /** Binds the seeders to the history of one existing user, who must not have any data yet.
  *  @remarks Each entity resolves and seeds dependencies, unless they already exist
  *  @throws When the user already has data on first use, or the database is not marked as seedable. */
-export function createSeeder({ seed, ...base }: SeederInit) {
+export function createSeeder({ run = task => task(), seed, ...base }: SeederInit) {
 	// A private instance avoids setting global Faker seed
 	const faker = new Faker({ locale: [en, baseLocale] });
 	faker.seed(seed ?? Array.from(base.userId, char => char.charCodeAt(0)));
@@ -74,7 +77,7 @@ export function createSeeder({ seed, ...base }: SeederInit) {
 				return [];
 			}
 
-			const batch = await seeder(await context(), opts && { ...opts, count });
+			const batch = await run(async () => seeder(await context(), opts && { ...opts, count }));
 			batch.forEach(row => void rows.set(row.id, row));
 			initialized = true;
 			return batch;

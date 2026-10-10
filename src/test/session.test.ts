@@ -1,10 +1,11 @@
 import { eq, sql } from 'drizzle-orm';
+import { Temporal } from 'temporal-polyfill';
 import { describe, expect, onTestFinished, vi } from 'vitest';
 
 import { users } from '@/db/schema/auth';
 
 import { type TestTX } from '@/test/pglite';
-import { asUser, bypassRLS, testConnection } from '@/test/session';
+import { asUser, bypassRLS, createTestSession, testConnection } from '@/test/session';
 
 describe('bypassRLS', () => {
 	const currentRole = async (db: TestTX) => {
@@ -115,5 +116,56 @@ describe('asUser fixture rollback', { concurrent: false }, () => {
 
 		// The additional user inserted in this suite should be rolled back.
 		expect(inserted).toBeUndefined();
+	});
+});
+
+describe('asUser seed fixture', () => {
+	asUser('Repeated calls continue seeding the same user', async ({ seed }) => {
+		// A second seeder bound to the user would refuse them, as they already have data
+		const [client] = await seed().clients({ count: 1 });
+		const invoices = await seed.invoices({ count: 2 });
+
+		expect(invoices).toHaveLength(2);
+		expect((await seed().all()).clients.map(c => c.id)).toEqual([client.id]);
+	});
+
+	asUser('Applies options given on first use to all subsequent calls', async ({ seed }) => {
+		const from = Temporal.Instant.from('2024-06-01T00:00:00Z');
+
+		// The first config version begins at the start of the seeded history
+		const [config] = await seed({ from }).config({ versions: 1 });
+		expect(Temporal.Instant.from(config.validFrom).equals(from)).toBe(true);
+
+		// This call should inherit options
+		const [clients] = await seed().clients({ count: 1 });
+		expect(Temporal.Instant.from(clients.versions[0].validFrom).equals(from)).toBe(true);
+	});
+
+	asUser('Property access leaves the seeder unbound until called', async ({ seed }) => {
+		const { clients } = seed;
+		const from = Temporal.Instant.from('2024-06-01T00:00:00Z');
+
+		// Would be refused if reading the property had already bound a seeder
+		seed({ from });
+
+		const [client] = await clients({ count: 1 });
+		expect(Temporal.Instant.from(client.versions[0].validFrom).equals(from)).toBe(true);
+	});
+
+	asUser('Refuses options for a seeder that is already bound', async ({ seed }) => {
+		seed();
+		expect(() => seed({ seed: 1 })).toThrow('already bound');
+	});
+
+	asUser('Binds a separate seeder to each user', async ({ auth, session, seed }) => {
+		const other = await createTestSession(auth);
+
+		const [mine] = await seed().clients({ count: 1 });
+		const [theirs] = await seed({ userId: other.user.id }).clients({ count: 1 });
+
+		expect(mine.userId).toBe(session.user.id);
+		expect(theirs.userId).toBe(other.user.id);
+		expect(seed({ userId: other.user.id })).toBe(seed({ userId: other.user.id }));
+		expect(seed()).not.toBe(seed({ userId: other.user.id }));
 	});
 });

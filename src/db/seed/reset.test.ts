@@ -1,5 +1,4 @@
 import { eq, getTableName, sql } from 'drizzle-orm';
-import { Temporal } from 'temporal-polyfill';
 import { expect } from 'vitest';
 
 import { keychain, sessions, users } from '@/db/schema';
@@ -7,17 +6,7 @@ import { keychain, sessions, users } from '@/db/schema';
 import { type TestTX } from '@/test/pglite';
 import { bypassRLS, createTestSession, asUser as test } from '@/test/session';
 
-import { createSeeder } from './orchestrator';
 import { owned, resetUser } from './reset';
-
-/** Binds the seeders to a fixed history for a user. */
-const seeder = (db: TestTX, userId: string) =>
-	createSeeder({
-		tx: db,
-		userId,
-		from: Temporal.Instant.from('2023-01-01T00:00:00Z'),
-		to: Temporal.Instant.from('2026-03-15T02:30:00Z'),
-	});
 
 /** Counts the rows in each table, for a given user. */
 async function countRows(db: TestTX, userId: string) {
@@ -37,13 +26,13 @@ async function countRows(db: TestTX, userId: string) {
 	return counts;
 }
 
-test('Deletes the data of one user only', async ({ db, auth, session }) => {
+test('Deletes the data of one user only', async ({ db, auth, session, seed }) => {
 	const userId = session.user.id;
 	const other = await createTestSession(auth);
 
 	await bypassRLS(async () => {
-		await seeder(db, userId).all();
-		await seeder(db, other.user.id).all();
+		await seed().all();
+		await seed({ userId: other.user.id }).all();
 
 		const untouched = await countRows(db, other.user.id);
 
@@ -58,11 +47,11 @@ test('Deletes the data of one user only', async ({ db, auth, session }) => {
 	});
 });
 
-test('Refuses to reset database not marked as seedable', async ({ db, session }) => {
+test('Refuses to reset database not marked as seedable', async ({ db, session, seed }) => {
 	const userId = session.user.id;
 
 	await bypassRLS(async () => {
-		await seeder(db, userId).all();
+		await seed().all();
 		const seeded = await countRows(db, userId);
 
 		await db.execute(sql`COMMENT ON DATABASE postgres IS NULL`);
