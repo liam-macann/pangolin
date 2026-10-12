@@ -1,4 +1,4 @@
-import { base as baseLocale, en, Faker, type NumberOrRange } from '@faker-js/faker';
+import { base as baseLocale, en, Faker } from '@faker-js/faker';
 import { once } from 'es-toolkit/function';
 
 import { seedClients } from './entities/clients';
@@ -6,7 +6,8 @@ import { seedConfig } from './entities/config';
 import { seedKeychain } from './entities/encrypt';
 import { seedInvoices } from './entities/invoices';
 import { seedTaxes } from './entities/taxes';
-import { type SeedContext, type SeedOptions } from './shared/context';
+import { assertHistory, createPool, type PoolInit } from './pool';
+import { type SeedContext } from './shared/context';
 import { assertSeedable } from './shared/guard';
 
 /** Options for each entity that a full seed fills in. */
@@ -17,28 +18,9 @@ export interface EntityOptions {
 	taxes?: Parameters<typeof seedTaxes>[1];
 }
 
-/** Returns what is missing, rejecting requests whose upper bound is already exceeded. */
-function shortfall(have: number, want?: NumberOrRange) {
-	if (want === undefined) return;
-	const { min, max } = typeof want === 'number' ? { min: want, max: Infinity } : want;
-
-	if (have > max) throw new Error(`Already seeded ${have}: more than caller asked for`);
-	if (have >= min) return;
-
-	if (typeof want === 'number') return min - have;
-	return { min: min - have, max: max - have };
-}
-
-/** @throws When a seeded history is not as long as asked for, as its periods are already cut. */
-function assertHistory(history: number[], versions?: NumberOrRange) {
-	if (history.some(len => shortfall(len, versions))) {
-		throw new Error('Version history cannot be recut once seeded');
-	}
-}
-
 export interface SeederInit extends Omit<SeedContext, 'encrypt' | 'faker'> {
 	/** Wraps each write action with a callback. */
-	run?: <T>(task: () => Promise<T>) => Promise<T>;
+	run?: PoolInit<SeedContext>['run'];
 
 	/** Makes the data reproducible. Defaults to the user, so that parallel users never collide PKs. */
 	seed?: number | number[];
@@ -58,57 +40,11 @@ export function createSeeder({ run = task => task(), seed, ...base }: SeederInit
 		return { ...base, faker, encrypt: await seedKeychain(base.tx, base.userId) };
 	});
 
-	/** Remembers the seeded rows of an entity.
-	 *  @param validate Rejects options that the rows already seeded cannot satisfy. */
-	function pool<Row extends { id: string }, Opts extends SeedOptions>(
-		seeder: (ctx: SeedContext, options?: Opts) => Promise<Row[]>,
-		validate?: (rows: Row[], options?: Opts) => void,
-	) {
-		const rows = new Map<string, Row>();
-		let initialized = false;
-
-		/** Adds new logical entities, each with its own history where versioned. */
-		const add = async (opts?: Opts) => {
-			const { overrides } = opts ?? {};
-
-			// If given an override array, default to row count matching length
-			const want = opts?.count ?? (Array.isArray(overrides) ? overrides.length : undefined);
-			const count = want && faker.helpers.rangeToNumber(want);
-
-			// Prevents building dependencies if no entities were requested
-			if (count === 0) {
-				initialized = true;
-				return [];
-			}
-
-			const batch = await run(async () => seeder(await context(), opts && { ...opts, count }));
-			batch.forEach(row => void rows.set(row.id, row));
-			initialized = true;
-			return batch;
-		};
-
-		/** Seeds only what is missing: a first batch, or the shortfall on a requested pool size.
-		 *  @throws If an entity cannot be reseeded to meet requested conditions. */
-		const ensure = async (opts?: Opts) => {
-			validate?.([...rows.values()], opts);
-			if (!initialized) await add(opts);
-			else if (opts) {
-				if (opts.overrides) throw new Error('Overrides cannot change rows once seeded');
-				const count = shortfall(rows.size, opts.count);
-				if (count !== undefined) await add({ ...opts, count });
-			}
-
-			return list();
-		};
-
-		/** A copy of the pool, so that a caller cannot mutate it */
-		const list = () => [...rows.values()];
-
-		/** Whether the caller asked for none of this entity: seeded, yet empty */
-		const declined = () => initialized && rows.size === 0;
-
-		return { add, ensure, list, declined };
-	}
+	const pool = createPool({
+		run,
+		context,
+		resolveNumberOrRange: count => faker.helpers.rangeToNumber(count),
+	});
 
 	const taxes = pool(seedTaxes);
 

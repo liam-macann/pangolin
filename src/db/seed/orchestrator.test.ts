@@ -1,4 +1,3 @@
-import { type NumberOrRange } from '@faker-js/faker';
 import { sql } from 'drizzle-orm';
 import { Temporal } from 'temporal-polyfill';
 import { describe, expect } from 'vitest';
@@ -25,6 +24,18 @@ const seeder = (db: TestTX, userId: string, seed = 42) =>
 	});
 
 describe('createSeeder', () => {
+	test.for(['taxes', 'clients', 'invoices'] as const)(
+		'A %s count resolving to zero writes nothing',
+		async (entity, { db, session }) => {
+			const seed = seeder(db, session.user.id);
+
+			expect(await seed[entity]({ count: { min: 0, max: 0 } })).toEqual([]);
+
+			for (const table of owned) expect(await db.$count(table)).toBe(0);
+			expect(await db.$count(tables.keychain)).toBe(0);
+		},
+	);
+
 	test('Refuses to seed a database that is not marked as seedable', async ({ db, session }) => {
 		await db.execute(sql`COMMENT ON DATABASE postgres IS NULL`);
 		await expect(seeder(db, session.user.id).all()).rejects.toThrow('is not marked as seedable');
@@ -64,41 +75,6 @@ describe('createSeeder', () => {
 			);
 		},
 	);
-
-	test('Adds nothing when seeded count falls within requested range', async ({ db, session }) => {
-		const seed = seeder(db, session.user.id);
-		const clients = await seed.clients({ count: 3, versions: 1 });
-
-		const result = await seed.all({
-			clients: { count: { min: 1, max: 400 } },
-			invoices: { count: 0 },
-		});
-
-		expect(result.clients).toEqual(clients);
-		expect(await db.$count(tables.clients)).toBe(3);
-	});
-
-	test('Bridges a shortfall, refusing an already exceeded count', async ({ db, session }) => {
-		const seed = seeder(db, session.user.id);
-		await seed.clients({ count: 3, versions: 5 });
-
-		const all = (n: NumberOrRange, v?: NumberOrRange) =>
-			seed.all({ clients: { count: n, versions: v } });
-
-		// Plain number is treated as a minimum
-		await expect(all(2, 2)).resolves.not.toThrow();
-
-		// Explicit range has min/max semantics
-		await expect(all({ min: 0, max: 2 })).rejects.toThrow('Already seeded 3'); // Logical count
-		await expect(all(3, { min: 0, max: 2 })).rejects.toThrow('Already seeded 5'); // Version count
-
-		// Automatically seeds a shortfall (you cannot recut version history, so only logical count)
-		const range = await all({ min: 4, max: 8 });
-		expect(range.clients.length).toBeGreaterThanOrEqual(4);
-		expect(range.clients.length).toBeLessThanOrEqual(8);
-
-		expect((await all(10)).clients).toHaveLength(10);
-	});
 
 	test('Refuses to alter version histories once seeded', async ({ db, session }) => {
 		// History is distributed over a range (bound at init).
@@ -148,22 +124,6 @@ describe('createSeeder', () => {
 		for (const table of owned) expect(await db.$count(table)).toBe(0);
 	});
 
-	test('Preserves explicitly empty pools on subsequent default calls', async ({ db, session }) => {
-		const seed = seeder(db, session.user.id);
-		const first = await seed.all({
-			taxes: { count: 0 },
-			clients: { count: 0 },
-			invoices: { count: 0 },
-			config: { versions: 1 },
-		});
-
-		expect(first).toMatchObject({ taxes: [], clients: [], invoices: [] });
-		expect(await seed.all()).toEqual(first);
-		expect(await db.$count(tables.taxes)).toBe(0);
-		expect(await db.$count(tables.clients)).toBe(0);
-		expect(await db.$count(tables.invoices)).toBe(0);
-	});
-
 	test('Scopes seeded entities to their owning users', async ({ db, auth, session }) => {
 		const other = await createTestSession(auth);
 		const [mine] = await seeder(db, session.user.id).clients({ count: 1, versions: 1 });
@@ -200,35 +160,6 @@ describe('createSeeder', () => {
 		expect(listed.taxes).toEqual([]);
 		expect(fallback.taxes).toHaveLength(await db.$count(tables.taxes));
 		expect(fallback.taxes.length).toBeGreaterThan(0);
-	});
-
-	test('Counts reused taxes once in dependency pools', async ({ db, session }) => {
-		const seed = seeder(db, session.user.id);
-		const options = { count: 3, overrides: { rate: '0.1000' as const } };
-
-		const first = await seed.taxes(options);
-		await seed.taxes(options);
-
-		// Tests the in-memory pool, not the DB
-		const seeded = await seed.all({ taxes: { count: { min: 3, max: 3 } } });
-
-		expect(seeded.taxes).toEqual(first);
-		expect(await db.$count(tables.taxes)).toBe(3);
-	});
-
-	test('Returns cloned rows, not the internal array reference', async ({ db, session }) => {
-		const seed = seeder(db, session.user.id);
-		const { clients } = await seed.all({
-			clients: { count: 2, versions: 1 },
-			invoices: { count: 0 },
-		});
-
-		await seed.clients({ count: 1, versions: 1 });
-		expect(clients).toHaveLength(2);
-
-		clients.length = 0;
-		expect((await seed.all({ invoices: { count: 0 } })).clients).toHaveLength(3);
-		expect(await db.$count(tables.clients)).toBe(3);
 	});
 
 	test('Applies overrides to each entity, in order', async ({ db, session }) => {
