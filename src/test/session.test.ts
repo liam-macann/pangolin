@@ -2,6 +2,8 @@ import { eq, sql } from 'drizzle-orm';
 import { Temporal } from 'temporal-polyfill';
 import { describe, expect, onTestFinished, vi } from 'vitest';
 
+import { withRLS } from '@/db';
+import { clients } from '@/db/schema';
 import { users } from '@/db/schema/auth';
 
 import { type TestTX } from '@/test/pglite';
@@ -80,6 +82,34 @@ describe('bypassRLS', () => {
 
 			expect(outer).toBe('neondb_owner');
 			expect(await currentRole(db)).toBe('authenticated');
+		});
+	});
+
+	describe('Inside withRLS()', () => {
+		/** Reads every client id the acting user can reach through `withRLS()` */
+		const visibleClients = () =>
+			withRLS(tx => tx.select({ id: clients.id }).from(clients)).then(rows => rows.map(r => r.id));
+
+		asUser('Bypasses RLS for the duration of the callback only', async ({ auth, seed }) => {
+			const other = await createTestSession(auth);
+			const [theirs] = await seed({ userId: other.user.id }).clients({ count: 1 });
+
+			expect(await visibleClients()).toEqual([]);
+			expect(await bypassRLS(() => visibleClients())).toEqual([theirs.id]);
+			expect(await visibleClients()).toEqual([]);
+		});
+
+		asUser('Stays bypassed after a nested call returns', async ({ auth, seed }) => {
+			const other = await createTestSession(auth);
+			const [theirs] = await seed({ userId: other.user.id }).clients({ count: 1 });
+
+			const outer = await bypassRLS(async () => {
+				await bypassRLS(async () => {});
+				return visibleClients();
+			});
+
+			expect(outer).toEqual([theirs.id]);
+			expect(await visibleClients()).toEqual([]);
 		});
 	});
 
