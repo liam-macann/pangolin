@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { describe, expect } from 'vitest';
+import { assert, describe, expect } from 'vitest';
 import { z } from 'zod';
 
 import { type Enum } from '@/lib/utils/drizzle';
@@ -7,11 +7,9 @@ import { item as itemSchema } from '@/lib/validation/document';
 import { getBounds } from '@/lib/zod';
 import * as tables from '@/db/schema';
 
-import { bypassRLS, asUser as test } from '@/test/session';
+import { bypassRLS, createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { fetchStats } from './stats';
-
-type Item = { quantity: number; unitCost: number };
 
 const isNumber = (schema: z.core.$ZodType): schema is z.core.$ZodNumber | z.core.$ZodNumberFormat =>
 	schema instanceof z.ZodNumber || schema instanceof z.ZodNumberFormat;
@@ -20,147 +18,121 @@ const quantityBounds = getBounds(itemSchema.shape.quantity, isNumber);
 const unitCostBounds = getBounds(itemSchema.shape.unitCost, isNumber);
 
 describe('fetchStats', () => {
-	type InvoiceCase = { items: Item[]; status: Enum<typeof tables.statusEnum>; void?: boolean };
-	type ExpectedStats = {
-		validCount: number;
-		netSum: number;
-		grossSum: number;
-		grossOutstanding: number;
+	/** Builds invoice seed override with a single item costing `total`, untaxed by default. */
+	const invoice = (
+		total: number,
+		status: Enum<typeof tables.statusEnum>,
+		{ isVoid = false, taxes = [] }: { isVoid?: boolean; taxes?: string[] } = {},
+	) => ({
+		status: { status, isVoid },
+		items: [{ quantity: '1' as const, unitCost: `${total}` as const, taxes }],
+	});
+
+	const unpaid = (total: number, taxes?: string[]) => invoice(total, 'unpaid', { taxes });
+	const paid = (total: number, taxes?: string[]) => invoice(total, 'paid', { taxes });
+	const refunded = (total: number) => invoice(total, 'refunded');
+	const voided = (total: number) => invoice(total, 'unpaid', { isVoid: true });
+
+	/** Fetches the stats of a user who invoices in one currency, as plain numbers. */
+	const fetchTotals = async () => {
+		const { validCount, totals } = await fetchStats();
+		assert(totals?.length === 1, 'Expected totals for a single currency');
+
+		const [{ netSum, grossSum, grossOutstanding }] = totals;
+		return {
+			count: validCount,
+			net: Number(netSum),
+			gross: Number(grossSum),
+			outstanding: Number(grossOutstanding),
+		};
 	};
 
-	test.for<[string, { invoices: InvoiceCase[]; expected: ExpectedStats }]>([
-		[
-			'coinciding totals',
-			{
-				invoices: [
-					{ items: [{ quantity: 1, unitCost: 100 }], status: 'unpaid' },
-					{ items: [{ quantity: 1, unitCost: 100 }], status: 'unpaid' },
-				],
-				expected: { validCount: 2, netSum: 200, grossSum: 200, grossOutstanding: 200 },
-			},
-		],
-		[
-			'fractional totals',
-			{
-				invoices: [
-					{ items: [{ quantity: 1, unitCost: 33.33 }], status: 'unpaid' },
-					{ items: [{ quantity: 1, unitCost: 66.67 }], status: 'unpaid' },
-				],
-				expected: { validCount: 2, netSum: 100, grossSum: 100, grossOutstanding: 100 },
-			},
-		],
-		[
-			'negative total (credit note)',
-			{
-				invoices: [
-					{ items: [{ quantity: 1, unitCost: 100 }], status: 'unpaid' },
-					{ items: [{ quantity: 1, unitCost: -40 }], status: 'unpaid' },
-				],
-				expected: { validCount: 2, netSum: 60, grossSum: 60, grossOutstanding: 60 },
-			},
-		],
-		[
-			'zero-total invoice',
-			{
-				invoices: [
-					{ items: [{ quantity: 0, unitCost: 100 }], status: 'unpaid' },
-					{ items: [{ quantity: 1, unitCost: 50 }], status: 'unpaid' },
-				],
-				expected: { validCount: 2, netSum: 50, grossSum: 50, grossOutstanding: 50 },
-			},
-		],
-		[
-			'refunded invoice',
-			{
-				invoices: [
-					{ items: [{ quantity: 1, unitCost: 100 }], status: 'refunded' },
-					{ items: [{ quantity: 1, unitCost: 50 }], status: 'unpaid' },
-				],
-				expected: { validCount: 2, netSum: 50, grossSum: 50, grossOutstanding: 50 },
-			},
-		],
-		[
-			'paid invoice',
-			{
-				invoices: [
-					{ items: [{ quantity: 1, unitCost: 100 }], status: 'paid' },
-					{ items: [{ quantity: 1, unitCost: 50 }], status: 'unpaid' },
-				],
-				expected: { validCount: 2, netSum: 150, grossSum: 150, grossOutstanding: 50 },
-			},
-		],
-		[
-			'voided invoice',
-			{
-				invoices: [
-					{ items: [{ quantity: 1, unitCost: 100 }], status: 'unpaid', void: true },
-					{ items: [{ quantity: 1, unitCost: 50 }], status: 'unpaid' },
-				],
-				expected: { validCount: 1, netSum: 50, grossSum: 50, grossOutstanding: 50 },
-			},
-		],
-		[
-			'max total',
-			{
-				invoices: [
-					{
-						items: [{ quantity: quantityBounds.maximum, unitCost: unitCostBounds.maximum }],
-						status: 'unpaid',
-					},
-				],
-				expected: {
-					validCount: 1,
-					netSum: quantityBounds.maximum * unitCostBounds.maximum,
-					grossSum: quantityBounds.maximum * unitCostBounds.maximum,
-					grossOutstanding: quantityBounds.maximum * unitCostBounds.maximum,
-				},
-			},
-		],
-		[
-			'min total',
-			{
-				invoices: [
-					{
-						items: [{ quantity: quantityBounds.maximum, unitCost: unitCostBounds.minimum }],
-						status: 'unpaid',
-					},
-				],
-				expected: {
-					validCount: 1,
-					netSum: quantityBounds.maximum * unitCostBounds.minimum,
-					grossSum: quantityBounds.maximum * unitCostBounds.minimum,
-					grossOutstanding: quantityBounds.maximum * unitCostBounds.minimum,
-				},
-			},
-		],
-	])('Calculates dashboard stats correctly: %s', async ([, { invoices, expected }], { seed }) => {
-		await seed.config({ overrides: [{ currency: 'AUD' }] });
-		await seed.invoices({
-			overrides: invoices.map(invoice => ({
-				status: { status: invoice.status, isVoid: invoice.void ?? false },
-				items: invoice.items.map(item => ({
-					quantity: `${item.quantity}`,
-					unitCost: `${item.unitCost}`,
-					taxes: [],
-				})),
-			})),
+	describe('Totals', () => {
+		test('Sums invoices with coinciding totals', async ({ seed }) => {
+			// ie. not SUM DISTINCT
+			await seed.invoices({ overrides: [unpaid(100), unpaid(100)] });
+			expect(await fetchTotals()).toEqual({ count: 2, net: 200, gross: 200, outstanding: 200 });
 		});
 
-		const stats = await fetchStats();
-		expect(stats.validCount).toBe(expected.validCount);
-		expect(stats.totals).toEqual([
-			expect.objectContaining({
-				currency: 'AUD',
-				netSum: expected.netSum.toFixed(4),
-				grossSum: expected.grossSum.toFixed(4),
-				grossOutstanding: expected.grossOutstanding.toFixed(4),
-			}),
-		]);
+		test('Sums invoices with fractional totals', async ({ seed }) => {
+			await seed.invoices({ overrides: [unpaid(33.33), unpaid(66.67)] });
+			expect(await fetchTotals()).toEqual({ count: 2, net: 100, gross: 100, outstanding: 100 });
+		});
+
+		test('Deducts an invoice with a negative total (credit note)', async ({ seed }) => {
+			await seed.invoices({ overrides: [unpaid(100), unpaid(-40)] });
+			expect(await fetchTotals()).toEqual({ count: 2, net: 60, gross: 60, outstanding: 60 });
+		});
+
+		test('Counts an invoice with a zero total', async ({ seed }) => {
+			await seed.invoices({ overrides: [unpaid(0), unpaid(50)] });
+			expect(await fetchTotals()).toEqual({ count: 2, net: 50, gross: 50, outstanding: 50 });
+		});
+
+		test('Counts a refunded invoice, but excludes it from every sum', async ({ seed }) => {
+			await seed.invoices({ overrides: [refunded(100), unpaid(50)] });
+			expect(await fetchTotals()).toEqual({ count: 2, net: 50, gross: 50, outstanding: 50 });
+		});
+
+		test('Excludes a paid invoice from the outstanding amount only', async ({ seed }) => {
+			await seed.invoices({ overrides: [paid(100), unpaid(50)] });
+			expect(await fetchTotals()).toEqual({ count: 2, net: 150, gross: 150, outstanding: 50 });
+		});
+
+		test('Excludes a voided invoice from the count and every sum', async ({ seed }) => {
+			await seed.invoices({ overrides: [voided(100), unpaid(50)] });
+			expect(await fetchTotals()).toEqual({ count: 1, net: 50, gross: 50, outstanding: 50 });
+		});
+
+		test('Sums gross totals inclusive of tax', async ({ seed }) => {
+			const [gst] = await seed.taxes({ overrides: [{ name: 'GST', rate: '0.1000' }] });
+			await seed.config({ overrides: [{ taxRegistration: true }] });
+			await seed.invoices({ overrides: [unpaid(100, [gst.id]), paid(100, [gst.id])] });
+
+			// Net, gross and outstanding all differ, so each figure can only come from its own column
+			expect(await fetchTotals()).toEqual({ count: 2, net: 200, gross: 220, outstanding: 110 });
+		});
+
+		test.for([
+			['most positive', unitCostBounds.maximum],
+			['most negative', unitCostBounds.minimum],
+		] as const)('Does not overflow at the %s invoice total', async ([, unitCost], { seed }) => {
+			const quantity = quantityBounds.maximum;
+			const total = quantity * unitCost;
+
+			await seed.invoices({
+				overrides: [
+					{
+						status: { status: 'unpaid', isVoid: false },
+						items: [{ quantity: `${quantity}`, unitCost: `${unitCost}`, taxes: [] }],
+					},
+				],
+			});
+
+			expect(await fetchTotals()).toEqual({
+				count: 1,
+				net: total,
+				gross: total,
+				outstanding: total,
+			});
+		});
 	});
 
 	test('Returns a zero count and null totals when the user has no invoices', async () => {
 		const stats = await fetchStats();
 		expect(stats).toEqual({ validCount: 0, totals: null });
+	});
+
+	test('Only aggregates invoices belonging to the authenticated user', async ({ auth, seed }) => {
+		const other = await createTestSession(auth);
+		await seed({ userId: other.user.id }).invoices({ overrides: [unpaid(1000)] });
+		await seed.invoices({ overrides: [unpaid(50)] });
+
+		const mine = await bypassRLS(() => fetchTotals()); // Checks that withRLS is not the only protection
+		expect(mine).toEqual({ count: 1, net: 50, gross: 50, outstanding: 50 });
+
+		const theirs = await bypassRLS(() => sessionStorage.run(other, () => fetchTotals()));
+		expect(theirs).toEqual({ count: 1, net: 1000, gross: 1000, outstanding: 1000 });
 	});
 
 	describe('Mixed currencies', () => {
@@ -175,7 +147,7 @@ describe('fetchStats', () => {
 					{
 						createdAt: aud.validFrom,
 						status: { status: 'unpaid', isVoid: false },
-						items: [{ quantity: '1', unitCost: '100', taxes: [] }],
+						items: [{ quantity: '1', unitCost: '33.33', taxes: [] }],
 					},
 					{
 						createdAt: usd.validFrom,
@@ -192,9 +164,9 @@ describe('fetchStats', () => {
 				expect.arrayContaining([
 					expect.objectContaining({
 						currency: 'AUD',
-						netSum: '100.0000',
-						grossSum: '100.0000',
-						grossOutstanding: '100.0000',
+						netSum: '33.3300',
+						grossSum: '33.3300',
+						grossOutstanding: '33.3300',
 					}),
 					expect.objectContaining({
 						currency: 'USD',
