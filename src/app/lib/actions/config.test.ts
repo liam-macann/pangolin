@@ -1,4 +1,3 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
 import { updateTag } from 'next/cache';
 import { after } from 'next/server';
 import { afterEach, assert, beforeEach, describe, expect, vi } from 'vitest';
@@ -12,6 +11,7 @@ import { getSession } from '@/auth';
 import { asUser as test } from '@/test/session';
 
 import { updateUserConfig } from './config';
+import { captureAfter } from './tests/after';
 import { addressBuilder, configBuilder } from './tests/builders';
 
 describe('updateUserConfig', () => {
@@ -184,16 +184,12 @@ describe('updateUserConfig', () => {
 	test('Schedules cleanup', async ({ session }) => {
 		vi.spyOn(actions, 'cleanupConfigs');
 		vi.spyOn(actions, 'cleanupAddresses');
-		let deferred: (() => unknown) | undefined;
-		vi.mocked(after).mockImplementation(callback => {
-			if (typeof callback === 'function') deferred = AsyncLocalStorage.bind(callback);
-		});
+		const runAfter = captureAfter();
 
 		await updateUserConfig(configBuilder());
 
 		vi.mocked(getSession).mockClear();
-		assert(deferred, 'Expected cleanup to be scheduled');
-		await deferred();
+		await runAfter();
 
 		expect(getSession).toHaveBeenCalledTimes(1);
 		expect(actions.cleanupConfigs).toHaveBeenCalledWith(session.user.id);

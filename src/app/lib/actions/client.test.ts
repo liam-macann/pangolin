@@ -1,4 +1,3 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
@@ -15,6 +14,7 @@ import { getSession } from '@/auth';
 import { bypassRLS, createTestSession, sessionStorage, asUser as test } from '@/test/session';
 
 import { createClient, updateClient, updateClientDeleted, updateClientFavorite } from './client';
+import { captureAfter } from './tests/after';
 import { addressBuilder, clientBuilder } from './tests/builders';
 
 /** Fetch the active clientData row (and associated address) for a given client */
@@ -192,16 +192,12 @@ describe('updateClient', () => {
 		const [client] = await seed.clients({ count: 1 });
 		vi.spyOn(actions, 'cleanupClientData');
 		vi.spyOn(actions, 'cleanupAddresses');
-		let deferred: (() => unknown) | undefined;
-		vi.mocked(after).mockImplementation(callback => {
-			if (typeof callback === 'function') deferred = AsyncLocalStorage.bind(callback);
-		});
+		const runAfter = captureAfter();
 
 		await updateClient({ ...clientBuilder(), clientId: client.id });
 
 		vi.mocked(getSession).mockClear();
-		assert(deferred, 'Expected cleanup to be scheduled');
-		await deferred();
+		await runAfter();
 
 		expect(getSession).toHaveBeenCalledTimes(1);
 		expect(actions.cleanupClientData).toHaveBeenCalledWith(session.user.id);
