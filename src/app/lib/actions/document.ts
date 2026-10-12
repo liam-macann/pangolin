@@ -17,9 +17,16 @@ export async function createDocument(input: z.input<typeof zodSchema>) {
 			columns: { id: true, taxRegistration: true },
 			where: { validTo: { isNull: true }, userId: session.user.id },
 			orderBy: { validFrom: 'desc' },
+			with: { configTaxes: { columns: { taxId: true }, where: { userId: session.user.id } } },
 		});
 
 		if (!currentConfig) notFound();
+
+		// Throws notFound() if an item lists a tax the config does not offer, or owned by another tenant
+		if (currentConfig.taxRegistration) {
+			const offered = new Set(currentConfig.configTaxes.map(tax => tax.taxId));
+			if (!items.every(item => [...item.taxes].every(taxId => offered.has(taxId)))) notFound();
+		}
 
 		// Throws notFound() if client does not exist, or is owned by another tenant
 		await tx.query.clientData

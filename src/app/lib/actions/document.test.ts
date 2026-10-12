@@ -180,6 +180,25 @@ describe('createDocument', () => {
 				),
 			),
 		).rejects.toThrow();
+		expect(navigation.notFound).toHaveBeenCalled();
+
+		expect(await withRLS(db => db.select().from(tables.documents))).toHaveLength(0);
+	});
+
+	test('Rejects an item referencing a tax the config does not offer', async ({ seed }) => {
+		const [offered, withheld] = await seed.taxes({ count: 2 });
+		await seed.config({ overrides: [{ taxRegistration: true, taxes: [offered.id] }] });
+		const [client] = await seed.clients({ count: 1, versions: 1 });
+
+		await expect(
+			createDocument(
+				documentBuilder({
+					clientDataId: client.versions[0].id,
+					items: [{ taxes: new Set([offered.id, withheld.id]) }],
+				}),
+			),
+		).rejects.toThrow();
+		expect(navigation.notFound).toHaveBeenCalled();
 
 		expect(await withRLS(db => db.select().from(tables.documents))).toHaveLength(0);
 	});
