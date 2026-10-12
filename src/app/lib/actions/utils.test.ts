@@ -1,4 +1,4 @@
-import { describe, expect } from 'vitest';
+import { assert, describe, expect } from 'vitest';
 
 import * as tables from '@/db/schema';
 
@@ -7,16 +7,14 @@ import { asUser as test } from '@/test/session';
 import { cleanupAddresses, cleanupClientData, cleanupConfigs } from './utils';
 
 describe('cleanupConfigs', () => {
-	test('Preserves the active config', async ({ db, session, seed }) => {
-		await seed.config({ versions: 1 });
-		await cleanupConfigs(session.user.id);
-		expect(await db.select().from(tables.config)).toHaveLength(1);
-	});
-
 	test('Removes invalidated and unreferenced configs', async ({ db, session, seed }) => {
-		await seed.config({ versions: 4 });
+		const active = (await seed.config({ versions: 4 })).find(config => config.validTo === null);
+		assert(active, 'Seeded config should have an active version');
+
 		await cleanupConfigs(session.user.id);
-		expect(await db.select().from(tables.config)).toHaveLength(1);
+
+		const remaining = await db.select({ id: tables.config.id }).from(tables.config);
+		expect(remaining).toEqual([{ id: active.id }]);
 	});
 
 	test('Preserves invalidated config referenced by an invoice', async ({ db, session, seed }) => {
@@ -32,23 +30,18 @@ describe('cleanupConfigs', () => {
 });
 
 describe('cleanupClientData', () => {
-	test('Removes invalidated client data not referenced by any invoice', async ({
-		db,
-		session,
-		seed,
-	}) => {
-		await seed.clients({ count: 1, versions: 2 });
+	test('Removes invalidated and unreferenced client data', async ({ db, session, seed }) => {
+		const [client] = await seed.clients({ count: 1, versions: 5 });
+		const active = client.versions.find(version => version.validTo === null);
+		assert(active, 'Seeded client should have an active version');
 
 		await cleanupClientData(session.user.id);
 
-		expect(await db.select().from(tables.clientData)).toHaveLength(1);
+		const remaining = await db.select({ id: tables.clientData.id }).from(tables.clientData);
+		expect(remaining).toEqual([{ id: active.id }]);
 	});
 
-	test('Preserves invalidated client data referenced by an invoice', async ({
-		db,
-		session,
-		seed,
-	}) => {
+	test('Preserves invalidated client data referenced by invoice', async ({ db, session, seed }) => {
 		const [client] = await seed.clients({ count: 1, versions: 2 });
 		const invalidated = client.versions[0];
 		expect(invalidated.validTo, 'First version should have been superseded').not.toBeNull();
@@ -59,14 +52,6 @@ describe('cleanupClientData', () => {
 		await cleanupClientData(session.user.id);
 
 		expect(await db.select().from(tables.clientData)).toHaveLength(2);
-	});
-
-	test('Preserves the active client data', async ({ db, session, seed }) => {
-		await seed.clients({ count: 1, versions: 1 });
-
-		await cleanupClientData(session.user.id);
-
-		expect(await db.select().from(tables.clientData)).toHaveLength(1);
 	});
 });
 

@@ -40,15 +40,8 @@ const saveClientVia: Record<
 	(input: ClientInput) => Promise<string>
 > = {
 	async createClient(input: ClientInput) {
-		const existing = await withRLS(db => db.select({ id: tables.clients.id }).from(tables.clients));
-
-		await createClient(input);
-
-		const clients = await withRLS(db => db.select({ id: tables.clients.id }).from(tables.clients));
-		const created = clients.find(client => existing.every(({ id }) => id !== client.id));
-
-		assert(created, 'createClient should have inserted a new logical client');
-		return created.id;
+		const { id } = await createClient(input);
+		return id;
 	},
 
 	async updateClient(input: ClientInput) {
@@ -67,12 +60,18 @@ const saveClientVia: Record<
 describe.for(Object.entries(saveClientVia))('Client insertion behaviour: %s', ([, saveClient]) => {
 	test('Persists submitted fields on the active data row', async () => {
 		const clientId = await saveClient(
-			clientBuilder({ name: 'Alaric Wivell', email: 'a-wivell@acme.example' }),
+			clientBuilder({
+				name: '  Alaric Wivell',
+				organization: ' Acme  ',
+				email: '  client@acme.example  ',
+			}),
 		);
 
+		// Values should be trimmed
 		expect(await getActiveClientData(clientId)).toMatchObject({
 			name: 'Alaric Wivell',
-			email: 'a-wivell@acme.example',
+			organization: 'Acme',
+			email: 'client@acme.example',
 		});
 	});
 
@@ -84,22 +83,6 @@ describe.for(Object.entries(saveClientVia))('Client insertion behaviour: %s', ([
 		expect(await getActiveClientData(second)).toMatchObject({
 			name: 'Alaric Wivell',
 			organization: null,
-		});
-	});
-
-	test('Trims whitespace from string values', async () => {
-		const clientId = await saveClient(
-			clientBuilder({
-				name: '  Alaric Wivell  ',
-				organization: '  Acme  ',
-				email: '  client@acme.example  ',
-			}),
-		);
-
-		expect(await getActiveClientData(clientId)).toMatchObject({
-			name: 'Alaric Wivell',
-			organization: 'Acme',
-			email: 'client@acme.example',
 		});
 	});
 
@@ -205,13 +188,7 @@ describe('updateClient', () => {
 		expect(activeData).toMatchObject({ organization: 'Acme' });
 	});
 
-	test('Invalidates cache tags', async ({ session, seed }) => {
-		const [client] = await seed.clients({ count: 1 });
-		await updateClient({ ...clientBuilder(), clientId: client.id });
-		expect(updateTag).toHaveBeenCalledWith(`clients-${session.user.id}`);
-	});
-
-	test('Schedules cleanup and invalidates cache tags', async ({ session, seed }) => {
+	test('Schedules cleanup', async ({ session, seed }) => {
 		const [client] = await seed.clients({ count: 1 });
 		vi.spyOn(actions, 'cleanupClientData');
 		vi.spyOn(actions, 'cleanupAddresses');

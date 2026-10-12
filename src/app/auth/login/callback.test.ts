@@ -36,8 +36,9 @@ test.for([
 	expect(internalURL.validate(input)).toBe(false);
 });
 
-test('Rejects an absent or repeated callback URL', () => {
+test('Rejects an absent callback URL', () => {
 	expect(internalURL.validate(undefined)).toBe(false);
+	expect(internalURL.validate(null)).toBe(false);
 });
 
 test('Rejects a repeated callback URL', () => {

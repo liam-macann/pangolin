@@ -6,7 +6,7 @@ describe('GET /api/address/metadata/{country}', () => {
 	test('Returns 405 for an unsupported method', async () => {
 		const res = await app.request('/api/address/metadata/US', { method: 'POST' });
 		expect(res.status).toBe(405);
-		expect(res.headers.get('Allow')).toBeDefined();
+		expect(res.headers.get('Allow')).toContain('GET');
 		expect(res.headers.get('Content-Type')).toContain('application/problem+json');
 		await expect(res.json()).resolves.toMatchObject({ status: 405, code: 'method-not-allowed' });
 	});

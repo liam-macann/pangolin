@@ -3,7 +3,7 @@ import { describe, expect } from 'vitest';
 import { z } from 'zod';
 
 import { type Enum } from '@/lib/utils/drizzle';
-import { invoice as invoiceSchema } from '@/lib/validation/invoice';
+import { item as itemSchema } from '@/lib/validation/document';
 import { getBounds } from '@/lib/zod';
 import * as tables from '@/db/schema';
 
@@ -16,12 +16,8 @@ type Item = { quantity: number; unitCost: number };
 const isNumber = (schema: z.core.$ZodType): schema is z.core.$ZodNumber | z.core.$ZodNumberFormat =>
 	schema instanceof z.ZodNumber || schema instanceof z.ZodNumberFormat;
 
-const quantityBounds = getBounds(invoiceSchema.shape.items.element.shape.quantity, isNumber, {
-	minimum: -Infinity,
-});
-const unitCostBounds = getBounds(invoiceSchema.shape.items.element.shape.unitCost, isNumber, {
-	minimum: -Infinity,
-});
+const quantityBounds = getBounds(itemSchema.shape.quantity, isNumber);
+const unitCostBounds = getBounds(itemSchema.shape.unitCost, isNumber);
 
 describe('fetchStats', () => {
 	type InvoiceCase = { items: Item[]; status: Enum<typeof tables.statusEnum>; void?: boolean };

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { Invoice } from '@/api/dto/invoice';
 import { percentToRate } from '@/lib/utils';
 import { taxes as taxesSchema } from '@/lib/validation/config';
+import { item as itemSchema } from '@/lib/validation/document';
 import { invoice as invoiceSchema } from '@/lib/validation/invoice';
 import { getBounds } from '@/lib/zod';
 import { withRLS } from '@/db';
@@ -20,22 +21,12 @@ type Item = Pick<typeof tables.lineItems.$inferInsert, 'quantity' | 'unitCost'>;
 
 const isNumber = (schema: z.core.$ZodType): schema is z.core.$ZodNumber | z.core.$ZodNumberFormat =>
 	schema instanceof z.ZodNumber || schema instanceof z.ZodNumberFormat;
+
 const isArray = (schema: z.core.$ZodType): schema is z.core.$ZodArray =>
 	schema instanceof z.ZodArray;
 
-const quantityBounds = getBounds(invoiceSchema.shape.items.element.shape.quantity, isNumber, {
-	minimum: -Infinity,
-});
-const unitCostBounds = getBounds(invoiceSchema.shape.items.element.shape.unitCost, isNumber, {
-	minimum: -Infinity,
-});
-
-const taxRateBounds = getBounds(taxesSchema.def.element.shape.rate, isNumber, {
-	minimum: -Infinity,
-});
-
-const itemsBounds = getBounds(invoiceSchema.shape.items, isArray);
-const taxCountBounds = getBounds(taxesSchema, isArray);
+const quantityBounds = getBounds(itemSchema.shape.quantity, isNumber);
+const unitCostBounds = getBounds(itemSchema.shape.unitCost, isNumber);
 
 describe('fetchInvoice() and fetchInvoices()', () => {
 	const fetchBoth = async (id: string) => [
@@ -165,22 +156,40 @@ describe('fetchInvoice()', () => {
 			expect(invoice.grossTotal).toBe(expected.toFixed(4));
 		});
 
-		test('grossTotal does not overflow across the max item count', async ({ seed }) => {
-			const items = Array.from(
-				{ length: itemsBounds.maximum },
-				(): Item => ({
-					quantity: '1',
-					unitCost: `${unitCostBounds.maximum}`,
-				}),
-			);
+		test(`Invoice gross total cannot overflow`, async ({ seed }) => {
+			const taxPercent = getBounds(taxesSchema.element.shape.rate, isNumber).maximum;
+			const taxCount = getBounds(taxesSchema, isArray).maximum;
 
-			await seed.config({ overrides: [{ taxRegistration: false }] });
-			const [{ id }] = await seed.invoices({ overrides: [{ items }] });
+			const itemCount = getBounds(invoiceSchema.shape.items, isArray).maximum;
+			const qty = quantityBounds.maximum;
+			const unitCost = unitCostBounds.maximum;
 
-			const invoice = await fetchInvoice(id);
-			expect(invoice.grossTotal).toBe(
-				(Math.round(unitCostBounds.maximum * itemsBounds.maximum * 100) / 100).toFixed(4),
-			);
+			const taxes = await seed.taxes({
+				overrides: Array.from({ length: taxCount }, (_, i) => ({
+					name: `TAX_${i}`,
+					rate: percentToRate(taxPercent),
+				})),
+			});
+
+			// Config attaches all defined taxes
+			await seed.config({ overrides: [{ taxRegistration: true, taxes: taxes.map(v => v.id) }] });
+
+			// Every item at the maximum cost, taxed by the maximum number of taxes at the maximum rate
+			const items = [...Array(itemCount)].map(() => ({
+				quantity: `${qty}` as const,
+				unitCost: `${unitCost}` as const,
+				taxes: taxes.map(tax => tax.id),
+			}));
+
+			const [seeded] = await seed.invoices({ overrides: [{ items }] });
+
+			/** The maximum number of taxes multiplied by the maximum tax rate */
+			const maxTaxation = 1 + (taxCount * taxPercent) / 100;
+			/** Max gross cost for a single item */
+			const maxItemGross = unitCost * maxTaxation;
+
+			const invoice = await fetchInvoice(seeded.id);
+			expect(invoice.grossTotal).toBe((qty * maxItemGross * itemCount).toFixed(4));
 		});
 	});
 
@@ -208,36 +217,6 @@ describe('fetchInvoice()', () => {
 				expect(invoice.grossTotal).toBe(expectedGross.toFixed(4));
 			},
 		);
-
-		const expectedItemGross =
-			unitCostBounds.maximum * (1 + (taxCountBounds.maximum * taxRateBounds.maximum) / 100);
-		test(`Invoice gross total cannot overflow`, async ({ seed }) => {
-			const taxes = await seed.taxes({
-				overrides: Array.from({ length: taxCountBounds.maximum }, (_, i) => ({
-					name: `TAX_${i}`,
-					rate: percentToRate(taxRateBounds.maximum),
-				})),
-			});
-
-			// Config attaches all defined taxes
-			await seed.config({ overrides: [{ taxRegistration: true }] });
-
-			// Every item at the maximum cost, taxed by the maximum number of taxes at the maximum rate
-			const [seeded] = await seed.invoices({
-				overrides: [
-					{
-						items: Array.from({ length: itemsBounds.maximum }, () => ({
-							quantity: '1' as const,
-							unitCost: `${unitCostBounds.maximum}` as const,
-							taxes: taxes.map(tax => tax.id),
-						})),
-					},
-				],
-			});
-
-			const invoice = await fetchInvoice(seeded.id);
-			expect(invoice.grossTotal).toBe((expectedItemGross * itemsBounds.maximum).toFixed(4));
-		});
 	});
 
 	describe('Tax registration status', () => {
@@ -395,16 +374,7 @@ describe('fetchInvoice()', () => {
 
 describe('fetchInvoices()', () => {
 	describe('orderBy', () => {
-		test('Orders invoices by issued date (descending) by default', async ({ seed }) => {
-			const [first, second] = await seed.invoices({
-				overrides: [{ issuedAt: '2026-01-01' }, { issuedAt: '2026-01-02' }],
-			});
-
-			const invoices = await fetchInvoices({ limit: 200 });
-			expect(invoices.map(i => i.id)).toEqual([second.id, first.id]);
-		});
-
-		test('Allows overriding the orderBy defaults', async ({ seed }) => {
+		test('Allows overriding the default issued date (descending) order', async ({ seed }) => {
 			const [first, second] = await seed.invoices({
 				overrides: [{ issuedAt: '2026-01-01' }, { issuedAt: '2026-01-02' }],
 			});

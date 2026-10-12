@@ -1,4 +1,4 @@
-import { assert, describe, expect, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 
 import { formatNumeric, isNumericString, NumericString } from '@/lib/utils/numeric';
 
@@ -45,7 +45,6 @@ describe('NumericString', () => {
 
 	test.for(accepted)('Accepts numeric string: "%s"', value => {
 		expect(isNumericString(value)).toBe(true);
-		assert(isNumericString(value));
 	});
 
 	test.for(accepted)('Preserves decimal representation through parse: "%s" ', value => {
@@ -55,7 +54,6 @@ describe('NumericString', () => {
 
 	test.for(rejected)('Rejects invalid value: "%s"', value => {
 		expect(isNumericString(value)).toBe(false);
-		assert(!isNumericString(value));
 	});
 
 	test('Accepts decimal string above the JavaScript number range', () => {

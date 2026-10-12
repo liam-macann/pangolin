@@ -48,7 +48,7 @@ describe('buildDocDefinition', () => {
 					invoiceDataBuilder({ config: { taxRegistration: false } }),
 				);
 				expect(info?.title).toMatch(/^Invoice /);
-				expect(info?.title).not.toContain(/\btax\b/i);
+				expect(info?.title).not.toMatch(/\btax\b/i);
 			});
 
 			test('Title uses "Tax Invoice" prefix when tax-registered', () => {
