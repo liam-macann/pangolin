@@ -3,6 +3,7 @@ import { Temporal } from 'temporal-polyfill';
 
 import { type createClient } from '@/lib/actions/client';
 import { type updateUserConfig } from '@/lib/actions/config';
+import { type createDocument } from '@/lib/actions/document';
 import { type createInvoice } from '@/lib/actions/invoice';
 import { type ElementType, type Minimized, type PartialDeep } from '@/lib/utils/type';
 
@@ -11,6 +12,7 @@ import { createBuilder } from '@/test/builders';
 type ClientInput = Parameters<typeof createClient>[0];
 type AddressInput = NonNullable<ClientInput['address']>;
 type ConfigInput = Parameters<typeof updateUserConfig>[0];
+type DocumentInput = Parameters<typeof createDocument>[0];
 type InvoiceInput = Parameters<typeof createInvoice>[0];
 type InvoiceItemInput = ElementType<InvoiceInput['items']>;
 
@@ -64,18 +66,15 @@ export const invoiceItemBuilder = createBuilder<InvoiceItemInput>(
 	}),
 );
 
-/** Builds an invoice with optional overrides, merged onto a minimal base. */
-export const invoiceBuilder = (
-	overrides: PartialDeep<Omit<InvoiceInput, 'clientDataId'>> & Pick<InvoiceInput, 'clientDataId'>,
-): InvoiceInput => {
+/** Builds a document with optional overrides, merged onto a minimal base. */
+export const documentBuilder = (
+	overrides: PartialDeep<Omit<DocumentInput, 'clientDataId'>> & Pick<DocumentInput, 'clientDataId'>,
+): DocumentInput => {
 	const { clientDataId, items: itemOverrides, ...rest } = overrides;
 
-	const base: Minimized<Omit<InvoiceInput, 'clientDataId' | 'items'>> = {
+	const base: Minimized<Omit<DocumentInput, 'clientDataId' | 'items'>> = {
 		title: undefined,
 		description: undefined,
-		dueAt: Temporal.Now.plainDateISO().add({ days: 14 }).toString(),
-		status: 'unpaid',
-		notes: undefined,
 	};
 
 	return {
@@ -84,5 +83,23 @@ export const invoiceBuilder = (
 		items: itemOverrides
 			? itemOverrides.map(item => invoiceItemBuilder(item))
 			: [invoiceItemBuilder()],
+	};
+};
+
+/** Builds an invoice with optional overrides, merged onto a minimal document. */
+export const invoiceBuilder = (
+	overrides: PartialDeep<Omit<InvoiceInput, 'clientDataId'>> & Pick<InvoiceInput, 'clientDataId'>,
+): InvoiceInput => {
+	const { clientDataId, title, description, items, ...rest } = overrides;
+
+	const base: Minimized<Omit<InvoiceInput, keyof DocumentInput>> = {
+		dueAt: Temporal.Now.plainDateISO().add({ days: 14 }).toString(),
+		status: 'unpaid',
+		notes: undefined,
+	};
+
+	return {
+		...documentBuilder({ clientDataId, title, description, items }),
+		...toMerged(base, rest),
 	};
 };
