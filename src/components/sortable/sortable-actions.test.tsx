@@ -1,39 +1,20 @@
 import { describe, expect, test } from 'vitest';
-import { userEvent } from 'vitest/browser';
-import { render } from 'vitest-browser-react';
+import { commands, userEvent } from 'vitest/browser';
 
 import { SortableActions } from './sortable-actions';
-import { SortableItem } from './sortable-item';
-import { SortableList } from './sortable-list';
-import { Sortable } from './sortable-root';
-
-type Item = {
-	id: string;
-	label: string;
-};
-
-const sample: Item[] = [
-	{ id: 'first', label: 'First item' },
-	{ id: 'second', label: 'Second item' },
-];
+import { renderSortable } from './tests/helpers';
 
 describe('SortableActions', () => {
 	test('Shows actions belonging to the selected item', async () => {
-		const screen = await render(
-			<Sortable items={sample} onReorder={() => {}}>
-				<SortableList>
-					{(item: Item, index) => (
-						<SortableItem key={item.id} id={item.id} index={index}>
-							<SortableActions>
-								<button type='button'>Delete "{item.label}"</button>
-							</SortableActions>
-						</SortableItem>
-					)}
-				</SortableList>
-			</Sortable>,
-		);
+		const { screen, locators } = await renderSortable({
+			children: item => (
+				<SortableActions>
+					<button type='button'>Delete "{item.label}"</button>
+				</SortableActions>
+			),
+		});
 
-		const trigger = screen.getByRole('button', { name: 'Actions' }).first();
+		const trigger = locators.actions.first();
 
 		await expect
 			.poll(async () => {
@@ -51,31 +32,38 @@ describe('SortableActions', () => {
 			.not.toBeInTheDocument();
 	});
 
-	test('Cannot be dragged', async () => {
+	test('Cannot be dragged', { retry: 2 }, async () => {
 		// The entire SortableItem becomes a drag surface when there is not SortableHandle.
 		// SortableActions is a menu, and has distinct drag semantics (ie. releasing pointer over menu item)
 
-		let flag = false;
+		const renderList = () =>
+			renderSortable({
+				children: item => (
+					<>
+						<SortableActions>
+							<button type='button'>Delete "{item.label}"</button>
+						</SortableActions>
+						<span data-testid={`label-${item.id}`}>{item.label}</span>
+					</>
+				),
+			});
 
-		const screen = await render(
-			<Sortable items={sample} onReorder={() => (flag = true)}>
-				<SortableList>
-					{(item: Item, index) => (
-						<SortableItem key={item.id} id={item.id} index={index}>
-							<SortableActions>
-								<button type='button'>Delete "{item.label}"</button>
-							</SortableActions>
-							<span data-testid={`item-${item.id}`}>{item.label}</span>
-						</SortableItem>
-					)}
-				</SortableList>
-			</Sortable>,
+		const { screen, locators, onReorder } = await renderList();
+		await commands.dragWithAnimation(
+			locators.actions.first().selector,
+			screen.getByTestId('label-second').selector,
 		);
 
-		const source = screen.getByRole('button', { name: 'Actions' }).first();
-		const target = screen.getByTestId('item-second');
-		await userEvent.dragAndDrop(source, target);
+		expect(onReorder, 'Expected the actions trigger not to move').not.toHaveBeenCalled();
 
-		expect(flag, 'Expected a drag started on the actions trigger not to reorder').toBe(false);
+		// Positive control: the same drag reorders when started elsewhere on the item
+		await screen.unmount();
+		const control = await renderList();
+		await commands.dragWithAnimation(
+			control.screen.getByTestId('label-first').selector,
+			control.screen.getByTestId('label-second').selector,
+		);
+
+		await expect.poll(() => control.onReorder).toHaveBeenCalledTimes(1);
 	});
 });

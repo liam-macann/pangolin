@@ -1,38 +1,18 @@
-import { describe, expect, test, vi } from 'vitest';
-import { userEvent } from 'vitest/browser';
-import { render } from 'vitest-browser-react';
+import { describe, expect, test } from 'vitest';
+import { type Locator, userEvent } from 'vitest/browser';
 
 import { SortableActions } from './sortable-actions';
-import { SortableHandle } from './sortable-handle';
-import { SortableItem } from './sortable-item';
-import { SortableList } from './sortable-list';
-import { Sortable } from './sortable-root';
-
-type Item = {
-	id: string;
-	label: string;
-};
-
-const sample: Item[] = [
-	{ id: 'first', label: 'First item' },
-	{ id: 'second', label: 'Second item' },
-];
+import { renderSortable, sample } from './tests/helpers';
 
 describe('SortableItem', () => {
 	test('Item exposes an accessible name distinct from nested controls', async () => {
-		const screen = await render(
-			<Sortable items={sample} onReorder={() => {}}>
-				<SortableList>
-					{(item: Item, index) => (
-						<SortableItem key={item.id} id={item.id} index={index}>
-							<SortableActions>
-								<button type='button'>Delete "{item.label}"</button>
-							</SortableActions>
-						</SortableItem>
-					)}
-				</SortableList>
-			</Sortable>,
-		);
+		const { screen } = await renderSortable({
+			children: item => (
+				<SortableActions>
+					<button type='button'>Delete "{item.label}"</button>
+				</SortableActions>
+			),
+		});
 
 		// Without an accessible name, the item (role="button") derives name from content, colliding with
 		// nested controls and making both indistinguishable to accessible-name-based queries.
@@ -48,25 +28,34 @@ describe('SortableItem', () => {
 		expect(actions.every(element => element.tagName === 'BUTTON')).toBe(true);
 	});
 
-	test('Does not reorder a disabled item', async () => {
-		const onReorder = vi.fn();
+	describe('Reordering', () => {
+		const moveDown = async (item: Locator) => {
+			// The item only becomes focusable once registered as a drag source
+			await expect.element(item).toHaveAttribute('tabindex', '0');
+			item.element().focus();
+			await expect.element(item).toHaveFocus();
 
-		const screen = await render(
-			<Sortable items={sample} onReorder={onReorder}>
-				<SortableList>
-					{(item: Item, index) => (
-						<SortableItem key={item.id} id={item.id} index={index} disabled>
-							<SortableHandle data-testid={`handle-${item.id}`} />
-						</SortableItem>
-					)}
-				</SortableList>
-			</Sortable>,
-		);
+			await userEvent.keyboard('{Space}');
+			await userEvent.keyboard('{ArrowDown}');
+			await userEvent.keyboard('{Space}');
+		};
 
-		const source = screen.getByTestId('handle-first');
-		const target = screen.getByTestId('handle-second');
-		await userEvent.dragAndDrop(source, target);
+		test('Reorders an enabled item', async () => {
+			const { locators, onReorder } = await renderSortable();
 
-		expect(onReorder).not.toHaveBeenCalled();
+			await moveDown(locators.items.first());
+
+			await expect
+				.poll(() => onReorder)
+				.toHaveBeenCalledExactlyOnceWith({ initialIndex: 0, index: 1 });
+		});
+
+		test('Does not reorder a disabled item', async () => {
+			const { locators, onReorder } = await renderSortable({ disableItem: () => true });
+
+			await moveDown(locators.items.first());
+
+			expect(onReorder).not.toHaveBeenCalled();
+		});
 	});
 });

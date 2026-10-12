@@ -3,19 +3,8 @@ import { render } from 'vitest-browser-react';
 
 import { SortableEmpty } from './sortable-empty';
 import { SortableHandle } from './sortable-handle';
-import { SortableItem } from './sortable-item';
-import { SortableList } from './sortable-list';
 import { Sortable } from './sortable-root';
-
-type Item = {
-	id: string;
-	label: string;
-};
-
-const sample: Item[] = [
-	{ id: 'first', label: 'First item' },
-	{ id: 'second', label: 'Second item' },
-];
+import { renderSortable, sample } from './tests/helpers';
 
 describe('SortableEmpty', () => {
 	test('Is hidden when items are present', async () => {
@@ -40,22 +29,9 @@ describe('SortableEmpty', () => {
 	});
 
 	test('Item controls are not rendered when there are no items', async () => {
-		const screen = await render(
-			<Sortable items={[]} onReorder={() => {}}>
-				<SortableList>
-					{(item: Item, index) => (
-						<SortableItem data-testid='item' key={item.id} id={item.id} index={index}>
-							<SortableHandle />
-						</SortableItem>
-					)}
-				</SortableList>
-			</Sortable>,
-		);
+		const { locators } = await renderSortable({ items: [], children: () => <SortableHandle /> });
 
-		await expect.element(screen.getByTestId('item')).not.toBeInTheDocument();
-
-		await expect
-			.element(screen.getByRole('button', { name: 'Reorder item' }))
-			.not.toBeInTheDocument();
+		await expect.element(locators.items).not.toBeInTheDocument();
+		await expect.element(locators.handles).not.toBeInTheDocument();
 	});
 });
