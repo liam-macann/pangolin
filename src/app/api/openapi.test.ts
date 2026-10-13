@@ -46,27 +46,35 @@ describe("OpenAPI loadVendor('zod')", () => {
 		['email', z.email()],
 		['date', z.iso.date()],
 		['date-time', z.iso.datetime()],
-		['base64', z.base64()],
-		['base64url', z.base64url()],
 	] as const)('Documents %s without intrinsic patterns', async ([format, schema]) => {
 		const spec = (await getQuerySchemas(z.object({ property: schema })))('property');
 
-		const hasFormat = 'format' in spec && spec.format === format;
-		const hasEncoding = 'contentEncoding' in spec && spec.contentEncoding === format;
-
-		// Logical XOR: exactly one should be present
-		expect(hasFormat !== hasEncoding, 'Expected either format or encoding to match').toBe(true);
+		expect(spec).toMatchObject({ format });
 		expect(spec).not.toHaveProperty('pattern');
 	});
 
 	test.for([
-		['uuid', z.uuid()],
-		['email', z.email()],
-		['date', z.iso.date()],
-		['date-time', z.iso.datetime()],
 		['base64', z.base64()],
 		['base64url', z.base64url()],
-	] as const)('Preserves explicit %s pattern constraints', async ([format, schema]) => {
+	] as const)(
+		'Documents %s as an encoding, constrained by its intrinsic pattern',
+		async ([encoding, schema]) => {
+			const spec = (await getQuerySchemas(z.object({ property: schema })))('property');
+
+			// contentEncoding is only an annotation, so the pattern is what constrains the value
+			expect(spec).toMatchObject({ contentEncoding: encoding, pattern: expect.any(String) });
+			expect(spec).not.toHaveProperty('format');
+		},
+	);
+
+	test.for([
+		['uuid', z.uuid(), false],
+		['email', z.email(), false],
+		['date', z.iso.date(), false],
+		['date-time', z.iso.datetime(), false],
+		['base64', z.base64(), true],
+		['base64url', z.base64url(), true],
+	] as const)('Preserves explicit %s pattern constraints', async ([format, schema, intrinsic]) => {
 		const spec = await getQuerySchemas(
 			z.object({
 				property: schema
@@ -84,7 +92,8 @@ describe("OpenAPI loadVendor('zod')", () => {
 		// Logical XOR: exactly one should be present
 		expect(hasFormat !== hasEncoding, 'Expected either format or encoding to match').toBe(true);
 
-		expect('allOf' in spec && spec.allOf).toHaveLength(5);
+		// Encodings also keep their intrinsic pattern
+		expect('allOf' in spec && spec.allOf).toHaveLength(intrinsic ? 6 : 5);
 		expect(spec).toMatchObject({
 			allOf: expect.arrayContaining([
 				{ pattern: '^prefix-.*', type: 'string' },
@@ -97,13 +106,13 @@ describe("OpenAPI loadVendor('zod')", () => {
 	});
 
 	test.for([
-		['uuid', z.uuid()],
-		['email', z.email()],
-		['date', z.iso.date()],
-		['date-time', z.iso.datetime()],
-		['base64', z.base64()],
-		['base64url', z.base64url()],
-	] as const)('Preserves unrelated %s allOf constraints', async ([format, schema]) => {
+		['uuid', z.uuid(), false],
+		['email', z.email(), false],
+		['date', z.iso.date(), false],
+		['date-time', z.iso.datetime(), false],
+		['base64', z.base64(), true],
+		['base64url', z.base64url(), true],
+	] as const)('Preserves unrelated %s allOf constraints', async ([format, schema, intrinsic]) => {
 		const target = schema.regex(new RegExp(`^custom-${format}$`));
 
 		const override: JSONSchemaGeneratorParams['override'] = context => {
@@ -123,7 +132,8 @@ describe("OpenAPI loadVendor('zod')", () => {
 			options: { override },
 		}).then(lookup => lookup('target'));
 
-		expect('allOf' in spec && spec.allOf).toHaveLength(5);
+		// Encodings also keep their intrinsic pattern
+		expect('allOf' in spec && spec.allOf).toHaveLength(intrinsic ? 6 : 5);
 		expect(spec).toMatchObject({
 			allOf: expect.arrayContaining([
 				{ maxLength: 64, minLength: 12, type: 'string' },
