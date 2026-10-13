@@ -14,7 +14,7 @@ import { sessionStorage } from '@/test/session';
 
 const execFile = promisify(execFileCallback);
 
-const SCHEMATHESIS_VERSION = '4.25.2';
+const SCHEMATHESIS_VERSION = '4.27.0';
 const SCHEMATHESIS_SESSION_TOKEN = 'SCHEMATHESIS_SESSION_TOKEN';
 
 const isExecException = (error: unknown): error is ExecException =>
@@ -25,6 +25,8 @@ async function writeSchemathesisConfig(): Promise<string> {
 	const configPath = path.join(ATTACHMENT_DIRECTORY, 'schemathesis.toml');
 
 	const content = [
+		'hooks = "src.test.schemathesis.hooks"',
+		'',
 		'[auth.openapi.SessionCookie]',
 		`api_key = "\${${SCHEMATHESIS_SESSION_TOKEN}}"`,
 		'',
@@ -63,6 +65,10 @@ async function startServer(session: Session) {
 				{
 					hostname: '127.0.0.1',
 					port: 0,
+					serverOptions: {
+						// Let generated invalid URLs reach Hono instead of failing in the harness
+						maxHeaderSize: 64 * 1024,
+					},
 					fetch: req => {
 						// Isolate the incoming request entirely from the ambient test context
 						return sessionStorage.exit(() => {

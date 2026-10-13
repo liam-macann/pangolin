@@ -39,6 +39,7 @@ scripts/.openapi-*.mjs
 # testing
 .vitest-attachments/
 .schemathesis
+__pycache__/
 
 # typegen
 tsconfig.tsbuildinfo
