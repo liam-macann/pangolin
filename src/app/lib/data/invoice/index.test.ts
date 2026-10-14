@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { type DBQueryConfigOrderBy, eq, type FieldSelection, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import * as navigation from 'next/navigation';
 import { describe, expect } from 'vitest';
 import { z } from 'zod';
@@ -384,26 +384,6 @@ describe('fetchInvoices()', () => {
 
 			const invoicesOverride = await fetchInvoices({ limit: 200, orderBy: { issuedAt: 'asc' } });
 			expect(invoicesOverride.map(i => i.id)).toEqual([first.id, second.id]);
-		});
-
-		test.for<[string, DBQueryConfigOrderBy<typeof tables.invoices, FieldSelection>]>([
-			['object', { dueAt: 'asc' }],
-			['callback', (invoice, { asc }) => asc(invoice.dueAt)],
-		])('Allows extending the orderBy defaults with %s-form', async ([_, orderBy], { seed }) => {
-			const seeded = await seed.invoices({
-				overrides: [
-					{ issuedAt: '2026-01-01', dueAt: '2026-02-03' },
-					{ issuedAt: '2026-01-02', dueAt: '2026-02-02' },
-					{ issuedAt: '2026-01-03', dueAt: '2026-02-03' },
-					{ issuedAt: '2026-01-04', dueAt: '2026-02-03' },
-				],
-			});
-			const [first, second, third, fourth] = seeded.map(invoice => invoice.id);
-
-			const invoices = await fetchInvoices({ limit: 200, orderBy });
-			// second has earliest due date, and so places first.
-			// fourth, third, and first tie; order is resolved by fallback issuedAt 'desc'
-			expect(invoices.map(i => i.id)).toEqual([second, fourth, third, first]);
 		});
 	});
 

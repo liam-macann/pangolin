@@ -9,7 +9,7 @@ import { type ClientData } from '@/lib/data/client';
 import { type FetchOptions } from '@/lib/data/helpers';
 import { withVault } from '@/lib/encrypt';
 import { invoiceReference, type Simplify } from '@/lib/utils';
-import { coalesce, mergeOrderBy, withFilter } from '@/lib/utils/drizzle';
+import { coalesce, withFilter } from '@/lib/utils/drizzle';
 import { type NumericString } from '@/lib/utils/numeric';
 import { withRLS } from '@/db';
 import { type relations } from '@/db/relations';
@@ -45,7 +45,8 @@ export async function fetchInvoices(
 ): Promise<Invoice[]> {
 	try {
 		return await withRLS(async (tx, session) => {
-			const orderBy = mergeOrderBy(opts.orderBy, { issuedAt: 'desc', id: 'desc' });
+			// Caller order replaces the default, and so must end on a unique key
+			const orderBy = opts.orderBy ?? { issuedAt: 'desc', id: 'desc' };
 
 			// Picks which invoices match the filter first, embedded as a subquery
 			// Relations would otherwise be joined for every row before it is sorted and limited

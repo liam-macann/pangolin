@@ -8,7 +8,7 @@ import { type FetchOptions } from '@/lib/data/helpers';
 import { fetchStats } from '@/lib/data/invoice/stats';
 import { withVault } from '@/lib/encrypt';
 import { fetchAddressMetadata, formatAddress } from '@/lib/utils/address';
-import { coalesce, mergeOrderBy } from '@/lib/utils/drizzle';
+import { coalesce } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
 import { type relations } from '@/db/relations';
 import * as schema from '@/db/schema';
@@ -64,9 +64,10 @@ export async function fetchClients(
 					...(opts.where ?? {}),
 					userId: { eq: session.user.id },
 				},
-				orderBy: mergeOrderBy(
-					opts.orderBy,
-					(client, { sql }) =>
+				// Caller-supplied order replaces the default, so it must end on a unique key of its own
+				orderBy:
+					opts.orderBy ??
+					((client, { sql }) =>
 						sql<string>`(${db
 							.select({ name: coalesce(schema.clientData.organization, schema.clientData.name) })
 							.from(schema.clientData)
@@ -74,8 +75,7 @@ export async function fetchClients(
 								and(eq(schema.clientData.clientId, client.id), isNull(schema.clientData.validTo)),
 							)
 							.limit(1)}
-    				)`,
-				),
+    				)`),
 				limit: opts.limit,
 			});
 

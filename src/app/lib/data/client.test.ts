@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { type DBQueryConfigOrderBy, type FieldSelection } from 'drizzle-orm';
 import * as navigation from 'next/navigation';
 import { assert, describe, expect } from 'vitest';
 
@@ -103,34 +102,6 @@ describe('fetchClients', () => {
 
 			const clientsOverride = await fetchClients({ limit: 200, orderBy: { isFavorite: 'desc' } });
 			expect(clientsOverride.map(c => c.id)).toEqual([z.id, a.id]);
-		});
-
-		test.for<[string, DBQueryConfigOrderBy<typeof tables.clients, FieldSelection>]>([
-			['object', { isFavorite: 'desc' }],
-			['callback', (client, { desc }) => desc(client.isFavorite)],
-		])('Allows extending the orderBy defaults with %s-form', async ([_, orderBy], { seed }) => {
-			const [zaria, azariyah, yosselin] = await seed.clients({
-				overrides: [
-					{
-						isDeleted: false,
-						isFavorite: true,
-						data: { name: 'Zaria Lemery', organization: null },
-					},
-					{
-						isDeleted: false,
-						isFavorite: true,
-						data: { name: 'Azariyah Radabaugh', organization: null },
-					},
-					{
-						isDeleted: false,
-						isFavorite: false,
-						data: { name: 'Yosselin Rhames', organization: null },
-					},
-				],
-			});
-
-			const clients = await fetchClients({ limit: 200, orderBy });
-			expect(clients.map(c => c.id)).toEqual([azariyah.id, zaria.id, yosselin.id]);
 		});
 	});
 
