@@ -53,9 +53,7 @@ const app = createApiRouter().get(
 	validator('query', query, validationHook),
 	async c => {
 		const { client, limit = undefined, offset = undefined } = c.req.valid('query');
-		const filter = client
-			? { documentWithSum: { clientData: { client: { id: { eq: client } } } } }
-			: undefined;
+		const filter = client ? { document: { clientData: { clientId: { eq: client } } } } : undefined;
 
 		const [data, total] = await Promise.all([
 			fetchInvoices({ where: filter, limit, offset }),

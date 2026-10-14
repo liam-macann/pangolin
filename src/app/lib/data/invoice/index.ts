@@ -104,7 +104,7 @@ async function _fetchInvoices(
 /** Fetches invoices for a given client. Accepts logical client ID, not SCD ID. */
 export const fetchInvoicesForClient = (clientId: string, limit: number) =>
 	fetchInvoices({
-		where: { documentWithSum: { clientData: { client: { id: { eq: clientId } } } } },
+		where: { document: { clientData: { clientId: { eq: clientId } } } },
 		limit,
 	});
 
