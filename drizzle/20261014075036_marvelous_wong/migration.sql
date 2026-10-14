@@ -1,0 +1,1 @@
+CREATE INDEX "idx_invoice_user_issued_at_id" ON "invoice" ("user_id","issued_at","id");

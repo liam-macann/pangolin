@@ -71,6 +71,9 @@ export const invoices = snakeCase.table(
 
 		unique('uq_invoice_id_user_id').on(t.id, t.userId),
 
+		// For keyset pagination: serves the default list order, read backwards for newest first
+		index('idx_invoice_user_issued_at_id').on(t.userId, t.issuedAt, t.id),
+
 		// Ensure that the sequence is unique for each user
 		unique('uq_invoice_user_partition_index').on(t.userId, t.partition, t.index).nullsNotDistinct(),
 		check('chk_positive_index', sql`${t.index} >= 0`),
