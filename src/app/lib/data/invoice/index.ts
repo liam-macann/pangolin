@@ -1,4 +1,4 @@
-import { and, asc, count, eq, min, sql, sum } from 'drizzle-orm';
+import { and, asc, count, eq, inArray, min, sql, sum } from 'drizzle-orm';
 import { cacheLife, cacheTag } from 'next/cache';
 import { notFound, unstable_rethrow } from 'next/navigation';
 import { Temporal } from 'temporal-polyfill';
@@ -54,52 +54,51 @@ async function _fetchInvoices(
 	cacheLife('hours');
 	cacheTag(`invoices-${session.user.id}`);
 
-	return withRLS(session, async tx =>
-		tx.query.invoices
-			.findMany({
-				where: {
-					...(opts.where ?? {}),
-					userId: { eq: session.user.id },
-				},
-				columns: { userId: false },
-				with: {
-					status: { columns: { id: false, userId: false } },
-					documentWithSum: {
-						columns: {
-							id: false,
-							clientDataId: false,
-							configId: false,
-							userId: false,
+	return await withRLS(session, async tx => {
+		const orderBy = mergeOrderBy(opts.orderBy, { issuedAt: 'desc', id: 'desc' });
 
-							// Included with config data
-							taxRegistration: false,
-							currency: false,
-						},
-						with: {
-							clientData: { columns: { name: true, organization: true, clientId: true } },
-							config: {
-								columns: {
-									timezone: true,
-									currency: true,
-									numberingScheme: true,
-								},
-							},
-						},
+		// Picks which invoices match the filter first, embedded as a subquery
+		// Relations would otherwise be joined for every row before it is sorted and limited
+		const window = tx.query.invoices.findMany({
+			where: { ...(opts.where ?? {}), userId: { eq: session.user.id } },
+			columns: { id: true },
+			orderBy,
+			limit: opts.limit,
+			offset: opts.offset,
+		});
+
+		const rows = await tx.query.invoices.findMany({
+			where: { RAW: invoice => inArray(invoice.id, window) },
+			orderBy, // The window order is lost by the lookup, so is applied again
+			columns: { userId: false },
+			with: {
+				status: { columns: { id: false, userId: false } },
+				documentWithSum: {
+					columns: {
+						id: false,
+						clientDataId: false,
+						configId: false,
+						userId: false,
+
+						// Included with config data
+						taxRegistration: false,
+						currency: false,
+					},
+					with: {
+						clientData: { columns: { name: true, organization: true, clientId: true } },
+						config: { columns: { timezone: true, currency: true, numberingScheme: true } },
 					},
 				},
-				orderBy: mergeOrderBy(opts.orderBy, { issuedAt: 'desc', id: 'desc' }),
-				limit: opts.limit,
-				offset: opts.offset,
-			})
-			.then(res =>
-				res.map(({ documentWithSum, ...inv }) => ({
-					...documentWithSum,
-					...inv,
-					createdAt: toISOString(documentWithSum.createdAt),
-					reference: invoiceReference(inv, documentWithSum.config.numberingScheme),
-				})),
-			),
-	);
+			},
+		});
+
+		return rows.map(({ documentWithSum, ...inv }) => ({
+			...documentWithSum,
+			...inv,
+			createdAt: toISOString(documentWithSum.createdAt),
+			reference: invoiceReference(inv, documentWithSum.config.numberingScheme),
+		}));
+	});
 }
 
 /** Fetches invoices for a given client. Accepts logical client ID, not SCD ID. */
