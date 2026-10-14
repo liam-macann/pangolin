@@ -3,7 +3,7 @@ import { assert, describe, expect, test } from 'vitest';
 import { z } from 'zod';
 import { type JSONSchemaGeneratorParams } from 'zod/v4/core';
 
-import '@/api/openapi';
+import { setArrayParam } from '@/api/openapi';
 import { createApiRouter, defineRoute, validationHook } from '@/api/routes/shared';
 
 /** Generates an OpenAPI document and returns a query-parameter schema lookup */
@@ -161,5 +161,42 @@ describe("OpenAPI loadVendor('zod')", () => {
 		expect(schemaFor('min')).toMatchObject({ format: 'int32', minimum: 0 });
 		expect(schemaFor('max')).toMatchObject({ format: 'int32', maximum: 100 });
 		expect(schemaFor('both')).toMatchObject({ format: 'int32', minimum: 0, maximum: 100 });
+	});
+});
+
+describe('setArrayParam()', () => {
+	test('Documents only list-valued query parameters as a comma-separated value', async () => {
+		const schema = z.object({
+			list: z.array(z.enum(['a', 'b'])),
+			registered: z.array(z.string()).meta({ id: 'SetArrayParamList' }),
+			single: z.string(),
+		});
+
+		const app = createApiRouter().get(
+			'/resource',
+			...defineRoute.public({ responses: { 200: { description: 'Success' } } }),
+			validator('query', schema, validationHook),
+			c => c.json({}, 200),
+		);
+
+		const document = setArrayParam(await generateSpecs(app), { style: 'form', explode: false });
+
+		const parameters = document.paths?.['/resource']?.get?.parameters ?? [];
+		const find = (name: string) => parameters.find(param => 'name' in param && param.name === name);
+
+		expect(find('list')).toMatchObject({
+			style: 'form',
+			explode: false,
+			schema: { type: 'array', items: { enum: ['a', 'b'] } },
+		});
+
+		// A schema registered with an ID is documented by reference, which is followed to its component
+		expect(find('registered')).toMatchObject({
+			style: 'form',
+			explode: false,
+			schema: { $ref: '#/components/schemas/SetArrayParamList' },
+		});
+
+		expect(find('single')).not.toHaveProperty('explode');
 	});
 });

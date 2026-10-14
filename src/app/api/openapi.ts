@@ -2,10 +2,11 @@ import { convertToOpenAPISchema } from '@standard-community/standard-openapi/con
 import { isFunction } from 'es-toolkit';
 import { type Env, type Hono, type Schema } from 'hono';
 import { generateSpecs, loadVendor } from 'hono-openapi';
+import { OpenAPIV3, type OpenAPIV3_1 } from 'openapi-types';
 import {
 	$ZodCheck,
 	type $ZodChecks,
-	type $ZodType,
+	$ZodType,
 	type JSONSchemaGeneratorParams,
 	toJSONSchema,
 } from 'zod/v4/core';
@@ -87,18 +88,21 @@ const composeZodOverride = (existing: unknown): JSONSchemaGeneratorParams['overr
 };
 
 loadVendor('zod', {
-	toOpenAPISchema: (schema, context) =>
-		convertToOpenAPISchema(
-			// @ts-expect-error -- converter/runtime compatibility with Zod 4 JSON Schema
+	toOpenAPISchema: (schema, context) => {
+		if (!(schema instanceof $ZodType)) throw new Error('The zod vendor converts only Zod schemas');
+
+		return convertToOpenAPISchema(
+			// @ts-expect-error Converter/runtime compatibility with Zod 4 JSON Schema
 			toJSONSchema(schema, {
 				// Matches the upstream default (@standard-community/standard-openapi)
-				io: context.options?.io ?? 'input',
+				io: context.options?.io === 'output' ? 'output' : 'input',
 				unrepresentable: 'any',
 				override: composeZodOverride(context.options?.override),
-				target: 'draft-07',
+				target: 'draft-2020-12',
 			}),
 			context,
-		),
+		);
+	},
 });
 
 /** Path to the interactive API reference page, relative to the dashboard origin */
@@ -133,11 +137,46 @@ const internalOnly = {
 	tags: ['Avatar'],
 };
 
+/** Mutates how list-valued query parameters serialization are specified in the OpenAPI contract. */
+export function setArrayParam<T extends OpenAPIV3_1.Document>(
+	document: T,
+	serialize: Pick<OpenAPIV3_1.ParameterBaseObject, 'style' | 'explode'>,
+) {
+	const methods = Object.values(OpenAPIV3.HttpMethods);
+
+	// Gather all parameter objects (operation-level and components)
+	const parameters = [
+		...Object.values(document.components?.parameters ?? {}),
+		...Object.values(document.paths ?? {}).flatMap(item =>
+			methods.flatMap(verb => item?.[verb]?.parameters ?? []),
+		),
+	];
+
+	/** Follows a reference to the component schema it names. */
+	const resolve = (schema: OpenAPIV3_1.SchemaObject | OpenAPIV3_1.ReferenceObject) =>
+		'$ref' in schema
+			? document.components?.schemas?.[schema.$ref.replace('#/components/schemas/', '')]
+			: schema;
+
+	parameters.forEach(param => {
+		if ('$ref' in param || param.in !== 'query' || !param.schema) return;
+		if (resolve(param.schema)?.type !== 'array') return;
+
+		param.style = serialize.style;
+		param.explode = serialize.explode;
+	});
+
+	return document;
+}
+
 /** @internal Requires explicit routes to be provided. Prefer export from `@/api/hono` */
-export async function getOpenApiDocument(routes: Hono<Env, Schema, '/'>) {
+export async function getOpenApiDocument<E extends Env, S extends Schema, P extends string>(
+	routes: Hono<E, S, P>,
+) {
 	const authContext = await auth.$context;
 
-	return generateSpecs(routes, {
+	const document = await generateSpecs(routes, {
+		defaultValidationErrorResponse: false,
 		documentation: {
 			...documentConfig,
 			components: {
@@ -151,9 +190,12 @@ export async function getOpenApiDocument(routes: Hono<Env, Schema, '/'>) {
 				},
 			},
 		},
+
 		// Strip internal routes (and their now-orphaned tags) from the spec served in production
 		...(process.env.NODE_ENV === 'production'
 			? { exclude: internalOnly.paths, excludeTags: internalOnly.tags }
 			: {}),
 	});
+
+	return setArrayParam(document, { style: 'form', explode: false });
 }

@@ -4,6 +4,7 @@ import { hc } from 'hono/client';
 import { headers } from 'next/headers';
 
 import app, { type AppType } from '@/api/hono';
+import { buildSearchParams } from '@/api/query';
 
 const origin = (inbound: Headers) => {
 	const firstValue = (value: string | null) => value?.split(',')[0]?.trim() || undefined;
@@ -37,5 +38,5 @@ const internalFetch: typeof fetch = async (input, init) => {
 };
 
 // Placeholder sentinel; internalFetch rewrites the origin per request
-export const rpc = hc<AppType>('http://internal/api', { fetch: internalFetch });
+export const rpc = hc<AppType>('http://internal/api', { fetch: internalFetch, buildSearchParams });
 export default rpc;
