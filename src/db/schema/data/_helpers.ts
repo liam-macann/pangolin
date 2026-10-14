@@ -181,8 +181,10 @@ export const policy = ({
 	].filter(Boolean);
 };
 
+/** Whether a row belongs to the authenticated user.
+ * @remarks Only the setting is a subquery, so Postgres evaluates it once per query, not once per row. */
 export const authUid = (userIdColumn: AnyPgColumn) =>
-	sql`(select current_setting('app.user_id')::uuid = ${userIdColumn})`;
+	sql`${userIdColumn} = (select current_setting('app.user_id')::uuid)`;
 
 /** Composite FK ensuring a child row matches parent `user_id` */
 export const relationOwnership = (

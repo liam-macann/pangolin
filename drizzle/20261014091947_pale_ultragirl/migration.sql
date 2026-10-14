@@ -1,0 +1,35 @@
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "keychain" TO "authenticated" USING ("keychain"."id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "keychain" TO "authenticated" WITH CHECK ("keychain"."id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "user" TO "authenticated" USING ("user"."id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "address" TO "authenticated" USING ("address"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "address" TO "authenticated" WITH CHECK ("address"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-delete" ON "address" TO "authenticated" USING ("address"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "client_data" TO "authenticated" USING ("client_data"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "client_data" TO "authenticated" WITH CHECK ("client_data"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-delete" ON "client_data" TO "authenticated" USING ("client_data"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "client" TO "authenticated" USING ("client"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "client" TO "authenticated" WITH CHECK ("client"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-update" ON "client" TO "authenticated" USING ("client"."user_id" = (select current_setting('app.user_id')::uuid)) WITH CHECK ("client"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-delete" ON "client" TO "authenticated" USING ("client"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "config" TO "authenticated" USING ("config"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "config" TO "authenticated" WITH CHECK ("config"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-delete" ON "config" TO "authenticated" USING ("config"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "config_tax" TO "authenticated" USING ("config_tax"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "config_tax" TO "authenticated" WITH CHECK ("config_tax"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "tax" TO "authenticated" USING ("tax"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "tax" TO "authenticated" WITH CHECK ("tax"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-delete" ON "tax" TO "authenticated" USING ("tax"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "document" TO "authenticated" USING ("document"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "document" TO "authenticated" WITH CHECK ("document"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "invoice_status" TO "authenticated" USING ("invoice_status"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "invoice_status" TO "authenticated" WITH CHECK ("invoice_status"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-update" ON "invoice_status" TO "authenticated" USING ("invoice_status"."user_id" = (select current_setting('app.user_id')::uuid)) WITH CHECK ("invoice_status"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "invoice" TO "authenticated" USING ("invoice"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "invoice" TO "authenticated" WITH CHECK ("invoice"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "sequencer" TO "authenticated" USING ("sequencer"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "sequencer" TO "authenticated" WITH CHECK ("sequencer"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-update" ON "sequencer" TO "authenticated" USING ("sequencer"."user_id" = (select current_setting('app.user_id')::uuid)) WITH CHECK ("sequencer"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "item_tax" TO "authenticated" USING ("item_tax"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "item_tax" TO "authenticated" WITH CHECK ("item_tax"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-select" ON "line_item" TO "authenticated" USING ("line_item"."user_id" = (select current_setting('app.user_id')::uuid));--> statement-breakpoint
+ALTER POLICY "granular-crud-authenticated-policy-insert" ON "line_item" TO "authenticated" WITH CHECK ("line_item"."user_id" = (select current_setting('app.user_id')::uuid));
