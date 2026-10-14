@@ -1,10 +1,16 @@
-import { Hono } from 'hono';
-import { type DescribeRouteOptions, describeRoute } from 'hono-openapi';
+import { Hono, type ValidationTargets } from 'hono';
+import {
+	// biome-ignore lint/style/noRestrictedImports: Wrapped here as a domain validator used by routes
+	validator as baseValidator,
+	type DescribeRouteOptions,
+	describeRoute,
+} from 'hono-openapi';
 import { standardSchemaProblemHook } from 'hono-problem-details/standard-schema';
 import { z } from 'zod';
 
 import { problemContract } from '@/api/errors/contract';
 import { type Env, requireAuth } from '@/api/middleware';
+import { queryParams } from '@/api/query';
 
 export const createApiRouter = () => new Hono<Env>();
 
@@ -29,7 +35,15 @@ export const defineRoute = {
 	public: (config: DescribeRouteOptions) => [describeRoute({ ...config, security: [{}] })] as const,
 };
 
-export const validationHook = standardSchemaProblemHook();
+export const validator = <TTarget extends keyof ValidationTargets, TSchema extends z.ZodObject>(
+	target: TTarget,
+	schema: TSchema,
+) =>
+	baseValidator(
+		target,
+		target === 'query' ? queryParams(schema) : schema,
+		standardSchemaProblemHook(),
+	);
 
 const coerceToNumber = (value: unknown) =>
 	typeof value === 'string' && value.trim() !== '' ? Number(value) : value;

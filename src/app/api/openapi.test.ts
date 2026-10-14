@@ -1,17 +1,18 @@
+// biome-ignore lint/style/noRestrictedImports: Tests schema conversion through hono-openapi validator
 import { generateSpecs, resolver, validator } from 'hono-openapi';
 import { assert, describe, expect, test } from 'vitest';
 import { z } from 'zod';
 import { type JSONSchemaGeneratorParams } from 'zod/v4/core';
 
 import { setArrayParam } from '@/api/openapi';
-import { createApiRouter, defineRoute, validationHook } from '@/api/routes/shared';
+import { createApiRouter, defineRoute } from '@/api/routes/shared';
 
 /** Generates an OpenAPI document and returns a query-parameter schema lookup */
 const getQuerySchemas = async (query: z.ZodType, options?: Parameters<typeof resolver>[1]) => {
 	const app = createApiRouter().get(
 		'/resource',
 		...defineRoute.public({ responses: { 200: { description: 'Success' } } }),
-		validator('query', query, validationHook, options),
+		validator('query', query, undefined, options),
 		c => c.json({}, 200),
 	);
 
@@ -175,7 +176,7 @@ describe('setArrayParam()', () => {
 		const app = createApiRouter().get(
 			'/resource',
 			...defineRoute.public({ responses: { 200: { description: 'Success' } } }),
-			validator('query', schema, validationHook),
+			validator('query', schema),
 			c => c.json({}, 200),
 		);
 

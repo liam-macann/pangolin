@@ -1,11 +1,11 @@
-import { resolver, validator } from 'hono-openapi';
+import { resolver } from 'hono-openapi';
 import { z } from 'zod';
 
 import { Invoice } from '@/api/dto/invoice';
 import { problemContract } from '@/api/errors';
 import { countInvoices, fetchInvoices } from '@/lib/data/invoice';
 
-import { createApiRouter, defineRoute, paginationSchema, validationHook } from './shared';
+import { createApiRouter, defineRoute, paginationSchema, validator } from './shared';
 
 const query = z
 	.object({
@@ -47,21 +47,16 @@ const route = defineRoute.protected({
 	},
 });
 
-const app = createApiRouter().get(
-	'/',
-	...route,
-	validator('query', query, validationHook),
-	async c => {
-		const { client, limit = undefined, offset = undefined } = c.req.valid('query');
-		const filter = client ? { document: { clientData: { clientId: { eq: client } } } } : undefined;
+const app = createApiRouter().get('/', ...route, validator('query', query), async c => {
+	const { client, limit = undefined, offset = undefined } = c.req.valid('query');
+	const filter = client ? { document: { clientData: { clientId: { eq: client } } } } : undefined;
 
-		const [data, total] = await Promise.all([
-			fetchInvoices({ where: filter, limit, offset }),
-			countInvoices(client),
-		]);
+	const [data, total] = await Promise.all([
+		fetchInvoices({ where: filter, limit, offset }),
+		countInvoices(client),
+	]);
 
-		return c.json({ data, meta: { total, limit, offset } }, 200);
-	},
-);
+	return c.json({ data, meta: { total, limit, offset } }, 200);
+});
 
 export default app;

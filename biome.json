@@ -109,6 +109,10 @@
 							"better-auth": {
 								"importNames": ["Session"],
 								"message": "Prefer using Session from @/auth"
+							},
+							"hono-openapi": {
+								"importNames": ["validator"],
+								"message": "Import validator from @/api/routes/shared, which applies the API conventions"
 							}
 						},
 						"patterns": [

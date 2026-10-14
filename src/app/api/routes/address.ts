@@ -1,11 +1,11 @@
-import { resolver, validator } from 'hono-openapi';
+import { resolver } from 'hono-openapi';
 import { z } from 'zod';
 
 import { AddressMetadata, country } from '@/api/dto/address';
 import { problemContract } from '@/api/errors';
 import { fetchAddressMetadata } from '@/lib/utils/address';
 
-import { createApiRouter, defineRoute, validationHook } from './shared';
+import { createApiRouter, defineRoute, validator } from './shared';
 
 const params = z.object({
 	country: country.meta({
@@ -37,7 +37,7 @@ const route = defineRoute.public({
 const app = createApiRouter().get(
 	'/metadata/:country',
 	...route,
-	validator('param', params, validationHook),
+	validator('param', params),
 	async c => {
 		const { country } = c.req.valid('param');
 

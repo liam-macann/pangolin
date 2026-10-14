@@ -1,11 +1,11 @@
-import { resolver, validator } from 'hono-openapi';
+import { resolver } from 'hono-openapi';
 import { z } from 'zod';
 
 import { Client } from '@/api/dto/client';
 import { problemContract } from '@/api/errors';
 import { countClients, fetchClient, fetchClients } from '@/lib/data/client';
 
-import { createApiRouter, defineRoute, paginationSchema, validationHook } from './shared';
+import { createApiRouter, defineRoute, paginationSchema, validator } from './shared';
 
 const listQuery = paginationSchema.omit({ total: true }).strict();
 const listRoute = defineRoute.protected({
@@ -66,13 +66,13 @@ const getRoute = defineRoute.protected({
 });
 
 const app = createApiRouter()
-	.get('/', ...listRoute, validator('query', listQuery, validationHook), async c => {
+	.get('/', ...listRoute, validator('query', listQuery), async c => {
 		const { limit = undefined, offset = undefined } = c.req.valid('query');
 		const [data, total] = await Promise.all([fetchClients({ limit, offset }), countClients()]);
 
 		return c.json({ data, meta: { total, limit, offset } }, 200);
 	})
-	.get('/:id', ...getRoute, validator('param', getParams, validationHook), async c => {
+	.get('/:id', ...getRoute, validator('param', getParams), async c => {
 		const { id } = c.req.valid('param');
 		const data = await fetchClient(id);
 		return c.json({ data }, 200);

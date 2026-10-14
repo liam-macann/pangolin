@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { hc } from 'hono/client';
+// biome-ignore lint/style/noRestrictedImports: Tests queryParams() apart from the shared validator
 import { validator } from 'hono-openapi';
 import { describe, expect, expectTypeOf, test } from 'vitest';
 import { z } from 'zod';
