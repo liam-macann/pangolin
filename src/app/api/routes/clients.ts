@@ -1,13 +1,46 @@
+import { and, eq, isNull, type SQL, type SQLWrapper, sql } from 'drizzle-orm';
+import { QueryBuilder } from 'drizzle-orm/pg-core';
 import { resolver } from 'hono-openapi';
 import { z } from 'zod';
 
 import { Client } from '@/api/dto/client';
 import { problemContract } from '@/api/errors';
-import { countClients, fetchClient, fetchClients } from '@/lib/data/client';
+import { defineKeyset } from '@/api/pagination';
+import { fetchClient, fetchClients } from '@/lib/data/client';
+import { coalesce } from '@/lib/utils/drizzle';
+import * as tables from '@/db/schema';
 
-import { createApiRouter, defineRoute, paginationSchema, validator } from './shared';
+import {
+	createApiRouter,
+	defineRoute,
+	paginationMetaSchema,
+	paginationQuerySchema,
+	validator,
+} from './shared';
 
-const listQuery = paginationSchema.omit({ total: true }).strict();
+const qb = new QueryBuilder();
+
+/** A `client_data` column read from the currently-valid revision of a logical client. */
+const currentRevision =
+	(column: SQLWrapper) =>
+	(client: typeof tables.clients): SQL<string> =>
+		sql`${qb
+			.select({ value: sql`${column}` })
+			.from(tables.clientData)
+			.where(and(eq(tables.clientData.clientId, client.id), isNull(tables.clientData.validTo)))
+			.limit(1)}`;
+
+/** Fields the client list can be sorted by. */
+const keyset = defineKeyset(tables.clients, {
+	name: currentRevision(coalesce(tables.clientData.name, tables.clientData.organization)),
+	organization: currentRevision(coalesce(tables.clientData.organization, tables.clientData.name)),
+});
+
+const listQuery = z
+	.object({ sort: keyset.sortParam.prefault(['organization']) })
+	.extend(paginationQuerySchema.shape)
+	.strict();
+
 const listRoute = defineRoute.protected({
 	tags: ['Clients'],
 	operationId: 'listClients',
@@ -19,17 +52,26 @@ const listRoute = defineRoute.protected({
 					schema: resolver(
 						z.object({
 							data: z.array(Client).max(200),
-							meta: paginationSchema,
+							meta: paginationMetaSchema,
 						}),
 					),
 				},
 			},
-			description: 'List the current user’s clients.',
+			description: 'List clients for the authenticated user.',
+			links: {
+				NextPage: {
+					operationId: 'listClients',
+					parameters: {
+						sort: '$request.query.sort',
+						cursor: '$response.body#/meta/nextCursor',
+					},
+				},
+			},
 		},
 		...problemContract({
 			422: {
-				description: 'Invalid query parameters.',
-				problems: [422],
+				description: 'Query parameters (including pagination cursor) are invalid.',
+				problems: ['INVALID_CURSOR', 422],
 			},
 		}),
 	},
@@ -67,10 +109,18 @@ const getRoute = defineRoute.protected({
 
 const app = createApiRouter()
 	.get('/', ...listRoute, validator('query', listQuery), async c => {
-		const { limit = undefined, offset = undefined } = c.req.valid('query');
-		const [data, total] = await Promise.all([fetchClients({ limit, offset }), countClients()]);
+		const { cursor, limit, sort } = c.req.valid('query');
 
-		return c.json({ data, meta: { total, limit, offset } }, 200);
+		const page = keyset.page({ cursor, limit, sort });
+
+		const rows = await fetchClients({
+			where: page.where({}),
+			orderBy: page.orderBy,
+			extras: page.extras,
+			limit: page.limit,
+		});
+
+		return c.json(page.result(rows), 200);
 	})
 	.get('/:id', ...getRoute, validator('param', getParams), async c => {
 		const { id } = c.req.valid('param');

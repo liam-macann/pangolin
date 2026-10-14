@@ -2,11 +2,13 @@ import {
 	type DBQueryConfigOrderBy,
 	type GetTableViewFieldSelection,
 	type RelationsFilter,
+	type SQL,
 	type TableRelationalConfig,
 	type TablesRelationalConfig,
 } from 'drizzle-orm';
 import { unauthorized, unstable_rethrow } from 'next/navigation';
 
+import { type SortValues } from '@/api/pagination';
 import { type relations } from '@/db/relations';
 
 import { getSession, type Session } from '@/auth';
@@ -21,7 +23,8 @@ export type FetchOptions<
 		GetTableViewFieldSelection<TTableConfig['table']>
 	>;
 	limit?: number;
-	offset?: number;
+	/** Selected alongside each row, and returned on it as they are. */
+	extras?: { sortValues: (table: TTableConfig['table']) => SQL<SortValues> };
 };
 
 export async function query<T>(

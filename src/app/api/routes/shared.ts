@@ -10,6 +10,7 @@ import { z } from 'zod';
 
 import { problemContract } from '@/api/errors/contract';
 import { type Env, requireAuth } from '@/api/middleware';
+import { Cursor } from '@/api/pagination';
 import { queryParams } from '@/api/query';
 
 export const createApiRouter = () => new Hono<Env>();
@@ -48,8 +49,7 @@ export const validator = <TTarget extends keyof ValidationTargets, TSchema exten
 const coerceToNumber = (value: unknown) =>
 	typeof value === 'string' && value.trim() !== '' ? Number(value) : value;
 
-export const paginationSchema = z.object({
-	total: z.int32().nonnegative().readonly(),
+export const paginationQuerySchema = z.object({
 	limit: z
 		.preprocess(coerceToNumber, z.int32().positive().max(200))
 		.default(200)
@@ -57,11 +57,17 @@ export const paginationSchema = z.object({
 			description: 'Maximum number of items to return.',
 			examples: [20],
 		}),
-	offset: z
-		.preprocess(coerceToNumber, z.int32().nonnegative().max(100_000))
-		.optional()
+	cursor: Cursor.optional(),
+});
+
+export const paginationMetaSchema = z.object({
+	limit: z
+		.int32()
+		.positive()
+		.max(200)
 		.meta({
-			description: 'Number of items to skip.',
-			examples: [0],
+			description: 'The maximum number of items that could be returned in this query.',
+			examples: [20],
 		}),
+	nextCursor: Cursor.nullable(),
 });

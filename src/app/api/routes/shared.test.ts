@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { requireAuth } from '@/api/middleware';
 
-import { createApiRouter, defineRoute, paginationSchema, validator } from './shared';
+import { createApiRouter, defineRoute, paginationQuerySchema, validator } from './shared';
 
 describe('defineRoute', () => {
 	const baseRoute = {
@@ -85,10 +85,14 @@ describe('validator()', () => {
 	});
 });
 
-describe('paginationSchema', () => {
-	const query = paginationSchema.omit({ total: true });
+describe('paginationQuerySchema', () => {
+	test('Coerces a numeric limit, rejecting an empty one', () => {
+		expect(paginationQuerySchema.parse({ limit: '1' })).toEqual({ limit: 1 });
+		expect(paginationQuerySchema.validate({ limit: '' })).toBe(false);
+	});
 
-	test.for(['limit', 'offset'])('Rejects an empty %s', parameter => {
-		expect(query.validate({ [parameter]: '' })).toBe(false);
+	test('Accepts a malformed cursor, so that it is reported as an invalid cursor', () => {
+		// Rejecting it here would return a generic validation error instead of the domain problem
+		expect(paginationQuerySchema.safeParse({ cursor: 'not base64url' }).success).toBe(true);
 	});
 });

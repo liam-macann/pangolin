@@ -1,5 +1,4 @@
-import { and, asc, count, eq, inArray, min, sql, sum } from 'drizzle-orm';
-import { cacheLife, cacheTag } from 'next/cache';
+import { asc, eq, inArray, min, sql, sum } from 'drizzle-orm';
 import { notFound, unstable_rethrow } from 'next/navigation';
 import { Temporal } from 'temporal-polyfill';
 
@@ -7,7 +6,7 @@ import { type Config } from '@/api/dto/config';
 import { type Invoice } from '@/api/dto/invoice';
 import { fetchConfig } from '@/lib/data';
 import { type ClientData } from '@/lib/data/client';
-import { type FetchOptions, query } from '@/lib/data/helpers';
+import { type FetchOptions } from '@/lib/data/helpers';
 import { withVault } from '@/lib/encrypt';
 import { invoiceReference, type Simplify } from '@/lib/utils';
 import { coalesce, mergeOrderBy, withFilter } from '@/lib/utils/drizzle';
@@ -15,8 +14,6 @@ import { type NumericString } from '@/lib/utils/numeric';
 import { withRLS } from '@/db';
 import { type relations } from '@/db/relations';
 import * as schema from '@/db/schema';
-
-import { type Session } from '@/auth';
 
 /** Serializes a stored instant to the millisecond-precision UTC form of the API contract */
 const toISOString = (instant: Temporal.InstantLike) =>
@@ -43,62 +40,60 @@ export type DetailedInvoice = Omit<Invoice, 'clientData' | 'config'> & {
 };
 
 /** Fetch a bounded window of invoices for the authenticated user. */
-export const fetchInvoices = (opts: Parameters<typeof _fetchInvoices>[1]) =>
-	query(async session => _fetchInvoices(session, opts), 'Failed to fetch invoices');
-
-async function _fetchInvoices(
-	session: Session,
+export async function fetchInvoices(
 	opts: FetchOptions<typeof relations.invoices>,
 ): Promise<Invoice[]> {
-	'use cache';
-	cacheLife('hours');
-	cacheTag(`invoices-${session.user.id}`);
+	try {
+		return await withRLS(async (tx, session) => {
+			const orderBy = mergeOrderBy(opts.orderBy, { issuedAt: 'desc', id: 'desc' });
 
-	return await withRLS(session, async tx => {
-		const orderBy = mergeOrderBy(opts.orderBy, { issuedAt: 'desc', id: 'desc' });
+			// Picks which invoices match the filter first, embedded as a subquery
+			// Relations would otherwise be joined for every row before it is sorted and limited
+			const window = tx.query.invoices.findMany({
+				where: { ...(opts.where ?? {}), userId: { eq: session.user.id } },
+				columns: { id: true },
+				orderBy,
+				limit: opts.limit,
+			});
 
-		// Picks which invoices match the filter first, embedded as a subquery
-		// Relations would otherwise be joined for every row before it is sorted and limited
-		const window = tx.query.invoices.findMany({
-			where: { ...(opts.where ?? {}), userId: { eq: session.user.id } },
-			columns: { id: true },
-			orderBy,
-			limit: opts.limit,
-			offset: opts.offset,
-		});
+			const rows = await tx.query.invoices.findMany({
+				where: { RAW: invoice => inArray(invoice.id, window) },
+				orderBy, // The window order is lost by the lookup, so is applied again
+				columns: { userId: false },
+				extras: opts.extras,
+				with: {
+					status: { columns: { id: false, userId: false } },
+					documentWithSum: {
+						columns: {
+							id: false,
+							clientDataId: false,
+							configId: false,
+							userId: false,
 
-		const rows = await tx.query.invoices.findMany({
-			where: { RAW: invoice => inArray(invoice.id, window) },
-			orderBy, // The window order is lost by the lookup, so is applied again
-			columns: { userId: false },
-			with: {
-				status: { columns: { id: false, userId: false } },
-				documentWithSum: {
-					columns: {
-						id: false,
-						clientDataId: false,
-						configId: false,
-						userId: false,
-
-						// Included with config data
-						taxRegistration: false,
-						currency: false,
-					},
-					with: {
-						clientData: { columns: { name: true, organization: true, clientId: true } },
-						config: { columns: { timezone: true, currency: true, numberingScheme: true } },
+							// Included with config data
+							taxRegistration: false,
+							currency: false,
+						},
+						with: {
+							clientData: { columns: { name: true, organization: true, clientId: true } },
+							config: { columns: { timezone: true, currency: true, numberingScheme: true } },
+						},
 					},
 				},
-			},
-		});
+			});
 
-		return rows.map(({ documentWithSum, ...inv }) => ({
-			...documentWithSum,
-			...inv,
-			createdAt: toISOString(documentWithSum.createdAt),
-			reference: invoiceReference(inv, documentWithSum.config.numberingScheme),
-		}));
-	});
+			return rows.map(({ documentWithSum, ...inv }) => ({
+				...documentWithSum,
+				...inv,
+				createdAt: toISOString(documentWithSum.createdAt),
+				reference: invoiceReference(inv, documentWithSum.config.numberingScheme),
+			}));
+		});
+	} catch (error) {
+		unstable_rethrow(error);
+		console.error('Database Error:', error);
+		throw new Error('Failed to fetch invoices');
+	}
 }
 
 /** Fetches invoices for a given client. Accepts logical client ID, not SCD ID. */
@@ -107,32 +102,6 @@ export const fetchInvoicesForClient = (clientId: string, limit: number) =>
 		where: { document: { clientData: { clientId: { eq: clientId } } } },
 		limit,
 	});
-
-/** Count invoices for the authenticated user, optionally filtered by client */
-export const countInvoices = (clientId?: string) =>
-	query(session => _countInvoices(session, clientId), 'Failed to count invoices');
-
-async function _countInvoices(session: Session, clientId?: string) {
-	'use cache';
-	cacheLife('hours');
-	cacheTag(`invoices-${session.user.id}`);
-
-	return withRLS(session, async tx => {
-		const [row] = await tx
-			.select({ count: count() })
-			.from(schema.invoices)
-			.innerJoin(schema.documents, eq(schema.documents.id, schema.invoices.id))
-			.innerJoin(schema.clientData, eq(schema.clientData.id, schema.documents.clientDataId))
-			.where(
-				and(
-					eq(schema.invoices.userId, session.user.id),
-					clientId ? eq(schema.clientData.clientId, clientId) : undefined,
-				),
-			);
-
-		return row?.count ?? 0;
-	});
-}
 
 /** Join relational (incl. item) details with a single invoice record for authenticated user */
 export async function fetchInvoice(id: string): Promise<DetailedInvoice> {

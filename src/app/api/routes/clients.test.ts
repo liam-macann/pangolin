@@ -13,17 +13,6 @@ describe('GET /api/clients', () => {
 		await expect(res.json()).resolves.toMatchObject({ status: 401, code: 'unauthorized' });
 	});
 
-	asUser('Returns clients with pagination metadata', async ({ seed }) => {
-		await seed.clients({ count: 2, overrides: { isDeleted: false } });
-
-		const res = await app.request('/api/clients?limit=1&offset=0');
-		expect(res.status).toBe(200);
-
-		const body = await res.json();
-		expect(body.data).toHaveLength(1);
-		expect(body.meta).toEqual({ total: 2, limit: 1, offset: 0 });
-	});
-
 	asUser('Never returns clients belonging to another user', async ({ auth, seed }) => {
 		const other = await createTestSession(auth);
 		await seed({ userId: other.user.id }).clients({ count: 1, overrides: { isDeleted: false } });
@@ -34,9 +23,9 @@ describe('GET /api/clients', () => {
 		const res = await bypassRLS(async () => app.request('/api/clients'));
 		const body = await res.json();
 
-		expect(body.data, 'Should only include single invoice for user').toHaveLength(1);
+		expect(body.data, 'Should only include single client for user').toHaveLength(1);
 		expect(body.data[0].id).toBe(mine.id);
-		expect(body.meta.total).toBe(1);
+		expect(body.meta).toEqual({ limit: 200, nextCursor: null });
 	});
 });
 

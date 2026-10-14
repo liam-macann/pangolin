@@ -19,16 +19,14 @@ import config from './routes/config';
 import invoices from './routes/invoices';
 import meta from './routes/meta';
 
-const routes = new Hono()
+export type AppType = typeof routes;
+export const routes = new Hono()
 	.route('/', meta)
 	.route('/config', config)
 	.route('/clients', clients)
 	.route('/invoices', invoices)
 	.route('/address', address)
 	.route('/avatar', avatar);
-
-export type AppType = typeof routes;
-export { routes };
 
 const app = new Hono<Env>({ strict: false }).basePath('/api').onError(onError);
 
