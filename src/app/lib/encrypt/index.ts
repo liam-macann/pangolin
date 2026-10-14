@@ -103,7 +103,11 @@ async function crypto(uuid: string) {
 export type Vault = Omit<Awaited<ReturnType<typeof crypto>>, 'destroy'>;
 
 /** Allows any type except {@link Vault}. A fail-fast error that catches the basic case at compile time. */
-type NoVault<T> = T extends Vault ? never : { [K in keyof T]: NoVault<T[K]> };
+type NoVault<T> = unknown extends T
+	? T
+	: T extends Vault
+		? never
+		: { [K in keyof T]: NoVault<T[K]> };
 
 /** Allow nested {@link withVault()} calls to reuse the outer vault scope. */
 const ctx = new AsyncLocalStorage<{ vault: Vault; userId: string; open: boolean }>();
