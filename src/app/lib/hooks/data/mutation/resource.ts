@@ -59,6 +59,16 @@ export function createOptimisticResource<TEntity extends { readonly id: string }
 	/** Uses query selector to project optimistic intents, ahead of a caller select function
 	 * @remarks Place this in a useQuery() to make it optimistic
 	 */
+	function useOptimisticSelect<TResponse, TData>(
+		applyFn: ApplyUpdateFn<TResponse, TEntity>,
+		select: (response: TResponse) => TData,
+	): (response: TResponse) => TData;
+
+	function useOptimisticSelect<TResponse, TData = TResponse>(
+		applyFn: ApplyUpdateFn<TResponse, TEntity>,
+		select?: (response: TResponse) => TData,
+	): (response: TResponse) => TResponse | TData;
+
 	function useOptimisticSelect<TResponse, TData = TResponse>(
 		applyFn: ApplyUpdateFn<TResponse, TEntity>,
 		select?: (response: TResponse) => TData,

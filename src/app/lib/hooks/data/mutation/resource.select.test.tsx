@@ -51,7 +51,7 @@ describe('createOptimisticResource()', { timeout: 1000 }, () => {
 				return {
 					useEntity: useSuspenseQuery({ initialData: serverEntities, ...opts, select }),
 
-					useMutateFavourite: resource.useOptimisticMutation({
+					useMutateFavorite: resource.useOptimisticMutation({
 						targetId: 'target',
 						mutationFn: favoriteMutation.mutationFn,
 						scope: { id: 'favorite' },
@@ -68,7 +68,7 @@ describe('createOptimisticResource()', { timeout: 1000 }, () => {
 
 			const hooks = {
 				favorite: favoriteMutation.bind(act, value =>
-					result.current.useMutateFavourite.mutateAsync(value),
+					result.current.useMutateFavorite.mutateAsync(value),
 				),
 				archive: archiveMutation.bind(act, value =>
 					result.current.useMutateArchived.mutateAsync(value),
@@ -79,7 +79,7 @@ describe('createOptimisticResource()', { timeout: 1000 }, () => {
 			const snapshot = () => ({
 				/** Data with optimistic overlay; what is visible in the UI */
 				overlaid: result.current.useEntity.data,
-				/** Data sitting in the Tanstack cache; the last server response */
+				/** Data sitting in the TanStack cache; the last server response. */
 				cache: QueryClient.getQueryData<Entity[]>(queryKey),
 			});
 
