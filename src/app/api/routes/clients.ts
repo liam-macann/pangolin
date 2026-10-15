@@ -70,8 +70,8 @@ const listRoute = defineRoute.protected({
 		},
 		...problemContract({
 			422: {
-				description: 'Query parameters (including pagination cursor) are invalid.',
-				problems: ['INVALID_CURSOR', 422],
+				description: 'The pagination cursor is invalid.',
+				problems: ['INVALID_CURSOR'],
 			},
 		}),
 	},
@@ -98,10 +98,6 @@ const getRoute = defineRoute.protected({
 			404: {
 				description: 'The requested client was not found.',
 				problems: ['NOT_FOUND'],
-			},
-			422: {
-				description: 'The client identifier is invalid.',
-				problems: [422],
 			},
 		}),
 	},

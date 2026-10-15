@@ -68,6 +68,18 @@ rules:
         notMatch: "^http:"
   owasp:api4:2023-string-restricted: false
 
+  # Validation issues are returned in full; the response builder does not cap their count.
+  # Exempt only the Problem Details errors array, keeping other array limits enforced.
+  owasp:api4:2023-array-limit:
+    message: "Schema of type array must specify maxItems."
+    severity: error
+    given: >-
+      $..[?(@ && @.type=='array' &&
+      !@path.endsWith("['application/problem+json']['schema']['properties']['errors']"))]
+    then:
+      field: maxItems
+      function: defined
+
   # Operations with no client-supplied input (path/query params and  body) have nothing to reject with 400/422
   owasp:api8:2023-define-error-validation:
     message: "Missing error response of either 400, 422 or 4XX."
@@ -113,11 +125,15 @@ rules:
 
   # UUID and ISO date strings are already length-bounded.
   # A literal maxLength would just restate what the format already guarantees.
+  # Problem Details validation field paths and messages are forwarded without truncation.
   owasp:api4:2023-string-limit:
     message: "Schema of type string must specify maxLength, enum, or const."
     description: "String size should be limited to mitigate resource exhaustion attacks. This can be done using `maxLength`, `enum` or `const`."
     severity: error
-    given: "$..[?(@ && @.type=='string' && @.format != 'uuid' && @.format != 'date' && @.format != 'date-time')]"
+    given: >-
+      $..[?(@ && @.type=='string' && @.format != 'uuid' && @.format != 'date' && @.format != 'date-time' &&
+      !@path.endsWith("['application/problem+json']['schema']['properties']['errors']['items']['properties']['field']") &&
+      !@path.endsWith("['application/problem+json']['schema']['properties']['errors']['items']['properties']['message']"))]
     then:
       function: schema
       functionOptions:

@@ -11,6 +11,8 @@ import {
 	toJSONSchema,
 } from 'zod/v4/core';
 
+import { problemContract } from '@/api/errors/contract';
+
 import { auth } from '@/auth';
 
 type ZodCheckType = $ZodChecks['_zod']['def']['check'];
@@ -170,13 +172,27 @@ export function setArrayParam<T extends OpenAPIV3_1.Document>(
 }
 
 /** @internal Requires explicit routes to be provided. Prefer export from `@/api/hono` */
-export async function getOpenApiDocument<E extends Env, S extends Schema, P extends string>(
+export async function buildOpenApiDocument<E extends Env, S extends Schema, P extends string>(
 	routes: Hono<E, S, P>,
 ) {
 	const authContext = await auth.$context;
 
+	const problems = problemContract({
+		400: { description: 'Request validation failed.', problems: ['VALIDATION_ERROR'] },
+	});
+
+	const validationError = problems[400].content['application/problem+json'];
+
 	const document = await generateSpecs(routes, {
-		defaultValidationErrorResponse: false,
+		defaultValidationErrorResponse: {
+			...problems[400],
+			content: {
+				'application/problem+json': {
+					...validationError,
+					schema: await validationError.schema.toOpenAPISchema().then(s => s.schema),
+				},
+			},
+		},
 		documentation: {
 			...documentConfig,
 			components: {

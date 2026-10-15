@@ -8,7 +8,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import { timeout } from 'hono/timeout';
 import { trimTrailingSlash } from 'hono/trailing-slash';
 
-import { getOpenApiDocument as _getOpenApiDocument } from '@/api/openapi';
+import { buildOpenApiDocument } from '@/api/openapi';
 
 import { onError, problems } from './errors';
 import { type Env } from './middleware';
@@ -72,7 +72,7 @@ app.use(timeout(30 * 1000));
 app.route('/', routes);
 app.notFound(() => problems.create('NOT_FOUND').getResponse());
 
-export const getOpenApiDocument = () => _getOpenApiDocument(routes);
+export const getOpenApiDocument = () => buildOpenApiDocument(routes);
 app.get('/openapi.json', async c => c.json(await getOpenApiDocument()));
 
 export default app;

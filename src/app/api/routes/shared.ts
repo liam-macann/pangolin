@@ -9,6 +9,7 @@ import { standardSchemaProblemHook } from 'hono-problem-details/standard-schema'
 import { z } from 'zod';
 
 import { problemContract } from '@/api/errors/contract';
+import { ProblemDetails } from '@/api/errors/schema';
 import { type Env, requireAuth } from '@/api/middleware';
 import { Cursor } from '@/api/pagination';
 import { queryParams } from '@/api/query';
@@ -40,11 +41,15 @@ export const validator = <TTarget extends keyof ValidationTargets, TSchema exten
 	target: TTarget,
 	schema: TSchema,
 ) =>
-	baseValidator(
-		target,
-		target === 'query' ? queryParams(schema) : schema,
-		standardSchemaProblemHook(),
-	);
+	baseValidator(target, target === 'query' ? queryParams(schema) : schema, async (...args) => {
+		const response = standardSchemaProblemHook()(...args);
+		if (!response) return;
+
+		const body = await ProblemDetails.parseAsync(await response.json());
+
+		// Convert status code to 400 (from 422) to match hono-openapi default error contract
+		return Response.json({ ...body, status: 400 }, { status: 400, headers: response.headers });
+	});
 
 const coerceToNumber = (value: unknown) =>
 	typeof value === 'string' && value.trim() !== '' ? Number(value) : value;

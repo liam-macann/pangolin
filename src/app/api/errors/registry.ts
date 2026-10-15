@@ -28,6 +28,11 @@ export const registry = {
 		status: 502,
 		title: 'Upstream Unavailable',
 	},
+	VALIDATION_ERROR: {
+		type: `${PROBLEM_BASE}/validation_error`,
+		status: 400,
+		title: 'Validation Error',
+	},
 	INVALID_CURSOR: {
 		type: `${PROBLEM_BASE}/invalid_cursor`,
 		status: 422,
@@ -35,7 +40,7 @@ export const registry = {
 	},
 } as const;
 
-/** Registry of the API's domain error types, keyed for type-safe throwing via `problems.create()`. */
+/** Registry of the API domain error types, keyed for type-safe throwing via `problems.create()`. */
 export const problems = createProblemTypeRegistry(registry, { autoCode: true });
 
 /** Registered {@link problems} keys */

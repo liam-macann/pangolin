@@ -11,9 +11,9 @@ describe('GET /api/address/metadata/{country}', () => {
 		await expect(res.json()).resolves.toMatchObject({ status: 405, code: 'method-not-allowed' });
 	});
 
-	test('Returns 422 for an unrecognized country code', async () => {
+	test('Returns 400 for an unrecognized country code', async () => {
 		const res = await app.request('/api/address/metadata/ZZ');
-		expect(res.status).toBe(422);
+		expect(res.status).toBe(400);
 	});
 
 	test('Returns address metadata for a valid country, with a long-lived cache header', async () => {

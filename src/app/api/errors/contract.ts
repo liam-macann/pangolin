@@ -61,7 +61,7 @@ const problemResponse = (
 							);
 						}
 
-						return [problemExampleName(key), { summary: example.title, value: example }];
+						return [problemExampleName(key), { summary: example.title, value: example }] as const;
 					}),
 				),
 			},
@@ -74,12 +74,12 @@ const problemResponse = (
 export const problemContract = <const T extends ProblemContractEntries>(
 	entries: T & ValidateUniqueProblems<T>,
 ) => {
-	return Object.fromEntries([
+	return Object.fromEntries<ReturnType<typeof problemResponse>>([
 		[500, problemResponse(500, 'Unexpected server error.', [500])],
 
 		...Object.entries(entries).map(([key, entry]) => {
 			const status = Number(key);
-			return [status, problemResponse(status, entry.description, entry.problems)];
+			return [status, problemResponse(status, entry.description, entry.problems)] as const;
 		}),
 	]);
 };

@@ -80,8 +80,14 @@ describe('validator()', () => {
 			body: JSON.stringify({ name: 1 }),
 		});
 
-		expect(response.status).toBe(422);
+		expect(response.status).toBe(400);
 		expect(response.headers.get('Content-Type')).toMatch(/^application\/problem\+json/);
+
+		await expect(response.json()).resolves.toMatchObject({
+			status: 400,
+			title: 'Validation Error',
+			errors: [{ field: 'name', message: expect.any(String) }],
+		});
 	});
 });
 

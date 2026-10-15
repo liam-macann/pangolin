@@ -25,12 +25,7 @@ const route = defineRoute.public({
 			},
 			description: 'Return address format metadata for a country.',
 		},
-		...problemContract({
-			422: {
-				description: 'The country code parameter is invalid.',
-				problems: [422],
-			},
-		}),
+		...problemContract({}),
 	},
 });
 

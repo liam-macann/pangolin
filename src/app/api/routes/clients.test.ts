@@ -35,9 +35,9 @@ describe('GET /api/clients/{id}', () => {
 		expect(res.status).toBe(401);
 	});
 
-	asUser('Returns 422 for a non-UUID id', async () => {
+	asUser('Returns 400 for a non-UUID id', async () => {
 		const res = await app.request('/api/clients/not-a-uuid');
-		expect(res.status).toBe(422);
+		expect(res.status).toBe(400);
 	});
 
 	asUser('Returns 404 for a nonexistent client id', async () => {

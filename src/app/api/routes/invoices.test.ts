@@ -149,8 +149,8 @@ describe('GET /api/invoices', () => {
 		expect(body.meta).toEqual({ limit: 200, nextCursor: null });
 	});
 
-	asUser('Returns 422 for a non-UUID client filter', async () => {
+	asUser('Returns 400 for a non-UUID client filter', async () => {
 		const res = await app.request('/api/invoices?client=not-a-uuid');
-		expect(res.status).toBe(422);
+		expect(res.status).toBe(400);
 	});
 });

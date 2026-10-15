@@ -24,6 +24,9 @@ export const ProblemDetails = z
 		code: z
 			.enum(problems.types().map(<S extends string>(key: S) => kebabCase(key) as KebabCase<S>))
 			.optional(),
+
+		/** Field errors returned by the request validation hook. */
+		errors: z.array(z.object({ field: z.string(), message: z.string() })).optional(),
 	})
 	.meta({ title: 'ProblemDetails' });
 

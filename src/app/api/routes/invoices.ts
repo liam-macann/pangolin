@@ -93,8 +93,8 @@ const route = defineRoute.protected({
 		},
 		...problemContract({
 			422: {
-				description: 'Query parameters (including pagination cursor) are invalid.',
-				problems: ['INVALID_CURSOR', 422],
+				description: 'The pagination cursor is invalid.',
+				problems: ['INVALID_CURSOR'],
 			},
 		}),
 	},
