@@ -1,11 +1,10 @@
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
-import { type InferResponseType } from 'hono/client';
 
 import rpc from '#rpc';
 import { type Invoice } from '@/api/dto/invoice';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { type SuspenseOptions } from './helpers';
+import { composeSelect, type QueryOptions } from './helpers';
 import { createOptimisticResource } from './mutation/resource';
 
 export const invoiceQueries = {
@@ -17,13 +16,8 @@ export const invoiceQueries = {
 	list: (clientId?: string) =>
 		queryOptions({
 			queryKey: invoiceQueries.listKey(clientId),
-			queryFn: ({ signal }) =>
-				parseAPIRes(
-					rpc.invoices.$get(
-						{ query: { ...(clientId ? { client: clientId } : {}) } },
-						{ init: { signal } },
-					),
-				),
+			queryFn: ({ signal }) => parseAPIRes(rpc.invoices.$get({ query: {} }, { init: { signal } })),
+			select: response => response.data,
 		}),
 };
 
@@ -32,34 +26,29 @@ const factory = createOptimisticResource<Invoice>({
 	invalidates: () => [invoiceQueries.rootKey()],
 });
 
-type InvoicesResponse = InferResponseType<typeof rpc.invoices.$get, 200>;
-type InvoiceOptions<TData> = SuspenseOptions<
-	InvoicesResponse,
-	ReturnType<typeof invoiceQueries.listKey>,
-	TData
->;
+type InvoiceListOptions<TSelect> = QueryOptions<typeof invoiceQueries.list, TSelect>;
 
-const useOptimisticInvoiceQuery = <TData = InvoicesResponse>(
+const useInvoiceList = <TSelect>(
 	clientId: string | undefined,
-	options?: InvoiceOptions<TData>,
+	options?: InvoiceListOptions<TSelect>,
 ) => {
-	const select = factory.useOptimisticSelect(
-		(response, update) => ({
-			...response,
-			data: response.data.map(update),
-		}),
-		options?.select,
-	);
-
-	return useSuspenseQuery({ ...invoiceQueries.list(clientId), ...options, select });
+	const { select, ...query } = invoiceQueries.list(clientId);
+	return useSuspenseQuery({
+		...query,
+		...options,
+		select: factory.useOptimisticSelect(
+			(response, update) => ({ ...response, data: response.data.map(update) }),
+			composeSelect(select, options),
+		),
+	});
 };
 
-export const useInvoices = <TData = InvoicesResponse>(options?: InvoiceOptions<TData>) =>
-	useOptimisticInvoiceQuery(undefined, options);
+export const useInvoices = <TSelect>(options?: InvoiceListOptions<TSelect>) =>
+	useInvoiceList(undefined, options);
 
-export const useClientInvoices = <TData = InvoicesResponse>(
+export const useClientInvoices = <TSelect>(
 	clientId: string,
-	options?: InvoiceOptions<TData>,
-) => useOptimisticInvoiceQuery(clientId, options);
+	options?: InvoiceListOptions<TSelect>,
+) => useInvoiceList(clientId, options);
 
 export const useInvoiceMutation = factory.useOptimisticMutation;

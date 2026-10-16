@@ -20,12 +20,9 @@ import { OverflowMenu } from './../ui/menu';
 
 const LIMIT = 5;
 export function Table({ clientId }: { clientId: string }) {
-	const {
-		data: { data: client },
-	} = useClient(clientId);
-	const {
-		data: { data: invoices },
-	} = useClientInvoices(clientId);
+	const { data: client } = useClient(clientId);
+
+	const { data: invoices } = useClientInvoices(clientId);
 
 	const table = useInvoiceTable(
 		{
@@ -55,9 +52,7 @@ export function Table({ clientId }: { clientId: string }) {
 }
 
 export function Header({ clientId }: { clientId: string }) {
-	const {
-		data: { data: client },
-	} = useClient(clientId);
+	const { data: client } = useClient(clientId);
 
 	return (
 		<div className='flex items-baseline justify-between'>

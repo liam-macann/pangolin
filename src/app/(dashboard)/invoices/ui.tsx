@@ -62,9 +62,7 @@ function serializeSortParam(sorting: SortingState): string | null {
 }
 
 export function Table() {
-	const {
-		data: { data: invoices },
-	} = useInvoices();
+	const { data: invoices } = useInvoices();
 
 	const searchParams = useSearchParams();
 
@@ -169,7 +167,7 @@ function EmptyState() {
 	return (
 		<>
 			<div className='scrim-b-24 scrim-background max-h-44 overflow-clip'>
-				<PlaceholderTable config={config.data} />
+				<PlaceholderTable config={config} />
 			</div>
 
 			<Empty
@@ -221,7 +219,7 @@ function DialogContent() {
 	const { data: config } = useConfig();
 
 	return (
-		<CreateInvoiceDialog handle={createDialog} config={config.data}>
+		<CreateInvoiceDialog handle={createDialog} config={config}>
 			<Trigger />
 		</CreateInvoiceDialog>
 	);

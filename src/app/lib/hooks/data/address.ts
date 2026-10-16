@@ -1,12 +1,11 @@
 import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
-import { type InferResponseType } from 'hono/client';
 import { registerCountry } from 'lib-address';
 
 import rpc from '#rpc';
 import { type Address, AddressMetadata } from '@/api/dto/address';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { type SuspenseOptions } from './helpers';
+import { composeSelect, type QueryOptions } from './helpers';
 
 export const addressQueries = {
 	rootKey: () => ['address'] as const,
@@ -24,31 +23,18 @@ export const addressQueries = {
 				return response;
 			},
 			staleTime: Infinity,
+			select: response => response.data,
 		}),
 };
 
-type AddressMetadataResponse = InferResponseType<
-	(typeof rpc.address.metadata)[':country']['$get'],
-	200
->;
-type AddressMetadataOptions<TData> = SuspenseOptions<
-	AddressMetadataResponse,
-	ReturnType<typeof addressQueries.metadataKey>,
-	TData
->;
-
-export function useAddressMetadata<TData = AddressMetadataResponse>(
+export const useAddressMetadata = <TSelect>(
 	country: Address['country'],
-	options?: AddressMetadataOptions<TData>,
-) {
-	const initialData =
-		typeof options?.initialData === 'function' ? options.initialData() : options?.initialData;
+	opts?: QueryOptions<typeof addressQueries.metadata, TSelect>,
+) => {
+	const initial = typeof opts?.initialData === 'function' ? opts.initialData() : opts?.initialData;
 
-	if (initialData?.data.key === country) registerCountry(AddressMetadata.parse(initialData.data));
+	if (initial?.data.key === country) registerCountry(AddressMetadata.parse(initial.data));
 
-	return useSuspenseQuery({
-		...addressQueries.metadata(country),
-		...options,
-		select: options?.select,
-	});
-}
+	const { select, ...query } = addressQueries.metadata(country);
+	return useSuspenseQuery({ ...query, ...opts, select: composeSelect(select, opts) });
+};

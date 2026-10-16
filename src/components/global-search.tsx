@@ -120,9 +120,9 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 			</CommandList>
 		);
 
-	const { locale } = config.data.data;
-	const clientsData = clients.data?.data;
-	const invoicesData = invoices.data?.data;
+	const { locale } = config.data;
+	const clientsData = clients.data;
+	const invoicesData = invoices.data;
 
 	return (
 		<CommandList ref={listRef}>

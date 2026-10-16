@@ -101,10 +101,7 @@ beforeEach(() => {
 
 		if (metadata) registerCountry(metadata);
 
-		return {
-			data: { data: metadata },
-			isFetching: false,
-		};
+		return { data: metadata, isFetching: false };
 	});
 });
 
@@ -360,7 +357,7 @@ describe('AddressInput', () => {
 			if (countryCode === 'CA') throw new Error('metadata failure');
 
 			registerCountry(countryMetadata.US);
-			return { data: { data: countryMetadata.US }, isFetching: false };
+			return { data: countryMetadata.US, isFetching: false };
 		});
 		vi.spyOn(console, 'error').mockImplementation(() => {});
 

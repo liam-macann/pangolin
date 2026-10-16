@@ -31,9 +31,7 @@ import { CreateClientDialog } from './../ui/dialogs';
 import { Card } from './card';
 
 export function Clients() {
-	const {
-		data: { data },
-	} = useClients();
+	const { data } = useClients();
 	const favorites = data.filter(client => client.isFavorite);
 
 	return (

@@ -102,8 +102,8 @@ export function InvoiceDetails() {
 
 function BillTo() {
 	const { control } = useFormContext<CreateInvoiceDraft>();
-	const { data: clientsResponse } = useClients();
-	const items = clientsResponse.data.map(client => ({
+	const { data: clients } = useClients();
+	const items = clients.map(client => ({
 		value: client.data.scdId,
 		label: client.data.name ?? client.data.organization ?? client.data.email,
 	}));

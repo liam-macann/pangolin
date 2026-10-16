@@ -66,8 +66,8 @@ export const columns = columnHelper.columns([
 
 					<span className='text-muted-foreground text-xs group-data-void/row:text-muted-foreground/50 md:hidden'>
 						{formatDate(row.original.issuedAt, {
-							locale: config.data.locale,
-							omitCurrentYearIn: config.data.timezone,
+							locale: config.locale,
+							omitCurrentYearIn: config.timezone,
 						})}
 					</span>
 
@@ -95,8 +95,8 @@ export const columns = columnHelper.columns([
 			return (
 				<span className='text-muted-foreground group-data-void/row:text-muted-foreground/50'>
 					{formatDate(row.original.issuedAt, {
-						locale: config.data.locale,
-						omitCurrentYearIn: config.data.timezone,
+						locale: config.locale,
+						omitCurrentYearIn: config.timezone,
 					})}
 				</span>
 			);
@@ -153,7 +153,7 @@ function FormatPrice({
 			{...props}
 		>
 			<span className='relative'>
-				{formatCurrency(row.original.grossTotal, row.original.config.currency, config.data.locale)}
+				{formatCurrency(row.original.grossTotal, row.original.config.currency, config.locale)}
 				<div
 					aria-hidden='true'
 					className={cn(

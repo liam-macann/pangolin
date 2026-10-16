@@ -84,10 +84,10 @@ function LocaleFields({ region, disabled }: { region: Address['country']; disabl
 	const isStale = deferredRegion !== region;
 
 	// Fetch region from cache or Google Address Metadata API
-	const { data: response, isFetching } = useAddressMetadata(deferredRegion);
+	const { data: metadata, isFetching } = useAddressMetadata(deferredRegion);
 	const isLoading = isStale || isFetching;
 
-	return <FieldLayout disabled={disabled} loading={isLoading} metadata={response.data} />;
+	return <FieldLayout disabled={disabled} loading={isLoading} metadata={metadata} />;
 }
 
 function FieldLayout({
