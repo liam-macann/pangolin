@@ -2,19 +2,21 @@
 
 import { UserCirclePlusIcon } from '@phosphor-icons/react';
 import { UserRectangleIcon } from '@phosphor-icons/react/dist/ssr';
-import { type TableState } from '@tanstack/react-table';
+import { type PaginationState, type TableState } from '@tanstack/react-table';
 import { AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { type Client } from '@/api/dto/client';
 import { useClients } from '@/lib/hooks';
+import { useFetchAhead, useFetchWhile } from '@/lib/hooks/data/helpers';
 import { cn } from '@/lib/utils';
 
 import {
 	createDataTableColumnHelper,
 	type DataTableFeatures,
 	useDataTable,
+	useDeferredPage,
 } from '@/components/data-table';
 import { MaintainHeight } from '@/components/maintain-height';
 import { Button } from '@/ui/button';
@@ -31,9 +33,6 @@ import { CreateClientDialog } from './../ui/dialogs';
 import { Card } from './card';
 
 export function Clients() {
-	const { data } = useClients();
-	const favorites = data.filter(client => client.isFavorite);
-
 	return (
 		<div className='w-full'>
 			<div className='mb-8 flex w-full items-baseline justify-between'>
@@ -45,29 +44,51 @@ export function Clients() {
 					</Button>
 				</CreateClientDialog>
 			</div>
-			{favorites.length > 0 && (
-				<>
-					<section className='no-scrollbar flex snap-x gap-4 max-lg:-mx-6 max-lg:scroll-px-6 max-lg:overflow-scroll max-lg:px-6 lg:grid lg:grid-cols-4'>
-						<AnimatePresence mode='popLayout' initial={false}>
-							{favorites.map(client => (
-								<Card
-									key={client.id}
-									client={client}
-									className='shrink-0 basis-60 snap-start max-lg:max-w-[90%]'
-									variant='secondary'
-								/>
-							))}
-						</AnimatePresence>
-					</section>
 
-					<hr className='my-12' />
-				</>
-			)}
+			<Favorites />
 
 			<MaintainHeight>
-				<Table data={data} />
+				<Table />
 			</MaintainHeight>
 		</div>
+	);
+}
+
+function useFavorites() {
+	const selectFavorites = (clients: Client[]) => clients.filter(client => client.isFavorite);
+
+	const { data: global } = useClients({ select: selectFavorites });
+	const optimisticIds = new Set(global.map(client => client.id));
+
+	// Pulls favorited clients directly from the API, so deeply indexed clients are included.
+	const { data: targeted } = useClients({ params: { favorite: true }, select: selectFavorites });
+
+	// The global cache holds every client up to its last loaded page, in API order.
+	// Favorites missing from it necessarily rank afterwards.
+	return [...global, ...targeted.filter(c => !optimisticIds.has(c.id))].slice(0, 32);
+}
+
+export function Favorites() {
+	const favorites = useFavorites();
+	if (favorites.length === 0) return null;
+
+	return (
+		<>
+			<section className='no-scrollbar flex snap-x gap-4 max-lg:-mx-6 max-lg:scroll-px-6 max-lg:overflow-scroll max-lg:px-6 lg:grid lg:grid-cols-4'>
+				<AnimatePresence mode='popLayout' initial={false}>
+					{favorites.map(client => (
+						<Card
+							key={client.id}
+							client={client}
+							className='shrink-0 basis-60 snap-start max-lg:max-w-[90%]'
+							variant='secondary'
+						/>
+					))}
+				</AnimatePresence>
+			</section>
+
+			<hr className='my-12' />
+		</>
 	);
 }
 
@@ -91,7 +112,9 @@ const columns = columnHelper.columns([
 	}),
 ]);
 
-function Table({ data }: { data: Client[] }) {
+function Table() {
+	const { data, ...query } = useClients();
+
 	const router = useRouter();
 
 	const [isFiltering, setIsFiltering] = useState(false);
@@ -99,6 +122,7 @@ function Table({ data }: { data: Client[] }) {
 		{
 			data,
 			columns,
+			pageCount: query.hasNextPage ? -1 : undefined,
 			initialState: {
 				pagination: { pageSize: 40 },
 				columnFilters: [{ id: 'isFavorite', value: false }],
@@ -109,8 +133,15 @@ function Table({ data }: { data: Client[] }) {
 				else table.setColumnFilters([]);
 			},
 		},
-		() => null,
+		state => ({ globalFilter: state.globalFilter, pagination: state.pagination }),
 	);
+
+	const { pageIndex, pageSize } = table.state.pagination;
+
+	// Load a page ahead of what you are viewing
+	useFetchAhead(query, data.length, table.state.pagination);
+	// Search only filters loaded clients, so keep loading until matches fill a page
+	useFetchWhile(query, (pageIndex + 1) * pageSize > table.getPrePaginatedRowModel().rows.length);
 
 	return (
 		<table.AppTable>
@@ -137,29 +168,12 @@ function Table({ data }: { data: Client[] }) {
 						sorting: state.sorting,
 					})}
 				>
-					{(table, { globalFilter }) =>
-						table.getRowModel().rows.length ? (
-							<section className='grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'>
-								<AnimatePresence mode='popLayout' initial={false}>
-									{table.getRowModel().rows.map((client, i) => (
-										<Card
-											className={cn(
-												i === 0 &&
-													isFiltering &&
-													globalFilter !== '' &&
-													'[&>a]:border-ring [&>a]:ring-2',
-											)}
-											style={{ zIndex: table.getRowCount() - i }}
-											key={client.original.id}
-											client={client.original}
-										/>
-									))}
-								</AnimatePresence>
-							</section>
-						) : (
-							<div className='py-6 text-center text-muted-foreground'>No results</div>
-						)
-					}
+					{(_, { globalFilter, pagination }) => (
+						<ClientCards
+							pagination={pagination}
+							highlightFirst={isFiltering && globalFilter !== ''}
+						/>
+					)}
 				</table.Content>
 			) : (
 				<EmptyState />
@@ -167,6 +181,39 @@ function Table({ data }: { data: Client[] }) {
 
 			<table.PaginationControls />
 		</table.AppTable>
+	);
+}
+
+function ClientCards({
+	pagination,
+	highlightFirst,
+}: {
+	pagination: PaginationState;
+	highlightFirst: boolean;
+}) {
+	const { rows, busy } = useDeferredPage<Client>(pagination);
+
+	if (!rows.length) return <div className='py-6 text-center text-muted-foreground'>No results</div>;
+
+	return (
+		<section
+			aria-busy={busy}
+			className={cn(
+				'grid gap-4 transition-opacity duration-200 ease-in-out-circ sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4',
+				busy && 'cursor-wait opacity-50 delay-150 duration-500',
+			)}
+		>
+			<AnimatePresence mode='popLayout' initial={false}>
+				{rows.map((client, i) => (
+					<Card
+						className={cn(i === 0 && highlightFirst && '[&>a]:border-ring [&>a]:ring-2')}
+						style={{ zIndex: rows.length - i }}
+						key={client.original.id}
+						client={client.original}
+					/>
+				))}
+			</AnimatePresence>
+		</section>
 	);
 }
 

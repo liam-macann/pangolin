@@ -24,7 +24,8 @@ export function DataTablePaginationControls({
 			})}
 		>
 			{({ pagination }) =>
-				conditional && table.getPageCount() <= 1 ? null : (
+				// Page count can be unknown, so check navigation instead
+				conditional && !table.getCanPreviousPage() && !table.getCanNextPage() ? null : (
 					<ButtonGroup>
 						<Button
 							variant='secondary'

@@ -12,7 +12,7 @@ import { parseAPIRes } from '@/lib/api/parse-api-response';
 import { composeSelect, type PageParam, type QueryOptions, updatePages } from './helpers';
 import { createOptimisticResource } from './mutation/resource';
 
-export const INVOICE_PAGE_SIZE = 100;
+export const INVOICE_PAGE_SIZE = 40;
 
 export const invoiceQueries = {
 	rootKey: () => ['invoices'] as const,

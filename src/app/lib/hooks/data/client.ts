@@ -16,19 +16,26 @@ import { createOptimisticResource } from './mutation/resource';
 
 export const CLIENT_PAGE_SIZE = 100;
 
+type ClientListParams = {
+	/** Whether to list only favorites, or only clients that are not. */
+	favorite?: boolean;
+};
+
 export const clientQueries = {
 	rootKey: () => ['clients'] as const,
 
 	listsKey: () => [...clientQueries.rootKey(), 'list'] as const,
-	listKey: () => [...clientQueries.listsKey(), { limit: CLIENT_PAGE_SIZE }] as const,
-	list: () =>
+	listKey: ({ favorite }: ClientListParams = {}) =>
+		[...clientQueries.listsKey(), { favorite: favorite ?? null, limit: CLIENT_PAGE_SIZE }] as const,
+	list: (params: ClientListParams = {}) =>
 		infiniteQueryOptions({
-			queryKey: clientQueries.listKey(),
+			queryKey: clientQueries.listKey(params),
 			queryFn: ({ pageParam, signal }: QueryFunctionContext<QueryKey, PageParam>) =>
 				parseAPIRes(
 					rpc.clients.$get(
 						{
 							query: {
+								...(params.favorite !== undefined && { favorite: String(params.favorite) }),
 								limit: String(CLIENT_PAGE_SIZE),
 								...(pageParam ? { cursor: pageParam } : {}),
 							},
@@ -61,8 +68,11 @@ const factory = createOptimisticResource<Client>({
 	invalidates: affectedClientKeys,
 });
 
-export const useClients = <TSelect>(options?: QueryOptions<typeof clientQueries.list, TSelect>) => {
-	const { select, ...query } = clientQueries.list();
+export const useClients = <TSelect>({
+	params = {},
+	...options
+}: QueryOptions<typeof clientQueries.list, TSelect> & { params?: ClientListParams } = {}) => {
+	const { select, ...query } = clientQueries.list(params);
 	return useSuspenseInfiniteQuery({
 		...query,
 		...options,

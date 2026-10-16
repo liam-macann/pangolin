@@ -8,6 +8,7 @@ import { type ComponentProps, Suspense, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { useConfig, useInvoices } from '@/lib/hooks';
+import { useFetchAhead, useFetchWhile } from '@/lib/hooks/data/helpers';
 
 import { Button } from '@/ui/button';
 import {
@@ -62,8 +63,6 @@ function serializeSortParam(sorting: SortingState): string | null {
 }
 
 export function Table() {
-	const { data: invoices } = useInvoices();
-
 	const searchParams = useSearchParams();
 
 	// Params are used to set initial state, not as controlled table state.
@@ -102,7 +101,6 @@ export function Table() {
 	return (
 		<InvoiceTable
 			key={resetCount}
-			data={invoices}
 			initialState={{
 				sorting: parseSortParam(searchParams.get('sort')),
 				pagination: { pageIndex: pageParam > 1 ? pageParam - 1 : 0 },
@@ -118,10 +116,12 @@ export function Table() {
 	);
 }
 
-function InvoiceTable({ data, onGlobalFilterChange, ...options }: UseInvoiceTableOptions) {
+function InvoiceTable({ onGlobalFilterChange, ...options }: Omit<UseInvoiceTableOptions, 'data'>) {
+	const query = useInvoices();
 	const table = useInvoiceTable(
 		{
-			data,
+			data: query.data,
+			pageCount: query.hasNextPage ? -1 : undefined,
 			// The client filter shows as the search value, so typing replaces it
 			onGlobalFilterChange: next => {
 				table.setColumnFilters(filters => filters.filter(filter => filter.id !== 'clientId'));
@@ -129,11 +129,22 @@ function InvoiceTable({ data, onGlobalFilterChange, ...options }: UseInvoiceTabl
 			},
 			...options,
 		},
-		state => ({ columnFilters: state.columnFilters }),
+		state => ({
+			columnFilters: state.columnFilters,
+			globalFilter: state.globalFilter,
+			pagination: state.pagination,
+		}),
 	);
 
+	const { pageIndex, pageSize } = table.state.pagination;
+
+	// Load a page ahead of what you are viewing
+	useFetchAhead(query, query.data.length, table.state.pagination);
+	// Keep loading new pages while filtering, until matches fill a page
+	useFetchWhile(query, (pageIndex + 1) * pageSize > table.getPrePaginatedRowModel().rows.length);
+
 	/** Uses controlled data length to determine empty state, not filtered table view */
-	const isEmpty = data.length === 0;
+	const isEmpty = query.data.length === 0;
 
 	// The table allows you to filter by client UUID, although not exposed in the table UI
 	const clientFilter = table.state.columnFilters.find(filter => filter.id === 'clientId');

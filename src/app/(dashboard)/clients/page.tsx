@@ -14,7 +14,7 @@ export const instant = false;
 
 export default function Page() {
 	return (
-		<PrefetchQuery queries={[clientQueries.list()]}>
+		<PrefetchQuery queries={[clientQueries.list(), clientQueries.list({ favorite: true })]}>
 			<Clients />
 		</PrefetchQuery>
 	);

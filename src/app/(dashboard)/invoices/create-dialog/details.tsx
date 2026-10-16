@@ -1,11 +1,12 @@
 'use client';
 
-import { type Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
+import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
-import { type ComponentProps, Suspense, useId } from 'react';
+import { type ComponentProps, type Ref, Suspense, useId, useRef, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { useClients } from '@/lib/hooks';
+import { useFetchNearEnd } from '@/lib/hooks/data/helpers';
 import { cn } from '@/lib/utils';
 
 import { InfoTip } from '@/components/info';
@@ -102,11 +103,26 @@ export function InvoiceDetails() {
 
 function BillTo() {
 	const { control } = useFormContext<CreateInvoiceDraft>();
-	const { data: clients } = useClients();
-	const items = clients.map(client => ({
-		value: client.data.scdId,
-		label: client.data.name ?? client.data.organization ?? client.data.email,
-	}));
+	const items = useClients({
+		select: clients =>
+			clients.map(client => ({
+				value: client.data.scdId,
+				label: client.data.name ?? client.data.organization ?? client.data.email,
+			})),
+	});
+
+	// A controlled filter renders the matches in the same commit as this component,
+	// so the check below measures the filtered list
+	const { contains } = ComboboxPrimitive.useFilter();
+	const [search, setSearch] = useState('');
+
+	const matches = search
+		? items.data.filter(item => contains(item, search, ({ label }) => label))
+		: items.data;
+
+	// Search only filters the loaded items, so keep loading new pages while the end of the list is in view
+	const listRef = useRef<HTMLDivElement>(null);
+	const onScroll = useFetchNearEnd(items, listRef);
 
 	return (
 		<Controller
@@ -115,10 +131,16 @@ function BillTo() {
 			render={({ field, fieldState }) => (
 				<BillToCombobox
 					errors={fieldState.invalid ? [fieldState.error] : undefined}
-					items={items}
+					items={items.data}
+					filteredItems={matches}
 					{...field}
-					value={items.find(item => item.value === (field.value || '')) || null}
+					value={items.data.find(item => item.value === (field.value || '')) || null}
 					onValueChange={value => field.onChange(value?.value)}
+					ref={listRef}
+					onScroll={onScroll}
+					onInputValueChange={(value, { reason }) =>
+						setSearch(reason === 'input-change' ? value.trim() : '')
+					}
 				/>
 			)}
 		/>
@@ -128,11 +150,15 @@ function BillTo() {
 function BillToCombobox({
 	errors,
 	loading = false,
+	ref,
+	onScroll,
 	...props
 }: {
 	errors?: ComponentProps<typeof FieldError>['errors'];
 	loading?: boolean;
-} & ComboboxPrimitive.Root.Props<{ value: string; label: string }>) {
+	ref?: Ref<HTMLDivElement>;
+} & ComboboxPrimitive.Root.Props<{ value: string; label: string }> &
+	Pick<ComboboxPrimitive.List.Props, 'onScroll'>) {
 	const id = useId();
 
 	return (
@@ -150,7 +176,7 @@ function BillToCombobox({
 					/>
 					<ComboboxContent>
 						<ComboboxEmpty>No clients found.</ComboboxEmpty>
-						<ComboboxList>
+						<ComboboxList ref={ref} onScroll={onScroll}>
 							{item => (
 								<ComboboxItem key={item.value} value={item}>
 									{item.label}

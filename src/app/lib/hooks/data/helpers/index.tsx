@@ -4,6 +4,7 @@ import { type Cursor } from '@/api/pagination/cursor';
 
 import { type QueryDefinition, type SelectOptions } from './options';
 
+export * from './infinite';
 export type { QueryDefinition, QueryOptions } from './options';
 
 /** Page parameter of a cursor-paginated query, which starts without a cursor. */

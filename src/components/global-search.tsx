@@ -16,7 +16,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { useClients, useConfig, useInvoices, useKeyPress } from '@/lib/hooks';
 import { clientQueries } from '@/lib/hooks/data/client';
 import { configQueries } from '@/lib/hooks/data/config';
-import { prefetch } from '@/lib/hooks/data/helpers';
+import { prefetch, useFetchNearEnd } from '@/lib/hooks/data/helpers';
 import { invoiceQueries } from '@/lib/hooks/data/invoice';
 import { pluralize } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
@@ -129,7 +129,12 @@ function Items({
 	const config = useConfig();
 
 	const router = useRouter();
-	const search = useCommandState(state => state.search);
+
+	// Search only filters the loaded items, so keep loading while the end of the list is in view.
+	useCommandState(state => state.filtered.count); // Subscribe to match count, to reevaluate on filter
+	const fetchClients = useFetchNearEnd(clients, ref);
+	// Clients come first, so don't trigger invoices until they are pulled
+	const fetchInvoices = useFetchNearEnd(invoices, ref, !clients.hasNextPage);
 
 	if (!config.data)
 		return (
@@ -143,7 +148,13 @@ function Items({
 	const invoicesData = invoices.data;
 
 	return (
-		<CommandList ref={ref}>
+		<CommandList
+			ref={ref}
+			onScroll={() => {
+				fetchClients();
+				fetchInvoices();
+			}}
+		>
 			<CommandEmpty>No results found.</CommandEmpty>
 			{!!clientsData?.length && (
 				<CommandGroup heading='Clients'>

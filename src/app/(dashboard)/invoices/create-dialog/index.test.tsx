@@ -15,7 +15,9 @@ const { client, mutateAsync } = vi.hoisted(() => ({
 // Data hooks hit the API, and the server action pulls in the database
 vi.mock('@/lib/actions/invoice', () => ({ createInvoice: vi.fn() }));
 vi.mock('@/lib/hooks', () => ({
-	useClients: () => ({ data: [{ data: client }] }),
+	useClients: ({ select }: { select: (clients: { data: typeof client }[]) => unknown }) => ({
+		data: select([{ data: client }]),
+	}),
 	useInvoiceMutation: () => ({ mutateAsync }),
 	useMediaQuery: () => true,
 }));
