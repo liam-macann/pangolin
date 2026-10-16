@@ -1,23 +1,44 @@
-import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
+import {
+	infiniteQueryOptions,
+	type QueryFunctionContext,
+	type QueryKey,
+	useSuspenseInfiniteQuery,
+} from '@tanstack/react-query';
 
 import rpc from '#rpc';
 import { type Invoice } from '@/api/dto/invoice';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { composeSelect, type QueryOptions } from './helpers';
+import { composeSelect, type PageParam, type QueryOptions, updatePages } from './helpers';
 import { createOptimisticResource } from './mutation/resource';
+
+export const INVOICE_PAGE_SIZE = 100;
 
 export const invoiceQueries = {
 	rootKey: () => ['invoices'] as const,
 
 	listsKey: () => [...invoiceQueries.rootKey(), 'list'] as const,
 	listKey: (clientId?: string) =>
-		[...invoiceQueries.listsKey(), { client: clientId ?? null }] as const,
+		[...invoiceQueries.listsKey(), { client: clientId ?? null, limit: INVOICE_PAGE_SIZE }] as const,
 	list: (clientId?: string) =>
-		queryOptions({
+		infiniteQueryOptions({
 			queryKey: invoiceQueries.listKey(clientId),
-			queryFn: ({ signal }) => parseAPIRes(rpc.invoices.$get({ query: {} }, { init: { signal } })),
-			select: response => response.data,
+			queryFn: ({ pageParam, signal }: QueryFunctionContext<QueryKey, PageParam>) =>
+				parseAPIRes(
+					rpc.invoices.$get(
+						{
+							query: {
+								...(clientId ? { client: clientId } : {}),
+								limit: String(INVOICE_PAGE_SIZE),
+								...(pageParam ? { cursor: pageParam } : {}),
+							},
+						},
+						{ init: { signal } },
+					),
+				),
+			initialPageParam: null,
+			getNextPageParam: lastPage => lastPage.meta.nextCursor,
+			select: response => response.pages.flatMap(page => page.data),
 		}),
 };
 
@@ -33,13 +54,10 @@ const useInvoiceList = <TSelect>(
 	options?: InvoiceListOptions<TSelect>,
 ) => {
 	const { select, ...query } = invoiceQueries.list(clientId);
-	return useSuspenseQuery({
+	return useSuspenseInfiniteQuery({
 		...query,
 		...options,
-		select: factory.useOptimisticSelect(
-			(response, update) => ({ ...response, data: response.data.map(update) }),
-			composeSelect(select, options),
-		),
+		select: factory.useOptimisticSelect(updatePages, composeSelect(select, options)),
 	});
 };
 

@@ -1,22 +1,44 @@
-import { queryOptions, useSuspenseQuery } from '@tanstack/react-query';
+import {
+	infiniteQueryOptions,
+	type QueryFunctionContext,
+	type QueryKey,
+	queryOptions,
+	useSuspenseInfiniteQuery,
+	useSuspenseQuery,
+} from '@tanstack/react-query';
 
 import rpc from '#rpc';
 import { type Client } from '@/api/dto/client';
 import { parseAPIRes } from '@/lib/api/parse-api-response';
 
-import { composeSelect, type QueryOptions } from './helpers';
+import { composeSelect, type PageParam, type QueryOptions, updatePages } from './helpers';
 import { createOptimisticResource } from './mutation/resource';
+
+export const CLIENT_PAGE_SIZE = 100;
 
 export const clientQueries = {
 	rootKey: () => ['clients'] as const,
 
 	listsKey: () => [...clientQueries.rootKey(), 'list'] as const,
-	listKey: () => [...clientQueries.listsKey()] as const,
+	listKey: () => [...clientQueries.listsKey(), { limit: CLIENT_PAGE_SIZE }] as const,
 	list: () =>
-		queryOptions({
+		infiniteQueryOptions({
 			queryKey: clientQueries.listKey(),
-			queryFn: ({ signal }) => parseAPIRes(rpc.clients.$get({ query: {} }, { init: { signal } })),
-			select: response => response.data,
+			queryFn: ({ pageParam, signal }: QueryFunctionContext<QueryKey, PageParam>) =>
+				parseAPIRes(
+					rpc.clients.$get(
+						{
+							query: {
+								limit: String(CLIENT_PAGE_SIZE),
+								...(pageParam ? { cursor: pageParam } : {}),
+							},
+						},
+						{ init: { signal } },
+					),
+				),
+			initialPageParam: null,
+			getNextPageParam: lastPage => lastPage.meta.nextCursor,
+			select: response => response.pages.flatMap(page => page.data),
 		}),
 
 	detailsKey: () => [...clientQueries.rootKey(), 'detail'] as const,
@@ -41,13 +63,10 @@ const factory = createOptimisticResource<Client>({
 
 export const useClients = <TSelect>(options?: QueryOptions<typeof clientQueries.list, TSelect>) => {
 	const { select, ...query } = clientQueries.list();
-	return useSuspenseQuery({
+	return useSuspenseInfiniteQuery({
 		...query,
 		...options,
-		select: factory.useOptimisticSelect(
-			(response, update) => ({ ...response, data: response.data.map(update) }),
-			composeSelect(select, options),
-		),
+		select: factory.useOptimisticSelect(updatePages, composeSelect(select, options)),
 	});
 };
 
