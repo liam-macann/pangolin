@@ -22,13 +22,7 @@ const columnHelper = createDataTableColumnHelper<Invoice>();
 /** Column definitions for invoices */
 export const columns = columnHelper.columns([
 	columnHelper.accessor('reference', {
-		// Creation order approximates allocation order, which is stable across numbering scheme switches
-		sortFn: (a, b) => {
-			const cA = a.original.createdAt;
-			const cB = b.original.createdAt;
-			return cA > cB ? 1 : cA < cB ? -1 : 0;
-		},
-		sortDescFirst: true,
+		enableSorting: false,
 		header: ({ column }) => (
 			<ToggleHeader column={column}>
 				<span className='max-sm:hidden'>Reference</span>
@@ -80,6 +74,7 @@ export const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor(row => row.status.status, {
 		id: 'status',
+		enableSorting: false,
 		header: ({ column }) => <ToggleHeader column={column} title='Status' />,
 		meta: { className: 'max-sm:hidden' },
 		cell: ({ row }) => <StatusSelect row={row} />,
@@ -101,21 +96,16 @@ export const columns = columnHelper.columns([
 				</span>
 			);
 		},
-		sortFn: 'datetime',
 		size: 150,
 	}),
 	columnHelper.accessor('grossTotal', {
+		id: 'amount',
 		header: ({ column }) => (
 			<div className='text-right'>
 				<ToggleHeader column={column} title='Amount' />
 			</div>
 		),
 		cell: ({ row }) => <FormatPrice className='text-right' row={row} />,
-		sortFn: (a, b) => {
-			const iA = Number(a.original.grossTotal);
-			const iB = Number(b.original.grossTotal);
-			return iA > iB ? 1 : iA < iB ? -1 : 0;
-		},
 		size: 150,
 	}),
 	columnHelper.accessor(row => row.clientData.clientId, {

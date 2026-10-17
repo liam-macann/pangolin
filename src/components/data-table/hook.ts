@@ -47,8 +47,10 @@ type DataTable<TData extends RowData, TSelected> = Omit<
 
 export type DataTableOptions<TData extends RowData> = Omit<
 	AppTableOptions<TData>,
+	| 'enableSorting'
 	| 'initialState'
 	| 'key'
+	| 'manualSorting'
 	| 'onColumnFiltersChange'
 	| 'onGlobalFilterChange'
 	| 'onPaginationChange'
@@ -59,7 +61,8 @@ export type DataTableOptions<TData extends RowData> = Omit<
 	onGlobalFilterChange?: (value: string) => void;
 	/** Called with the resolved column filters, after the table resets to page one. */
 	onColumnFiltersChange?: (columnFilters: ColumnFiltersState) => void;
-	/** Called with the resolved sort, after the table resets to page one. */
+	/** Called with the resolved sort, after the table resets to page one.
+	 * @remarks Rows are never sorted by the table, so headers only sort when this applies the sort to the data. */
 	onSortingChange?: (sorting: SortingState) => void;
 	/** Called with the resolved pagination state. */
 	onPaginationChange?: (pagination: PaginationState) => void;
@@ -88,6 +91,9 @@ export function useDataTable<TData extends RowData, TSelected = TableState<DataT
 	const table = useAppTable(
 		{
 			...options,
+			// Data arrives in pages, so sorting the loaded rows would misorder them against later pages
+			manualSorting: true,
+			enableSorting: onSortingChange !== undefined,
 			atoms: {
 				...options.atoms,
 				columnFilters: columnFiltersAtom,

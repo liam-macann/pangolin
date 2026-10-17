@@ -31,7 +31,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
 	return (
 		<PrefetchQuery
-			queries={[clientQueries.detail(id), invoiceQueries.list(id), configQueries.current()]}
+			queries={[
+				clientQueries.detail(id),
+				invoiceQueries.list({ client: id }),
+				configQueries.current(),
+			]}
 		>
 			<Button
 				variant='ghost'

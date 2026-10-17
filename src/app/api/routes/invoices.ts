@@ -51,7 +51,9 @@ export const keyset = defineKeyset(tables.invoices, {
 
 const query = z
 	.object({
+		/** @default "-issuedAt" */
 		sort: keyset.sortParam.prefault(['-issuedAt']),
+		/** Client the invoices are billed to. */
 		client: z
 			.uuid()
 			.optional()

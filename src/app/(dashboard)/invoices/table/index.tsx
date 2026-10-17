@@ -1,6 +1,6 @@
 'use client';
 
-import { type SortingState, type TableState } from '@tanstack/react-table';
+import { type TableState } from '@tanstack/react-table';
 import { toMerged } from 'es-toolkit';
 
 import { type Config } from '@/api/dto/config';
@@ -16,14 +16,13 @@ import {
 
 import { columns } from './columns';
 import { usePlaceholderInvoices } from './placeholder';
-
-export const DEFAULT_SORT: SortingState = [{ id: 'reference', desc: true }];
+import { DEFAULT_SORT } from './sort';
 
 export type UseInvoiceTableOptions = Omit<DataTableOptions<Invoice>, 'columns'> & {
 	columns?: DataTableOptions<Invoice>['columns'];
 };
 
-/** Creates a table instance with preconfigured defaults for Invoice data */
+/** Creates a table instance with preconfigured defaults for Invoice data. */
 export function useInvoiceTable<TSelected = TableState<DataTableFeatures>>(
 	{
 		data,
@@ -119,3 +118,4 @@ export function PlaceholderTable({ config, count }: { config: Config; count?: nu
 }
 
 export { columns } from './columns';
+export { DEFAULT_SORT, fromAPISort, toAPISort } from './sort';

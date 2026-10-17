@@ -2,10 +2,10 @@
 
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { PlusCircleIcon, ReceiptIcon } from '@phosphor-icons/react';
-import { type SortingState } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
-import { type ComponentProps, Suspense, useRef, useState } from 'react';
+import { type ComponentProps, Suspense, useDeferredValue, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
+import { z } from 'zod';
 
 import { useConfig, useInvoices } from '@/lib/hooks';
 import { useFetchAhead, useFetchWhile } from '@/lib/hooks/data/helpers';
@@ -23,52 +23,22 @@ import { createDialogHandle } from '@/ui/responsive-dialog';
 
 import { CreateInvoiceDialog } from '@/src/app/(dashboard)/invoices/create-dialog';
 
+import { parseTableParams, tableParams } from './params';
 import {
 	DEFAULT_SORT,
 	InvoiceTableContent,
 	PlaceholderTable,
+	toAPISort,
 	type UseInvoiceTableOptions,
 	useInvoiceTable,
 } from './table';
-
-function parseSortParam(sort: string | null): SortingState | undefined {
-	if (!sort) return;
-	const parsed = sort.split(',').map(part => {
-		// Ensures that we are not matching a colon in the column name
-		const sep = part.lastIndexOf(':');
-		if (sep === -1 || sep === 0) return null;
-
-		const key = part.slice(0, sep);
-		const value = part.slice(sep + 1);
-
-		if (value !== 'asc' && value !== 'desc') return null;
-		return { id: key, desc: value === 'desc' };
-	});
-
-	const filtered = parsed.filter((p): p is NonNullable<typeof p> => p !== null);
-
-	// If any column in the parse failed, discard sort
-	if (parsed.length !== filtered.length) return;
-
-	return filtered;
-}
-
-function serializeSortParam(sorting: SortingState): string | null {
-	const buildSortString = (sorting: SortingState) =>
-		sorting.map(col => `${col.id}:${col.desc ? 'desc' : 'asc'}`).join(',');
-
-	if (sorting.length === 0) return null;
-	const serialized = buildSortString(sorting);
-	return serialized === buildSortString(DEFAULT_SORT) ? null : serialized;
-}
 
 export function Table() {
 	const searchParams = useSearchParams();
 
 	// Params are used to set initial state, not as controlled table state.
 	// Allowing TanStack to control state internally greatly improves performance, compared to reading URL.
-	const pageParam = Number(searchParams.get('page'));
-	const clientParam = searchParams.get('client');
+	const params = parseTableParams(searchParams);
 
 	/** Our model of the table internal state */
 	const internalState = useRef(searchParams.toString());
@@ -83,12 +53,12 @@ export function Table() {
 		internalState.current = searchParams.toString();
 	}
 
-	function updateParams(updates: Record<string, string | null>) {
+	function updateParams(updates: Partial<z.input<typeof tableParams>>) {
 		const params = new URLSearchParams(internalState.current);
 
 		Object.entries(updates).forEach(([key, value]) => {
-			if (value === null || value === '') params.delete(key);
-			else params.set(key, value);
+			if (value) params.set(key, value);
+			else params.delete(key);
 		});
 
 		const query = params.toString();
@@ -102,30 +72,45 @@ export function Table() {
 		<InvoiceTable
 			key={resetCount}
 			initialState={{
-				sorting: parseSortParam(searchParams.get('sort')),
-				pagination: { pageIndex: pageParam > 1 ? pageParam - 1 : 0 },
-				globalFilter: searchParams.get('q') ?? undefined,
-				...(clientParam && { columnFilters: [{ id: 'clientId', value: clientParam }] }),
+				sorting: params.sort,
+				pagination: { pageIndex: params.page ?? 0 },
+				globalFilter: params.q,
+				...(params.client && { columnFilters: [{ id: 'clientId', value: params.client }] }),
 			}}
-			onGlobalFilterChange={q => updateParams({ q, client: null })}
-			onSortingChange={next => updateParams({ sort: serializeSortParam(next) })}
+			onGlobalFilterChange={q => updateParams({ q, client: undefined })}
+			onSortingChange={next => updateParams({ sort: z.encode(tableParams.shape.sort, next) })}
 			onPaginationChange={({ pageIndex }) =>
-				updateParams({ page: pageIndex === 0 ? null : String(pageIndex + 1) })
+				updateParams({ page: z.encode(tableParams.shape.page, pageIndex) })
 			}
 		/>
 	);
 }
 
-function InvoiceTable({ onGlobalFilterChange, ...options }: Omit<UseInvoiceTableOptions, 'data'>) {
-	const query = useInvoices();
+function InvoiceTable({
+	initialState,
+	onGlobalFilterChange,
+	onSortingChange,
+	...options
+}: Omit<UseInvoiceTableOptions, 'data'>) {
+	const [sorting, setSorting] = useState(initialState?.sorting ?? DEFAULT_SORT);
+
+	// Keeps showing rows in the previous order while the new order loads, rather than suspending
+	const deferredSorting = useDeferredValue(sorting);
+	const query = useInvoices({ params: { sort: toAPISort(deferredSorting) } });
+
 	const table = useInvoiceTable(
 		{
 			data: query.data,
 			pageCount: query.hasNextPage ? -1 : undefined,
+			initialState: { ...initialState, sorting },
 			// The client filter shows as the search value, so typing replaces it
 			onGlobalFilterChange: next => {
 				table.setColumnFilters(filters => filters.filter(filter => filter.id !== 'clientId'));
 				onGlobalFilterChange?.(next);
+			},
+			onSortingChange: next => {
+				setSorting(next);
+				onSortingChange?.(next);
 			},
 			...options,
 		},
@@ -167,7 +152,7 @@ function InvoiceTable({ onGlobalFilterChange, ...options }: Omit<UseInvoiceTable
 
 			{!isEmpty ? (
 				<>
-					<InvoiceTableContent table={table} />
+					<InvoiceTableContent table={table} loading={sorting !== deferredSorting} />
 					<div className='flex items-center justify-end gap-2 py-4'>
 						<table.PaginationControls />
 					</div>

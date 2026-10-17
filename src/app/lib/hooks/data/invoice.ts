@@ -4,6 +4,7 @@ import {
 	type QueryKey,
 	useSuspenseInfiniteQuery,
 } from '@tanstack/react-query';
+import { type InferRequestType } from 'hono/client';
 
 import rpc from '#rpc';
 import { type Invoice } from '@/api/dto/invoice';
@@ -12,23 +13,34 @@ import { parseAPIRes } from '@/lib/api/parse-api-response';
 import { composeSelect, type PageParam, type QueryOptions, updatePages } from './helpers';
 import { createOptimisticResource } from './mutation/resource';
 
+export type InvoiceListParams = Pick<
+	InferRequestType<typeof rpc.invoices.$get>['query'],
+	'client' | 'sort'
+>;
+
+/** Most recently issued first, matching the API default. */
+export const DEFAULT_INVOICE_SORT = ['-issuedAt'] satisfies InvoiceListParams['sort'];
 export const INVOICE_PAGE_SIZE = 40;
 
 export const invoiceQueries = {
 	rootKey: () => ['invoices'] as const,
 
 	listsKey: () => [...invoiceQueries.rootKey(), 'list'] as const,
-	listKey: (clientId?: string) =>
-		[...invoiceQueries.listsKey(), { client: clientId ?? null, limit: INVOICE_PAGE_SIZE }] as const,
-	list: (clientId?: string) =>
+	listKey: ({ client, sort = DEFAULT_INVOICE_SORT }: InvoiceListParams = {}) =>
+		[
+			...invoiceQueries.listsKey(),
+			{ client: client ?? null, sort, limit: INVOICE_PAGE_SIZE },
+		] as const,
+	list: (params: InvoiceListParams = {}) =>
 		infiniteQueryOptions({
-			queryKey: invoiceQueries.listKey(clientId),
+			queryKey: invoiceQueries.listKey(params),
 			queryFn: ({ pageParam, signal }: QueryFunctionContext<QueryKey, PageParam>) =>
 				parseAPIRes(
 					rpc.invoices.$get(
 						{
 							query: {
-								...(clientId ? { client: clientId } : {}),
+								...(params.client ? { client: params.client } : {}),
+								sort: params.sort ?? DEFAULT_INVOICE_SORT,
 								limit: String(INVOICE_PAGE_SIZE),
 								...(pageParam ? { cursor: pageParam } : {}),
 							},
@@ -50,10 +62,10 @@ const factory = createOptimisticResource<Invoice>({
 type InvoiceListOptions<TSelect> = QueryOptions<typeof invoiceQueries.list, TSelect>;
 
 const useInvoiceList = <TSelect>(
-	clientId: string | undefined,
+	params: InvoiceListParams,
 	options?: InvoiceListOptions<TSelect>,
 ) => {
-	const { select, ...query } = invoiceQueries.list(clientId);
+	const { select, ...query } = invoiceQueries.list(params);
 	return useSuspenseInfiniteQuery({
 		...query,
 		...options,
@@ -61,12 +73,15 @@ const useInvoiceList = <TSelect>(
 	});
 };
 
-export const useInvoices = <TSelect>(options?: InvoiceListOptions<TSelect>) =>
-	useInvoiceList(undefined, options);
+export const useInvoices = <TSelect>({
+	params = {},
+	...options
+}: InvoiceListOptions<TSelect> & { params?: Omit<InvoiceListParams, 'client'> } = {}) =>
+	useInvoiceList(params, options);
 
 export const useClientInvoices = <TSelect>(
 	clientId: string,
 	options?: InvoiceListOptions<TSelect>,
-) => useInvoiceList(clientId, options);
+) => useInvoiceList({ client: clientId }, options);
 
 export const useInvoiceMutation = factory.useOptimisticMutation;

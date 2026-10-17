@@ -4,14 +4,11 @@ import {
 	columnVisibilityFeature,
 	createFilteredRowModel,
 	createPaginatedRowModel,
-	createSortedRowModel,
 	filterFn_equals,
 	globalFilteringFeature,
 	metaHelper,
 	rowPaginationFeature,
 	rowSortingFeature,
-	sortFn_datetime,
-	sortFn_text,
 	tableFeatures,
 } from '@tanstack/react-table';
 
@@ -23,12 +20,11 @@ export const features = tableFeatures({
 	columnVisibilityFeature,
 	columnSizingFeature,
 
+	// Sort state is applied by the API, so rows have no sorted row model
 	filteredRowModel: createFilteredRowModel(),
-	sortedRowModel: createSortedRowModel(),
 	paginatedRowModel: createPaginatedRowModel(),
 
 	filterFns: { equals: filterFn_equals },
-	sortFns: { datetime: sortFn_datetime, text: sortFn_text },
 
 	columnMeta: metaHelper<{ className?: string }>(),
 });
