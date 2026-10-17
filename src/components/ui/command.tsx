@@ -55,12 +55,19 @@ function CommandDialog({
 
 function CommandInput({
 	className,
+	value,
+	onValueChange,
 	...props
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
 	return (
 		<div data-slot='command-input-wrapper' className='p-3 pb-0'>
 			<InputGroup className='h-8! rounded-lg! border-input/30 bg-input/30 *:data-[slot=input-group-addon]:pl-2!'>
-				<InputGroupInput render={<CommandPrimitive.Input />} data-slot='command-input' {...props} />
+				<InputGroupInput
+					// cmdk replaces the change handler of Base UI, so its search props must reach cmdk itself
+					render={<CommandPrimitive.Input value={value} onValueChange={onValueChange} />}
+					data-slot='command-input'
+					{...props}
+				/>
 				<InputGroupAddon>
 					<MagnifyingGlassIcon className='size-4 shrink-0 opacity-50' />
 				</InputGroupAddon>

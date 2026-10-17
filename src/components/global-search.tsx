@@ -9,10 +9,11 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useCommandState } from 'cmdk';
 import { useRouter } from 'next/navigation';
-import { type ComponentProps, Suspense, useRef, useState } from 'react';
+import { type ComponentProps, type RefObject, Suspense, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { useClients, useConfig, useInvoices, useKeyPress, usePrevious } from '@/lib/hooks';
+import { useClients, useConfig, useInvoices, useKeyPress } from '@/lib/hooks';
 import { clientQueries } from '@/lib/hooks/data/client';
 import { configQueries } from '@/lib/hooks/data/config';
 import { prefetch } from '@/lib/hooks/data/helpers';
@@ -35,7 +36,14 @@ import { toast } from '@/ui/toast';
 
 function GlobalSearch() {
 	const [open, setOpen] = useState(false);
+	const [search, setSearch] = useState('');
+	const listRef = useRef<HTMLDivElement>(null);
 	const queryClient = useQueryClient();
+
+	const onOpenChange = (next: boolean) => {
+		setOpen(next);
+		if (!next) setSearch('');
+	};
 
 	const prefetchSearch = () => {
 		void Promise.allSettled([
@@ -71,12 +79,20 @@ function GlobalSearch() {
 				title='Search'
 				description='Find people or invoices…'
 				open={open}
-				onOpenChange={setOpen}
+				onOpenChange={onOpenChange}
 				render={<nav />}
 				className='top-1/4 max-h-[calc(75%-(--spacing(12)))]'
 			>
 				<Command>
-					<CommandInput placeholder='Search for people or invoices…' />
+					<CommandInput
+						placeholder='Search for people or invoices…'
+						value={search}
+						onValueChange={value => {
+							// Commits the new matches, including cmdk scroll, before resetting scroll to top
+							flushSync(() => setSearch(value));
+							listRef.current?.scrollTo({ top: 0 });
+						}}
+					/>
 					<Suspense
 						fallback={
 							<CommandList className='overflow-clip'>
@@ -86,7 +102,7 @@ function GlobalSearch() {
 							</CommandList>
 						}
 					>
-						<Items onOpenChange={setOpen} />
+						<Items ref={listRef} onNavigate={() => onOpenChange(false)} />
 					</Suspense>
 					<footer className='sticky bottom-0 flex items-center gap-2 border-input/30 border-t bg-background px-4 py-2 pb-2.5 text-muted-foreground text-xs dark:bg-popover'>
 						<Kbd className='size-5'>
@@ -100,18 +116,20 @@ function GlobalSearch() {
 	);
 }
 
-function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
+function Items({
+	ref,
+	onNavigate,
+}: {
+	ref: RefObject<HTMLDivElement | null>;
+	/** Called once a result has been chosen and navigated to. */
+	onNavigate: () => void;
+}) {
 	const clients = useClients();
 	const invoices = useInvoices();
 	const config = useConfig();
 
 	const router = useRouter();
-	const listRef = useRef<HTMLDivElement>(null);
-
 	const search = useCommandState(state => state.search);
-	const prevSearch = usePrevious(search);
-
-	if (search !== prevSearch) listRef.current?.scrollTo({ top: 0 });
 
 	if (!config.data)
 		return (
@@ -125,7 +143,7 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 	const invoicesData = invoices.data;
 
 	return (
-		<CommandList ref={listRef}>
+		<CommandList ref={ref}>
 			<CommandEmpty>No results found.</CommandEmpty>
 			{!!clientsData?.length && (
 				<CommandGroup heading='Clients'>
@@ -139,7 +157,7 @@ function Items({ onOpenChange }: { onOpenChange: (v: boolean) => void }) {
 							className='*:last:hidden'
 							onSelect={() => {
 								router.push(`/clients/${client.id}`);
-								onOpenChange(false);
+								onNavigate();
 							}}
 						>
 							{client.data.name ? (
