@@ -143,6 +143,16 @@ function DataTableHeader<TData extends RowData>() {
 						<TableRow key={headerGroup.id}>
 							{headerGroup.headers.map(header => (
 								<TableHead
+									scope='col'
+									aria-sort={
+										header.column.getCanSort()
+											? header.column.getIsSorted() === 'asc'
+												? 'ascending'
+												: header.column.getIsSorted() === 'desc'
+													? 'descending'
+													: 'none'
+											: undefined
+									}
 									style={{
 										width: `${header.getSize()}px`,
 										minWidth: `${header.column.columnDef.minSize}px`,
