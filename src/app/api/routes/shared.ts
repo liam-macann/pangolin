@@ -54,6 +54,9 @@ export const validator = <TTarget extends keyof ValidationTargets, TSchema exten
 const coerceToNumber = (value: unknown) =>
 	typeof value === 'string' && value.trim() !== '' ? Number(value) : value;
 
+export const coerceToBoolean = (value: unknown) =>
+	value === 'true' ? true : value === 'false' ? false : value;
+
 export const paginationQuerySchema = z.object({
 	limit: z
 		.preprocess(coerceToNumber, z.int32().positive().max(200))

@@ -1,4 +1,4 @@
-import { and, eq, isNull, type SQL, type SQLWrapper, sql } from 'drizzle-orm';
+import { and, EmptyFilter, eq, isNull, type SQL, type SQLWrapper, sql } from 'drizzle-orm';
 import { QueryBuilder } from 'drizzle-orm/pg-core';
 import { resolver } from 'hono-openapi';
 import { z } from 'zod';
@@ -11,6 +11,7 @@ import { coalesce } from '@/lib/utils/drizzle';
 import * as tables from '@/db/schema';
 
 import {
+	coerceToBoolean,
 	createApiRouter,
 	defineRoute,
 	paginationMetaSchema,
@@ -37,7 +38,16 @@ const keyset = defineKeyset(tables.clients, {
 });
 
 const listQuery = z
-	.object({ sort: keyset.sortParam.prefault(['organization']) })
+	.object({
+		sort: keyset.sortParam.prefault(['organization']),
+		favorite: z
+			.preprocess(coerceToBoolean, z.boolean())
+			.optional()
+			.meta({
+				description: 'Filter clients by whether they are marked as a favorite.',
+				examples: [true],
+			}),
+	})
 	.extend(paginationQuerySchema.shape)
 	.strict();
 
@@ -62,6 +72,7 @@ const listRoute = defineRoute.protected({
 				NextPage: {
 					operationId: 'listClients',
 					parameters: {
+						favorite: '$request.query.favorite',
 						sort: '$request.query.sort',
 						cursor: '$response.body#/meta/nextCursor',
 					},
@@ -105,12 +116,12 @@ const getRoute = defineRoute.protected({
 
 const app = createApiRouter()
 	.get('/', ...listRoute, validator('query', listQuery), async c => {
-		const { cursor, limit, sort } = c.req.valid('query');
+		const { cursor, limit, sort, favorite } = c.req.valid('query');
 
 		const page = keyset.page({ cursor, limit, sort });
 
 		const rows = await fetchClients({
-			where: page.where({}),
+			where: page.where({ isFavorite: { eq: favorite ?? EmptyFilter } }),
 			orderBy: page.orderBy,
 			extras: page.extras,
 			limit: page.limit,

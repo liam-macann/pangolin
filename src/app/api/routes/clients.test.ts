@@ -13,6 +13,31 @@ describe('GET /api/clients', () => {
 		await expect(res.json()).resolves.toMatchObject({ status: 401, code: 'unauthorized' });
 	});
 
+	asUser('Filters by favorite', async ({ seed }) => {
+		const [favorite, other] = await seed.clients({
+			overrides: [
+				{ isFavorite: true, isDeleted: false },
+				{ isFavorite: false, isDeleted: false },
+			],
+		});
+
+		const ids = async (query: string) => {
+			const res = await app.request(`/api/clients${query}`);
+			expect(res.status).toBe(200);
+			const { data } = await res.json();
+			return data.map((client: { id: string }) => client.id);
+		};
+
+		await expect(ids('?favorite=true')).resolves.toEqual([favorite.id]);
+		await expect(ids('?favorite=false')).resolves.toEqual([other.id]);
+		await expect(ids('')).resolves.toHaveLength(2);
+	});
+
+	asUser('Returns 400 for a favorite filter other than true or false', async () => {
+		const res = await app.request('/api/clients?favorite=yes');
+		expect(res.status).toBe(400);
+	});
+
 	asUser('Never returns clients belonging to another user', async ({ auth, seed }) => {
 		const other = await createTestSession(auth);
 		await seed({ userId: other.user.id }).clients({ count: 1, overrides: { isDeleted: false } });
