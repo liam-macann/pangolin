@@ -8,7 +8,7 @@ import { type Invoice } from '@/api/dto/invoice';
 import { cn } from '@/lib/utils';
 
 import {
-	type DataTableContentProps,
+	type DataTableBodyProps,
 	type DataTableFeatures,
 	type DataTableOptions,
 	useDataTable,
@@ -56,7 +56,7 @@ export function InvoiceTableContent({
 	getRowAttr,
 	getCellAttr,
 	...props
-}: DataTableContentProps<Invoice> & { table: Pick<InvoiceTable, 'Content'> }) {
+}: DataTableBodyProps<Invoice> & { table: Pick<InvoiceTable, 'Content'> }) {
 	return (
 		<table.Content
 			getRowAttr={(row, ...args) => {

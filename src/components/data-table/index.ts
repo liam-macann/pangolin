@@ -7,4 +7,8 @@ export {
 	useDataTable,
 	useDataTableContext,
 } from './hook';
-export type { DataTableContentProps } from './internal/content';
+export {
+	type DataTableBodyProps,
+	type DataTableContentProps,
+	useDeferredPage,
+} from './internal/content';

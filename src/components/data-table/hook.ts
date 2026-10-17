@@ -6,6 +6,7 @@ import {
 	type SortingState,
 	type TableState,
 } from '@tanstack/react-table';
+import { useEffect } from 'react';
 
 import { DataTableContent, type DataTableContentComponent } from './internal/content';
 import { cellContext, headerContext, tableContext } from './internal/context';
@@ -119,6 +120,15 @@ export function useDataTable<TData extends RowData, TSelected = TableState<DataT
 		},
 		selector,
 	);
+
+	// Do not allow tables to settle on pages beyond the total count. This can happen when rapidly paging through deferred pages.
+	const pageCount = table.getPageCount();
+	useEffect(() => {
+		if (pageCount === -1) return;
+
+		const finalIndex = Math.max(0, pageCount - 1);
+		if (paginationAtom.get().pageIndex > finalIndex) table.setPageIndex(finalIndex);
+	}, [pageCount, paginationAtom, table]);
 
 	return table as DataTable<TData, TSelected>;
 }
