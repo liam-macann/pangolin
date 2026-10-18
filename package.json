@@ -64,6 +64,7 @@
 		"@vvo/tzdb": "^6.198.0",
 		"babel-plugin-react-compiler": "^19.1.0-rc.3",
 		"better-auth": "^1.7.1",
+		"cbor-x": "^1.6.6",
 		"class-variance-authority": "^0.7.1",
 		"client-only": "^0.0.1",
 		"clsx": "^2.1.1",

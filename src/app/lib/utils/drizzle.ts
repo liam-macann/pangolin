@@ -63,6 +63,12 @@ export function jsonbBuildObject<T extends Record<string, AnySql>>(shape: T) {
 	}>`jsonb_build_object(${sql.join(entries, sql.raw(', '))})`;
 }
 
+/** Combines expressions of one type into a Postgres array. */
+export const array = <T>(exprs: SQL<T>[]): SQL<T[]> => {
+	if (exprs.length === 0) throw new Error('A SQL array requires at least one expression');
+	return sql`array[${sql.join(exprs, sql`, `)}]`;
+};
+
 /**
  * Appends a SQL "FILTER (WHERE ...)" clause to an aggregate function.
  * @param aggregate - The aggregate function: `sum(col)`, `count(col)`
