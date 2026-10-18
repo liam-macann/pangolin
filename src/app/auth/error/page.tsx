@@ -18,7 +18,7 @@ type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default function AuthErrorPage({ searchParams }: { searchParams: SearchParams }) {
 	return (
-		<div className='flex flex-col gap-y-4 rounded-md border bg-card p-4 py-8 shadow md:p-8'>
+		<div className='flex flex-col gap-y-4 rounded-md border bg-card px-8 py-8 shadow'>
 			<Suspense fallback={<ErrorMessage />}>
 				{searchParams.then(params => {
 					const { error } = paramsSchema.parse(params);
