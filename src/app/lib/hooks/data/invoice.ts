@@ -76,7 +76,7 @@ const useInvoiceList = <TSelect>(
 export const useInvoices = <TSelect>({
 	params = {},
 	...options
-}: InvoiceListOptions<TSelect> & { params?: Omit<InvoiceListParams, 'client'> } = {}) =>
+}: InvoiceListOptions<TSelect> & { params?: InvoiceListParams } = {}) =>
 	useInvoiceList(params, options);
 
 export const useClientInvoices = <TSelect>(

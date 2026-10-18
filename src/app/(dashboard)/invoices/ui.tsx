@@ -93,16 +93,25 @@ function InvoiceTable({
 	...options
 }: Omit<UseInvoiceTableOptions, 'data'>) {
 	const [sorting, setSorting] = useState(initialState?.sorting ?? DEFAULT_SORT);
+	const [columnFilters, setColumnFilters] = useState(initialState?.columnFilters ?? []);
 
-	// Keeps showing rows in the previous order while the new order loads, rather than suspending
+	// The table allows you to filter by client UUID, although not exposed in the table UI
+	const clientFilter = columnFilters.find(filter => filter.id === 'clientId');
+	const clientId = clientFilter ? String(clientFilter.value) : undefined;
+
+	// Keeps showing the previous rows while the new sort or client loads, rather than suspending
 	const deferredSorting = useDeferredValue(sorting);
-	const query = useInvoices({ params: { sort: toAPISort(deferredSorting) } });
+	const deferredClientId = useDeferredValue(clientId);
+	const query = useInvoices({
+		params: { sort: toAPISort(deferredSorting), client: deferredClientId },
+	});
 
 	const table = useInvoiceTable(
 		{
 			data: query.data,
 			pageCount: query.hasNextPage ? -1 : undefined,
 			initialState: { ...initialState, sorting },
+			onColumnFiltersChange: setColumnFilters,
 			// The client filter shows as the search value, so typing replaces it
 			onGlobalFilterChange: next => {
 				table.setColumnFilters(filters => filters.filter(filter => filter.id !== 'clientId'));
@@ -115,7 +124,6 @@ function InvoiceTable({
 			...options,
 		},
 		state => ({
-			columnFilters: state.columnFilters,
 			globalFilter: state.globalFilter,
 			pagination: state.pagination,
 		}),
@@ -128,16 +136,17 @@ function InvoiceTable({
 	// Keep loading new pages while filtering, until matches fill a page
 	useFetchWhile(query, (pageIndex + 1) * pageSize > table.getPrePaginatedRowModel().rows.length);
 
-	/** Uses controlled data length to determine empty state, not filtered table view */
-	const isEmpty = query.data.length === 0;
+	/** Uses controlled data length to determine empty state, not filtered table view.
+	 * @remarks A client with no invoices still shows the table, so its filter can be cleared. */
+	const isEmpty = query.data.length === 0 && !deferredClientId;
 
-	// The table allows you to filter by client UUID, although not exposed in the table UI
-	const clientFilter = table.state.columnFilters.find(filter => filter.id === 'clientId');
-	const clientId = clientFilter ? String(clientFilter.value) : null;
+	// Search input updates immediately, not through the deferred ID
 	const clientName = clientId
 		? (table.getCoreRowModel().rows.find(row => row.original.clientData.clientId === clientId)
 				?.original.clientData.name ?? clientId)
 		: null;
+
+	const isLoading = sorting !== deferredSorting || clientId !== deferredClientId;
 
 	return (
 		<table.AppTable>
@@ -152,7 +161,7 @@ function InvoiceTable({
 
 			{!isEmpty ? (
 				<>
-					<InvoiceTableContent table={table} loading={sorting !== deferredSorting} />
+					<InvoiceTableContent table={table} loading={isLoading} />
 					<div className='flex items-center justify-end gap-2 py-4'>
 						<table.PaginationControls />
 					</div>

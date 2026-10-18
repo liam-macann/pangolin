@@ -18,8 +18,8 @@ export default async function Page({
 }: {
 	searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-	const { sort } = parseTableParams(await searchParams);
-	const invoices = invoiceQueries.list({ sort: toAPISort(sort ?? DEFAULT_SORT) });
+	const { sort, client } = parseTableParams(await searchParams);
+	const invoices = invoiceQueries.list({ sort: toAPISort(sort ?? DEFAULT_SORT), client });
 
 	return (
 		<PrefetchQuery queries={[invoices, configQueries.current()]}>
