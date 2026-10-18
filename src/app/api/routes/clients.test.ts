@@ -13,6 +13,27 @@ describe('GET /api/clients', () => {
 		await expect(res.json()).resolves.toMatchObject({ status: 401, code: 'unauthorized' });
 	});
 
+	asUser('Sorts in Unicode order across names and organizations', async ({ seed }) => {
+		// Byte order would give Banana, apple, zebra, Éclair
+		const [zebra, eclair, apple, banana] = await seed.clients({
+			versions: 1,
+			overrides: [
+				{ isDeleted: false, data: { name: 'zebra', organization: null } },
+				{ isDeleted: false, data: { organization: 'Éclair' } },
+				{ isDeleted: false, data: { name: 'apple', organization: null } },
+				{ isDeleted: false, data: { organization: 'Banana' } },
+			],
+		});
+
+		const res = await app.request('/api/clients');
+		expect(res.status).toBe(200);
+		const { data } = await res.json();
+
+		expect(data.map((client: { id: string }) => client.id)).toEqual(
+			[apple, banana, eclair, zebra].map(client => client.id),
+		);
+	});
+
 	asUser('Filters by favorite', async ({ seed }) => {
 		const [favorite, other] = await seed.clients({
 			overrides: [

@@ -3,6 +3,7 @@ import { char, check, integer, PgDialect, pgTable, text, varchar } from 'drizzle
 import { describe, expect, test } from 'vitest';
 
 import { getTextColumnBounds, jsonbAgg } from '@/lib/utils/drizzle';
+import { unicode } from '@/db/schema/types';
 
 describe('getTextColumnBounds()', () => {
 	const t = pgTable(
@@ -14,6 +15,7 @@ describe('getTextColumnBounds()', () => {
 			checkedText: text(),
 			exactText: text(),
 			constrainedVarchar: varchar({ length: 12 }),
+			unicode: unicode(),
 		},
 		t => [
 			check('test_checked_text_min', sql`char_length(${t.checkedText}) >= 2`),
@@ -21,6 +23,7 @@ describe('getTextColumnBounds()', () => {
 			check('test_exact_text_length', sql`character_length(${t.exactText}) = 3`),
 			check('test_constrained_varchar_min', sql`length(${t.constrainedVarchar}) >= 2`),
 			check('test_constrained_varchar_max', sql`char_length(${t.constrainedVarchar}) <= 8`),
+			check('test_unicode_max', sql`char_length(${t.unicode}) <= 255`),
 		],
 	);
 
@@ -41,6 +44,9 @@ describe('getTextColumnBounds()', () => {
 
 	test('Combines type and check bounds', () =>
 		expect(getTextColumnBounds(t.constrainedVarchar)).toEqual({ minLength: 2, maxLength: 8 }));
+
+	test('Reads length bounds on the Unicode text domain', () =>
+		expect(getTextColumnBounds(t.unicode)).toEqual({ minLength: 0, maxLength: 255 }));
 });
 
 describe('jsonbAgg()', () => {

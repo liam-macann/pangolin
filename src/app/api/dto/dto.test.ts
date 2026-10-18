@@ -22,6 +22,7 @@ import { Invoice } from '@/api/dto/invoice';
 import { getNumericColumnPrecision, getTextColumnBounds } from '@/lib/utils/drizzle';
 import { collectNodes, getBounds } from '@/lib/zod';
 import * as db from '@/db/schema';
+import { isUnicode } from '@/db/schema/types';
 
 type FieldMapping = [column: Column, path: string];
 
@@ -170,7 +171,10 @@ describe('API contract fields are compatible with database storage constraints',
 				}
 
 				assert(
-					column instanceof PgChar || column instanceof PgText || column instanceof PgVarchar,
+					column instanceof PgChar ||
+						column instanceof PgText ||
+						column instanceof PgVarchar ||
+						isUnicode(column),
 					'Expected a text column',
 				);
 

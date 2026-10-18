@@ -9,6 +9,8 @@ import {
 	type PgVarchar,
 } from 'drizzle-orm/pg-core';
 
+import { type UnicodeColumn } from '@/db/schema/types';
+
 type AnySql = SQL | Column | SQL.Aliased;
 
 /** Helper type to extract the TypeScript type from a PgColumn or SQL */
@@ -85,7 +87,7 @@ export function coalesce<Args extends [SqlOrPrimitive, SqlOrPrimitive, ...SqlOrP
 const dialect = new PgDialect();
 
 /** Reads length bounds of a string column, from either type (VARCHAR, CHAR) or check constraints */
-export const getTextColumnBounds = (column: PgChar | PgText | PgVarchar) => {
+export const getTextColumnBounds = (column: PgChar | PgText | PgVarchar | UnicodeColumn) => {
 	const checks = getTableConfig(getColumnTable(column)).checks;
 
 	// In Postgres, all three are equivalent
@@ -117,7 +119,7 @@ export const getTextColumnBounds = (column: PgChar | PgText | PgVarchar) => {
 				maxLength: Math.min(acc.maxLength, check.maxLength),
 			}),
 			// CHAR length does not impose minimum, but rather pads input to length
-			{ minLength: 0, maxLength: column.length ?? Infinity },
+			{ minLength: 0, maxLength: ('length' in column ? column.length : undefined) ?? Infinity },
 		);
 };
 

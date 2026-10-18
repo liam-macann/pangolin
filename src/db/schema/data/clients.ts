@@ -12,6 +12,7 @@ import {
 
 import { coalesce } from '@/lib/utils/drizzle';
 import { users } from '@/db/schema/auth';
+import { unicode } from '@/db/schema/types';
 
 import { authUid, policy, relationOwnership, scdTable } from './_helpers';
 import { address } from './address';
@@ -61,9 +62,9 @@ export const clientData = scdTable(
 		clientId: uuid()
 			.references(() => clients.id, { onDelete: 'cascade' })
 			.notNull(),
-		name: text(),
-		organization: text(),
-		displayName: text()
+		name: unicode(),
+		organization: unicode(),
+		displayName: unicode()
 			.generatedAlwaysAs((): SQL => coalesce(clientData.name, clientData.organization))
 			.notNull(),
 		email: text().notNull(),

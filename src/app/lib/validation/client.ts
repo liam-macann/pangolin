@@ -8,8 +8,16 @@ import { clientData as clientDataSchema } from '@/db/schema/data';
  *  Carries no cross-field refinements, so subsets may be derived with pick()/omit()/extend(). */
 export const clientDataFields = createInsertSchema(clientDataSchema, {
 	email: s => z.string().trim().pipe(z.email()).pipe(s),
-	name: s => s.transform(value => value?.trim() || null),
-	organization: s => s.transform(value => value?.trim() || null),
+	name: () =>
+		z
+			.string()
+			.trim()
+			.transform(value => value || null),
+	organization: () =>
+		z
+			.string()
+			.trim()
+			.transform(value => value || null),
 })
 	.pick({
 		clientId: true,
