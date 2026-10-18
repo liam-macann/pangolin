@@ -107,6 +107,12 @@
 	}
 }
 
+body {
+	/* Starting with iOS 26, Safari allows content beneath the UI chrome to be visible.
+       This allows for absolutely positioned backdrops. */
+	position: relative;
+}
+
 @utility transition {
 	transition-property:
 		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
