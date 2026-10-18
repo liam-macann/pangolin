@@ -2,7 +2,7 @@
 
 import { UserCirclePlusIcon } from '@phosphor-icons/react';
 import { UserRectangleIcon } from '@phosphor-icons/react/dist/ssr';
-import { type ColumnFiltersState, type TableState } from '@tanstack/react-table';
+import { type TableState } from '@tanstack/react-table';
 import { AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -94,21 +94,20 @@ const columns = columnHelper.columns([
 function Table({ data }: { data: Client[] }) {
 	const router = useRouter();
 
-	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([
-		{ id: 'isFavorite', value: false },
-	]);
-
 	const [isFiltering, setIsFiltering] = useState(false);
 	const table = useDataTable(
 		{
 			data,
 			columns,
-			initialState: { pagination: { pageSize: 40 } },
-			state: { columnFilters },
-			onGlobalFilterChange: val => {
-				setColumnFilters(val === '' ? [{ id: 'isFavorite', value: false }] : []);
+			initialState: {
+				pagination: { pageSize: 40 },
+				columnFilters: [{ id: 'isFavorite', value: false }],
 			},
-			onColumnFiltersChange: setColumnFilters,
+			// Favorites have their own section, so they only appear in the list while searching
+			onGlobalFilterChange: val => {
+				if (val === '') table.resetColumnFilters();
+				else table.setColumnFilters([]);
+			},
 		},
 		() => null,
 	);

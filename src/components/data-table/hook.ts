@@ -1,5 +1,6 @@
 import { useCreateAtom } from '@tanstack/react-store';
 import {
+	type ColumnFiltersState,
 	createTableHook,
 	type PaginationState,
 	type RowData,
@@ -46,11 +47,18 @@ type DataTable<TData extends RowData, TSelected> = Omit<
 
 export type DataTableOptions<TData extends RowData> = Omit<
 	AppTableOptions<TData>,
-	'initialState' | 'key' | 'onGlobalFilterChange' | 'onPaginationChange' | 'onSortingChange'
+	| 'initialState'
+	| 'key'
+	| 'onColumnFiltersChange'
+	| 'onGlobalFilterChange'
+	| 'onPaginationChange'
+	| 'onSortingChange'
 > & {
 	initialState?: DataTableInitialState;
-	/** Called with the resolved global filter, after column filters are cleared and the table resets to page one. */
+	/** Called with the resolved global filter, after the table resets to page one. */
 	onGlobalFilterChange?: (value: string) => void;
+	/** Called with the resolved column filters, after the table resets to page one. */
+	onColumnFiltersChange?: (columnFilters: ColumnFiltersState) => void;
 	/** Called with the resolved sort, after the table resets to page one. */
 	onSortingChange?: (sorting: SortingState) => void;
 	/** Called with the resolved pagination state. */
@@ -60,6 +68,7 @@ export type DataTableOptions<TData extends RowData> = Omit<
 export function useDataTable<TData extends RowData, TSelected = TableState<DataTableFeatures>>(
 	{
 		initialState = {},
+		onColumnFiltersChange,
 		onGlobalFilterChange,
 		onSortingChange,
 		onPaginationChange,
@@ -67,8 +76,8 @@ export function useDataTable<TData extends RowData, TSelected = TableState<DataT
 	}: DataTableOptions<TData>,
 	selector?: (state: TableState<DataTableFeatures>) => TSelected,
 ): DataTable<TData, TSelected> {
-	// Own these slices via atoms rather than React state:
-	// writing to an atom only re-renders subscribers
+	// Own these slices via atoms rather than React state: writing to an atom only re-renders subscribers
+	const columnFiltersAtom = useCreateAtom<ColumnFiltersState>(initialState.columnFilters ?? []);
 	const globalFilterAtom = useCreateAtom(initialState.globalFilter ?? '');
 	const sortingAtom = useCreateAtom<SortingState>(initialState.sorting ?? []);
 	const paginationAtom = useCreateAtom<PaginationState>({
@@ -81,6 +90,7 @@ export function useDataTable<TData extends RowData, TSelected = TableState<DataT
 			...options,
 			atoms: {
 				...options.atoms,
+				columnFilters: columnFiltersAtom,
 				globalFilter: globalFilterAtom,
 				sorting: sortingAtom,
 				pagination: paginationAtom,
@@ -94,10 +104,17 @@ export function useDataTable<TData extends RowData, TSelected = TableState<DataT
 				},
 			},
 
+			onColumnFiltersChange: updater => {
+				const next = typeof updater === 'function' ? updater(columnFiltersAtom.get()) : updater;
+
+				paginationAtom.set(previous => ({ ...previous, pageIndex: 0 }));
+				columnFiltersAtom.set(next);
+				onColumnFiltersChange?.(next);
+			},
+
 			onGlobalFilterChange: updater => {
 				const next = typeof updater === 'function' ? updater(globalFilterAtom.get()) : updater;
 
-				table.setColumnFilters([]);
 				paginationAtom.set(previous => ({ ...previous, pageIndex: 0 }));
 				globalFilterAtom.set(next);
 				onGlobalFilterChange?.(next);

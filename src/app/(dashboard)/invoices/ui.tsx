@@ -118,10 +118,19 @@ export function Table() {
 	);
 }
 
-function InvoiceTable({ data, ...options }: UseInvoiceTableOptions) {
-	const table = useInvoiceTable({ data, ...options }, state => ({
-		columnFilters: state.columnFilters,
-	}));
+function InvoiceTable({ data, onGlobalFilterChange, ...options }: UseInvoiceTableOptions) {
+	const table = useInvoiceTable(
+		{
+			data,
+			// The client filter shows as the search value, so typing replaces it
+			onGlobalFilterChange: next => {
+				table.setColumnFilters(filters => filters.filter(filter => filter.id !== 'clientId'));
+				onGlobalFilterChange?.(next);
+			},
+			...options,
+		},
+		state => ({ columnFilters: state.columnFilters }),
+	);
 
 	/** Uses controlled data length to determine empty state, not filtered table view */
 	const isEmpty = data.length === 0;
