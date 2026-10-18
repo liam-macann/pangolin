@@ -32,7 +32,12 @@ import {
 import { CreateClientDialog } from './../ui/dialogs';
 import { Card } from './card';
 
+const MAX_FAVORITES = 32;
+
 export function Clients() {
+	const favorites = useFavorites();
+	const favoriteLimitReached = favorites.length >= MAX_FAVORITES;
+
 	return (
 		<div className='w-full'>
 			<div className='mb-8 flex w-full items-baseline justify-between'>
@@ -45,10 +50,10 @@ export function Clients() {
 				</CreateClientDialog>
 			</div>
 
-			<Favorites />
+			<Favorites clients={favorites} />
 
 			<MaintainHeight>
-				<Table />
+				<Table favoriteLimitReached={favoriteLimitReached} />
 			</MaintainHeight>
 		</div>
 	);
@@ -65,21 +70,21 @@ function useFavorites() {
 
 	// The global cache holds every client up to its last loaded page, in API order.
 	// Favorites missing from it necessarily rank afterwards.
-	return [...global, ...targeted.filter(c => !optimisticIds.has(c.id))].slice(0, 32);
+	return [...global, ...targeted.filter(c => !optimisticIds.has(c.id))].slice(0, MAX_FAVORITES);
 }
 
-export function Favorites() {
-	const favorites = useFavorites();
-	if (favorites.length === 0) return null;
+function Favorites({ clients }: { clients: Client[] }) {
+	if (clients.length === 0) return null;
 
 	return (
 		<>
 			<section className='no-scrollbar flex snap-x gap-4 max-lg:-mx-6 max-lg:scroll-px-6 max-lg:overflow-scroll max-lg:px-6 lg:grid lg:grid-cols-4'>
 				<AnimatePresence mode='popLayout' initial={false}>
-					{favorites.map(client => (
+					{clients.map(client => (
 						<Card
 							key={client.id}
 							client={client}
+							favoriteLimitReached={false}
 							className='shrink-0 basis-60 snap-start max-lg:max-w-[90%]'
 							variant='secondary'
 						/>
@@ -112,7 +117,7 @@ const columns = columnHelper.columns([
 	}),
 ]);
 
-function Table() {
+function Table({ favoriteLimitReached }: { favoriteLimitReached: boolean }) {
 	const { data, ...query } = useClients();
 
 	const router = useRouter();
@@ -171,6 +176,7 @@ function Table() {
 					{(_, { globalFilter, pagination }) => (
 						<ClientCards
 							pagination={pagination}
+							favoriteLimitReached={favoriteLimitReached}
 							highlightFirst={isFiltering && globalFilter !== ''}
 						/>
 					)}
@@ -187,9 +193,11 @@ function Table() {
 function ClientCards({
 	pagination,
 	highlightFirst,
+	favoriteLimitReached,
 }: {
 	pagination: PaginationState;
 	highlightFirst: boolean;
+	favoriteLimitReached: boolean;
 }) {
 	const { rows, busy } = useDeferredPage<Client>(pagination);
 
@@ -210,6 +218,7 @@ function ClientCards({
 						style={{ zIndex: rows.length - i }}
 						key={client.original.id}
 						client={client.original}
+						favoriteLimitReached={favoriteLimitReached}
 					/>
 				))}
 			</AnimatePresence>

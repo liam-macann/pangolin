@@ -13,12 +13,14 @@ import { Toggle } from '@/ui/toggle';
 import { OverflowMenu, useClientActions } from './menu';
 export function Card({
 	client,
+	favoriteLimitReached,
 	className,
 	ref,
 	variant = 'outline',
 	...props
 }: {
 	client: Client;
+	favoriteLimitReached: boolean;
 	ref?: React.Ref<HTMLDivElement>;
 	variant?: 'secondary' | 'outline';
 } & HTMLMotionProps<'div'>) {
@@ -103,6 +105,12 @@ export function Card({
 			{/* Outside of Link for semantics: <button> may not be within <a> */}
 			<Toggle
 				pressed={client.isFavorite}
+				disabled={!client.isFavorite && favoriteLimitReached}
+				title={
+					!client.isFavorite && favoriteLimitReached
+						? 'You have the maximum number of favourites.'
+						: undefined
+				}
 				onClick={e => e.stopPropagation()}
 				onPressedChange={pressed => setFavorite(pressed)}
 				size='icon-xs'
