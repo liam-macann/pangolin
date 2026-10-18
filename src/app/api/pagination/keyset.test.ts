@@ -98,6 +98,38 @@ describe('defineKeyset()', () => {
 		expect(await traverse({ combination: 'desc' })).toEqual(ascending.toReversed());
 	});
 
+	asUser('Includes null values when a nullable field leads the sort', async ({ seed }) => {
+		// This tests the leadingBound() logic, which branches on the first sort key
+
+		const [none, acme, zeta] = await seed.clients({
+			versions: 1,
+			overrides: [
+				{ isDeleted: false, data: { organization: null } },
+				{ isDeleted: false, data: { organization: 'Acme Corp' } },
+				{ isDeleted: false, data: { organization: 'Zeta Corp' } },
+			],
+		});
+
+		const ascending = [acme.id, zeta.id, none.id];
+		expect(await traverse({ organization: 'asc' })).toEqual(ascending);
+		expect(await traverse({ organization: 'desc' })).toEqual(ascending.toReversed());
+	});
+
+	asUser('Bounds a leading column by the cursor value, so indexes seek to it', async ({ db }) => {
+		const sort = { issuedAt: 'desc' } as const;
+		const page = defineKeyset(tables.invoices, { issuedAt: invoice => invoice.issuedAt }).page({
+			cursor: encode(
+				{ sort, values: ['2026-01-01', crypto.randomUUID()] },
+				{ table: getTableName(tables.invoices) },
+			),
+			limit: 1,
+			sort,
+		});
+
+		const query = db.query.invoices.findMany({ where: page.where({}) }).toSQL();
+		expect(query.sql).toMatch(/"issued_at" <= \$\d+\) and/);
+	});
+
 	asUser.for([
 		{ favorite: 'asc', organization: 'asc' },
 		{ favorite: 'asc', organization: 'desc' },
