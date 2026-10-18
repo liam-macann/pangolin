@@ -22,7 +22,7 @@ function Command({ className, ...props }: React.ComponentProps<typeof CommandPri
 
 function CommandDialog({
 	title = 'Command Palette',
-	description = 'Search for a command to run...',
+	description = 'Search for a command to run…',
 	children,
 	className,
 	showCloseButton = false,
@@ -43,7 +43,11 @@ function CommandDialog({
 				<DialogDescription>{description}</DialogDescription>
 			</DialogHeader>
 			<DialogContent
-				className={cn('top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0', className)}
+				className={cn(
+					'top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0 sm:max-w-xl',
+					'data-open:duration-50',
+					className,
+				)}
 				showCloseButton={showCloseButton}
 				render={render}
 			>
@@ -60,8 +64,8 @@ function CommandInput({
 	...props
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
 	return (
-		<div data-slot='command-input-wrapper' className='p-3 pb-0'>
-			<InputGroup className='h-8! rounded-lg! border-input/30 bg-input/30 *:data-[slot=input-group-addon]:pl-2!'>
+		<div data-slot='command-input-wrapper' className=''>
+			<InputGroup className='h-auto rounded-none border-0 border-b border-dotted bg-transparent! px-3 py-1 pt-1.5 *:data-[slot=input-group-addon]:pl-2!'>
 				<InputGroupInput
 					// cmdk replaces the change handler of Base UI, so its search props must reach cmdk itself
 					render={<CommandPrimitive.Input value={value} onValueChange={onValueChange} />}
@@ -69,7 +73,7 @@ function CommandInput({
 					{...props}
 				/>
 				<InputGroupAddon>
-					<MagnifyingGlassIcon className='size-4 shrink-0 opacity-50' />
+					<MagnifyingGlassIcon className='size-4 shrink-0' />
 				</InputGroupAddon>
 			</InputGroup>
 		</div>

@@ -104,7 +104,7 @@ function GlobalSearch() {
 					>
 						<Items ref={listRef} onNavigate={() => onOpenChange(false)} />
 					</Suspense>
-					<footer className='sticky bottom-0 flex items-center gap-2 border-input/30 border-t bg-background px-4 py-2 pb-2.5 text-muted-foreground text-xs dark:bg-popover'>
+					<footer className='sticky bottom-0 flex items-center gap-2 border-t border-dotted bg-background px-4 py-2.5 pb-3 text-muted-foreground text-xs'>
 						<Kbd className='size-5'>
 							<ArrowElbowDownLeftIcon aria-label='Enter' />
 						</Kbd>
