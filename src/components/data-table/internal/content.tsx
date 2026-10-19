@@ -31,7 +31,7 @@ export type DataTableBodyProps<TData extends RowData> = {
 	 *
 	 * @example
 	 * ```ts
-	 * getRowAttr={row => ({ 'data-void': row.isVoid })}
+	 * getRowAttr={row => ({ 'data-void': row.voidedAt !== null })}
 	 * ```
 	 */
 	getRowAttr?: (
@@ -48,7 +48,7 @@ export type DataTableBodyProps<TData extends RowData> = {
 	 *
 	 * @example
 	 * ```ts
-	 * getCellAttr={cell => ({ 'data-void': row.isVoid })}
+	 * getCellAttr={cell => ({ 'data-void': row.voidedAt !== null })}
 	 * ```
 	 */
 	getCellAttr?: (

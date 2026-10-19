@@ -32,7 +32,7 @@ export const columns = columnHelper.columns([
 		meta: { className: 'relative' },
 		cell: ({ row }) => (
 			<div className='flex gap-2 gap-y-0 font-medium text-xs tabular-nums max-sm:flex-col max-sm:justify-between sm:items-center'>
-				<span className='sr-only'>{row.original.isVoid && 'Void, '}</span>
+				<span className='sr-only'>{row.original.voidedAt !== null && 'Void, '}</span>
 				{row.original.reference}
 
 				{row.original.notes && (

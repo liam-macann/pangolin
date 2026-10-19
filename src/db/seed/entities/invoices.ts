@@ -39,7 +39,7 @@ type ItemShape = Pick<
 /** What may be overridden for a seeded invoice. */
 type InvoiceShape = Pick<
 	DTO.Invoice,
-	'issuedAt' | 'dueAt' | 'title' | 'description' | 'createdAt' | 'status' | 'isVoid' | 'notes'
+	'issuedAt' | 'dueAt' | 'title' | 'description' | 'createdAt' | 'status' | 'voidedAt' | 'notes'
 > & {
 	items: Partial<ItemShape>[];
 	clientDataId: string;
@@ -129,9 +129,12 @@ function buildInvoice(
 			id,
 			userId,
 			status: faker.helpers.arrayElement(tables.statusEnum.enumValues),
-			isVoid: faker.datatype.boolean({ probability: 0.1 }),
+			voidedAt: faker.helpers.maybe(
+				() => instantsBetween({ ...ctx, from: createdAt }, 1)[0].toString(),
+				{ probability: 0.1 },
+			),
 			notes: faker.helpers.maybe(() => faker.lorem.sentence(), { probability: 0.2 }),
-			...pick(overrides, ['status', 'isVoid', 'notes']),
+			...pick(overrides, ['status', 'voidedAt', 'notes']),
 		} satisfies typeof tables.invoiceStatus.$inferInsert,
 
 		items: items.map(item => item.row),

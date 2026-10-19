@@ -50,7 +50,14 @@ export const Invoice = z
 			.max(2000)
 			.nullable()
 			.meta({ examples: ['Paid via bank transfer'] }),
-		isVoid: z.boolean(),
+		voidedAt: z.iso
+			.datetime({ precision: 3 })
+			.nullable()
+			.meta({
+				description: 'When the invoice was voided, or null if still valid.',
+				examples: ['2026-02-01T10:00:00.000Z'],
+			})
+			.readonly(),
 
 		client: z.object({
 			id: z.uuid().meta({ examples: ['9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'] }),

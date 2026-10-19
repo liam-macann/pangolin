@@ -65,7 +65,7 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 		},
 		pageMargins,
 		footer: documentFooter(invoice, pageMargins),
-		...(invoice.isVoid
+		...(invoice.voidedAt !== null
 			? {
 					watermark: {
 						text: 'VOID',

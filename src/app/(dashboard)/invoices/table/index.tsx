@@ -60,8 +60,9 @@ export function InvoiceTableContent({
 		<table.Content
 			getRowAttr={(row, ...args) => {
 				const overrides = getRowAttr?.(row, ...args);
+				const isVoid = row.voidedAt !== null;
 				return {
-					'data-void': row.isVoid || undefined,
+					'data-void': isVoid || undefined,
 					...overrides,
 
 					className: cn(
@@ -70,7 +71,7 @@ export function InvoiceTableContent({
 					),
 
 					style: {
-						backgroundImage: row.isVoid
+						backgroundImage: isVoid
 							? `repeating-linear-gradient(
                     45deg,
                     transparent,
@@ -79,7 +80,7 @@ export function InvoiceTableContent({
                     color-mix(var(--color-gray-3) 50%, transparent) 4px
                 )`
 							: '',
-						backgroundSize: row.isVoid ? 'calc(4px * sqrt(2))' : '',
+						backgroundSize: isVoid ? 'calc(4px * sqrt(2))' : '',
 
 						...overrides?.style,
 					},

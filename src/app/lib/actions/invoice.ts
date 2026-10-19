@@ -1,6 +1,7 @@
 'use server';
 
 import { and, eq, sql } from 'drizzle-orm';
+import { type PgUpdateSetSource } from 'drizzle-orm/pg-core';
 import { updateTag } from 'next/cache';
 import { notFound, unstable_rethrow } from 'next/navigation';
 import { match } from 'ts-pattern';
@@ -78,7 +79,7 @@ export async function createInvoice(input: z.input<typeof zodSchema>) {
 /** Updates the status row of an invoice owned by the authenticated user */
 async function updateStatusRow(
 	id: string,
-	values: Partial<Omit<typeof schema.invoiceStatus.$inferInsert, 'id' | 'userId'>>,
+	values: Omit<PgUpdateSetSource<typeof schema.invoiceStatus>, 'id' | 'userId'>,
 ) {
 	const invoiceId = z.uuid().parse(id);
 
@@ -105,7 +106,10 @@ export async function updatePaymentStatus(id: string, status: Enum<typeof schema
 }
 
 export async function voidInvoice(id: string) {
-	return await updateStatusRow(id, { isVoid: true });
+	// Voiding again keeps the original void date
+	return await updateStatusRow(id, {
+		voidedAt: sql`coalesce(${schema.invoiceStatus.voidedAt}, transaction_timestamp())`,
+	});
 }
 
 export async function setInvoiceNotes(id: string, notes: string) {

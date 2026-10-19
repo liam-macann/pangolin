@@ -126,7 +126,7 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 							: // Use random status after that
 								Math.floor(seededRandom(i * 3) * status.length)
 					],
-				isVoid: false,
+				voidedAt: null,
 			} satisfies Invoice;
 		});
 	}, [config, count]);

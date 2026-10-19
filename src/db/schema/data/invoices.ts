@@ -1,6 +1,5 @@
 import { sql } from 'drizzle-orm';
 import {
-	boolean,
 	check,
 	date,
 	foreignKey,
@@ -160,8 +159,8 @@ export const invoiceStatus = snakeCase.table(
 		status: statusEnum().notNull(),
 		/** Private notes for the user */
 		notes: text(),
-		/** Whether the invoice has been voided */
-		isVoid: boolean().notNull().default(false),
+		/** When the invoice was voided, or `null` if it has not been. */
+		voidedAt: timestamp({ withTimezone: true, mode: 'string' }),
 	},
 	t => [
 		index('idx_invoice_status_user_id').on(t.userId),

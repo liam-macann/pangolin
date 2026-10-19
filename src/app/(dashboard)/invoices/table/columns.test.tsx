@@ -56,7 +56,7 @@ const invoiceBuilder = createBuilder<Invoice>(() => ({
 	currency: 'AUD',
 	status: 'unpaid',
 	notes: null,
-	isVoid: false,
+	voidedAt: null,
 }));
 
 function TestTable({ data }: { data: Invoice[] }) {

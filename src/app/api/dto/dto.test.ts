@@ -101,6 +101,7 @@ const DTOs: DTOConfig[] = [
 			[tables.invoices.issuedAt, 'issuedAt'],
 			[tables.invoices.dueAt, 'dueAt'],
 			[tables.documents.createdAt, 'createdAt'],
+			[tables.invoiceStatus.voidedAt, 'voidedAt'],
 		],
 		exempt: [
 			// Derived from partition + index, not persisted

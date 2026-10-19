@@ -114,7 +114,7 @@ describe('createInvoice', () => {
 		await expect(getInvoice(id)).resolves.toMatchObject({
 			userId: session.user.id,
 			index: 1,
-			status: { status: 'unpaid', isVoid: false }, // `invoice_status` table
+			status: { status: 'unpaid', voidedAt: null }, // `invoice_status` table
 		});
 
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
@@ -256,28 +256,31 @@ describe('updatePaymentStatus', () => {
 });
 
 describe('voidInvoice', () => {
-	const getVoidStatus = (id: string) => getInvoiceStatus(id).then(res => res.isVoid);
+	const getVoidedAt = (id: string) => getInvoiceStatus(id).then(res => res.voidedAt);
 
-	test('Marks an invoice as void', async ({ session, seed }) => {
-		const [seeded] = await seed.invoices({ overrides: [{ isVoid: false }] });
+	test('Records the date an invoice is first voided', async ({ session, seed }) => {
+		const [seeded] = await seed.invoices({ overrides: [{ voidedAt: null }] });
 
 		await voidInvoice(seeded.id);
-
-		expect(await getVoidStatus(seeded.id)).toBe(true);
+		const voidedAt = await getVoidedAt(seeded.id);
+		expect(voidedAt).not.toBeNull();
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
+
+		await voidInvoice(seeded.id);
+		expect(await getVoidedAt(seeded.id), 'Expected the first void date to be kept').toBe(voidedAt);
 	});
 
 	test('Does not mutate an invoice owned by another user', async ({ auth, seed }) => {
 		const other = await createTestSession(auth);
 		const [seeded] = await seed({ userId: other.user.id }).invoices({
-			overrides: [{ isVoid: false }],
+			overrides: [{ voidedAt: null }],
 		});
 
 		// Checks that withRLS is not the only protection
 		await expect(bypassRLS(() => voidInvoice(seeded.id))).rejects.toThrow();
 		expect(navigation.notFound).toHaveBeenCalled();
 
-		expect(await getVoidStatus(seeded.id), 'Expected no change').toBe(false);
+		expect(await getVoidedAt(seeded.id), 'Expected no change').toBeNull();
 	});
 });
 

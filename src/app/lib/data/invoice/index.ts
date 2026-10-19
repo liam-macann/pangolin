@@ -97,6 +97,7 @@ export async function fetchInvoices(
 					...config,
 					client: { id: clientId, ...clientData },
 					createdAt: toISOString(document.createdAt),
+					voidedAt: status.voidedAt && toISOString(status.voidedAt),
 					reference: invoiceReference({ index, partition }, numberingScheme),
 				} satisfies Invoice;
 			});
@@ -219,6 +220,7 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 					...status,
 					...invoice,
 					createdAt: toISOString(document.createdAt),
+					voidedAt: status.voidedAt && toISOString(status.voidedAt),
 					reference: invoiceReference({ index, partition }, config.numberingScheme),
 					config,
 					client: { id: clientId, ...(await vault.decryptDeep(client)) },

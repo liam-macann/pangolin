@@ -144,8 +144,8 @@ describe('fetchClients', () => {
 
 		await seed.invoices({
 			overrides: [
-				{ clientDataId: client.versions[0].id, isVoid: true },
-				{ clientDataId: client.versions[0].id, isVoid: false },
+				{ clientDataId: client.versions[0].id, voidedAt: '2026-01-01T00:00:00.000Z' },
+				{ clientDataId: client.versions[0].id, voidedAt: null },
 			],
 		});
 
@@ -178,7 +178,7 @@ describe('fetchClientStats', () => {
 		await seed.config({ overrides: [{ currency: 'AUD' }] });
 
 		const [clientA, clientB] = await seed.clients({ count: 2, versions: 1 });
-		const status = { status: 'unpaid', isVoid: false } as const;
+		const status = { status: 'unpaid', voidedAt: null } as const;
 
 		await seed.invoices({
 			overrides: [

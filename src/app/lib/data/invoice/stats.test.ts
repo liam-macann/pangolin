@@ -22,17 +22,18 @@ describe('fetchStats', () => {
 	const invoice = (
 		total: number,
 		status: Enum<typeof tables.statusEnum>,
-		{ isVoid = false, taxes = [] }: { isVoid?: boolean; taxes?: string[] } = {},
+		{ voidedAt = null, taxes = [] }: { voidedAt?: string | null; taxes?: string[] } = {},
 	) => ({
 		status,
-		isVoid,
+		voidedAt,
 		items: [{ quantity: '1' as const, unitCost: `${total}` as const, taxes }],
 	});
 
 	const unpaid = (total: number, taxes?: string[]) => invoice(total, 'unpaid', { taxes });
 	const paid = (total: number, taxes?: string[]) => invoice(total, 'paid', { taxes });
 	const refunded = (total: number) => invoice(total, 'refunded');
-	const voided = (total: number) => invoice(total, 'unpaid', { isVoid: true });
+	const voided = (total: number) =>
+		invoice(total, 'unpaid', { voidedAt: '2026-01-01T00:00:00.000Z' });
 
 	/** Fetches the stats of a user who invoices in one currency, as plain numbers. */
 	const fetchTotals = async () => {
@@ -105,7 +106,7 @@ describe('fetchStats', () => {
 				overrides: [
 					{
 						status: 'unpaid',
-						isVoid: false,
+						voidedAt: null,
 						items: [{ quantity: `${quantity}`, unitCost: `${unitCost}`, taxes: [] }],
 					},
 				],
@@ -149,13 +150,13 @@ describe('fetchStats', () => {
 					{
 						createdAt: aud.validFrom,
 						status: 'unpaid',
-						isVoid: false,
+						voidedAt: null,
 						items: [{ quantity: '1', unitCost: '33.33', taxes: [] }],
 					},
 					{
 						createdAt: usd.validFrom,
 						status: 'unpaid',
-						isVoid: false,
+						voidedAt: null,
 						items: [{ quantity: '1', unitCost: '50', taxes: [] }],
 					},
 				],
@@ -189,8 +190,8 @@ describe('fetchStats', () => {
 
 			const invoices = await seed.invoices({
 				overrides: [
-					{ createdAt: aud.validFrom, isVoid: false },
-					{ createdAt: usd.validFrom, isVoid: false },
+					{ createdAt: aud.validFrom, voidedAt: null },
+					{ createdAt: usd.validFrom, voidedAt: null },
 				],
 			});
 

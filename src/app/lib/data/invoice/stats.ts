@@ -5,6 +5,7 @@ import {
 	eq,
 	getColumns,
 	isNotNull,
+	isNull,
 	max,
 	ne,
 	type SQL,
@@ -50,7 +51,7 @@ export async function _fetchStats(
 				})
 				.from(filter)
 				.leftJoin(schema.invoiceStatus, eq(schema.invoiceStatus.id, filter.id))
-				.where(and(eq(filter.userId, session.user.id), eq(schema.invoiceStatus.isVoid, false))),
+				.where(and(eq(filter.userId, session.user.id), isNull(schema.invoiceStatus.voidedAt))),
 		);
 
 		// Currency may change when configuration is updated.

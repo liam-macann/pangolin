@@ -115,7 +115,7 @@ export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) 
 						<DropdownMenuSeparator />
 
 						<DropdownMenuItem
-							disabled={invoice.isVoid}
+							disabled={invoice.voidedAt !== null}
 							variant='destructive'
 							nativeButton
 							render={<AlertDialogTrigger />}
