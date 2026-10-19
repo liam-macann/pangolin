@@ -19,7 +19,7 @@ export const invoiceDataBuilder = (data?: PartialDeep<InvoicePrintData>): Invoic
 		netTotal: '1000.0000',
 		grossTotal: '1000.0000',
 		isVoid: false,
-		clientData: { name: null, organization: null, address: null },
+		client: { name: null, organization: null, address: null },
 		config: {
 			id: randomUUID(),
 			tradingName: 'My Business',

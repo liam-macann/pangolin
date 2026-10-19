@@ -142,8 +142,8 @@ function InvoiceTable({
 
 	// Search input updates immediately, not through the deferred ID
 	const clientName = clientId
-		? (table.getCoreRowModel().rows.find(row => row.original.clientData.clientId === clientId)
-				?.original.clientData.name ?? clientId)
+		? (table.getCoreRowModel().rows.find(row => row.original.client.id === clientId)?.original
+				.client.name ?? clientId)
 		: null;
 
 	const isLoading = sorting !== deferredSorting || clientId !== deferredClientId;

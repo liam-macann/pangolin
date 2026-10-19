@@ -53,7 +53,20 @@ export const Invoice = z
 			.max(255)
 			.meta({ examples: ['INV-001'] })
 			.readonly(),
-		clientData: z.object({
+
+		config: Config.pick({ timezone: true, currency: true }),
+
+		status: z.enum(['unpaid', 'paid', 'refunded']),
+		notes: z
+			.string()
+			.normalize()
+			.max(2000)
+			.nullable()
+			.meta({ examples: ['Paid via bank transfer'] }),
+		isVoid: z.boolean(),
+
+		client: z.object({
+			id: z.uuid().meta({ examples: ['9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'] }),
 			name: z
 				.string()
 				.normalize()
@@ -66,18 +79,8 @@ export const Invoice = z
 				.max(255)
 				.nullable()
 				.meta({ examples: ['Acme Inc.'] }),
-			clientId: z.uuid().meta({ examples: ['9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'] }),
+			/** The logical client ID, not the SCD version ID. */
 		}),
-		config: Config.pick({ timezone: true, currency: true }),
-
-		status: z.enum(['unpaid', 'paid', 'refunded']),
-		notes: z
-			.string()
-			.normalize()
-			.max(2000)
-			.nullable()
-			.meta({ examples: ['Paid via bank transfer'] }),
-		isVoid: z.boolean(),
 	})
 	.meta({ ref: 'Invoice', description: 'An invoice belonging to the current user.' });
 

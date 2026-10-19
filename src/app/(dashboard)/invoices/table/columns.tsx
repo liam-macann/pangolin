@@ -46,7 +46,7 @@ export const columns = columnHelper.columns([
 		),
 		size: 150,
 	}),
-	columnHelper.accessor(row => row.clientData.name || row.clientData.organization, {
+	columnHelper.accessor(row => row.client.name || row.client.organization, {
 		id: 'name',
 		header: ({ column }) => <ToggleHeader column={column} title='Name' />,
 		minSize: 140,
@@ -108,7 +108,7 @@ export const columns = columnHelper.columns([
 		cell: ({ row }) => <FormatPrice className='text-right' row={row} />,
 		size: 150,
 	}),
-	columnHelper.accessor(row => row.clientData.clientId, {
+	columnHelper.accessor(row => row.client.id, {
 		id: 'clientId',
 		filterFn: 'equals',
 		enableSorting: false,

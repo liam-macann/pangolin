@@ -159,7 +159,7 @@ describe('buildDocDefinition', () => {
 					country: 'AU',
 				},
 			},
-			clientData: {
+			client: {
 				name: 'Alaric Wivell',
 				organization: 'Wivell Holdings',
 				address: {

@@ -28,16 +28,14 @@ export function addresseeTable({ config, ...invoice }: InvoicePrintData): Conten
 					{
 						stack: [
 							{ text: 'Bill To', bold: true },
-							invoice.clientData.name
-								? [invoice.clientData.organization ? 'Attn: ' : '', invoice.clientData.name].join(
-										'',
-									)
+							invoice.client.name
+								? [invoice.client.organization ? 'Attn: ' : '', invoice.client.name].join('')
 								: [],
-							invoice.clientData.organization || [],
-							invoice.clientData.address
+							invoice.client.organization || [],
+							invoice.client.address
 								? [
 										{
-											text: formatAddress(invoice.clientData.address),
+											text: formatAddress(invoice.client.address),
 											marginTop: spacing(2),
 										},
 									]

@@ -197,8 +197,8 @@ function Items({
 							value={invoice.id}
 							keywords={[
 								invoice.reference,
-								invoice.clientData.name,
-								invoice.clientData.organization,
+								invoice.client.name,
+								invoice.client.organization,
 								formatCurrency(invoice.grossTotal, invoice.config.currency, locale),
 							].filter((v): v is string => typeof v === 'string')}
 							className='flex w-full items-baseline gap-2 *:last:hidden'
@@ -207,7 +207,7 @@ function Items({
 							<span className='font-medium text-xs tabular-nums group-not-data-selected/command-item:text-muted-foreground'>
 								{invoice.reference}
 							</span>
-							<span>{invoice.clientData.name || invoice.clientData.organization}</span>
+							<span>{invoice.client.name || invoice.client.organization}</span>
 							<span className='grow text-right text-muted-foreground'>
 								{formatCurrency(invoice.grossTotal, invoice.config.currency, locale)}
 							</span>

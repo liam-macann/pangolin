@@ -30,8 +30,8 @@ export type LineItem = Simplify<
 >;
 
 /** Superset of {@link Invoice} with relational data */
-export type DetailedInvoice = Omit<Invoice, 'clientData' | 'config'> & {
-	clientData: Pick<ClientData, 'name' | 'organization' | 'address'>;
+export type DetailedInvoice = Omit<Invoice, 'config'> & {
+	client: Pick<ClientData, 'name' | 'organization' | 'address'>;
 	config: Config;
 	items: LineItem[];
 
@@ -86,6 +86,7 @@ export async function fetchInvoices(
 			return rows.map(({ documentWithSum, status, ...inv }) => {
 				const {
 					config: { numberingScheme, ...config },
+					clientData: { clientId, ...clientData },
 					...document
 				} = documentWithSum;
 
@@ -94,6 +95,7 @@ export async function fetchInvoices(
 					...status,
 					...inv,
 					config,
+					client: { id: clientId, ...clientData },
 					createdAt: toISOString(document.createdAt),
 					reference: invoiceReference(inv, numberingScheme),
 				} satisfies Invoice;
@@ -162,7 +164,7 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 						},
 						with: {
 							clientData: {
-								columns: { name: true, organization: true },
+								columns: { clientId: true, name: true, organization: true },
 								with: { address: true },
 							},
 							items: {
@@ -198,7 +200,11 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 			if (!res) notFound();
 
 			const {
-				documentWithSum: { configId, ...document },
+				documentWithSum: {
+					configId,
+					clientData: { clientId, ...client },
+					...document
+				},
 				status,
 				...invoice
 			} = res;
@@ -213,7 +219,7 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 					createdAt: toISOString(document.createdAt),
 					reference: invoiceReference(invoice, config.numberingScheme),
 					config,
-					clientData: await vault.decryptDeep(document.clientData),
+					client: { id: clientId, ...(await vault.decryptDeep(client)) },
 					tax,
 				};
 			});

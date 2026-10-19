@@ -51,7 +51,7 @@ const invoiceBuilder = createBuilder<Invoice>(() => ({
 	netTotal: NumericString.parse('1000.0000'),
 	grossTotal: NumericString.parse('1000.0000'),
 	reference: 'INV-001',
-	clientData: { name: 'Alaric Wivell', organization: null, clientId: crypto.randomUUID() },
+	client: { name: 'Alaric Wivell', organization: null, id: crypto.randomUUID() },
 	config: { timezone: 'Australia/Sydney', currency: 'AUD' },
 	status: 'unpaid',
 	notes: null,
