@@ -3,6 +3,7 @@ import { updateTag } from 'next/cache';
 import * as navigation from 'next/navigation';
 import { Temporal } from 'temporal-polyfill';
 import { assert, describe, expect, onTestFinished, vi } from 'vitest';
+import { z } from 'zod';
 
 import { type Enum } from '@/lib/utils/drizzle';
 import { withRLS } from '@/db';
@@ -237,7 +238,18 @@ describe('updateInvoiceStatus', () => {
 			overrides: [{ status: { status: 'unpaid' } }],
 		});
 
-		await bypassRLS(() => updateInvoiceStatus(seeded.id, 'paid')); // Checks that withRLS is not the only protection
+		// Checks that withRLS is not the only protection
+		await expect(bypassRLS(() => updateInvoiceStatus(seeded.id, 'paid'))).rejects.toThrow();
+		expect(navigation.notFound).toHaveBeenCalled();
+
+		await expect(getPaymentStatus(seeded.id), 'Expected no change').resolves.toBe('unpaid');
+	});
+
+	test('Rejects an unknown payment status', async ({ seed }) => {
+		const [seeded] = await seed.invoices({ overrides: [{ status: { status: 'unpaid' } }] });
+
+		// @ts-expect-error: Server action arguments are untrusted at runtime
+		await expect(updateInvoiceStatus(seeded.id, 'overdue')).rejects.toThrow(z.ZodError);
 
 		await expect(getPaymentStatus(seeded.id)).resolves.toBe('unpaid');
 	});
@@ -261,9 +273,11 @@ describe('voidInvoice', () => {
 			overrides: [{ status: { isVoid: false } }],
 		});
 
-		await bypassRLS(() => voidInvoice(seeded.id)); // Checks that withRLS is not the only protection
+		// Checks that withRLS is not the only protection
+		await expect(bypassRLS(() => voidInvoice(seeded.id))).rejects.toThrow();
+		expect(navigation.notFound).toHaveBeenCalled();
 
-		expect(await getVoidStatus(seeded.id)).toBe(false);
+		expect(await getVoidStatus(seeded.id), 'Expected no change').toBe(false);
 	});
 });
 
@@ -301,8 +315,18 @@ describe('setInvoiceNotes', () => {
 
 		const seeded = await getInvoiceNotes(invoiceId); // Capture what was seeded
 
-		await bypassRLS(() => setInvoiceNotes(invoiceId, 'Hijacked note')); // Checks that withRLS is not the only protection
+		// Checks that withRLS is not the only protection
+		await expect(bypassRLS(() => setInvoiceNotes(invoiceId, 'Hijacked note'))).rejects.toThrow();
+		expect(navigation.notFound).toHaveBeenCalled();
 
-		expect(await getInvoiceNotes(invoiceId)).toBe(seeded);
+		expect(await getInvoiceNotes(invoiceId), 'Expected no change').toBe(seeded);
 	});
+});
+
+test.for([
+	['updateInvoiceStatus', (id: string) => updateInvoiceStatus(id, 'paid')],
+	['voidInvoice', (id: string) => voidInvoice(id)],
+	['setInvoiceNotes', (id: string) => setInvoiceNotes(id, 'Follow up next month')],
+] as const)('%s rejects a malformed invoice ID before querying', async ([, action]) => {
+	await expect(action('not-a-uuid')).rejects.toThrow(z.ZodError); // The ID should not reach Postgres
 });

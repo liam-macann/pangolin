@@ -2,9 +2,9 @@
 
 import { and, eq, sql } from 'drizzle-orm';
 import { updateTag } from 'next/cache';
-import { unstable_rethrow } from 'next/navigation';
+import { notFound, unstable_rethrow } from 'next/navigation';
 import { match } from 'ts-pattern';
-import type z from 'zod';
+import { z } from 'zod';
 
 import { allocateSequence } from '@/lib/sequencer';
 import { type Enum } from '@/lib/utils/drizzle';
@@ -75,43 +75,40 @@ export async function createInvoice(input: z.input<typeof zodSchema>) {
 	});
 }
 
-export async function updateInvoiceStatus(id: string, status: Enum<typeof schema.statusEnum>) {
+/** Updates the status row of an invoice owned by the authenticated user */
+async function updateStatusRow(
+	id: string,
+	values: Partial<Omit<typeof schema.invoiceStatus.$inferInsert, 'id' | 'userId'>>,
+) {
+	const invoiceId = z.uuid().parse(id);
+
 	await withRLS(async (db, session) => {
-		await db
+		const [updated] = await db
 			.update(schema.invoiceStatus)
-			.set({ status })
+			.set(values)
 			.where(
-				and(eq(schema.invoiceStatus.id, id), eq(schema.invoiceStatus.userId, session.user.id)),
-			);
+				and(
+					eq(schema.invoiceStatus.id, invoiceId),
+					eq(schema.invoiceStatus.userId, session.user.id),
+				),
+			)
+			.returning({ id: schema.invoiceStatus.id });
+
+		if (!updated) notFound();
 
 		updateTag(`invoices-${session.user.id}`);
 	});
 }
 
-export async function voidInvoice(id: string) {
-	await withRLS(async (db, session) => {
-		await db
-			.update(schema.invoiceStatus)
-			.set({ isVoid: true })
-			.where(
-				and(eq(schema.invoiceStatus.id, id), eq(schema.invoiceStatus.userId, session.user.id)),
-			);
+export async function updateInvoiceStatus(id: string, status: Enum<typeof schema.statusEnum>) {
+	return await updateStatusRow(id, { status: await zodSchema.shape.status.parseAsync(status) });
+}
 
-		updateTag(`invoices-${session.user.id}`);
-	});
+export async function voidInvoice(id: string) {
+	return await updateStatusRow(id, { isVoid: true });
 }
 
 export async function setInvoiceNotes(id: string, notes: string) {
 	const parsed = await zodSchema.shape.notes.parseAsync(notes);
-
-	await withRLS(async (db, session) => {
-		await db
-			.update(schema.invoiceStatus)
-			.set({ notes: parsed ?? null })
-			.where(
-				and(eq(schema.invoiceStatus.id, id), eq(schema.invoiceStatus.userId, session.user.id)),
-			);
-
-		updateTag(`invoices-${session.user.id}`);
-	});
+	await updateStatusRow(id, { notes: parsed ?? null });
 }
