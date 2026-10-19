@@ -100,7 +100,7 @@ async function updateStatusRow(
 	});
 }
 
-export async function updateInvoiceStatus(id: string, status: Enum<typeof schema.statusEnum>) {
+export async function updatePaymentStatus(id: string, status: Enum<typeof schema.statusEnum>) {
 	return await updateStatusRow(id, { status: await zodSchema.shape.status.parseAsync(status) });
 }
 

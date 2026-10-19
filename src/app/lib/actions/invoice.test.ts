@@ -11,7 +11,7 @@ import * as tables from '@/db/schema';
 
 import { bypassRLS, createTestSession, asUser as test } from '@/test/session';
 
-import { createInvoice, setInvoiceNotes, updateInvoiceStatus, voidInvoice } from './invoice';
+import { createInvoice, setInvoiceNotes, updatePaymentStatus, voidInvoice } from './invoice';
 import { invoiceBuilder } from './tests/builders';
 
 const getInvoice = async (id: string) => {
@@ -220,13 +220,13 @@ const getInvoiceStatus = (id: string) =>
 			.then(res => res[0]),
 	);
 
-describe('updateInvoiceStatus', () => {
+describe('updatePaymentStatus', () => {
 	const getPaymentStatus = (id: string) => getInvoiceStatus(id).then(res => res.status);
 
 	test('Updates the payment status', async ({ session, seed }) => {
 		const [seeded] = await seed.invoices({ overrides: [{ status: { status: 'unpaid' } }] });
 
-		await updateInvoiceStatus(seeded.id, 'paid');
+		await updatePaymentStatus(seeded.id, 'paid');
 
 		await expect(getPaymentStatus(seeded.id)).resolves.toBe('paid');
 		expect(updateTag).toHaveBeenCalledWith(`invoices-${session.user.id}`);
@@ -239,7 +239,7 @@ describe('updateInvoiceStatus', () => {
 		});
 
 		// Checks that withRLS is not the only protection
-		await expect(bypassRLS(() => updateInvoiceStatus(seeded.id, 'paid'))).rejects.toThrow();
+		await expect(bypassRLS(() => updatePaymentStatus(seeded.id, 'paid'))).rejects.toThrow();
 		expect(navigation.notFound).toHaveBeenCalled();
 
 		await expect(getPaymentStatus(seeded.id), 'Expected no change').resolves.toBe('unpaid');
@@ -249,7 +249,7 @@ describe('updateInvoiceStatus', () => {
 		const [seeded] = await seed.invoices({ overrides: [{ status: { status: 'unpaid' } }] });
 
 		// @ts-expect-error: Server action arguments are untrusted at runtime
-		await expect(updateInvoiceStatus(seeded.id, 'overdue')).rejects.toThrow(z.ZodError);
+		await expect(updatePaymentStatus(seeded.id, 'overdue')).rejects.toThrow(z.ZodError);
 
 		await expect(getPaymentStatus(seeded.id)).resolves.toBe('unpaid');
 	});
@@ -324,7 +324,7 @@ describe('setInvoiceNotes', () => {
 });
 
 test.for([
-	['updateInvoiceStatus', (id: string) => updateInvoiceStatus(id, 'paid')],
+	['updatePaymentStatus', (id: string) => updatePaymentStatus(id, 'paid')],
 	['voidInvoice', (id: string) => voidInvoice(id)],
 	['setInvoiceNotes', (id: string) => setInvoiceNotes(id, 'Follow up next month')],
 ] as const)('%s rejects a malformed invoice ID before querying', async ([, action]) => {

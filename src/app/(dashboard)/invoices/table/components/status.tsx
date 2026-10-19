@@ -6,7 +6,7 @@ import { cva } from 'class-variance-authority';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { type ComponentProps } from 'react';
 
-import { updateInvoiceStatus } from '@/lib/actions/invoice';
+import { updatePaymentStatus } from '@/lib/actions/invoice';
 import { useAsyncStatus, useInvoiceMutation } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 
@@ -52,8 +52,8 @@ export function StatusSelect({
 
 	const { mutateAsync } = useInvoiceMutation({
 		targetId: invoice.id,
-		mutationFn: (status: Parameters<typeof updateInvoiceStatus>[1]) =>
-			updateInvoiceStatus(invoice.id, status),
+		mutationFn: (status: Parameters<typeof updatePaymentStatus>[1]) =>
+			updatePaymentStatus(invoice.id, status),
 		scope: { id: 'status' },
 		optimisticFn: (curr, next) => ({ ...curr, status: { ...curr.status, status: next } }),
 	});
