@@ -65,6 +65,11 @@ const query = z
 	.extend(paginationQuerySchema.shape)
 	.strict();
 
+export const listResponse = z.object({
+	data: z.array(Invoice).max(200),
+	meta: paginationMetaSchema,
+});
+
 const route = defineRoute.protected({
 	tags: ['Invoices'],
 	operationId: 'listInvoices',
@@ -72,14 +77,7 @@ const route = defineRoute.protected({
 	responses: {
 		200: {
 			content: {
-				'application/json': {
-					schema: resolver(
-						z.object({
-							data: z.array(Invoice).max(200),
-							meta: paginationMetaSchema,
-						}),
-					),
-				},
+				'application/json': { schema: resolver(listResponse) },
 			},
 			description: 'List invoices, optionally filtered by client.',
 			links: {

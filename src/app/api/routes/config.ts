@@ -7,6 +7,8 @@ import { fetchConfig } from '@/lib/data';
 
 import { createApiRouter, defineRoute } from './shared';
 
+export const getResponse = z.object({ data: Config });
+
 const route = defineRoute.protected({
 	tags: ['Config'],
 	operationId: 'getConfig',
@@ -14,7 +16,7 @@ const route = defineRoute.protected({
 	responses: {
 		200: {
 			content: {
-				'application/json': { schema: resolver(z.object({ data: Config })) },
+				'application/json': { schema: resolver(getResponse) },
 			},
 			description: 'Return the active configuration.',
 		},

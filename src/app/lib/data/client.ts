@@ -39,7 +39,7 @@ export async function fetchClients(
 				},
 				with: {
 					data: {
-						columns: { id: false },
+						columns: { name: true, organization: true, email: true, notes: true },
 						with: { address: { columns: { id: false, userId: false } } },
 						extras: { scdId: data => data.id.getSQL() as SQL<string> },
 						where: { validTo: { isNull: true } },

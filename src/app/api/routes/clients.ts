@@ -51,6 +51,11 @@ const listQuery = z
 	.extend(paginationQuerySchema.shape)
 	.strict();
 
+export const listResponse = z.object({
+	data: z.array(Client).max(200),
+	meta: paginationMetaSchema,
+});
+
 const listRoute = defineRoute.protected({
 	tags: ['Clients'],
 	operationId: 'listClients',
@@ -58,14 +63,7 @@ const listRoute = defineRoute.protected({
 	responses: {
 		200: {
 			content: {
-				'application/json': {
-					schema: resolver(
-						z.object({
-							data: z.array(Client).max(200),
-							meta: paginationMetaSchema,
-						}),
-					),
-				},
+				'application/json': { schema: resolver(listResponse) },
 			},
 			description: 'List clients for the authenticated user.',
 			links: {
@@ -94,6 +92,8 @@ const getParams = z.object({
 		examples: ['f47ac10b-58cc-4372-a567-0e02b2c3d479'],
 	}),
 });
+export const getResponse = z.object({ data: Client });
+
 const getRoute = defineRoute.protected({
 	tags: ['Clients'],
 	operationId: 'getClient',
@@ -101,7 +101,7 @@ const getRoute = defineRoute.protected({
 	responses: {
 		200: {
 			content: {
-				'application/json': { schema: resolver(z.object({ data: Client })) },
+				'application/json': { schema: resolver(getResponse) },
 			},
 			description: 'Return the requested client.',
 		},

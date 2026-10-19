@@ -5,12 +5,24 @@ import app from '@/api/hono';
 
 import { asUser, bypassRLS, createTestSession } from '@/test/session';
 
+import { getResponse, listResponse } from './clients';
+
 describe('GET /api/clients', () => {
 	test('Returns 401 when there is no session', async () => {
 		const res = await app.request('/api/clients');
 
 		expect(res.status).toBe(401);
 		await expect(res.json()).resolves.toMatchObject({ status: 401, code: 'unauthorized' });
+	});
+
+	asUser('Returns only documented fields', async ({ seed }) => {
+		// An address is built, so that its fields are checked too
+		await seed.clients({ versions: 1, overrides: [{ isDeleted: false, data: { address: {} } }] });
+
+		const body = await (await app.request('/api/clients')).json();
+
+		// Parsing strips undocumented keys at any depth, so a leaked field shows in the diff
+		expect(body).toEqual(await listResponse.parseAsync(body));
 	});
 
 	asUser('Sorts in Unicode order across names and organizations', async ({ seed }) => {
@@ -79,6 +91,16 @@ describe('GET /api/clients/{id}', () => {
 	test('Returns 401 when there is no session', async () => {
 		const res = await app.request(`/api/clients/${randomUUID()}`);
 		expect(res.status).toBe(401);
+	});
+
+	asUser('Returns only documented fields', async ({ seed }) => {
+		// An address is built, so that its fields are checked too
+		const [client] = await seed.clients({ versions: 1, overrides: [{ data: { address: {} } }] });
+
+		const body = await (await app.request(`/api/clients/${client.id}`)).json();
+
+		// Parsing strips undocumented keys at any depth, so a leaked field shows in the diff
+		expect(body).toEqual(await getResponse.parseAsync(body));
 	});
 
 	asUser('Returns 400 for a non-UUID id', async () => {

@@ -40,7 +40,7 @@ export const fetchConfig = cache(async function fetchConfig(id?: string): Promis
 					addressId: false,
 				},
 				with: {
-					address: true,
+					address: { columns: { id: false, userId: false } },
 					configTaxes: {
 						with: { taxes: { columns: { userId: false } } },
 						orderBy: { order: 'asc' },

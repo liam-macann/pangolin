@@ -5,13 +5,22 @@ import app from '@/api/hono';
 
 import { asUser, bypassRLS, createTestSession } from '@/test/session';
 
-import { keyset } from './invoices';
+import { keyset, listResponse } from './invoices';
 
 describe('GET /api/invoices', () => {
 	test('Returns 401 when there is no session', async () => {
 		const res = await app.request('/api/invoices');
 		expect(res.status).toBe(401);
 		await expect(res.json()).resolves.toMatchObject({ status: 401, code: 'unauthorized' });
+	});
+
+	asUser('Returns only documented fields', async ({ seed }) => {
+		await seed.invoices({ count: 1 });
+
+		const body = await (await app.request('/api/invoices')).json();
+
+		// Parsing strips undocumented keys at any depth, so a leaked field shows in the diff
+		expect(body).toEqual(await listResponse.parseAsync(body));
 	});
 
 	asUser('Builds a cursor from every field, without exceeding length', async ({ seed }) => {
