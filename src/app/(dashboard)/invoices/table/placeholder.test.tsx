@@ -3,10 +3,11 @@ import { match } from 'ts-pattern';
 import { expect, test } from 'vitest';
 import { renderHook } from 'vitest-browser-react';
 
-import { type Invoice } from './columns';
+import type * as DTO from '@/api/dto/config';
+
 import { usePlaceholderInvoices } from './placeholder';
 
-type Config = Pick<Invoice['config'], 'timezone' | 'currency' | 'numberingScheme'>;
+type Config = Pick<DTO.Config, 'timezone' | 'currency' | 'numberingScheme'>;
 const defaults: Config = {
 	timezone: 'Australia/Sydney',
 	currency: 'AUD',
@@ -25,9 +26,11 @@ test('Generates N unique rows', async () => {
 	expect(new Set(invoices.map(invoice => invoice.id)).size).toBe(5);
 });
 
-test('Forwards the supplied config', async () => {
+test('Forwards only the invoice config fields', async () => {
 	const invoices = await generate();
-	invoices.map(invoice => expect(invoice.config).toEqual(defaults));
+	invoices.map(invoice =>
+		expect(invoice.config).toEqual({ timezone: defaults.timezone, currency: defaults.currency }),
+	);
 });
 
 test.for(['sequential', 'annual'] as const)(

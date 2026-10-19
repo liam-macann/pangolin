@@ -83,13 +83,21 @@ export async function fetchInvoices(
 				},
 			});
 
-			return rows.map(({ documentWithSum, status, ...inv }) => ({
-				...documentWithSum,
-				...status,
-				...inv,
-				createdAt: toISOString(documentWithSum.createdAt),
-				reference: invoiceReference(inv, documentWithSum.config.numberingScheme),
-			}));
+			return rows.map(({ documentWithSum, status, ...inv }) => {
+				const {
+					config: { numberingScheme, ...config },
+					...document
+				} = documentWithSum;
+
+				return {
+					...document,
+					...status,
+					...inv,
+					config,
+					createdAt: toISOString(document.createdAt),
+					reference: invoiceReference(inv, numberingScheme),
+				} satisfies Invoice;
+			});
 		});
 	} catch (error) {
 		unstable_rethrow(error);

@@ -52,7 +52,7 @@ const invoiceBuilder = createBuilder<Invoice>(() => ({
 	grossTotal: NumericString.parse('1000.0000'),
 	reference: 'INV-001',
 	clientData: { name: 'Alaric Wivell', organization: null, clientId: crypto.randomUUID() },
-	config: { timezone: 'Australia/Sydney', currency: 'AUD', numberingScheme: 'sequential' },
+	config: { timezone: 'Australia/Sydney', currency: 'AUD' },
 	status: 'unpaid',
 	notes: null,
 	isVoid: false,

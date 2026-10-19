@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Temporal } from 'temporal-polyfill';
 import { match } from 'ts-pattern';
 
+import type * as DTO from '@/api/dto/config';
 import { invoiceReference, seededRandom } from '@/lib/utils';
 import { NumericString } from '@/lib/utils/numeric';
 
@@ -61,7 +62,7 @@ function realisticAmount(currency: string, seed: number): number {
 	return Math.round(raw / step) * step;
 }
 
-type Config = Pick<Invoice['config'], 'timezone' | 'currency' | 'numberingScheme'>;
+type Config = Pick<DTO.Config, 'timezone' | 'currency' | 'numberingScheme'>;
 
 /** Generate deterministic fake invoices */
 export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
@@ -103,8 +104,6 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 					.toZonedDateTime({ timeZone: config.timezone, plainTime: { hour: 12 } })
 					.toInstant()
 					.toString({ fractionalSecondDigits: 3 }),
-				currency: config.currency,
-				taxRegistration: false,
 				title: null,
 				description: null,
 				issuedAt: issuedAt.toString(),
@@ -113,7 +112,7 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 				index,
 				netTotal: NumericString.parse(realisticAmount(config.currency, i * 3 + 2).toString()),
 				grossTotal: NumericString.parse(realisticAmount(config.currency, i * 3 + 2).toString()),
-				config,
+				config: { timezone: config.timezone, currency: config.currency },
 				clientData: {
 					name: names[nameIndex],
 					clientId: `placeholder-client-${nameIndex}`,
@@ -129,7 +128,7 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 								Math.floor(seededRandom(i * 3) * status.length)
 					],
 				isVoid: false,
-			};
+			} satisfies Invoice;
 		});
 	}, [config, count]);
 }
