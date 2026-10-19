@@ -23,6 +23,9 @@ describe('getOpenApiDocument()', () => {
 
 			expect(document.paths).not.toHaveProperty('/avatar');
 			expect(document.tags?.map(tag => tag.name)).not.toContain('Avatar');
+
+			expect(document.paths).not.toHaveProperty('/address/metadata');
+			expect(document.tags?.map(tag => tag.name)).not.toContain('Address');
 		});
 	});
 

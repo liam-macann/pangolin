@@ -135,8 +135,8 @@ export const documentConfig = {
 
 /** Routes documented for CI lint + fuzz coverage, but withheld from the production-served spec. */
 const internalOnly = {
-	paths: /^\/avatar(\/|$)/,
-	tags: ['Avatar'],
+	paths: /(^\/avatar(\/|$))|(^\/address\/metadata(\/|$))/,
+	tags: ['Avatar', 'Address'],
 };
 
 /** Mutates how list-valued query parameters serialization are specified in the OpenAPI contract. */
