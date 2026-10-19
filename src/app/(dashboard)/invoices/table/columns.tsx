@@ -143,7 +143,7 @@ function FormatPrice({
 			{...props}
 		>
 			<span className='relative'>
-				{formatCurrency(row.original.grossTotal, row.original.config.currency, config.locale)}
+				{formatCurrency(row.original.grossTotal, row.original.currency, config.locale)}
 				<div
 					aria-hidden='true'
 					className={cn(

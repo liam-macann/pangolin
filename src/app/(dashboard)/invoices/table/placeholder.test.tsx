@@ -14,23 +14,25 @@ const defaults: Config = {
 	numberingScheme: 'sequential',
 };
 
-async function generate(config?: Partial<Config>) {
-	const { result } = await renderHook(() => usePlaceholderInvoices({ ...defaults, ...config }));
+async function generate(config?: Partial<Config>, count?: number) {
+	const { result } = await renderHook(() =>
+		usePlaceholderInvoices({ ...defaults, ...config }, count),
+	);
 	return result.current;
 }
 
 test('Generates N unique rows', async () => {
-	const invoices = await generate();
+	const invoices = await generate(undefined, 6);
 
-	expect(invoices).toHaveLength(5);
-	expect(new Set(invoices.map(invoice => invoice.id)).size).toBe(5);
+	expect(invoices).toHaveLength(6);
+	expect(new Set(invoices.map(invoice => invoice.id)).size).toBe(6);
 });
 
-test('Forwards only the invoice config fields', async () => {
-	const invoices = await generate();
-	invoices.map(invoice =>
-		expect(invoice.config).toEqual({ timezone: defaults.timezone, currency: defaults.currency }),
-	);
+test('Forwards the invoice config fields', async () => {
+	const [invoice] = await generate(undefined, 1);
+
+	expect(invoice.timezone).toBe(defaults.timezone);
+	expect(invoice.currency).toBe(defaults.currency);
 });
 
 test.for(['sequential', 'annual'] as const)(

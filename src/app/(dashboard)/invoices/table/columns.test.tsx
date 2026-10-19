@@ -52,7 +52,8 @@ const invoiceBuilder = createBuilder<Invoice>(() => ({
 	grossTotal: NumericString.parse('1000.0000'),
 	reference: 'INV-001',
 	client: { name: 'Alaric Wivell', organization: null, id: crypto.randomUUID() },
-	config: { timezone: 'Australia/Sydney', currency: 'AUD' },
+	timezone: 'Australia/Sydney',
+	currency: 'AUD',
 	status: 'unpaid',
 	notes: null,
 	isVoid: false,
@@ -93,7 +94,7 @@ describe('Issue date prints the stored calendar date', () => {
 	])('In %s', async timezone => {
 		// Database stores calendar date in configured timezone
 		// This should never be interpreted as an instant, or cast between zones
-		const invoice = invoiceBuilder({ issuedAt: '2025-01-15', config: { timezone } });
+		const invoice = invoiceBuilder({ issuedAt: '2025-01-15', timezone });
 		const screen = await renderTable([invoice], { timezone });
 
 		await page.viewport(2000, 800);
@@ -123,7 +124,7 @@ describe('Issue date omits the current year of the current config timezone', () 
 		const invoice = invoiceBuilder({
 			issuedAt: '2027-01-01',
 			// The timezone of record is not used to determine the current year
-			config: { timezone: 'Pacific/Pago_Pago' },
+			timezone: 'Pacific/Pago_Pago',
 		});
 		const screen = await renderTable([invoice], { timezone });
 

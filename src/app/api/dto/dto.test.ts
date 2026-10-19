@@ -21,7 +21,7 @@ import { Config } from '@/api/dto/config';
 import { Invoice } from '@/api/dto/invoice';
 import { getNumericColumnPrecision, getTextColumnBounds } from '@/lib/utils/drizzle';
 import { collectNodes, getBounds } from '@/lib/zod';
-import * as db from '@/db/schema';
+import * as tables from '@/db/schema';
 import { isUnicode } from '@/db/schema/types';
 
 type FieldMapping = [column: Column, path: string];
@@ -33,12 +33,12 @@ interface DTOConfig {
 }
 
 const addressFields = (prefix?: string): FieldMapping[] => [
-	[db.address.dependentLocality, [prefix, 'dependentLocality'].filter(Boolean).join('.')],
-	[db.address.city, [prefix, 'city'].filter(Boolean).join('.')],
-	[db.address.administrativeArea, [prefix, 'administrativeArea'].filter(Boolean).join('.')],
-	[db.address.postalCode, [prefix, 'postalCode'].filter(Boolean).join('.')],
-	[db.address.sortingCode, [prefix, 'sortingCode'].filter(Boolean).join('.')],
-	[db.address.streetAddress, [prefix, 'streetAddress.items'].filter(Boolean).join('.')],
+	[tables.address.dependentLocality, [prefix, 'dependentLocality'].filter(Boolean).join('.')],
+	[tables.address.city, [prefix, 'city'].filter(Boolean).join('.')],
+	[tables.address.administrativeArea, [prefix, 'administrativeArea'].filter(Boolean).join('.')],
+	[tables.address.postalCode, [prefix, 'postalCode'].filter(Boolean).join('.')],
+	[tables.address.sortingCode, [prefix, 'sortingCode'].filter(Boolean).join('.')],
+	[tables.address.streetAddress, [prefix, 'streetAddress.items'].filter(Boolean).join('.')],
 ];
 
 const DTOs: DTOConfig[] = [
@@ -49,12 +49,12 @@ const DTOs: DTOConfig[] = [
 	{
 		dto: Client,
 		fields: [
-			[db.clients.id, 'id'],
-			[db.clientData.id, 'data.version'],
-			[db.clientData.name, 'data.name'],
-			[db.clientData.organization, 'data.organization'],
-			[db.clientData.email, 'data.email'],
-			[db.clientData.notes, 'data.notes'],
+			[tables.clients.id, 'id'],
+			[tables.clientData.id, 'data.version'],
+			[tables.clientData.name, 'data.name'],
+			[tables.clientData.organization, 'data.organization'],
+			[tables.clientData.email, 'data.email'],
+			[tables.clientData.notes, 'data.notes'],
 			...addressFields('data.address'),
 		],
 		exempt: [
@@ -65,20 +65,20 @@ const DTOs: DTOConfig[] = [
 	{
 		dto: Config,
 		fields: [
-			[db.config.id, 'id'],
-			[db.config.tradingName, 'tradingName'],
-			[db.config.language, 'language'],
-			[db.config.region, 'region'],
-			[db.config.currency, 'currency'],
-			[db.taxes.id, 'taxes.items.id'],
-			[db.taxes.name, 'taxes.items.name'],
-			[db.taxes.rate, 'taxes.items.rate'],
+			[tables.config.id, 'id'],
+			[tables.config.tradingName, 'tradingName'],
+			[tables.config.language, 'language'],
+			[tables.config.region, 'region'],
+			[tables.config.currency, 'currency'],
+			[tables.taxes.id, 'taxes.items.id'],
+			[tables.taxes.name, 'taxes.items.name'],
+			[tables.taxes.rate, 'taxes.items.rate'],
 			...addressFields('address'),
-			[db.config.email, 'email'],
-			[db.config.phone, 'phone'],
-			[db.config.header, 'header'],
-			[db.config.paymentDetails, 'paymentDetails.items'],
-			[db.config.tradingNumber, 'tradingNumber.items'],
+			[tables.config.email, 'email'],
+			[tables.config.phone, 'phone'],
+			[tables.config.header, 'header'],
+			[tables.config.paymentDetails, 'paymentDetails.items'],
+			[tables.config.tradingNumber, 'tradingNumber.items'],
 		],
 		exempt: [
 			// db.config.timezone has no char_length check
@@ -90,18 +90,18 @@ const DTOs: DTOConfig[] = [
 	{
 		dto: Invoice,
 		fields: [
-			[db.invoices.id, 'id'],
-			[db.clients.id, 'client.id'],
+			[tables.invoices.id, 'id'],
+			[tables.clients.id, 'client.id'],
 			[db.invoices.partition, 'partition'],
-			[db.documents.title, 'title'],
-			[db.documents.description, 'description'],
-			[db.clientData.name, 'client.name'],
-			[db.clientData.organization, 'client.organization'],
-			[db.invoiceStatus.notes, 'notes'],
-			[db.config.currency, 'config.currency'],
-			[db.invoices.issuedAt, 'issuedAt'],
-			[db.invoices.dueAt, 'dueAt'],
-			[db.documents.createdAt, 'createdAt'],
+			[tables.documents.title, 'title'],
+			[tables.documents.description, 'description'],
+			[tables.clientData.name, 'client.name'],
+			[tables.clientData.organization, 'client.organization'],
+			[tables.invoiceStatus.notes, 'notes'],
+			[tables.config.currency, 'currency'],
+			[tables.invoices.issuedAt, 'issuedAt'],
+			[tables.invoices.dueAt, 'dueAt'],
+			[tables.documents.createdAt, 'createdAt'],
 		],
 		exempt: [
 			// Derived from partition + index, not persisted
@@ -109,8 +109,8 @@ const DTOs: DTOConfig[] = [
 			// Derived by the document_with_sum database view
 			'netTotal',
 			'grossTotal',
-			// db.config.timezone has no char_length check
-			'config.timezone',
+			// tables.config.timezone has no char_length check
+			'timezone',
 		],
 	},
 ];

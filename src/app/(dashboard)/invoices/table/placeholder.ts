@@ -112,7 +112,8 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 				index,
 				netTotal: NumericString.parse(realisticAmount(config.currency, i * 3 + 2).toString()),
 				grossTotal: NumericString.parse(realisticAmount(config.currency, i * 3 + 2).toString()),
-				config: { timezone: config.timezone, currency: config.currency },
+				timezone: config.timezone,
+				currency: config.currency,
 				client: {
 					name: names[nameIndex],
 					id: `placeholder-client-${nameIndex}`,

@@ -199,7 +199,7 @@ function Items({
 								invoice.reference,
 								invoice.client.name,
 								invoice.client.organization,
-								formatCurrency(invoice.grossTotal, invoice.config.currency, locale),
+								formatCurrency(invoice.grossTotal, invoice.currency, locale),
 							].filter((v): v is string => typeof v === 'string')}
 							className='flex w-full items-baseline gap-2 *:last:hidden'
 							onSelect={() => router.push(`/invoices/${invoice.id}`)}
@@ -209,7 +209,7 @@ function Items({
 							</span>
 							<span>{invoice.client.name || invoice.client.organization}</span>
 							<span className='grow text-right text-muted-foreground'>
-								{formatCurrency(invoice.grossTotal, invoice.config.currency, locale)}
+								{formatCurrency(invoice.grossTotal, invoice.currency, locale)}
 							</span>
 						</CommandItem>
 					))}

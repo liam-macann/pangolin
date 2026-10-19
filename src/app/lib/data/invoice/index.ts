@@ -30,7 +30,7 @@ export type LineItem = Simplify<
 >;
 
 /** Superset of {@link Invoice} with relational data */
-export type DetailedInvoice = Omit<Invoice, 'config'> & {
+export type DetailedInvoice = Omit<Invoice, 'currency' | 'timezone'> & {
 	client: Pick<ClientData, 'name' | 'organization' | 'address'>;
 	config: Config;
 	items: LineItem[];
@@ -94,7 +94,7 @@ export async function fetchInvoices(
 					...document,
 					...status,
 					...inv,
-					config,
+					...config,
 					client: { id: clientId, ...clientData },
 					createdAt: toISOString(document.createdAt),
 					reference: invoiceReference(inv, numberingScheme),

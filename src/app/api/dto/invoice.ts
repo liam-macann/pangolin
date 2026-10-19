@@ -54,7 +54,7 @@ export const Invoice = z
 			.meta({ examples: ['INV-001'] })
 			.readonly(),
 
-		config: Config.pick({ timezone: true, currency: true }),
+		...Config.pick({ timezone: true, currency: true }).shape,
 
 		status: z.enum(['unpaid', 'paid', 'refunded']),
 		notes: z
