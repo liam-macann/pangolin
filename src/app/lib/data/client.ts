@@ -41,7 +41,7 @@ export async function fetchClients(
 					data: {
 						columns: { name: true, organization: true, email: true, notes: true },
 						with: { address: { columns: { id: false, userId: false } } },
-						extras: { scdId: data => data.id.getSQL() as SQL<string> },
+						extras: { version: data => data.id.getSQL() as SQL<string> },
 						where: { validTo: { isNull: true } },
 						limit: 1,
 					},

@@ -50,7 +50,7 @@ const DTOs: DTOConfig[] = [
 		dto: Client,
 		fields: [
 			[db.clients.id, 'id'],
-			[db.clientData.id, 'data.scdId'],
+			[db.clientData.id, 'data.version'],
 			[db.clientData.name, 'data.name'],
 			[db.clientData.organization, 'data.organization'],
 			[db.clientData.email, 'data.email'],

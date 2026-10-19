@@ -106,7 +106,7 @@ function BillTo() {
 	const items = useClients({
 		select: clients =>
 			clients.map(client => ({
-				value: client.data.scdId,
+				value: client.data.version,
 				label: client.data.name ?? client.data.organization ?? client.data.email,
 			})),
 	});

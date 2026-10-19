@@ -57,11 +57,11 @@ export async function createClient(input: z.infer<typeof clientDataCreate>) {
 			.values({ userId: session.user.id })
 			.returning({ id: schema.clients.id });
 
-		const scdId = await insertClientData(db, { ...data, clientId: id });
+		const version = await insertClientData(db, { ...data, clientId: id });
 
 		updateTag(`clients-${session.user.id}`);
 
-		return { id, scdId };
+		return { id, version };
 	});
 }
 

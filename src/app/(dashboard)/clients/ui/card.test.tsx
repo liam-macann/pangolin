@@ -21,7 +21,7 @@ const client: Client = {
 	isDeleted: false,
 	invoiceCount: 0,
 	data: {
-		scdId: crypto.randomUUID(),
+		version: crypto.randomUUID(),
 		name: 'Acme',
 		organization: null,
 		email: 'billing@acme.example',

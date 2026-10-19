@@ -27,7 +27,7 @@ export const Client = z
 				.max(255)
 				.nullable()
 				.meta({ examples: ['Acme Inc.'] }),
-			scdId: z
+			version: z
 				.uuid()
 				.meta({ examples: ['9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'] })
 				.readonly(),

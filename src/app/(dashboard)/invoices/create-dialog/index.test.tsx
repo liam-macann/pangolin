@@ -8,7 +8,7 @@ import { CreateInvoiceDialog } from './index';
 import { type CreateInvoiceConfig } from './types';
 
 const { client, mutateAsync } = vi.hoisted(() => ({
-	client: { scdId: crypto.randomUUID(), name: null, organization: 'Acme Inc.' },
+	client: { version: crypto.randomUUID(), name: null, organization: 'Acme Inc.' },
 	mutateAsync: vi.fn(async () => {}),
 }));
 
@@ -113,7 +113,7 @@ test('Submits a draft, then closes and resets', async () => {
 	await expect
 		.poll(() => mutateAsync)
 		.toHaveBeenCalledWith(
-			expect.objectContaining({ clientDataId: client.scdId, title: 'Draft title' }),
+			expect.objectContaining({ clientDataId: client.version, title: 'Draft title' }),
 		);
 
 	await expect.element(locators.dialog).not.toBeInTheDocument();

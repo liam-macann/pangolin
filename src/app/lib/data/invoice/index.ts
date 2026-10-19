@@ -97,7 +97,7 @@ export async function fetchInvoices(
 	}
 }
 
-/** Fetches invoices for a given client. Accepts logical client ID, not SCD ID. */
+/** Fetches invoices for a given client. Accepts logical client ID, not a client version ID. */
 export const fetchInvoicesForClient = (clientId: string, limit: number) =>
 	fetchInvoices({
 		where: { document: { clientData: { clientId: { eq: clientId } } } },
