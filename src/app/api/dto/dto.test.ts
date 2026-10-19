@@ -92,7 +92,6 @@ const DTOs: DTOConfig[] = [
 		fields: [
 			[tables.invoices.id, 'id'],
 			[tables.clients.id, 'client.id'],
-			[db.invoices.partition, 'partition'],
 			[tables.documents.title, 'title'],
 			[tables.documents.description, 'description'],
 			[tables.clientData.name, 'client.name'],

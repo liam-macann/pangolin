@@ -83,7 +83,7 @@ export async function fetchInvoices(
 				},
 			});
 
-			return rows.map(({ documentWithSum, status, ...inv }) => {
+			return rows.map(({ documentWithSum, status, index, partition, ...inv }) => {
 				const {
 					config: { numberingScheme, ...config },
 					clientData: { clientId, ...clientData },
@@ -97,7 +97,7 @@ export async function fetchInvoices(
 					...config,
 					client: { id: clientId, ...clientData },
 					createdAt: toISOString(document.createdAt),
-					reference: invoiceReference(inv, numberingScheme),
+					reference: invoiceReference({ index, partition }, numberingScheme),
 				} satisfies Invoice;
 			});
 		});
@@ -206,6 +206,8 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 					...document
 				},
 				status,
+				index,
+				partition,
 				...invoice
 			} = res;
 
@@ -217,7 +219,7 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 					...status,
 					...invoice,
 					createdAt: toISOString(document.createdAt),
-					reference: invoiceReference(invoice, config.numberingScheme),
+					reference: invoiceReference({ index, partition }, config.numberingScheme),
 					config,
 					client: { id: clientId, ...(await vault.decryptDeep(client)) },
 					tax,

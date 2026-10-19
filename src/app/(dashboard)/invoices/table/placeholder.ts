@@ -108,8 +108,6 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 				description: null,
 				issuedAt: issuedAt.toString(),
 				dueAt: dueAt.toString(),
-				partition,
-				index,
 				netTotal: NumericString.parse(realisticAmount(config.currency, i * 3 + 2).toString()),
 				grossTotal: NumericString.parse(realisticAmount(config.currency, i * 3 + 2).toString()),
 				timezone: config.timezone,

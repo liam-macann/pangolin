@@ -23,7 +23,7 @@ declare module 'pdfmake/interfaces' {
 /** A subset of API invoice data used for printing invoices */
 export type InvoicePrintData = OmitDeep<
 	DetailedInvoice,
-	'client.id' | 'id' | 'status' | 'items' | 'partition' | 'index' | 'notes'
+	'client.id' | 'id' | 'status' | 'items' | 'notes'
 > & {
 	// Gross amount is not displayed on a per-item basis, but rather deferred to the subtotal table
 	items: Omit<ElementType<DetailedInvoice['items']>, 'grossAmount'>[];

@@ -12,19 +12,6 @@ export const Invoice = z
 			.readonly(),
 		issuedAt: z.iso.date().meta({ examples: ['2026-01-15'] }),
 		dueAt: z.iso.date().meta({ examples: ['2026-02-14'] }),
-		/** @deprecated Prefer reference */
-		partition: z
-			.string()
-			.normalize()
-			.max(50)
-			.nullable()
-			.meta({ examples: ['2026'], deprecated: true })
-			.readonly(),
-		/** @deprecated Prefer reference */
-		index: z
-			.number()
-			.meta({ examples: [1], deprecated: true })
-			.readonly(),
 		title: z
 			.string()
 			.normalize()
