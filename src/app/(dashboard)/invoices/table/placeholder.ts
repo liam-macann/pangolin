@@ -30,7 +30,7 @@ const names = [
 ];
 
 // Entries repeated for randomness weighting
-const status: Invoice['status']['status'][] = [
+const status: Invoice['status'][] = [
 	// The first two invoices will always be these values
 	'unpaid',
 	'paid',
@@ -119,19 +119,16 @@ export function usePlaceholderInvoices(config: Config, count = 5): Invoice[] {
 					clientId: `placeholder-client-${nameIndex}`,
 					organization: null,
 				},
-				status: {
-					userId: 'placeholder',
-					notes: null,
-					status:
-						status[
-							// Ensure that first two rows are predictable
-							i < 2
-								? i
-								: // Use random status after that
-									Math.floor(seededRandom(i * 3) * status.length)
-						],
-					isVoid: false,
-				},
+				notes: null,
+				status:
+					status[
+						// Ensure that first two rows are predictable
+						i < 2
+							? i
+							: // Use random status after that
+								Math.floor(seededRandom(i * 3) * status.length)
+					],
+				isVoid: false,
 			};
 		});
 	}, [config, count]);

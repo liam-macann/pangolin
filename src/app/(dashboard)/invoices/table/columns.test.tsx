@@ -53,7 +53,9 @@ const invoiceBuilder = createBuilder<Invoice>(() => ({
 	reference: 'INV-001',
 	clientData: { name: 'Alaric Wivell', organization: null, clientId: crypto.randomUUID() },
 	config: { timezone: 'Australia/Sydney', currency: 'AUD', numberingScheme: 'sequential' },
-	status: { status: 'unpaid', notes: null, isVoid: false },
+	status: 'unpaid',
+	notes: null,
+	isVoid: false,
 }));
 
 function TestTable({ data }: { data: Invoice[] }) {

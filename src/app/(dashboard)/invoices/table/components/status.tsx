@@ -48,14 +48,14 @@ export function StatusSelect({
 	...props
 }: { row: Row<DataTableFeatures, Invoice> } & ComponentProps<typeof SelectTrigger>) {
 	const invoice = row.original;
-	const status = invoice.status.status;
+	const status = invoice.status;
 
 	const { mutateAsync } = useInvoiceMutation({
 		targetId: invoice.id,
 		mutationFn: (status: Parameters<typeof updatePaymentStatus>[1]) =>
 			updatePaymentStatus(invoice.id, status),
 		scope: { id: 'status' },
-		optimisticFn: (curr, next) => ({ ...curr, status: { ...curr.status, status: next } }),
+		optimisticFn: (curr, next) => ({ ...curr, status: next }),
 	});
 
 	const [updateStatus, track] = useAsyncStatus({

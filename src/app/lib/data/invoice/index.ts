@@ -83,8 +83,9 @@ export async function fetchInvoices(
 				},
 			});
 
-			return rows.map(({ documentWithSum, ...inv }) => ({
+			return rows.map(({ documentWithSum, status, ...inv }) => ({
 				...documentWithSum,
+				...status,
 				...inv,
 				createdAt: toISOString(documentWithSum.createdAt),
 				reference: invoiceReference(inv, documentWithSum.config.numberingScheme),
@@ -190,6 +191,7 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 
 			const {
 				documentWithSum: { configId, ...document },
+				status,
 				...invoice
 			} = res;
 
@@ -198,6 +200,7 @@ export async function fetchInvoice(id: string): Promise<DetailedInvoice> {
 
 				return {
 					...document,
+					...status,
 					...invoice,
 					createdAt: toISOString(document.createdAt),
 					reference: invoiceReference(invoice, config.numberingScheme),

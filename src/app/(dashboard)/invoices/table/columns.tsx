@@ -32,14 +32,14 @@ export const columns = columnHelper.columns([
 		meta: { className: 'relative' },
 		cell: ({ row }) => (
 			<div className='flex gap-2 gap-y-0 font-medium text-xs tabular-nums max-sm:flex-col max-sm:justify-between sm:items-center'>
-				<span className='sr-only'>{row.original.status.isVoid && 'Void, '}</span>
+				<span className='sr-only'>{row.original.isVoid && 'Void, '}</span>
 				{row.original.reference}
 
-				{row.original.status.notes && (
+				{row.original.notes && (
 					<NotesButton
 						className='-mx-1 sm:-translate-y-px'
 						invoiceId={row.original.id}
-						defaultValue={row.original.status.notes}
+						defaultValue={row.original.notes}
 					/>
 				)}
 			</div>
@@ -72,7 +72,7 @@ export const columns = columnHelper.columns([
 			);
 		},
 	}),
-	columnHelper.accessor(row => row.status.status, {
+	columnHelper.accessor(row => row.status, {
 		id: 'status',
 		enableSorting: false,
 		header: ({ column }) => <ToggleHeader column={column} title='Status' />,

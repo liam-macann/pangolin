@@ -22,11 +22,8 @@ declare module 'pdfmake/interfaces' {
 /** A subset of API invoice data used for printing invoices */
 export type InvoicePrintData = Omit<
 	DetailedInvoice,
-	'id' | 'status' | 'items' | 'partition' | 'index'
+	'id' | 'status' | 'items' | 'partition' | 'index' | 'notes'
 > & {
-	// isVoid is the only mutable status that may be accessed
-	status: Pick<DetailedInvoice['status'], 'isVoid'>;
-
 	// Gross amount is not displayed on a per-item basis, but rather deferred to the subtotal table
 	items: Omit<ElementType<DetailedInvoice['items']>, 'grossAmount'>[];
 };
@@ -67,7 +64,7 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 		},
 		pageMargins,
 		footer: documentFooter(invoice, pageMargins),
-		...(invoice.status.isVoid
+		...(invoice.isVoid
 			? {
 					watermark: {
 						text: 'VOID',

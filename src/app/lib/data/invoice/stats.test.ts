@@ -24,7 +24,8 @@ describe('fetchStats', () => {
 		status: Enum<typeof tables.statusEnum>,
 		{ isVoid = false, taxes = [] }: { isVoid?: boolean; taxes?: string[] } = {},
 	) => ({
-		status: { status, isVoid },
+		status,
+		isVoid,
 		items: [{ quantity: '1' as const, unitCost: `${total}` as const, taxes }],
 	});
 
@@ -103,7 +104,8 @@ describe('fetchStats', () => {
 			await seed.invoices({
 				overrides: [
 					{
-						status: { status: 'unpaid', isVoid: false },
+						status: 'unpaid',
+						isVoid: false,
 						items: [{ quantity: `${quantity}`, unitCost: `${unitCost}`, taxes: [] }],
 					},
 				],
@@ -146,12 +148,14 @@ describe('fetchStats', () => {
 				overrides: [
 					{
 						createdAt: aud.validFrom,
-						status: { status: 'unpaid', isVoid: false },
+						status: 'unpaid',
+						isVoid: false,
 						items: [{ quantity: '1', unitCost: '33.33', taxes: [] }],
 					},
 					{
 						createdAt: usd.validFrom,
-						status: { status: 'unpaid', isVoid: false },
+						status: 'unpaid',
+						isVoid: false,
 						items: [{ quantity: '1', unitCost: '50', taxes: [] }],
 					},
 				],
@@ -185,8 +189,8 @@ describe('fetchStats', () => {
 
 			const invoices = await seed.invoices({
 				overrides: [
-					{ createdAt: aud.validFrom, status: { isVoid: false } },
-					{ createdAt: usd.validFrom, status: { isVoid: false } },
+					{ createdAt: aud.validFrom, isVoid: false },
+					{ createdAt: usd.validFrom, isVoid: false },
 				],
 			});
 

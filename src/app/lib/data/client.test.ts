@@ -144,8 +144,8 @@ describe('fetchClients', () => {
 
 		await seed.invoices({
 			overrides: [
-				{ clientDataId: client.versions[0].id, status: { isVoid: true } },
-				{ clientDataId: client.versions[0].id, status: { isVoid: false } },
+				{ clientDataId: client.versions[0].id, isVoid: true },
+				{ clientDataId: client.versions[0].id, isVoid: false },
 			],
 		});
 
@@ -184,12 +184,12 @@ describe('fetchClientStats', () => {
 			overrides: [
 				{
 					clientDataId: clientA.versions[0].id,
-					status,
+					...status,
 					items: [{ quantity: '1', unitCost: '100', taxes: [] }],
 				},
 				{
 					clientDataId: clientB.versions[0].id,
-					status,
+					...status,
 					items: [{ quantity: '1', unitCost: '50', taxes: [] }],
 				},
 			],

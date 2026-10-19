@@ -224,7 +224,7 @@ describe('updatePaymentStatus', () => {
 	const getPaymentStatus = (id: string) => getInvoiceStatus(id).then(res => res.status);
 
 	test('Updates the payment status', async ({ session, seed }) => {
-		const [seeded] = await seed.invoices({ overrides: [{ status: { status: 'unpaid' } }] });
+		const [seeded] = await seed.invoices({ overrides: [{ status: 'unpaid' }] });
 
 		await updatePaymentStatus(seeded.id, 'paid');
 
@@ -235,7 +235,7 @@ describe('updatePaymentStatus', () => {
 	test('Does not mutate an invoice owned by another user', async ({ auth, seed }) => {
 		const other = await createTestSession(auth);
 		const [seeded] = await seed({ userId: other.user.id }).invoices({
-			overrides: [{ status: { status: 'unpaid' } }],
+			overrides: [{ status: 'unpaid' }],
 		});
 
 		// Checks that withRLS is not the only protection
@@ -246,7 +246,7 @@ describe('updatePaymentStatus', () => {
 	});
 
 	test('Rejects an unknown payment status', async ({ seed }) => {
-		const [seeded] = await seed.invoices({ overrides: [{ status: { status: 'unpaid' } }] });
+		const [seeded] = await seed.invoices({ overrides: [{ status: 'unpaid' }] });
 
 		// @ts-expect-error: Server action arguments are untrusted at runtime
 		await expect(updatePaymentStatus(seeded.id, 'overdue')).rejects.toThrow(z.ZodError);
@@ -259,7 +259,7 @@ describe('voidInvoice', () => {
 	const getVoidStatus = (id: string) => getInvoiceStatus(id).then(res => res.isVoid);
 
 	test('Marks an invoice as void', async ({ session, seed }) => {
-		const [seeded] = await seed.invoices({ overrides: [{ status: { isVoid: false } }] });
+		const [seeded] = await seed.invoices({ overrides: [{ isVoid: false }] });
 
 		await voidInvoice(seeded.id);
 
@@ -270,7 +270,7 @@ describe('voidInvoice', () => {
 	test('Does not mutate an invoice owned by another user', async ({ auth, seed }) => {
 		const other = await createTestSession(auth);
 		const [seeded] = await seed({ userId: other.user.id }).invoices({
-			overrides: [{ status: { isVoid: false } }],
+			overrides: [{ isVoid: false }],
 		});
 
 		// Checks that withRLS is not the only protection

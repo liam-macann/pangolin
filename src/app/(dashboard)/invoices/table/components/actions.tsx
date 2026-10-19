@@ -55,7 +55,7 @@ const useNotesMutation = (invoiceId: string) =>
 					? { children: 'Copy unsaved', onClick: () => navigator.clipboard.writeText(notes) }
 					: undefined,
 			}),
-		optimisticFn: (curr, { notes }) => ({ ...curr, status: { ...curr.status, notes } }),
+		optimisticFn: (curr, { notes }) => ({ ...curr, notes }),
 	});
 
 const useVoidMutation = ({ id: invoiceId, reference }: Pick<Invoice, 'id' | 'reference'>) =>
@@ -91,17 +91,17 @@ export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) 
 
 						<DropdownMenuSub>
 							<DropdownMenuSubTrigger>
-								{invoice.status.notes ? 'Edit notes' : 'Add notes'}
+								{invoice.notes ? 'Edit notes' : 'Add notes'}
 							</DropdownMenuSubTrigger>
 							<DropdownMenuSubContent>
 								<DropdownMenuSubContentTextarea
 									label='Your private notes'
-									defaultValue={invoice.status.notes ?? ''}
+									defaultValue={invoice.notes ?? ''}
 									maxLength={NOTES_MAX_LENGTH}
 									onBlur={e => {
 										// Skip the write when closing the submenu without changes
 										const input = e.target.value.trim();
-										const prev = invoice.status.notes?.trim() ?? '';
+										const prev = invoice.notes?.trim() ?? '';
 										if (input !== prev) setNotes({ id: invoice.id, notes: input });
 									}}
 								/>
@@ -115,7 +115,7 @@ export function OverflowMenu({ row }: { row: Row<DataTableFeatures, Invoice> }) 
 						<DropdownMenuSeparator />
 
 						<DropdownMenuItem
-							disabled={invoice.status.isVoid}
+							disabled={invoice.isVoid}
 							variant='destructive'
 							nativeButton
 							render={<AlertDialogTrigger />}

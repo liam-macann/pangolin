@@ -97,7 +97,7 @@ const DTOs: DTOConfig[] = [
 			[db.documents.description, 'description'],
 			[db.clientData.name, 'clientData.name'],
 			[db.clientData.organization, 'clientData.organization'],
-			[db.invoiceStatus.notes, 'status.notes'],
+			[db.invoiceStatus.notes, 'notes'],
 			[db.config.currency, 'config.currency'],
 			[db.invoices.issuedAt, 'issuedAt'],
 			[db.invoices.dueAt, 'dueAt'],

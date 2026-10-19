@@ -168,7 +168,7 @@ describe('createSeeder', () => {
 			config: { overrides: [{ currency: 'AUD', email: 'billing@acme.example', header: null }] },
 			invoices: {
 				overrides: [
-					{ dueAt: '2030-01-01', title: 'Retainer', status: { status: 'paid' } },
+					{ dueAt: '2030-01-01', title: 'Retainer', status: 'paid' },
 					{ issuedAt: '2024-01-01' },
 				],
 			},
@@ -187,7 +187,7 @@ describe('createSeeder', () => {
 			taxes: [{ rate: '0.2000' }, { rate: '0.2000' }],
 			configs: [{ currency: 'AUD', header: null }],
 			invoices: [
-				{ dueAt: '2030-01-01', title: 'Retainer', status: { status: 'paid' } },
+				{ dueAt: '2030-01-01', title: 'Retainer', status: 'paid' },
 				{ issuedAt: '2024-01-01' },
 			],
 			clients: [{ isDeleted: true, versions: [{ name: 'Zaria Lemery', addressId: null }] }],

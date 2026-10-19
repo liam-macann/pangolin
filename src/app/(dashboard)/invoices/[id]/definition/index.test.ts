@@ -7,12 +7,12 @@ import { collectTextNodes, invoiceDataBuilder, renderText } from './tests/helper
 describe('buildDocDefinition', () => {
 	describe('VOID watermark', () => {
 		test('Active invoice has no watermark', () => {
-			const inv = invoiceDataBuilder({ status: { isVoid: false } });
+			const inv = invoiceDataBuilder({ isVoid: false });
 			expect(buildDocDefinition(inv).watermark).toBeUndefined();
 		});
 
 		test('Voided invoice has watermark', () => {
-			const inv = invoiceDataBuilder({ status: { isVoid: true } });
+			const inv = invoiceDataBuilder({ isVoid: true });
 			expect(buildDocDefinition(inv).watermark).toMatchObject({ text: 'VOID' });
 		});
 	});

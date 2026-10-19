@@ -69,16 +69,15 @@ export const Invoice = z
 			clientId: z.uuid().meta({ examples: ['9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d'] }),
 		}),
 		config: Config.pick({ timezone: true, currency: true, numberingScheme: true }),
-		status: z.object({
-			status: z.enum(['unpaid', 'paid', 'refunded']),
-			notes: z
-				.string()
-				.normalize()
-				.max(2000)
-				.nullable()
-				.meta({ examples: ['Paid via bank transfer'] }),
-			isVoid: z.boolean(),
-		}),
+
+		status: z.enum(['unpaid', 'paid', 'refunded']),
+		notes: z
+			.string()
+			.normalize()
+			.max(2000)
+			.nullable()
+			.meta({ examples: ['Paid via bank transfer'] }),
+		isVoid: z.boolean(),
 	})
 	.meta({ ref: 'Invoice', description: 'An invoice belonging to the current user.' });
 
