@@ -34,7 +34,7 @@ export function SortableHandle({
 			{...props}
 			disabled={disabled}
 		>
-			<DotsSixIcon className='pointer-none inline-block self-center fill-inherit' />
+			<DotsSixIcon className='pointer-none inline-block self-center fill-foreground' />
 			<span className='sr-only'>Reorder item</span>
 		</Button>
 	);
