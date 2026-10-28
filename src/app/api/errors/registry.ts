@@ -1,6 +1,6 @@
 import { createProblemTypeRegistry } from 'hono-problem-details';
 
-const PROBLEM_BASE = 'https://invoicer.internal/errors';
+const PROBLEM_BASE = 'https://pangolin.internal/errors';
 
 export const registry = {
 	UNAUTHORIZED: {

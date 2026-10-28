@@ -18,8 +18,8 @@ import { InstrumentSans } from '@/src/styles/fonts';
 
 export const metadata: Metadata = {
 	title: {
-		template: '%s ∙ Invoicer',
-		default: 'Invoicer',
+		template: '%s ∙ Pangolin',
+		default: 'Pangolin',
 	},
 	description: 'A lightweight invoicing application for contract work',
 	// metadataBase: new URL(''),

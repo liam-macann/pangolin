@@ -9,7 +9,7 @@ describe('GET /api', () => {
 
 		const body = await res.json();
 		expect(body).toMatchObject({
-			name: 'Invoicer API',
+			name: 'Pangolin API',
 			documentation: expect.stringContaining('/docs/api'),
 		});
 	});

@@ -41,7 +41,7 @@ export const auth = betterAuth({
 	},
 	plugins: [nextCookies()],
 	advanced: {
-		cookiePrefix: 'invoicer',
+		cookiePrefix: 'pangolin',
 		// Safari drops Secure cookies on localhost
 		useSecureCookies: process.env.NODE_ENV === 'production',
 		database: { generateId: false, joins: true },

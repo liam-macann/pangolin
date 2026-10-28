@@ -112,14 +112,14 @@ export const apiDocsPath = '/docs/api';
 
 export const documentConfig = {
 	info: {
-		title: 'Invoicer API',
+		title: 'Pangolin API',
 		version: 'unstable_internal',
-		description: 'Internal REST API for the Invoicer dashboard.',
+		description: 'Internal REST API for the Pangolin dashboard.',
 	},
 	servers: [
 		{
 			url: '/api',
-			description: 'Base URL for the Invoicer API (production).',
+			description: 'Base URL for the Pangolin API (production).',
 			'x-internal': true,
 		},
 	],

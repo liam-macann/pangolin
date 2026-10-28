@@ -12,7 +12,7 @@ import { ScalarHydrate } from './hydrate';
 
 export const metadata: Metadata = {
 	title: 'API Reference',
-	description: 'Interactive reference documentation for the Invoicer API.',
+	description: 'Interactive reference documentation for the Pangolin API.',
 };
 
 const configuration = {

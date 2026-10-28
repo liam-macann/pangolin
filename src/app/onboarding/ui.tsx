@@ -199,7 +199,7 @@ function Landing({ name }: { name?: string }) {
 		<>
 			<h1 className='mb-2 font-bold text-xl'>{name ? `Hi, ${name}` : 'Welcome'}</h1>
 			<div className='text-muted-foreground'>
-				Invoicer is a simple solution to manage your income. Before getting started, we have a
+				Pangolin is a simple solution to manage your income. Before getting started, we have a
 				couple of questions to ask.
 			</div>
 			<Button className='mt-8 self-start' size='lg' onClick={next}>

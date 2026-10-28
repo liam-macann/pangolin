@@ -9,7 +9,7 @@ import { createApiRouter, defineRoute } from './shared';
 const rootRoute = defineRoute.public({
 	tags: ['Meta'],
 	operationId: 'getApiRoot',
-	description: 'Return basic information about the Invoicer API.',
+	description: 'Return basic information about the Pangolin API.',
 	responses: {
 		200: {
 			content: {
@@ -38,7 +38,7 @@ const rootRoute = defineRoute.public({
 const healthRoute = defineRoute.public({
 	tags: ['Meta'],
 	operationId: 'getHealth',
-	description: 'Liveness check for the Invoicer API.',
+	description: 'Liveness check for the Pangolin API.',
 	responses: {
 		200: {
 			content: {

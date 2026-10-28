@@ -72,7 +72,7 @@ async function startServer(session: Session) {
 					fetch: req => {
 						// Isolate the incoming request entirely from the ambient test context
 						return sessionStorage.exit(() => {
-							const cookie = getSessionCookie(req, { cookiePrefix: 'invoicer' });
+							const cookie = getSessionCookie(req, { cookiePrefix: 'pangolin' });
 
 							// Only populate sessionStorage if the request sends the matching session token
 							if (cookie === session.session.token) {

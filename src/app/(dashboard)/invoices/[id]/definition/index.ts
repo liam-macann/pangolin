@@ -53,8 +53,8 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 		info: {
 			title: title,
 			author: invoice.config.tradingName,
-			creator: 'Invoicer',
-			producer: 'Invoicer',
+			creator: 'Pangolin',
+			producer: 'Pangolin',
 			creationDate: createdAt,
 			modDate: createdAt,
 		},
