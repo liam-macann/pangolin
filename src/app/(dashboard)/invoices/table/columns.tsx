@@ -132,7 +132,7 @@ function FormatPrice({
 	...props
 }: { row: Row<DataTableFeatures, Invoice> } & ComponentProps<'div'>) {
 	const { data: config } = useConfig();
-	const scribbleSize = '6rem';
+	const scribbleSize = '6.5rem';
 
 	return (
 		<div
@@ -147,19 +147,19 @@ function FormatPrice({
 				<div
 					aria-hidden='true'
 					className={cn(
-						'filter-pencil-solid pointer-events-none absolute -inset-1 -inset-x-2.5 left-1/2 -translate-x-1/2 bg-repeat-x',
-						'hidden opacity-80 group-data-void/row:block', // Conditionally show when void
+						'pointer-events-none absolute -inset-1 -inset-x-2.5 left-1/2 -translate-x-1/2',
+						'mask-repeat-x bg-red-12/70 dark:bg-gray-12/80',
+						'hidden group-data-void/row:block', // Conditionally show when void
 						'group-even/row:rotate-180 group-nth-[3n]/row:scale-y-120', // Row-to-row variation
 					)}
 					style={{
 						// Quantize width to frequency of scribble (each 1/7th increment is a clean point to cut)
 						width: `round(up, 100%, calc(${scribbleSize}/7))`,
 
-						// Center scribble pattern, locking to grid position
-						// (left and right positioning would also work, but this ensures the first and last strokes vary)
-						backgroundPosition: `round(down, 50%, calc(${scribbleSize}/7)) 50%`,
-						backgroundSize: scribbleSize,
-						backgroundImage: 'url("/scribble.svg")',
+						// Center the scribble, locking it to the same grid
+						maskSize: `${scribbleSize} auto`,
+						maskPosition: `round(down, 50%, calc(${scribbleSize}/7)) 50%`,
+						maskImage: 'url(/scribble.png)',
 					}}
 				/>
 			</span>

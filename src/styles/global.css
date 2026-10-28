@@ -118,21 +118,6 @@ body {
 		color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to, opacity, transform, translate, scale, rotate, filter, -webkit-backdrop-filter, backdrop-filter, display, content-visibility, overlay, pointer-events;
 }
 
-@utility filter-pencil {
-	filter: url("/pencil.svg#stroke");
-}
-
-@utility filter-pencil-solid {
-	@variant dark {
-		--scribble-lum: 1;
-		--scribble-sat: 0.5;
-	}
-
-	/* Use sepia to force color into stroke */
-	filter: brightness(0) invert(var(--scribble-lum, 0.2)) sepia(1) saturate(var(--scribble-sat, 5))
-		url("/pencil.svg#stroke") contrast(0.85);
-}
-
 @utility small-caps {
 	font-size: 0.85em;
 	letter-spacing: 0.05em;

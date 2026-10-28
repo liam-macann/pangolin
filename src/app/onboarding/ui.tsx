@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/ui/button';
 
 import { type Session } from '@/auth';
-import ScribbleCircle from '@/src/assets/scribble-circle.svg';
 
 import { Customization } from './forms/customization';
 import { Details } from './forms/details';
@@ -137,9 +136,9 @@ export function Progress({ className, ...props }: ComponentProps<typeof motion.d
 					{i + 1}
 
 					{i === page - 1 && (
-						<ScribbleCircle
-							className='filter-pencil fade-in-0 absolute -inset-3 animate-in fill-foreground/50 group-even/step:rotate-150 group-nth-[3n]/step:rotate-45'
-							role='presentation'
+						<div
+							aria-hidden
+							className='fade-in-0 mask-[url(/scribble-circle.png)] mask-contain absolute -inset-4 animate-in bg-foreground/50 group-even/step:rotate-150 group-nth-[3n]/step:rotate-45'
 						/>
 					)}
 				</div>
