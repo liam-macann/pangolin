@@ -75,12 +75,37 @@ const flattenScheme = (
 	);
 
 /**
- * Generates a set of single color values to alternate between light and dark schemes
+ * Generates a set of single color values to alternate between light and dark schemes.
+ *
+ * @remarks This is preferred to light-dark() as it keeps the JS config in sync with the Tailwind dark variant.
+ *
+ * @returns
+ * ```ts
+ * {
+ *  sand: { [1-12]: var(--tw-light, VALUE) var(--tw-dark, VALUE) },
+ *  slate: { [1-12]: var(--tw-light, VALUE) var(--tw-dark, VALUE) },
+ *  […]
+ * }
+ * ```
+ *
+ * @remarks
+ *
+ * In your `global.css`, include:
+ * ```css
+ * :root {
+ *  `@variant dark {
+ *    color-scheme: dark;
+ *    --tw-light: ;
+ *    --tw-dark: initial;
+ *  }
+ * }
+ *
  * @remarks Includes a fallback value for editor hints
  */
 const lightDark = () =>
 	flattenScheme(
-		({ values: [light, dark, hint] }) => `light-dark(${light}, ${dark}) var(--tw-hint, ${hint})`,
+		({ values: [light, dark, hint] }) =>
+			`var(--tw-light, ${light}) var(--tw-dark, ${dark}) var(--tw-hint, ${hint})`,
 	);
 
 const generateColorVariables = (scheme: ColorMap) =>
@@ -101,7 +126,10 @@ export const config: Config = {
 			addBase({
 				':root': {
 					...generateColorVariables(lightDark()),
+					colorScheme: 'light',
 					'--tw-hint': ' ',
+					'--tw-light': 'initial',
+					'--tw-dark': '',
 				},
 			});
 		}),

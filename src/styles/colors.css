@@ -37,8 +37,6 @@
 	--sidebar-accent-foreground: var(--sidebar-primary);
 	--sidebar-border: var(--border);
 	--sidebar-ring: var(--ring);
-
-	color-scheme: light dark;
 }
 
 @variant dark {
@@ -120,5 +118,16 @@
 	*::before,
 	*::after {
 		@apply border-border outline-ring/50 ring-ring ring-offset-background;
+	}
+}
+
+/* CSS custom property based polyfill for light-dark(). See tailwind.config.mts */
+@layer components {
+	:root {
+		@variant dark {
+			color-scheme: dark;
+			--tw-light: ;
+			--tw-dark: initial;
+		}
 	}
 }
