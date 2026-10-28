@@ -1,4 +1,10 @@
 #!/bin/sh
 set -eu
 
-git-format-staged --formatter 'biome check --write --files-ignore-unknown=true --no-errors-on-unmatched --stdin-file-path="{}"' '*'
+git-format-staged --formatter '
+    if git --literal-pathspecs diff --cached --numstat --no-renames -- "{}" | grep -q "^-"; then
+        cat
+    else
+        biome check --write --files-ignore-unknown=true --no-errors-on-unmatched --stdin-file-path="{}"
+    fi
+' '*'
