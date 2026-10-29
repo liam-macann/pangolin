@@ -9,8 +9,8 @@
 		--typeset-font-heading: var(--font-display);
 		--typeset-font-mono: var(--font-mono);
 		--typeset-size: 1em;
-		--typeset-leading: 1.75;
-		--typeset-flow: 1.25em;
+		--typeset-leading: 1.6;
+		--typeset-flow: 1em;
 	}
 }
 
@@ -66,7 +66,7 @@
 		&:where(h2) {
 			font-size: 1.25em;
 			line-height: 1.4;
-			margin-block-start: calc(var(--typeset-flow) * 1.4);
+			margin-block-start: calc(var(--typeset-flow) * 1.75);
 		}
 		&:where(h3) {
 			font-size: 1.125em;
@@ -112,7 +112,13 @@
 			color: inherit;
 			font-weight: 500;
 			text-decoration-line: underline;
+			text-decoration-style: dotted;
+			text-underline-offset: 3px;
 			text-decoration-color: color-mix(in oklab, currentColor 30%, transparent);
+
+			&[href^="http"] {
+				@apply link-external;
+			}
 		}
 		&:where(a:hover) {
 			text-decoration-color: currentColor;
@@ -198,16 +204,18 @@
 		}
 		&:where(li) {
 			margin-block-start: 0.5em;
-			padding-inline-start: 0.4em;
+			padding-inline-start: 0.7em;
 		}
 		&:where(li > p, li > ul, li > ol) {
 			margin-block-start: 0.5em;
 		}
 		&:where(ul > li)::marker {
 			color: var(--typeset-muted);
+			font-weight: 500;
 		}
 		&:where(ol > li)::marker {
 			color: var(--typeset-muted);
+			font-weight: 500;
 		}
 
 		/* GFM task lists. */
@@ -467,5 +475,31 @@
 			figure > picture > img
 		):not(:where(.not-typeset, [data-not-typeset], .not-typeset *, [data-not-typeset] *)) {
 		margin-block-start: 0;
+	}
+}
+
+@utility no-link-external {
+	/* Will reject declarations, dropping rules */
+	--no-link-external: invalid;
+}
+
+@utility link-external {
+	/* This allows utility nested inside .no-link-external to override */
+	--no-link-external: initial;
+
+	margin-right: var(--no-link-external, 1.35ch);
+	position: var(--no-link-external, relative);
+
+	&::after {
+		content: var(--no-link-external, "↗" / ", (external)");
+		color: var(--no-link-external, color-mix(in sRGB, currentColor 40%, transparent));
+
+		/* No vertical offset; we rely on static baseline position.
+	 		Absolute position prevents glyph wrapping. */
+		position: var(--no-link-external, absolute);
+		letter-spacing: var(--no-link-external, 0);
+		text-indent: 0;
+
+		transform: var(--no-link-external, translate(0.17ch, 0.1em));
 	}
 }
