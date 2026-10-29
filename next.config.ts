@@ -1,3 +1,4 @@
+import createMDX from '@next/mdx';
 import { withSentryConfig } from '@sentry/nextjs';
 import { type NextConfig } from 'next';
 
@@ -8,6 +9,7 @@ const nextConfig: NextConfig = {
 	cacheComponents: true,
 	reactCompiler: true,
 	poweredByHeader: false,
+	pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
 	experimental: {
 		optimizePackageImports: ['@phosphor-icons/react'],
 		authInterrupts: true,
@@ -78,23 +80,29 @@ const nextConfig: NextConfig = {
 	serverExternalPackages: ['pdfmake', '@scalar/server-side-rendering'],
 };
 
-export default withSentryConfig(nextConfig, {
-	org: process.env.SENTRY_ORG,
-	project: process.env.SENTRY_PROJECT,
-	telemetry: false,
-
-	// Only print logs for uploading source maps in CI
-	silent: !process.env.CI,
-
-	// Upload a larger set of source maps for prettier stack traces (increases build time)
-	widenClientFileUpload: true,
-
-	// Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers
-	tunnelRoute: '/monitoring',
-
-	webpack: {
-		// Enables automatic instrumentation of Vercel Cron Monitors
-		automaticVercelMonitors: true,
-		treeshake: { removeDebugLogging: true },
-	},
+const withMDX = createMDX({
+	extension: /\.(md|mdx)$/,
 });
+
+export default withMDX(
+	withSentryConfig(nextConfig, {
+		org: process.env.SENTRY_ORG,
+		project: process.env.SENTRY_PROJECT,
+		telemetry: false,
+
+		// Only print logs for uploading source maps in CI
+		silent: !process.env.CI,
+
+		// Upload a larger set of source maps for prettier stack traces (increases build time)
+		widenClientFileUpload: true,
+
+		// Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers
+		tunnelRoute: '/monitoring',
+
+		webpack: {
+			// Enables automatic instrumentation of Vercel Cron Monitors
+			automaticVercelMonitors: true,
+			treeshake: { removeDebugLogging: true },
+		},
+	}),
+);
