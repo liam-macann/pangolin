@@ -66,7 +66,7 @@ function DialogPopup({
 			data-slot='dialog-content'
 			className={cn(
 				'fixed top-[50%] left-[50%] z-50 grid max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 overflow-scroll rounded-lg bg-background p-6 text-foreground shadow-lg ring-border **:ring-offset-background sm:max-w-lg dark:ring-1',
-				'duration-150 ease-out-cubic data-ending-style:opacity-0 data-starting-style:opacity-0 motion-safe:data-ending-style:scale-97 motion-safe:data-starting-style:scale-97 motion-safe:data-ending-style:blur-[2px] motion-safe:data-starting-style:blur-[2px]',
+				'duration-150 ease-out-cubic data-ending-style:opacity-0 data-starting-style:opacity-0 motion-safe:data-ending-style:scale-97 motion-safe:data-starting-style:scale-97',
 				className,
 			)}
 			{...props}
