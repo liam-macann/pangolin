@@ -8,8 +8,8 @@
 @config "./../../tailwind.config.mts";
 
 @theme {
-	--grid-template-columns-13: repeat(13, minmax(0, 1fr));
 	--breakpoint-xs: 30rem;
+	--breakpoint-3xl: 120rem;
 
 	--font-system:
 		ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
@@ -105,6 +105,15 @@
 			0px 1px 1px rgba(0, 0, 0, 0.04), 0px 8px 16px -4px rgba(0, 0, 0, 0.08),
 			0px 24px 32px -8px rgba(0, 0, 0, 0.06);
 	}
+}
+
+html {
+	@apply 3xl:text-[110%];
+
+	font-optical-sizing: auto;
+	hyphenate-limit-chars: 7 4 3;
+	hyphenate-limit-lines: 2;
+	text-autospace: auto;
 }
 
 body {
