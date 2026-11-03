@@ -80,8 +80,10 @@ export const AddressError = ({ className, ...props }: React.ComponentProps<typeo
 	<FieldError className={cn('text-xs', className)} {...props} />
 );
 
-const inputResetClass =
-	'border-none ring-0! bg-transparent! rounded-none overflow-visible shadow-none p-0 h-auto';
+const inputResetClass = cn(
+	'inset-shadow-none! h-auto overflow-visible rounded-none border-none bg-transparent! p-0 shadow-none ring-0!',
+);
+
 export const AddressInput = ({ className, ...props }: React.ComponentProps<typeof Input>) => (
 	<Input className={cn(inputResetClass, className)} {...props} />
 );
