@@ -54,7 +54,7 @@ export function scdTable<TColumnsMap extends Record<string, AnyPgColumnBuilder>>
 
 	extraConfig?: (
 		self: PgBuildExtraConfigColumns<TColumnsMap & typeof scdDates>,
-	) => PgTableExtraConfigValue[],
+	) => (PgTableExtraConfigValue | PgTableExtraConfigValue[])[],
 ) {
 	const table = snakeCase.table(
 		name,
@@ -130,7 +130,7 @@ export const policy = ({
 	insert: SQL | boolean | null;
 	update: SQL | boolean | null;
 	delete: SQL | boolean | null;
-}): (PgPolicy | undefined)[] => {
+}): PgPolicy[] => {
 	// Enforce that all CRUD operations have a policy defined (including explicit `null` values)
 	(['select', 'insert', 'update', 'delete'] as const).forEach(key => {
 		if (options[key] === undefined) throw new Error(`crudPolicy requires a ${key} policy`);
@@ -178,7 +178,7 @@ export const policy = ({
 				to: role,
 				using: del,
 			}),
-	].filter(Boolean);
+	].filter(p => p !== undefined);
 };
 
 /** Whether a row belongs to the authenticated user.

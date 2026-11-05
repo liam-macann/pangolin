@@ -55,7 +55,7 @@ export const invoices = snakeCase.table(
 		/** Index of invoice, by partition */
 		index: integer().notNull(),
 	},
-	(t): PgTableExtraConfigValue[] => [
+	(t): (PgTableExtraConfigValue | PgTableExtraConfigValue[])[] => [
 		// Ensure the logical invoice belongs to the same user as its document
 		relationOwnership(t.id, documents),
 
@@ -113,7 +113,7 @@ export const documents = snakeCase.table(
 			.notNull()
 			.references(() => config.id),
 	},
-	(t): PgTableExtraConfigValue[] => [
+	(t): (PgTableExtraConfigValue | PgTableExtraConfigValue[])[] => [
 		unique('uq_document_id_config').on(t.id, t.configId),
 		unique('uq_document_id_user_id').on(t.id, t.userId),
 
