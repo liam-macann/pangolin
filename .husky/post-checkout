@@ -75,7 +75,7 @@ if [ ! -x "$NEON" ]; then
 fi
 
 [ -x "$NEON" ] || {
-    printf '❎ Local Neon CLI missing – run pnpm install\n' >&2
+    printf '❎ Local Neon CLI missing – run nub install\n' >&2
     exit 1
 }
 
@@ -97,8 +97,8 @@ seed_file() {
 get_env() { sed -n "s/^$1=//p" "$ENV_FILE" | head -n 1 | sed 's/\r$//; s/^"//; s/"$//; s/^'\''//; s/'\''$//'; }
 
 # Seed files
-seed_file "$ENV_FILE" .env .env.local || cp .env.example "$ENV_FILE" 2>/dev/null || die "No env file to seed from"
-seed_file .neon .neon || die "No linked Neon workspace – run 'pnpm exec neon link'"
+seed_file "$ENV_FILE" .env .env.local || die "No env file to seed from – create .env.local"
+seed_file .neon .neon || die "No linked Neon workspace – run 'nub exec neon link'"
 
 PROJECT_ID=${NEON_PROJECT_ID:-$(get_env NEON_PROJECT_ID)}
 [ -n "$PROJECT_ID" ] || die "NEON_PROJECT_ID is missing"
