@@ -24,7 +24,7 @@ const sort = z.codec(param, z.array(z.object({ id: z.string(), desc: z.boolean()
 	},
 });
 
-/** Page number, which counts from 1 in the URL and from 0 as a table page index. */
+/** Pages of rows shown, which counts from 1 in the URL and from 0 in state. */
 const page = z.codec(param, z.int().nonnegative().optional(), {
 	decode: param => {
 		const number = Number(param);

@@ -186,8 +186,8 @@ importers:
         specifier: ^4.3.3
         version: 4.3.3
       tailwindcss-scrim-gradients:
-        specifier: ^0.4.2
-        version: 0.4.2(tailwindcss@4.3.3)
+        specifier: ^1.0.1
+        version: 1.0.1(tailwindcss@4.3.3)
       temporal-polyfill:
         specifier: ^1.0.5
         version: 1.0.5
@@ -7352,8 +7352,8 @@ packages:
   tailwind-merge@3.6.0:
     resolution: {integrity: sha512-uxL7qAVQriqRQPAyK3pj66VqskWqoZ37PW94jwOTwNfq/z9oyu1V+eqrZqtR2+fCiXdYOZe/Modt8GtvqNzu+w==}
 
-  tailwindcss-scrim-gradients@0.4.2:
-    resolution: {integrity: sha512-ED7so7nOvwbKyikmOgkRNQAvDyYMVxQK6USQvboqN3tF9y28NObiK1YFS1ovC0kZ3kzWcf1LJvAgY/ZdDNosZg==}
+  tailwindcss-scrim-gradients@1.0.1:
+    resolution: {integrity: sha512-El0dpzTekE76T4QAoRrJuUYhQiSzHDpPwNGCw2c3giJVfI9F4MW69bnArF29JHLDEh0rtTTnyPOznQghKirZig==}
     peerDependencies:
       tailwindcss: ^3.0.0 || ^4.0.0
 
@@ -15485,7 +15485,7 @@ snapshots:
 
   tailwind-merge@3.6.0: {}
 
-  tailwindcss-scrim-gradients@0.4.2(tailwindcss@4.3.3):
+  tailwindcss-scrim-gradients@1.0.1(tailwindcss@4.3.3):
     dependencies:
       tailwindcss: 4.3.3
 

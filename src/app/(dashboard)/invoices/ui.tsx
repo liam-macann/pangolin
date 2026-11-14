@@ -2,14 +2,26 @@
 
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
 import { PlusCircleIcon, ReceiptIcon } from '@phosphor-icons/react';
+import { type PaginationState } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
-import { type ComponentProps, Suspense, useDeferredValue, useRef, useState } from 'react';
+import {
+	type ComponentProps,
+	type ReactNode,
+	Suspense,
+	startTransition,
+	useDeferredValue,
+	useRef,
+	useState,
+} from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { z } from 'zod';
 
+import { type Invoice } from '@/api/dto/invoice';
 import { useConfig, useInvoices } from '@/lib/hooks';
-import { useFetchAhead, useFetchWhile } from '@/lib/hooks/data/helpers';
+import { useFetchWhile } from '@/lib/hooks/data/helpers';
+import { cn } from '@/lib/utils';
 
+import { useDataTableContext, useDeferredPage } from '@/components/data-table';
 import { Button } from '@/ui/button';
 import {
 	Empty,
@@ -32,6 +44,11 @@ import {
 	type UseInvoiceTableOptions,
 	useInvoiceTable,
 } from './table';
+
+/** Rows shown at first, and added by each "Get more". */
+const PAGE_SIZE = 20;
+/** Preview of rows on the next page, faded beneath the "Show more" button as a hint. */
+const PREVIEW_SIZE = 2;
 
 export function Table() {
 	const searchParams = useSearchParams();
@@ -73,14 +90,20 @@ export function Table() {
 			key={resetCount}
 			initialState={{
 				sorting: params.sort,
-				pagination: { pageIndex: params.page ?? 0 },
+				// Rows grow from the top, so the table only ever shows its first page
+				pagination: {
+					pageIndex: 0,
+					pageSize: ((params.page ?? 0) + 1) * PAGE_SIZE,
+				},
 				globalFilter: params.q,
 				...(params.client && { columnFilters: [{ id: 'clientId', value: params.client }] }),
 			}}
 			onGlobalFilterChange={q => updateParams({ q, client: undefined })}
 			onSortingChange={next => updateParams({ sort: z.encode(tableParams.shape.sort, next) })}
-			onPaginationChange={({ pageIndex }) =>
-				updateParams({ page: z.encode(tableParams.shape.page, pageIndex) })
+			onPaginationChange={({ pageSize }) =>
+				updateParams({
+					page: z.encode(tableParams.shape.page, pageSize / PAGE_SIZE - 1),
+				})
 			}
 		/>
 	);
@@ -90,6 +113,7 @@ function InvoiceTable({
 	initialState,
 	onGlobalFilterChange,
 	onSortingChange,
+	onColumnFiltersChange,
 	...options
 }: Omit<UseInvoiceTableOptions, 'data'>) {
 	const [sorting, setSorting] = useState(initialState?.sorting ?? DEFAULT_SORT);
@@ -111,13 +135,20 @@ function InvoiceTable({
 			data: query.data,
 			pageCount: query.hasNextPage ? -1 : undefined,
 			initialState: { ...initialState, sorting },
-			onColumnFiltersChange: setColumnFilters,
+			// A new sort or filter starts over from one page of rows
+			onColumnFiltersChange: next => {
+				table.setPageSize(PAGE_SIZE);
+				setColumnFilters(next);
+				onColumnFiltersChange?.(next);
+			},
 			// The client filter shows as the search value, so typing replaces it
 			onGlobalFilterChange: next => {
+				table.setPageSize(PAGE_SIZE);
 				table.setColumnFilters(filters => filters.filter(filter => filter.id !== 'clientId'));
 				onGlobalFilterChange?.(next);
 			},
 			onSortingChange: next => {
+				table.setPageSize(PAGE_SIZE);
 				setSorting(next);
 				onSortingChange?.(next);
 			},
@@ -129,12 +160,13 @@ function InvoiceTable({
 		}),
 	);
 
-	const { pageIndex, pageSize } = table.state.pagination;
+	const { pageSize } = table.state.pagination;
+	const matchCount = table.getPrePaginatedRowModel().rows.length;
 
-	// Load a page ahead of what you are viewing
-	useFetchAhead(query, query.data.length, table.state.pagination);
-	// Keep loading new pages while filtering, until matches fill a page
-	useFetchWhile(query, (pageIndex + 1) * pageSize > table.getPrePaginatedRowModel().rows.length);
+	// Load a page ahead of what is shown, so "Show more" is usually instant and has a preview
+	useFetchWhile(query, pageSize + PAGE_SIZE + PREVIEW_SIZE > query.data.length);
+	// Keep loading new pages while filtering, until matches fill what is shown
+	useFetchWhile(query, pageSize > matchCount);
 
 	/** Uses controlled data length to determine empty state, not filtered table view.
 	 * @remarks A client with no invoices still shows the table, so its filter can be cleared. */
@@ -147,6 +179,8 @@ function InvoiceTable({
 		: null;
 
 	const isLoading = sorting !== deferredSorting || clientId !== deferredClientId;
+
+	const canGetMore = table.getCanNextPage();
 
 	return (
 		<table.AppTable>
@@ -162,14 +196,73 @@ function InvoiceTable({
 			{!isEmpty ? (
 				<>
 					<InvoiceTableContent table={table} loading={isLoading} />
-					<div className='flex items-center justify-end gap-2 py-4'>
-						<table.PaginationControls />
-					</div>
+					{canGetMore && (
+						<InvoicePreview pagination={table.state.pagination}>
+							<Button
+								className='shadow-sm'
+								variant='outline'
+								size='lg'
+								loading={pageSize > matchCount && query.isFetchingNextPage}
+								// Renders the added rows once, rather than an urgent pass of the old rows and a deferred pass
+								onClick={() => startTransition(() => table.setPageSize(size => size + PAGE_SIZE))}
+							>
+								Show more
+							</Button>
+						</InvoicePreview>
+					)}
 				</>
 			) : (
 				<EmptyState />
 			)}
 		</table.AppTable>
+	);
+}
+
+/** The previewed rows on the next page, with child content positioned above. */
+function InvoicePreview({
+	pagination,
+	children,
+	className,
+}: {
+	pagination: PaginationState;
+	children: ReactNode;
+	className?: string;
+}) {
+	// Currently rendered rows (deferred state update)
+	const { rows } = useDeferredPage<Invoice>(pagination);
+
+	const table = useDataTableContext<Invoice>();
+	const data = table
+		.getPrePaginatedRowModel()
+		.rows.slice(rows.length, rows.length + PREVIEW_SIZE)
+		.map(row => row.original);
+
+	const preview = useInvoiceTable({ data }, () => null);
+
+	return (
+		// Continues the row borders, which the table above drops from its last row, outside the fade
+		<div className={cn('relative', className, data.length > 0 && 'border-t border-dotted')}>
+			{data.length > 0 && (
+				<div inert className='scrim-b-full scrim-background pointer-events-none select-none'>
+					<preview.AppTable>
+						<InvoiceTableContent
+							table={preview}
+							className='max-h-32 [&_thead]:hidden'
+							getRowAttr={(_, i) => ({ style: { opacity: (0.4 / (i + 1)).toFixed(2) } })}
+						/>
+					</preview.AppTable>
+				</div>
+			)}
+
+			<div
+				className={cn(
+					'flex justify-center',
+					data.length > 0 ? 'absolute inset-0 items-center' : 'py-4',
+				)}
+			>
+				{children}
+			</div>
+		</div>
 	);
 }
 
