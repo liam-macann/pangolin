@@ -66,7 +66,7 @@ export function InvoiceTableContent({
 					...overrides,
 
 					className: cn(
-						'group/row align-baseline data-void:text-foreground/50',
+						'group/row items-baseline data-void:text-foreground/50',
 						overrides?.className,
 					),
 
@@ -86,10 +86,7 @@ export function InvoiceTableContent({
 					},
 				};
 			}}
-			getCellAttr={(...args) => {
-				const overrides = getCellAttr?.(...args);
-				return { ...overrides, className: cn('align-baseline', overrides?.className) };
-			}}
+			getCellAttr={getCellAttr}
 			{...props}
 		/>
 	);

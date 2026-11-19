@@ -1,5 +1,6 @@
 import {
 	type Cell,
+	type Column,
 	FlexRender,
 	type PaginationState,
 	type ReactTable,
@@ -9,6 +10,7 @@ import {
 import { isEqual } from 'es-toolkit';
 import {
 	type ComponentProps,
+	type CSSProperties,
 	type DetailedHTMLProps,
 	type HTMLAttributes,
 	memo,
@@ -122,7 +124,7 @@ export function DataTableContent<TData extends RowData = RowData, TSelected = ne
 	}
 
 	return (
-		<Table className={cn('overflow-hidden', className)} {...props}>
+		<Table className={cn('block overflow-hidden', className)} {...props}>
 			<DataTableHeader<TData> />
 			<DataTableBody getRowAttr={getRowAttr} getCellAttr={getCellAttr} loading={loading} />
 		</Table>
@@ -141,9 +143,9 @@ function DataTableHeader<TData extends RowData>() {
 			})}
 		>
 			{() => (
-				<TableHeader>
+				<TableHeader className='block'>
 					{table.getHeaderGroups().map(headerGroup => (
-						<TableRow key={headerGroup.id}>
+						<TableRow key={headerGroup.id} className='flex'>
 							{headerGroup.headers.map(header => (
 								<TableHead
 									scope='col'
@@ -156,13 +158,9 @@ function DataTableHeader<TData extends RowData>() {
 													: 'none'
 											: undefined
 									}
-									style={{
-										width: `${header.getSize()}px`,
-										minWidth: `${header.column.columnDef.minSize}px`,
-										maxWidth: `${header.column.columnDef.maxSize}px`,
-									}}
+									style={columnStyle(header.column)}
 									key={header.id}
-									className={header.column.columnDef.meta?.className}
+									className={cn('content-center', header.column.columnDef.meta?.className)}
 								>
 									{header.isPlaceholder ? null : <table.FlexRender header={header} />}
 								</TableHead>
@@ -186,6 +184,7 @@ function DataTableBody<TData extends RowData>({
 		<table.Subscribe
 			selector={state => ({
 				columnFilters: state.columnFilters,
+				columnSizing: state.columnSizing,
 				columnVisibility: state.columnVisibility,
 				globalFilter: state.globalFilter,
 				pagination: state.pagination,
@@ -262,6 +261,7 @@ function DataTableRows<TData extends RowData>({
 			content: <FlexRender cell={cell} />,
 			attrs: getCellAttr?.(cell, cellIndex),
 			className: cell.column.columnDef.meta?.className,
+			style: columnStyle(cell.column),
 		})),
 	}));
 
@@ -269,17 +269,17 @@ function DataTableRows<TData extends RowData>({
 		<TableBody
 			aria-busy={busy}
 			className={cn(
-				'transition-opacity duration-200 ease-in-out-circ',
+				'block transition-opacity duration-200 ease-in-out-circ',
 				busy && 'cursor-wait opacity-50 delay-150 duration-500',
 			)}
 		>
 			{resolved.length ? (
 				resolved.map(({ row, ...props }) => <DataTableRow key={row.id} {...props} />)
 			) : (
-				<TableRow>
+				<TableRow className='flex'>
 					<TableCell
 						colSpan={table.getVisibleLeafColumns().length}
-						className='py-12 text-center text-base text-muted-foreground'
+						className='flex-1 py-12 text-center text-base text-muted-foreground'
 					>
 						<div className='flex flex-col items-center gap-3'>
 							<span>No results</span>
@@ -311,7 +311,19 @@ type ResolvedCell = {
 	content: ReactNode;
 	attrs?: CellAttr;
 	className?: string;
+	style: CSSProperties;
 };
+
+/** Width of a column cell, from its column definition alone.
+ * @remarks Never from content, so separate tables over the same columns line up. A cell hidden with
+ * CSS leaves its row, and the remaining cells share its space in proportion to their sizes. */
+function columnStyle<TData extends RowData>(
+	column: Column<DataTableFeatures, TData, unknown>,
+): CSSProperties {
+	const size = column.getSize();
+	const { minSize = 0, maxSize } = column.columnDef;
+	return { flex: `${size} ${size} ${size}px`, minWidth: minSize, maxWidth: maxSize };
+}
 
 /** A body row, which re-renders only when its cells or attributes change.
  * @remarks Avoids the table context, whose updates would bypass the memo and re-render every row. */
@@ -319,9 +331,18 @@ const DataTableRow = memo(
 	function DataTableRow({ attrs, cells }: { attrs?: RowAttr; cells: ResolvedCell[] }) {
 		return (
 			// <TableRow data-state={row.getIsSelected() && 'selected'}>
-			<TableRow {...attrs}>
-				{cells.map(({ cell, content, attrs, className }) => (
-					<TableCell key={cell.id} {...attrs} className={cn(attrs?.className, className)}>
+			<TableRow
+				{...attrs}
+				// Borders sit on the row, as flex cells may differ in height
+				className={cn('flex items-center border-b border-dotted', attrs?.className)}
+			>
+				{cells.map(({ cell, content, attrs, className, style }) => (
+					<TableCell
+						key={cell.id}
+						{...attrs}
+						className={cn('border-b-0', attrs?.className, className)}
+						style={{ ...style, ...attrs?.style }}
+					>
 						{content}
 					</TableCell>
 				))}
@@ -334,6 +355,8 @@ const DataTableRow = memo(
 		previous.cells.length === next.cells.length &&
 		previous.cells.every(
 			(resolved, i) =>
-				resolved.cell === next.cells[i].cell && isEqual(resolved.attrs, next.cells[i].attrs),
+				resolved.cell === next.cells[i].cell &&
+				isEqual(resolved.attrs, next.cells[i].attrs) &&
+				isEqual(resolved.style, next.cells[i].style),
 		),
 );
