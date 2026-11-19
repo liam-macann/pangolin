@@ -1,14 +1,17 @@
 import {
 	type Cell,
+	FlexRender,
 	type PaginationState,
 	type ReactTable,
 	type RowData,
 	type TableState,
 } from '@tanstack/react-table';
+import { isEqual } from 'es-toolkit';
 import {
 	type ComponentProps,
 	type DetailedHTMLProps,
 	type HTMLAttributes,
+	memo,
 	type ReactNode,
 	useDeferredValue,
 	useState,
@@ -250,6 +253,18 @@ function DataTableRows<TData extends RowData>({
 	const { rows } = page;
 	const busy = loading || page.busy;
 
+	// Attributes resolve here, so a row compares them by value rather than by callback identity
+	const resolved = rows.map((row, rowIndex) => ({
+		row,
+		attrs: getRowAttr?.(row.original, rowIndex),
+		cells: row.getVisibleCells().map((cell, cellIndex) => ({
+			cell,
+			content: <FlexRender cell={cell} />,
+			attrs: getCellAttr?.(cell, cellIndex),
+			className: cell.column.columnDef.meta?.className,
+		})),
+	}));
+
 	return (
 		<TableBody
 			aria-busy={busy}
@@ -258,28 +273,8 @@ function DataTableRows<TData extends RowData>({
 				busy && 'cursor-wait opacity-50 delay-150 duration-500',
 			)}
 		>
-			{rows.length ? (
-				rows.map((row, rowIndex) => (
-					<TableRow
-						key={row.id}
-						// data-state={row.getIsSelected() && 'selected'}
-						{...getRowAttr?.(row.original, rowIndex)}
-					>
-						{row.getVisibleCells().map((cell, cellIndex) => {
-							const cellProps = getCellAttr?.(cell, cellIndex);
-
-							return (
-								<TableCell
-									key={cell.id}
-									{...cellProps}
-									className={cn(cellProps?.className, cell.column.columnDef.meta?.className)}
-								>
-									<table.FlexRender cell={cell} />
-								</TableCell>
-							);
-						})}
-					</TableRow>
-				))
+			{resolved.length ? (
+				resolved.map(({ row, ...props }) => <DataTableRow key={row.id} {...props} />)
 			) : (
 				<TableRow>
 					<TableCell
@@ -306,3 +301,39 @@ function DataTableRows<TData extends RowData>({
 		</TableBody>
 	);
 }
+
+type RowAttr = ReturnType<NonNullable<DataTableBodyProps<RowData>['getRowAttr']>>;
+type CellAttr = ReturnType<NonNullable<DataTableBodyProps<RowData>['getCellAttr']>>;
+
+type ResolvedCell = {
+	/** Identity of the cell, which alone determines its content. */
+	cell: Pick<Cell<DataTableFeatures, RowData>, 'id'>;
+	content: ReactNode;
+	attrs?: CellAttr;
+	className?: string;
+};
+
+/** A body row, which re-renders only when its cells or attributes change.
+ * @remarks Avoids the table context, whose updates would bypass the memo and re-render every row. */
+const DataTableRow = memo(
+	function DataTableRow({ attrs, cells }: { attrs?: RowAttr; cells: ResolvedCell[] }) {
+		return (
+			// <TableRow data-state={row.getIsSelected() && 'selected'}>
+			<TableRow {...attrs}>
+				{cells.map(({ cell, content, attrs, className }) => (
+					<TableCell key={cell.id} {...attrs} className={cn(attrs?.className, className)}>
+						{content}
+					</TableCell>
+				))}
+			</TableRow>
+		);
+	},
+	// Content is a fresh element each render, so cells compare by identity instead
+	(previous, next) =>
+		isEqual(previous.attrs, next.attrs) &&
+		previous.cells.length === next.cells.length &&
+		previous.cells.every(
+			(resolved, i) =>
+				resolved.cell === next.cells[i].cell && isEqual(resolved.attrs, next.cells[i].attrs),
+		),
+);
