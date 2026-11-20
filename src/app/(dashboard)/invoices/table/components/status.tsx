@@ -25,14 +25,14 @@ import { toast } from '@/ui/toast';
 
 import { type Invoice } from './../columns';
 
-export const statusVariants = cva('capitalize', {
+export const statusVariants = cva('capitalize focus-visible:ring-2', {
 	variants: {
 		variant: {
 			unpaid:
-				'border-red-6! bg-red-3! text-red-12 ring-red-6/50! focus-visible:border-red-7! dark:border-red-6/50! dark:bg-red-10/20! dark:focus-visible:border-red-7/70!',
-			paid: 'border-blue-6! bg-blue-3! text-blue-12 ring-blue-6/50! focus-visible:border-blue-7! dark:border-blue-6/50! dark:bg-blue-10/20! dark:focus-visible:border-blue-7/70!',
+				'border-red-6! bg-red-3! text-red-12 ring-red-6/50! focus-visible:border-red-7! dark:bg-red-9/20!',
+			paid: 'border-blue-6! bg-blue-3! text-blue-12 ring-blue-6/50! focus-visible:border-blue-7! dark:bg-blue-9/20!',
 			refunded:
-				'border-orange-6! bg-orange-3! text-orange-12 ring-orange-6/50! focus-visible:border-orange-7! dark:border-orange-6/70! dark:bg-orange-10/20! dark:focus-visible:border-orange-7/70!',
+				'border-orange-6! bg-orange-3! text-orange-12 ring-orange-6/50! focus-visible:border-orange-7! dark:bg-orange-10/15!',
 		},
 	},
 });
