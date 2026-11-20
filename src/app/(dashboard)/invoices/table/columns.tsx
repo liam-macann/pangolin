@@ -118,10 +118,12 @@ export const columns = columnHelper.columns([
 	columnHelper.display({
 		id: 'actions',
 		cell: ({ row }) => (
-			<div className='-m-2 ml-0 flex translate-y-0.5 justify-end'>
+			<div className='-m-2 ml-0 flex justify-end'>
 				<OverflowMenu row={row} />
 			</div>
 		),
+		// An icon button has no text baseline, so it centres rather than joining the row baseline
+		meta: { className: 'self-center' },
 		size: 64,
 	}),
 ]);
