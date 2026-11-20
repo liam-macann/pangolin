@@ -76,8 +76,8 @@ export function InvoiceTableContent({
                     45deg,
                     transparent,
                     transparent 2px,
-                    color-mix(var(--color-gray-3) 50%, transparent) 2px,
-                    color-mix(var(--color-gray-3) 50%, transparent) 4px
+                    color-mix(var(--color-border) 25%, transparent) 2px,
+                    color-mix(var(--color-border) 25%, transparent) 4px
                 )`
 							: '',
 						backgroundSize: isVoid ? 'calc(4px * sqrt(2))' : '',

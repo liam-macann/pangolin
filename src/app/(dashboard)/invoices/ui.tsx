@@ -290,8 +290,8 @@ function EmptyState() {
               45deg,
               transparent,
               transparent 2px,
-              color-mix(var(--color-gray-3) 50%, transparent) 2px,
-              color-mix(var(--color-gray-3) 50%, transparent) 4px
+              color-mix(var(--color-border) 20%, transparent) 2px,
+              color-mix(var(--color-border) 20%, transparent) 4px
             )`,
 					backgroundSize: 'calc(4px * sqrt(2))',
 				}}
