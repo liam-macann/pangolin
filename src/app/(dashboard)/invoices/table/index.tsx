@@ -66,7 +66,7 @@ export function InvoiceTableContent({
 					...overrides,
 
 					className: cn(
-						'group/row items-baseline data-void:text-foreground/50',
+						'group/row items-baseline data-void:text-foreground/50 **:[td]:py-1.5',
 						overrides?.className,
 					),
 
