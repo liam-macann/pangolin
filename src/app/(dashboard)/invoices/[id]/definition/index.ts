@@ -29,6 +29,11 @@ export type InvoicePrintData = OmitDeep<
 	items: Omit<ElementType<DetailedInvoice['items']>, 'grossAmount'>[];
 };
 
+/** The document title, e.g. "Invoice 2026-12", or "Tax Invoice 2026-12" when tax registered. */
+export function invoiceTitle(invoice: Pick<InvoicePrintData, 'config' | 'reference'>) {
+	return `${invoice.config.taxRegistration ? 'Tax ' : ''}Invoice ${invoice.reference}`;
+}
+
 export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefinitions {
 	const colors = schemes[invoice.config.colorScheme];
 
@@ -42,7 +47,7 @@ export function buildDocDefinition(invoice: InvoicePrintData): TDocumentDefiniti
 		footerHeight(footerLeftContent.length), // B
 	];
 
-	const title = `${invoice.config.taxRegistration ? 'Tax ' : ''}Invoice ${invoice.reference}`;
+	const title = invoiceTitle(invoice);
 	const createdAt = new Date(invoice.createdAt);
 
 	return {

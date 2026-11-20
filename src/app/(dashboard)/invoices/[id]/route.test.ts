@@ -7,6 +7,7 @@ import * as invoiceData from '@/lib/data/invoice';
 
 import { asUser, bypassRLS, createTestSession, sessionStorage } from '@/test/session';
 
+import { invoiceTitle } from './definition';
 import { GET } from './route';
 
 vi.mock(import('@/lib/data/invoice'), async importOriginal => {
@@ -83,5 +84,16 @@ describe('GET /invoices/[id]', () => {
 
 		const bytes = new Uint8Array(await response.arrayBuffer());
 		expect(String.fromCharCode(...bytes.subarray(0, 5))).toBe('%PDF-');
+	});
+
+	asUser('Names the PDF file after the invoice title', async ({ seed }) => {
+		const [{ id }] = await seed.invoices({ count: 1 });
+		const filename = `${invoiceTitle(await invoiceData.fetchInvoice(id))}.pdf`;
+
+		const response = await GET(request(id), ctx(id));
+
+		expect(response.headers.get('Content-Disposition')).toBe(
+			`inline; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+		);
 	});
 });
