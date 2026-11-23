@@ -81,7 +81,7 @@ function GlobalSearch() {
 				open={open}
 				onOpenChange={onOpenChange}
 				render={<nav />}
-				className='top-1/4 max-h-[calc(75%-(--spacing(12)))]'
+				className='max-h-[calc(75%-(--spacing(12)))]'
 			>
 				<Command>
 					<CommandInput
