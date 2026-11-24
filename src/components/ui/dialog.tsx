@@ -33,7 +33,7 @@ function DialogBackdrop({
 		<DialogPrimitive.Backdrop
 			data-slot='dialog-overlay'
 			className={cn(
-				'absolute inset-0 z-50 bg-black/40 backdrop-contrast-80 duration-150 ease-out-quad data-ending-style:pointer-events-none data-ending-style:opacity-0 data-starting-style:opacity-0 dark:bg-black/80',
+				'absolute inset-0 z-50 bg-(--color-gray-a-6) backdrop-contrast-75 duration-150 ease-out-quad data-ending-style:pointer-events-none data-ending-style:opacity-0 data-starting-style:opacity-0 dark:bg-black/75',
 				className,
 			)}
 			{...props}
