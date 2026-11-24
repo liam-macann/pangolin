@@ -184,7 +184,7 @@ function InvoiceTable({
 
 	return (
 		<table.AppTable>
-			<div className='my-4 mb-6 flex items-center justify-between gap-3 md:mt-8'>
+			<div className='my-4 flex items-center justify-between gap-3 md:mt-8 md:mb-6'>
 				<Dialog />
 				<table.Search
 					className='h-10 grow shadow-none'
@@ -317,7 +317,9 @@ function Trigger(props: ComponentProps<typeof Button>) {
 	return (
 		<Button variant='outline' size='lg' {...props}>
 			<PlusCircleIcon />
-			<span className='hidden sm:block'>Create invoice</span>
+			<span>
+				Create <span className='hidden sm:inline'>invoice</span>
+			</span>
 		</Button>
 	);
 }

@@ -160,7 +160,11 @@ export function NotesButton({
 		<Popover>
 			<PopoverTrigger
 				render={
-					<Button className='text-inherit!' variant='ghost' size='icon-xs'>
+					<Button
+						className='in-data-void:text-inherit text-muted-foreground'
+						variant='ghost'
+						size='icon-xs'
+					>
 						<span className='sr-only'>Notes</span>
 						<ChatTextIcon aria-hidden className='size-3.5' />
 					</Button>

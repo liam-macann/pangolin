@@ -27,8 +27,7 @@ export const columns = columnHelper.columns([
 		enableSorting: false,
 		header: ({ column }) => (
 			<ToggleHeader column={column}>
-				<span className='max-sm:hidden'>Reference</span>
-				<span className='sm:hidden'>Ref.</span>
+				<span className=''>Reference</span>
 			</ToggleHeader>
 		),
 		meta: { className: 'relative' },
@@ -46,7 +45,8 @@ export const columns = columnHelper.columns([
 				)}
 			</div>
 		),
-		size: 150,
+		minSize: 75,
+		size: 110,
 	}),
 	columnHelper.accessor(row => row.client.name || row.client.organization, {
 		id: 'name',
@@ -57,7 +57,7 @@ export const columns = columnHelper.columns([
 		cell: ({ row, getValue }) => {
 			const { data: config } = useConfig();
 			return (
-				<div className='grid gap-1 py-1'>
+				<div className='py-1 leading-tight'>
 					<div className='truncate'>{getValue()}</div>
 
 					<span className='text-muted-foreground text-xs group-data-void/row:text-muted-foreground/50 md:hidden'>
@@ -67,7 +67,7 @@ export const columns = columnHelper.columns([
 						})}
 					</span>
 
-					<div className='mt-2 sm:hidden'>
+					<div className='mt-2 xs:hidden'>
 						<StatusSelect row={row} />
 					</div>
 				</div>
@@ -102,9 +102,9 @@ export const columns = columnHelper.columns([
 				</DropdownHeader>
 			);
 		},
-		meta: { className: 'max-sm:hidden' },
+		meta: { className: 'max-xs:hidden' },
 		cell: ({ row }) => <StatusSelect row={row} />,
-		minSize: 100,
+		minSize: 120,
 		size: 170,
 		maxSize: 200,
 	}),
@@ -143,14 +143,15 @@ export const columns = columnHelper.columns([
 	}),
 	columnHelper.display({
 		id: 'actions',
+		meta: { className: '!p-0' },
 		cell: ({ row }) => (
-			<div className='-m-2 ml-0 flex justify-end'>
+			<div className='mr-1 flex items-center justify-end'>
+				{/* A zero-width space gives the cell a text baseline to join the row baseline */}
+				<span aria-hidden='true'>&#8203;</span>
 				<OverflowMenu row={row} />
 			</div>
 		),
-		// An icon button has no text baseline, so it centres rather than joining the row baseline
-		meta: { className: 'self-center' },
-		size: 64,
+		size: 32,
 	}),
 ]);
 
