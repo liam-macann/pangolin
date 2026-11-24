@@ -113,7 +113,7 @@ function DialogPopup({
 				<StackedPopup {...renderProps} frontmost={open && !nestedDialogOpen} />
 			)}
 			className={cn(
-				'fixed inset-0 z-50 flex max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] flex-col place-self-center rounded-lg text-foreground **:ring-offset-background sm:max-w-lg',
+				'fixed inset-0 z-50 tall:mt-[-8vh] flex max-h-[calc(100%-2rem)] w-full max-w-[calc(100%-2rem)] flex-col place-self-center rounded-lg text-foreground **:ring-offset-background sm:max-w-lg',
 				'data-ending-style:opacity-0 data-starting-style:opacity-0 motion-safe:data-ending-style:scale-97 motion-safe:data-starting-style:scale-97',
 
 				// Lines the scaled top up with the frontmost top, lifted by the peek, and clips to the frontmost height
