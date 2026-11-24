@@ -21,7 +21,7 @@
 	--destructive: var(--color-red-11); /* Used for destructive text */
 	--destructive-background: var(--color-red-9); /* Used for destructive background (eg. buttons) */
 	--destructive-foreground: white; /* Used for text on destructive background */
-	--border: var(--color-gray-6);
+	--border: var(--color-gray-a-6);
 	--input: var(--border); /* Input borders (eg. textarea, checkbox; not buttons like combobox) */
 	--ring: var(--color-gray-7); /* Focus ring */
 	--chart-1: oklch(0.646 0.222 41.116);
