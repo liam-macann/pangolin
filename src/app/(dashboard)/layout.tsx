@@ -34,7 +34,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 	return (
 		<div className='min-h-screen text-foreground'>
 			<header className='gap-y-4 border-b py-4'>
-				<div className='mx-auto flex max-w-5xl flex-col px-6'>
+				<div className='mx-auto flex max-w-5xl flex-col px-6 max-sm:px-3'>
 					<div className='flex items-center gap-3 self-end'>
 						<GlobalSearch />
 						<Suspense fallback={<AccountMenuTrigger aria-disabled image={null} />}>
@@ -44,7 +44,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 					<TopNav links={links} />
 				</div>
 			</header>
-			<main className='mx-auto max-w-5xl px-6 py-12 pb-24'>{children}</main>
+			<main className='mx-auto max-w-5xl px-6 py-12 pb-24 max-sm:px-3'>{children}</main>
 		</div>
 	);
 }
