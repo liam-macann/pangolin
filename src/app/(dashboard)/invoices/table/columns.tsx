@@ -1,16 +1,18 @@
 'use client';
 
+import { FunnelSimpleIcon } from '@phosphor-icons/react';
 import { type Row } from '@tanstack/react-table';
 import { type ComponentProps } from 'react';
 
-import { type Invoice } from '@/api/dto/invoice';
+import { Invoice } from '@/api/dto/invoice';
 import { useConfig } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
 import { formatDate } from '@/lib/utils/date';
 
 import { createDataTableColumnHelper, type DataTableFeatures } from '@/components/data-table';
-import { ToggleHeader } from '@/components/data-table/column-header';
+import { DropdownHeader, ToggleHeader } from '@/components/data-table/column-header';
+import { DropdownMenuCheckboxItem } from '@/ui/dropdown-menu';
 
 import { NotesButton, OverflowMenu } from './components/actions';
 import { StatusSelect } from './components/status';
@@ -75,7 +77,31 @@ export const columns = columnHelper.columns([
 	columnHelper.accessor(row => row.status, {
 		id: 'status',
 		enableSorting: false,
-		header: ({ column }) => <ToggleHeader column={column} title='Status' />,
+		filterFn: 'arrHas',
+		header: ({ column }) => {
+			const filterValue = column.getFilterValue();
+			const selected = Array.isArray(filterValue) ? filterValue : [];
+
+			return (
+				<DropdownHeader column={column} title='Status' icon={<FunnelSimpleIcon />}>
+					{Invoice.shape.status.options.map(status => (
+						<DropdownMenuCheckboxItem
+							key={status}
+							className='capitalize'
+							checked={selected.includes(status)}
+							onCheckedChange={checked =>
+								// An emptied selection auto-removes the filter
+								column.setFilterValue(
+									checked ? [...selected, status] : selected.filter(value => value !== status),
+								)
+							}
+						>
+							{status}
+						</DropdownMenuCheckboxItem>
+					))}
+				</DropdownHeader>
+			);
+		},
 		meta: { className: 'max-sm:hidden' },
 		cell: ({ row }) => <StatusSelect row={row} />,
 		minSize: 100,

@@ -137,6 +137,7 @@ function DataTableHeader<TData extends RowData>() {
 	return (
 		<table.Subscribe
 			selector={state => ({
+				columnFilters: state.columnFilters,
 				columnSizing: state.columnSizing,
 				columnVisibility: state.columnVisibility,
 				sorting: state.sorting,

@@ -1,11 +1,6 @@
 'use client';
 
-import {
-	CaretDownIcon,
-	CaretUpDownIcon,
-	CaretUpIcon,
-	EyeSlashIcon,
-} from '@phosphor-icons/react/ssr';
+import { CaretDownIcon, CaretUpDownIcon, CaretUpIcon } from '@phosphor-icons/react/ssr';
 import { type Column, type RowData } from '@tanstack/react-table';
 import { type ReactNode } from 'react';
 
@@ -13,13 +8,7 @@ import { cn } from '@/lib/utils';
 
 import { type DataTableFeatures } from '@/components/data-table';
 import { Button } from '@/ui/button';
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from '@/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/ui/dropdown-menu';
 
 interface DataTableColumnHeaderProps<TData extends RowData, TValue>
 	extends React.HTMLAttributes<HTMLDivElement> {
@@ -31,43 +20,28 @@ export function DropdownHeader<TData extends RowData, TValue>({
 	column,
 	title,
 	className,
-}: DataTableColumnHeaderProps<TData, TValue>) {
-	if (!column.getCanSort()) {
-		return <div className={cn(className)}>{title}</div>;
-	}
-
+	icon,
+	children,
+}: DataTableColumnHeaderProps<TData, TValue> & { icon?: ReactNode }) {
 	return (
 		<div className={cn('flex items-center gap-2', className)}>
 			<DropdownMenu>
 				<DropdownMenuTrigger
 					render={
-						<Button variant='ghost' size='sm' className='-mx-2.5 h-8 data-[state=open]:bg-accent'>
+						<Button variant='ghost' size='sm' className='-mx-2.5'>
 							<span>{title}</span>
-							{column.getIsSorted() === 'desc' ? (
-								<CaretDownIcon weight='bold' />
-							) : column.getIsSorted() === 'asc' ? (
-								<CaretUpIcon weight='bold' />
-							) : (
-								<CaretUpDownIcon />
-							)}
+							{icon ??
+								(column.getIsSorted() === 'desc' ? (
+									<CaretDownIcon />
+								) : column.getIsSorted() === 'asc' ? (
+									<CaretUpIcon />
+								) : (
+									<CaretUpDownIcon />
+								))}
 						</Button>
 					}
 				/>
-				<DropdownMenuContent align='start'>
-					<DropdownMenuItem onClick={() => column.toggleSorting(false)}>
-						<CaretUpIcon />
-						Asc
-					</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => column.toggleSorting(true)}>
-						<CaretDownIcon />
-						Desc
-					</DropdownMenuItem>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
-						<EyeSlashIcon />
-						Hide
-					</DropdownMenuItem>
-				</DropdownMenuContent>
+				<DropdownMenuContent align='start'>{children}</DropdownMenuContent>
 			</DropdownMenu>
 		</div>
 	);

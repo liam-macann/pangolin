@@ -4,6 +4,7 @@ import {
 	columnVisibilityFeature,
 	createFilteredRowModel,
 	createPaginatedRowModel,
+	filterFn_arrHas,
 	filterFn_equals,
 	globalFilteringFeature,
 	metaHelper,
@@ -24,7 +25,7 @@ export const features = tableFeatures({
 	filteredRowModel: createFilteredRowModel(),
 	paginatedRowModel: createPaginatedRowModel(),
 
-	filterFns: { equals: filterFn_equals },
+	filterFns: { arrHas: filterFn_arrHas, equals: filterFn_equals },
 
 	columnMeta: metaHelper<{ className?: string }>(),
 });
