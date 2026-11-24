@@ -44,7 +44,7 @@ function CommandDialog({
 			</DialogHeader>
 			<DialogContent
 				className={cn(
-					'rounded-xl! *:data-[slot=dialog-body]:overflow-hidden *:data-[slot=dialog-body]:p-0 sm:max-w-xl',
+					'*:data-[slot=dialog-body]:overflow-hidden *:data-[slot=dialog-body]:p-0 sm:max-w-xl',
 					'data-open:duration-50',
 					className,
 				)}
@@ -144,7 +144,7 @@ function CommandItem({
 		<CommandPrimitive.Item
 			data-slot='command-item'
 			className={cn(
-				"group/command-item relative flex min-h-8 cursor-default select-none items-center gap-2 rounded-md px-2 py-1.5 text-sm [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+				"group/command-item relative flex min-h-8 cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
 				'data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50',
 				'data-selected:bg-highlighted data-selected:text-highlighted-foreground data-selected:**:text-highlighted-foreground',
 				className,
