@@ -223,7 +223,7 @@ const Trigger = ({ ...props }: ComponentProps<typeof Button>) => {
 	return (
 		<Button
 			variant='outline'
-			className='inset-shadow-2xs min-w-32 scale-100! rounded-full bg-none font-normal text-muted-foreground'
+			className='inset-shadow-2xs min-w-32 scale-100! rounded-full bg-none! font-normal text-muted-foreground dark:bg-secondary'
 			size='sm'
 			{...props}
 		>

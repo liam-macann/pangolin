@@ -37,6 +37,7 @@ function NavLink({ name, href, active }: { name: string; href: string; active: b
 	return (
 		<Button
 			variant='ghost'
+			depress={false}
 			size='sm'
 			className={cn(
 				'relative focus:z-10',

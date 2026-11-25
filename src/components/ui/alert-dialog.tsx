@@ -114,7 +114,7 @@ function AlertDialogAction({
 
 function AlertDialogCancel({
 	className,
-	variant = 'secondary',
+	variant = 'ghost',
 	...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Close> & {
 	variant?: VariantProps<typeof buttonVariants>['variant'];

@@ -115,6 +115,9 @@ html {
 	hyphenate-limit-chars: 7 4 3;
 	hyphenate-limit-lines: 2;
 	text-autospace: auto;
+
+	/* Pressable elements provide their own :active feedback */
+	-webkit-tap-highlight-color: transparent;
 }
 
 body {

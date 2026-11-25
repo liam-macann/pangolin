@@ -179,6 +179,7 @@ function CalendarDayButton({
 	return (
 		<Button
 			ref={ref}
+			depress={false}
 			variant='ghost'
 			size='icon-sm'
 			data-day={day.isoDate}

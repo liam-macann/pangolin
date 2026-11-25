@@ -25,7 +25,7 @@ import { toast } from '@/ui/toast';
 
 import { type Invoice } from './../columns';
 
-export const statusVariants = cva('capitalize focus-visible:ring-2', {
+export const statusVariants = cva('bg-none! capitalize focus-visible:ring-2', {
 	variants: {
 		variant: {
 			unpaid:

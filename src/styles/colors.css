@@ -7,7 +7,7 @@
 	--card-foreground: var(--foreground);
 	--popover: var(--card); /* Dropdown menus, etc. */
 	--popover-foreground: var(--foreground);
-	--primary: oklch(0.51 0.2 169);
+	--primary: oklch(0.5 0.25 169);
 	--primary-foreground: white; /* eg. Ghost button hover text */
 	--secondary: var(--color-gray-3); /* Secondary button treatment */
 	--secondary-2: var(--color-gray-4); /* Secondary button treatment: hover state */
@@ -16,10 +16,10 @@
 	--muted-foreground: var(--color-gray-11);
 	--accent: var(--color-gray-a-3);
 	--accent-foreground: var(--secondary-foreground);
-	--highlighted: var(--color-gray-11); /* Used for highlighted menu items */
-	--highlighted-foreground: var(--color-gray-1);
+	--highlighted: oklch(from var(--primary) l calc(c * 0.7) h); /* Used for highlighted menu items */
+	--highlighted-foreground: white;
 	--destructive: var(--color-red-11); /* Used for destructive text */
-	--destructive-background: var(--color-red-9); /* Used for destructive background (eg. buttons) */
+	--destructive-background: var(--color-red-10); /* Used for destructive background (eg. buttons) */
 	--destructive-foreground: white; /* Used for text on destructive background */
 	--border: var(--color-gray-a-6);
 	--input: var(--border); /* Input borders (eg. textarea, checkbox; not buttons like combobox) */
@@ -45,8 +45,6 @@
 		--card: var(--color-gray-3);
 		--popover: var(--color-gray-4);
 		--accent: var(--color-gray-a-3);
-		--highlighted: var(--color-gray-9);
-		--highlighted-foreground: var(--color-gray-12);
 		--destructive-background: var(--color-red-8);
 
 		--chart-1: oklch(0.488 0.243 264.376);
