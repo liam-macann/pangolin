@@ -9,7 +9,7 @@ export default function RootError({
 	retry: () => void;
 }) {
 	return (
-		<main className='flex min-h-screen flex-col items-center justify-center'>
+		<main className='flex min-h-dvh flex-col items-center justify-center'>
 			<h2 className='mb-4 text-center'>Something went wrong</h2>
 			<Button
 				onClick={

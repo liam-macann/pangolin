@@ -4,7 +4,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools';
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
 import { TableDevtoolsPanel } from '@tanstack/react-table-devtools';
 import { MotionConfig } from 'motion/react';
-import { type Metadata } from 'next';
+import { type Metadata, type Viewport } from 'next';
 import { Provider } from 'react-wrap-balancer';
 
 import { QueryProvider } from '@/lib/hooks/data/helpers/provider';
@@ -21,9 +21,11 @@ export const metadata: Metadata = {
 		template: '%s ∙ Pangolin',
 		default: 'Pangolin',
 	},
-	description: 'A lightweight invoicing application for contract work',
+	description: 'A lightweight invoicing application',
 	// metadataBase: new URL(''),
 };
+
+export const viewport: Viewport = { viewportFit: 'cover' };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 	return (

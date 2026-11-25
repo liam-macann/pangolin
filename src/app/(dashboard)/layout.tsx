@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
+import { cn } from '@/lib/utils';
+
 import GlobalSearch from '@/components/global-search';
 import UserAvatar, { AvatarEmpty } from '@/ui/avatar';
 import { Button } from '@/ui/button';
@@ -32,9 +34,14 @@ const links = new Map([
 
 export default function Layout({ children }: { children: React.ReactNode }) {
 	return (
-		<div className='min-h-screen text-foreground'>
-			<header className='gap-y-4 border-b py-4'>
-				<div className='mx-auto flex max-w-5xl flex-col px-6 max-sm:px-3'>
+		<div className='min-h-dvh text-foreground [--paddingX:--spacing(6)] max-xs:[--paddingX:--spacing(3)]'>
+			<header className='gap-y-4 border-b pt-[calc(--spacing(4)+env(safe-area-inset-top))] pb-4'>
+				<div
+					className={cn(
+						'mx-auto flex max-w-5xl flex-col',
+						'pr-[max(var(--paddingX),env(safe-area-inset-right))] pl-[max(var(--paddingX),env(safe-area-inset-left))]',
+					)}
+				>
 					<div className='flex items-center gap-3 self-end'>
 						<GlobalSearch />
 						<Suspense fallback={<AccountMenuTrigger aria-disabled image={null} />}>
@@ -44,7 +51,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 					<TopNav links={links} />
 				</div>
 			</header>
-			<main className='mx-auto max-w-5xl px-6 py-12 pb-24 max-sm:px-3'>{children}</main>
+			<main
+				className={cn(
+					'mx-auto max-w-5xl pt-12',
+					'pr-[max(var(--paddingX),env(safe-area-inset-right))] pb-[calc(--spacing(24)+env(safe-area-inset-bottom))] pl-[max(var(--paddingX),env(safe-area-inset-left))]',
+				)}
+			>
+				{children}
+			</main>
 		</div>
 	);
 }

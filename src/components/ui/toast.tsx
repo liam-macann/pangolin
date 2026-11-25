@@ -120,7 +120,7 @@ function ToastViewport({ className, ...props }: ToastPrimitive.Viewport.Props) {
 		<ToastPrimitive.Viewport
 			data-slot='toast-viewport'
 			className={cn(
-				'pointer-events-none fixed inset-x-4 bottom-6 z-50 mx-auto xs:max-w-sm outline-none',
+				'pointer-events-none fixed right-[max(--spacing(4),env(safe-area-inset-right))] bottom-[calc(--spacing(6)+env(safe-area-inset-bottom))] left-[max(--spacing(4),env(safe-area-inset-left))] z-50 mx-auto xs:max-w-sm outline-none',
 				className,
 			)}
 			{...props}
