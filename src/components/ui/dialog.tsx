@@ -134,7 +134,7 @@ function DialogPopup({
 				aria-hidden
 				data-slot='dialog-surface'
 				className={cn(
-					'absolute inset-0 bottom-(--dialog-clip-bottom) rounded-[inherit] bg-background shadow-lg ring-1 ring-border',
+					'absolute inset-0 bottom-(--dialog-clip-bottom) rounded-[inherit] bg-background shadow-black/10 shadow-xl ring-1 ring-border',
 					clipBottom,
 				)}
 			/>

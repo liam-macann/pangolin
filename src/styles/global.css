@@ -63,48 +63,37 @@
 			mask-size: 250% 100%;
 		}
 	}
-}
 
-@theme inline {
-	/*--shadow-2xs: var(--shadow-2xs);*/
-	--shadow-xs: var(--ds-shadow-small);
-	--shadow-sm: var(--ds-shadow-medium);
-	--shadow-md: var(--ds-shadow-large);
-	--shadow-lg: var(--ds-shadow-menu);
-	--shadow-xl: var(--ds-shadow-modal);
-	--shadow-2xl: var(--ds-shadow-fullscreen);
+	--inset-shadow-2xs: light-dark(rgb(0 0 0 / 0.05), rgb(0 0 0 / 0.25)) var(--ds-inset-shadow-2xs);
+
+	--shadow-xs: light-dark(rgb(0 0 0 / 4%), rgb(0 0 0 / 16%)) 0px 2px 2px;
+
+	--shadow-sm:
+		light-dark(rgb(0 0 0 / 4%), rgb(0 0 0 / 64%)) 0px 2px 2px,
+		light-dark(rgb(0 0 0 / 4%), rgb(0 0 0 / 2%)) 0px 8px 8px -8px;
+
+	--shadow-md:
+		light-dark(rgb(0 0 0 / 4%), rgb(0 0 0 / 8%)) 0px 2px 2px,
+		light-dark(rgb(0 0 0 / 4%), rgb(0 0 0 / 8%)) 0px 8px 16px -4px;
+
+	--shadow-lg:
+		light-dark(rgb(0 0 0 / 2%), rgb(0 0 0 / 4%)) 0px 1px 1px,
+		light-dark(rgb(0 0 0 / 4%), rgb(0 0 0 / 8%)) 0px 4px 8px -4px,
+		rgb(0 0 0 / 6%) 0px 16px 24px -8px;
+
+	--shadow-xl:
+		light-dark(rgb(0 0 0 / 2%), rgb(0 0 0 / 4%)) 0px 1px 1px,
+		light-dark(rgb(0 0 0 / 4%), rgb(0 0 0 / 8%)) 0px 8px 16px -4px,
+		rgb(0 0 0 / 6%) 0px 24px 32px -8px;
+
+	--shadow-2xl: initial;
 }
 
 :root {
-	--ds-shadow-small: 0px 2px 2px rgba(0, 0, 0, 0.04);
-	--ds-shadow-medium: 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 8px -8px rgba(0, 0, 0, 0.04);
-	--ds-shadow-large: 0px 2px 2px rgba(0, 0, 0, 0.04), 0px 8px 16px -4px rgba(0, 0, 0, 0.04);
-	--ds-shadow-tooltip: 0px 1px 1px rgba(0, 0, 0, 0.02), 0px 4px 8px rgba(0, 0, 0, 0.04);
-	--ds-shadow-menu:
-		0px 1px 1px rgba(0, 0, 0, 0.02), 0px 4px 8px -4px rgba(0, 0, 0, 0.04),
-		0px 16px 24px -8px rgba(0, 0, 0, 0.06);
-	--ds-shadow-modal:
-		0px 1px 1px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04),
-		0px 24px 32px -8px rgba(0, 0, 0, 0.06);
-	--ds-shadow-fullscreen:
-		0px 1px 1px rgba(0, 0, 0, 0.02), 0px 8px 16px -4px rgba(0, 0, 0, 0.04),
-		0px 24px 32px -8px rgba(0, 0, 0, 0.06);
-
+	--ds-inset-shadow-2xs: inset 0 1px;
 	@variant dark {
-		/* biome-ignore lint/suspicious/noDuplicateCustomProperties: Dark mode variant */
-		--ds-shadow-small: 0px 1px 2px rgba(0, 0, 0, 0.16);
-		--ds-shadow-medium: 0px 2px 2px rgba(0, 0, 0, 0.64), 0px 8px 8px -8px rgba(0, 0, 0, 0.02);
-		--ds-shadow-large: 0px 2px 2px rgba(0, 0, 0, 0.08), 0px 8px 16px -4px rgba(0, 0, 0, 0.08);
-		--ds-shadow-tooltip: 0px 1px 1px rgba(0, 0, 0, 0.04), 0px 4px 8px rgba(0, 0, 0, 0.08);
-		--ds-shadow-menu:
-			0px 1px 1px rgba(0, 0, 0, 0.04), 0px 4px 8px -4px rgba(0, 0, 0, 0.08),
-			0px 16px 24px -8px rgba(0, 0, 0, 0.06);
-		--ds-shadow-modal:
-			0px 1px 1px rgba(0, 0, 0, 0.04), 0px 8px 16px -4px rgba(0, 0, 0, 0.08),
-			0px 24px 32px -8px rgba(0, 0, 0, 0.06);
-		--ds-shadow-fullscreen:
-			0px 1px 1px rgba(0, 0, 0, 0.04), 0px 8px 16px -4px rgba(0, 0, 0, 0.08),
-			0px 24px 32px -8px rgba(0, 0, 0, 0.06);
+		/* biome-ignore lint/suspicious/noDuplicateCustomProperties: Dark mode override */
+		--ds-inset-shadow-2xs: inset 0 1.5px;
 	}
 }
 
