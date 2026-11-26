@@ -1,4 +1,4 @@
-import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
+import { CaretLeftIcon, CaretRightIcon } from '@/icons';
 
 import { Button } from '@/ui/button';
 import { ButtonGroup } from '@/ui/button-group';

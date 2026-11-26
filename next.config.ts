@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
 	poweredByHeader: false,
 	pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
 	experimental: {
-		optimizePackageImports: ['@phosphor-icons/react'],
+		optimizePackageImports: ['@phosphor-icons/react', '@/icons'],
 		authInterrupts: true,
 		taint: true,
 	},

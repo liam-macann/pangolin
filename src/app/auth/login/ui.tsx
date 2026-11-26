@@ -1,10 +1,11 @@
 'use client';
 
-import { ArrowUpRightIcon } from '@phosphor-icons/react';
 import { unstable_rethrow } from 'next/navigation';
 import { type ComponentProps, useState } from 'react';
 
 import { signIn } from '@/lib/auth';
+
+import { ArrowUpRightIcon } from '@/icons';
 
 import { Button } from '@/ui/button';
 import { Spinner } from '@/ui/spinner';

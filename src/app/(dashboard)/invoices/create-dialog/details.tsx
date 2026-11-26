@@ -1,13 +1,14 @@
 'use client';
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
-import { CaretUpDownIcon } from '@phosphor-icons/react/ssr';
 import { type ComponentProps, type Ref, Suspense, useId, useRef, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { useClients } from '@/lib/hooks';
 import { useFetchNearEnd } from '@/lib/hooks/data/helpers';
 import { cn } from '@/lib/utils';
+
+import { CaretUpDownIcon } from '@/icons';
 
 import { InfoTip } from '@/components/info';
 import { Button } from '@/ui/button';

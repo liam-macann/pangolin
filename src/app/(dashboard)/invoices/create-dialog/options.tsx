@@ -1,11 +1,12 @@
 'use client';
 
-import { ChatTextIcon, ClockIcon } from '@phosphor-icons/react';
 import { useId } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Temporal } from 'temporal-polyfill';
 
 import { formatDate } from '@/lib/utils/date';
+
+import { ChatTextIcon, ClockIcon } from '@/icons';
 
 import { Button } from '@/ui/button';
 import { ButtonGroup } from '@/ui/button-group';

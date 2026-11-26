@@ -1,6 +1,5 @@
 'use client';
 
-import { CheckCircleIcon, XCircleIcon } from '@phosphor-icons/react';
 import { type Row } from '@tanstack/react-table';
 import { cva } from 'class-variance-authority';
 import { AnimatePresence, MotionConfig, motion } from 'motion/react';
@@ -9,6 +8,8 @@ import { type ComponentProps } from 'react';
 import { updatePaymentStatus } from '@/lib/actions/invoice';
 import { useAsyncStatus, useInvoiceMutation } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
+
+import { CheckCircleIcon, XCircleIcon } from '@/icons';
 
 import { type DataTableFeatures } from '@/components/data-table';
 import {

@@ -1,6 +1,5 @@
 'use client';
 
-import { WarningIcon } from '@phosphor-icons/react/ssr';
 import { isValidCountryCode } from 'lib-address';
 import { type ComponentProps, Suspense, useDeferredValue } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -11,6 +10,8 @@ import { type Address, type AddressMetadata } from '@/api/dto/address';
 import { useAddressMetadata } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import type schema from '@/lib/validation/address';
+
+import { WarningIcon } from '@/icons';
 
 import { Alert, AlertTitle } from '@/ui/alert';
 import { FieldSet } from '@/ui/field';

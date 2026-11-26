@@ -1,11 +1,12 @@
 'use client';
 
-import { ChatTextIcon, DotsThreeIcon } from '@phosphor-icons/react';
 import { type Row } from '@tanstack/react-table';
 import { type ComponentProps, useId } from 'react';
 
 import { setInvoiceNotes, voidInvoice } from '@/lib/actions/invoice';
 import { useInvoiceMutation } from '@/lib/hooks';
+
+import { ChatTextIcon, DotsThreeIcon } from '@/icons';
 
 import { type DataTableFeatures } from '@/components/data-table';
 import {

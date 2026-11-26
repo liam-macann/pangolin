@@ -1,10 +1,11 @@
 'use client';
 
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover';
-import { InfoIcon } from '@phosphor-icons/react';
 import Balancer from 'react-wrap-balancer';
 
 import { cn } from '@/lib/utils';
+
+import { InfoIcon } from '@/icons';
 
 import { Button } from './ui/button';
 

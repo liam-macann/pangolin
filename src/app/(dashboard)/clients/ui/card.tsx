@@ -1,11 +1,12 @@
 'use client';
 
-import { BuildingOfficeIcon, DotsThreeIcon, StarIcon } from '@phosphor-icons/react/ssr';
 import { type HTMLMotionProps, motion } from 'motion/react';
 import Link from 'next/link';
 
 import { type Client } from '@/api/dto/client';
 import { cn, pluralize } from '@/lib/utils';
+
+import { BuildingOfficeIcon, DotsThreeIcon, StarIcon } from '@/icons';
 
 import { Button } from '@/ui/button';
 import { Toggle } from '@/ui/toggle';

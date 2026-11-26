@@ -1,4 +1,3 @@
-import { SignOutIcon } from '@phosphor-icons/react/ssr';
 import { headers } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -6,6 +5,8 @@ import { Suspense } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import { cn } from '@/lib/utils';
+
+import { SignOutIcon } from '@/icons';
 
 import GlobalSearch from '@/components/global-search';
 import UserAvatar, { AvatarEmpty } from '@/ui/avatar';

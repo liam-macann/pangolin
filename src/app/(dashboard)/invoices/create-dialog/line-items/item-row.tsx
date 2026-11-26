@@ -1,10 +1,11 @@
-import { DotsThreeIcon } from '@phosphor-icons/react';
 import { type ComponentProps, type ReactNode } from 'react';
 import { type Control, Controller, useFormState, useWatch } from 'react-hook-form';
 
 import { cn, rateToPercent } from '@/lib/utils';
 import { getCurrencySymbol } from '@/lib/utils/currencies';
 import { unitEnum } from '@/db/schema';
+
+import { DotsThreeIcon } from '@/icons';
 
 import { SortableHandle, SortableItem } from '@/components/sortable';
 import { Button } from '@/ui/button';

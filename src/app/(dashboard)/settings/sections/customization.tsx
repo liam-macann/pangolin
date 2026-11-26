@@ -1,12 +1,13 @@
 'use client';
 
-import { CheckIcon } from '@phosphor-icons/react';
 import { type ComponentProps, useId } from 'react';
 import { type Control, Controller, type ControllerRenderProps } from 'react-hook-form';
 import type z from 'zod/v4';
 
 import { cn } from '@/lib/utils';
 import { type config as formSchema } from '@/lib/validation/config';
+
+import { CheckIcon } from '@/icons';
 
 import { InfoTip } from '@/components/info';
 import { Button } from '@/ui/button';

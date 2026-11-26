@@ -1,9 +1,10 @@
 'use client';
 
-import { DotsSixIcon } from '@phosphor-icons/react';
 import { use } from 'react';
 
 import { cn } from '@/lib/utils';
+
+import { DotsSixIcon } from '@/icons';
 
 import { Button } from '@/ui/button';
 

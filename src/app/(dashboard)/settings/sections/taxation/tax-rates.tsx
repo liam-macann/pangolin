@@ -1,6 +1,5 @@
 'use client';
 
-import { InfoIcon, TrashIcon } from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'motion/react';
 import {
 	type Control,
@@ -16,6 +15,8 @@ import type z from 'zod/v4';
 
 import { cn } from '@/lib/utils';
 import { type config as formSchema } from '@/lib/validation/config';
+
+import { InfoIcon, TrashIcon } from '@/icons';
 
 import { InfoTip } from '@/components/info';
 import {

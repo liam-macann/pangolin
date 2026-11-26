@@ -1,6 +1,5 @@
 'use client';
 
-import { FunnelSimpleIcon } from '@phosphor-icons/react';
 import { type Row } from '@tanstack/react-table';
 import { type ComponentProps } from 'react';
 
@@ -9,6 +8,8 @@ import { useConfig } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
 import { formatDate } from '@/lib/utils/date';
+
+import { FunnelSimpleIcon } from '@/icons';
 
 import { createDataTableColumnHelper, type DataTableFeatures } from '@/components/data-table';
 import { DropdownHeader, ToggleHeader } from '@/components/data-table/column-header';

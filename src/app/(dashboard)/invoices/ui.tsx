@@ -1,7 +1,6 @@
 'use client';
 
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog';
-import { PlusCircleIcon, ReceiptIcon } from '@phosphor-icons/react';
 import { type PaginationState } from '@tanstack/react-table';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -20,6 +19,8 @@ import { type Invoice } from '@/api/dto/invoice';
 import { useConfig, useInvoices } from '@/lib/hooks';
 import { useFetchWhile } from '@/lib/hooks/data/helpers';
 import { cn } from '@/lib/utils';
+
+import { PlusCircleIcon, ReceiptIcon } from '@/icons';
 
 import { useDataTableContext, useDeferredPage } from '@/components/data-table';
 import { Button } from '@/ui/button';

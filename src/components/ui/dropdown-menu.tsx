@@ -1,12 +1,13 @@
 'use client';
 
 import { Menu as MenuPrimitive } from '@base-ui/react/menu';
-import { CaretRightIcon, CheckIcon } from '@phosphor-icons/react';
 import { cva } from 'class-variance-authority';
 import type * as React from 'react';
 import { useId } from 'react';
 
 import { cn } from '@/lib/utils';
+
+import { CaretRightIcon, CheckIcon } from '@/icons';
 
 import { Checkbox } from './checkbox';
 import { Textarea } from './textarea';

@@ -1,4 +1,3 @@
-import { CaretLeftIcon } from '@phosphor-icons/react/ssr';
 import { type Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -11,6 +10,8 @@ import { PrefetchQuery } from '@/lib/hooks/data/helpers/prefetch';
 import { invoiceQueries } from '@/lib/hooks/data/invoice';
 import { cn, pluralize } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
+
+import { CaretLeftIcon } from '@/icons';
 
 import { InfoTip } from '@/components/info';
 import { StatCard } from '@/components/stat-card';

@@ -234,6 +234,8 @@
 							"@/db",
 							"@/db/**",
 							":BLANK_LINE:",
+							"@/icons",
+							":BLANK_LINE:",
 							["@/components/**", "@/ui/**"],
 							":BLANK_LINE:",
 							":ALIAS:",

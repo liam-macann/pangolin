@@ -1,5 +1,6 @@
-import { MagnifyingGlassIcon } from '@phosphor-icons/react';
 import { type ComponentProps, type KeyboardEvent } from 'react';
+
+import { MagnifyingGlassIcon } from '@/icons';
 
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
 import { Spinner } from '@/ui/spinner';

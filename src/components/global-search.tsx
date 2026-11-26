@@ -1,11 +1,5 @@
 'use client';
 
-import {
-	ArrowElbowDownLeftIcon,
-	BuildingOfficeIcon,
-	MagnifyingGlassIcon,
-	UserCircleIcon,
-} from '@phosphor-icons/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCommandState } from 'cmdk';
 import { useRouter } from 'next/navigation';
@@ -20,6 +14,13 @@ import { prefetch, useFetchNearEnd } from '@/lib/hooks/data/helpers';
 import { invoiceQueries } from '@/lib/hooks/data/invoice';
 import { pluralize } from '@/lib/utils';
 import { formatCurrency } from '@/lib/utils/currencies';
+
+import {
+	ArrowElbowDownLeftIcon,
+	BuildingOfficeIcon,
+	MagnifyingGlassIcon,
+	UserCircleIcon,
+} from '@/icons';
 
 import { Button } from '@/ui/button';
 import {

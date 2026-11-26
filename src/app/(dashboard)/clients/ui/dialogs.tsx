@@ -1,7 +1,6 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { WarningIcon } from '@phosphor-icons/react';
 import { type ComponentProps, type ReactElement, type ReactNode, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import {
@@ -20,6 +19,8 @@ import { useClientMutation } from '@/lib/hooks';
 import { dropNull } from '@/lib/utils';
 import { transform as addressTransformSchema } from '@/lib/validation/address';
 import { clientDataCreate as createSchema, clientData as schema } from '@/lib/validation/client';
+
+import { WarningIcon } from '@/icons';
 
 import { type FormValues as AddressFormValues, AddressInput } from '@/components/address-input';
 import { Alert, AlertTitle } from '@/ui/alert';

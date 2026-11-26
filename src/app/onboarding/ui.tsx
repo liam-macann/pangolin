@@ -1,10 +1,11 @@
 'use client';
 
-import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { type ComponentProps, useEffect, useRef } from 'react';
 
 import { cn } from '@/lib/utils';
+
+import { CaretLeftIcon, CaretRightIcon } from '@/icons';
 
 import { Button } from '@/ui/button';
 

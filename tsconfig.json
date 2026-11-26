@@ -24,6 +24,7 @@
 			"@/db": ["./src/db"],
 			"@/db/*": ["./src/db/*"],
 			"@/test/*": ["./src/test/*"],
+			"@/icons": ["./src/components/icons"],
 			"@/*": ["./*"]
 		}
 	},

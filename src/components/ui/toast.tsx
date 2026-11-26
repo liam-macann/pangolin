@@ -7,18 +7,13 @@ import {
 	type ToastManagerUpdateOptions,
 	Toast as ToastPrimitive,
 } from '@base-ui/react/toast';
-import {
-	CheckCircleIcon,
-	InfoIcon,
-	WarningCircleIcon,
-	WarningIcon,
-	XIcon,
-} from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'motion/react';
 import type * as React from 'react';
 import { isValidElement } from 'react';
 
 import { cn } from '@/lib/utils';
+
+import { CheckCircleIcon, InfoIcon, WarningCircleIcon, WarningIcon, XIcon } from '@/icons';
 
 import { Button } from '@/ui/button';
 import { Spinner } from '@/ui/spinner';

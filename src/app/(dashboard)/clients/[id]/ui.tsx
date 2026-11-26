@@ -1,15 +1,11 @@
 'use client';
 
-import {
-	ArchiveIcon,
-	BuildingOfficeIcon,
-	DotsThreeVerticalIcon,
-	PencilIcon,
-} from '@phosphor-icons/react/dist/ssr';
 import Link from 'next/link';
 
 import { useClient, useClientInvoices } from '@/lib/hooks';
 import { pluralize } from '@/lib/utils';
+
+import { ArchiveIcon, BuildingOfficeIcon, DotsThreeVerticalIcon, PencilIcon } from '@/icons';
 
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';

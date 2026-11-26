@@ -1,8 +1,9 @@
 'use client';
 
-import { WarningIcon } from '@phosphor-icons/react';
 import { type ComponentProps, type ReactElement, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
+
+import { WarningIcon } from '@/icons';
 
 import { Alert, AlertTitle } from '@/ui/alert';
 import {

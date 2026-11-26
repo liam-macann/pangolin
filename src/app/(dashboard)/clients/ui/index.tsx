@@ -1,7 +1,5 @@
 'use client';
 
-import { UserCirclePlusIcon } from '@phosphor-icons/react';
-import { UserRectangleIcon } from '@phosphor-icons/react/dist/ssr';
 import { type PaginationState, type TableState } from '@tanstack/react-table';
 import { AnimatePresence } from 'motion/react';
 import { useRouter } from 'next/navigation';
@@ -11,6 +9,8 @@ import { type Client } from '@/api/dto/client';
 import { useClients } from '@/lib/hooks';
 import { useFetchAhead, useFetchWhile } from '@/lib/hooks/data/helpers';
 import { cn } from '@/lib/utils';
+
+import { UserCirclePlusIcon, UserRectangleIcon } from '@/icons';
 
 import {
 	createDataTableColumnHelper,

@@ -1,12 +1,13 @@
 'use client';
 
-import { TrashIcon } from '@phosphor-icons/react';
 import { matchSorter } from 'match-sorter';
 import { useState } from 'react';
 import { type Control, Controller, type FieldValues, useFieldArray } from 'react-hook-form';
 import { type z } from 'zod';
 
 import { type config as configSchema } from '@/lib/validation/config';
+
+import { TrashIcon } from '@/icons';
 
 import {
 	Sortable,

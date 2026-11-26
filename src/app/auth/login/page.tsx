@@ -1,8 +1,9 @@
-import { CheckIcon, WarningCircleIcon, XIcon } from '@phosphor-icons/react/ssr';
 import { type Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { z } from 'zod';
+
+import { CheckIcon, WarningCircleIcon, XIcon } from '@/icons';
 
 import { Alert, AlertDescription, AlertTitle } from '@/ui/alert';
 

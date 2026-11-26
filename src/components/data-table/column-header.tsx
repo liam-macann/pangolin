@@ -1,10 +1,11 @@
 'use client';
 
-import { CaretDownIcon, CaretUpDownIcon, CaretUpIcon } from '@phosphor-icons/react/ssr';
 import { type Column, type RowData } from '@tanstack/react-table';
 import { type ReactNode } from 'react';
 
 import { cn } from '@/lib/utils';
+
+import { CaretDownIcon, CaretUpDownIcon, CaretUpIcon } from '@/icons';
 
 import { type DataTableFeatures } from '@/components/data-table';
 import { Button } from '@/ui/button';

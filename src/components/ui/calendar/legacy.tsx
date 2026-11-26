@@ -1,6 +1,5 @@
 'use client';
 
-import { CaretDownIcon, CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react';
 import * as React from 'react';
 import {
 	type DayButton,
@@ -10,6 +9,8 @@ import {
 } from 'react-day-picker';
 
 import { cn, type DistributedOmit } from '@/lib/utils';
+
+import { CaretDownIcon, CaretLeftIcon, CaretRightIcon } from '@/icons';
 
 import { Button, buttonVariants } from '@/ui/button';
 

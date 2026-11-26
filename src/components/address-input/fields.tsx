@@ -1,5 +1,4 @@
 import { Combobox as ComboboxPrimitive } from '@base-ui/react';
-import { PlusIcon } from '@phosphor-icons/react';
 import { getZipExamples } from 'lib-address';
 import { type ChangeEvent, type ReactNode, useEffect, useId, useRef } from 'react';
 import {
@@ -12,6 +11,8 @@ import {
 
 import { type AddressMetadata } from '@/api/dto/address';
 import { cn, mergeRefs } from '@/lib/utils';
+
+import { PlusIcon } from '@/icons';
 
 import { Button } from '@/ui/button';
 import {

@@ -1,7 +1,8 @@
 'use client';
 
-import { DotsThreeIcon } from '@phosphor-icons/react';
 import { type ReactNode, use } from 'react';
+
+import { DotsThreeIcon } from '@/icons';
 
 import { Button } from '@/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/ui/dropdown-menu';

@@ -1,10 +1,11 @@
 'use client';
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react';
-import { CaretDownIcon, CaretUpDownIcon, CheckIcon, XIcon } from '@phosphor-icons/react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
+
+import { CaretDownIcon, CaretUpDownIcon, CheckIcon, XIcon } from '@/icons';
 
 import { Button } from '@/ui/button';
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/ui/input-group';
