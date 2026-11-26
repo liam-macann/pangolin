@@ -2,6 +2,7 @@
 
 import { Menu as MenuPrimitive } from '@base-ui/react/menu';
 import { CaretRightIcon, CheckIcon } from '@phosphor-icons/react';
+import { cva } from 'class-variance-authority';
 import type * as React from 'react';
 import { useId } from 'react';
 
@@ -77,6 +78,32 @@ function DropdownMenuLabel({
 	);
 }
 
+const itemVariants = cva(
+	cn(
+		'group/dropdown-menu-item relative flex w-full cursor-default select-none items-center gap-2 rounded-sm px-2 py-1 text-sm outline-hidden',
+		"[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+
+		// State
+		'data-disabled:pointer-events-none data-inset:pl-8 data-disabled:opacity-50',
+		'data-popup-open:not-data-highlighted:bg-accent data-popup-open:not-data-highlighted:text-accent-foreground',
+	),
+
+	{
+		variants: {
+			variant: {
+				default:
+					'data-highlighted:bg-highlighted data-highlighted:text-highlighted-foreground data-highlighted:**:text-highlighted-foreground',
+				input: 'data-highlighted:bg-accent data-highlighted:text-accent-foreground',
+				destructive:
+					'text-destructive data-highlighted:bg-destructive-background data-highlighted:text-destructive-foreground data-highlighted:**:text-destructive-foreground',
+			},
+		},
+		defaultVariants: {
+			variant: 'default',
+		},
+	},
+);
+
 function DropdownMenuItem({
 	className,
 	inset,
@@ -91,12 +118,7 @@ function DropdownMenuItem({
 			data-slot='dropdown-menu-item'
 			data-inset={inset}
 			data-variant={variant}
-			className={cn(
-				'group/dropdown-menu-item relative flex w-full cursor-default select-none items-center gap-2 rounded-sm px-2 py-1 text-sm outline-hidden focus:bg-highlighted focus:text-highlighted-foreground data-disabled:pointer-events-none data-inset:pl-8 data-disabled:opacity-50',
-				"[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
-				'data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive-background data-[variant=destructive]:focus:text-destructive-foreground',
-				className,
-			)}
+			className={cn(itemVariants({ variant }), className)}
 			{...props}
 		/>
 	);
@@ -118,12 +140,7 @@ function DropdownMenuSubTrigger({
 		<MenuPrimitive.SubmenuTrigger
 			data-slot='dropdown-menu-sub-trigger'
 			data-inset={inset}
-			className={cn(
-				"group/dropdown-menu-sub-trigger flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1 text-sm outline-hidden data-disabled:pointer-events-none data-inset:pl-8 data-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
-				'data-open:bg-accent data-popup-open:bg-accent data-open:text-accent-foreground data-popup-open:text-accent-foreground',
-				'hocus:bg-highlighted hocus:text-highlighted-foreground hocus:**:text-highlighted-foreground',
-				className,
-			)}
+			className={cn(itemVariants(), 'group/dropdown-menu-sub-trigger', className)}
 			{...props}
 		>
 			{children}
@@ -203,10 +220,7 @@ function DropdownMenuCheckboxItem({
 		<MenuPrimitive.CheckboxItem
 			data-slot='dropdown-menu-checkbox-item'
 			data-inset={inset}
-			className={cn(
-				"relative flex cursor-default select-none items-center gap-2 rounded-sm py-1 pr-8 pl-2 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-inset:pl-8 data-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
-				className,
-			)}
+			className={cn(itemVariants({ variant: 'input' }), 'pr-8', className)}
 			checked={checked}
 			{...props}
 		>
@@ -243,10 +257,7 @@ function DropdownMenuRadioItem({
 		<MenuPrimitive.RadioItem
 			data-slot='dropdown-menu-radio-item'
 			data-inset={inset}
-			className={cn(
-				"relative flex cursor-default select-none items-center gap-2 rounded-sm py-1 pr-8 pl-2 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-inset:pl-8 data-disabled:opacity-50 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
-				className,
-			)}
+			className={cn(itemVariants({ variant: 'input' }), className)}
 			{...props}
 		>
 			<span
