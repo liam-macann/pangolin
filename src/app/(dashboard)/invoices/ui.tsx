@@ -182,6 +182,10 @@ function InvoiceTable({
 
 	const canGetMore = table.getCanNextPage();
 
+	/** Fetching more pages because the search has not yet filled what is shown. */
+	const isSearching =
+		Boolean(table.state.globalFilter) && pageSize > matchCount && query.isFetchingNextPage;
+
 	return (
 		<table.AppTable>
 			<div className='my-4 flex items-center justify-between gap-3 md:mt-8 md:mb-6'>
@@ -190,6 +194,7 @@ function InvoiceTable({
 					className='h-10 grow shadow-none'
 					value={clientName ?? undefined}
 					placeholder='Search invoices…'
+					loading={isSearching}
 				/>
 			</div>
 

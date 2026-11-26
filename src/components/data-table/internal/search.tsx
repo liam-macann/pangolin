@@ -2,11 +2,14 @@ import { MagnifyingGlassIcon } from '@phosphor-icons/react';
 import { type ComponentProps, type KeyboardEvent } from 'react';
 
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group';
+import { Spinner } from '@/ui/spinner';
 
 import { useInternalTableContext } from './context';
 
 export type DataTableSearchProps = Omit<ComponentProps<typeof InputGroup>, 'onKeyDown'> & {
 	onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
+	/** Replaces the search icon with a spinner. */
+	loading?: boolean;
 } & Pick<ComponentProps<typeof InputGroupInput>, 'placeholder' | 'value'>;
 
 export function DataTableSearch({
@@ -15,6 +18,7 @@ export function DataTableSearch({
 	children,
 	value,
 	onKeyDown,
+	loading = false,
 	...props
 }: DataTableSearchProps) {
 	const table = useInternalTableContext();
@@ -23,9 +27,7 @@ export function DataTableSearch({
 		<table.Subscribe source={table.atoms.globalFilter}>
 			{globalFilter => (
 				<InputGroup {...props}>
-					<InputGroupAddon>
-						<MagnifyingGlassIcon />
-					</InputGroupAddon>
+					<InputGroupAddon>{loading ? <Spinner /> : <MagnifyingGlassIcon />}</InputGroupAddon>
 					<InputGroupInput
 						aria-label='Search'
 						placeholder={placeholder ?? 'Search…'}
