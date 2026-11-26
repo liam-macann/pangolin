@@ -20,15 +20,16 @@ function Options({ timezone }: { timezone: string }) {
 	);
 }
 
-/** Renders the options and opens their menu. */
-async function openOptions(timezone: string) {
+/** Renders the options and locates their controls. */
+async function renderOptions(timezone: string) {
 	const screen = await render(<Options timezone={timezone} />);
-	await screen.getByRole('button', { name: 'Options' }).click();
 
 	return {
-		issueDate: screen.getByRole('menuitem', { name: 'Date of issue' }),
-		dueDate: screen.getByRole('menuitem', { name: 'Due date' }),
+		dueDate: screen.getByRole('button', { name: 'Due date' }),
+		notes: screen.getByRole('button', { name: 'Notes' }),
+		tooltip: (text: string) => screen.getByText(text, { exact: true }),
 		day: (name: string) => screen.getByRole('button', { name }),
+		notesField: screen.getByRole('textbox', { name: 'Your private notes' }),
 	};
 }
 
@@ -48,33 +49,43 @@ describe('Dates', () => {
 		);
 	});
 
-	test('Shows the issue date as current date in the config timezone', async () => {
-		const { issueDate } = await openOptions('Pacific/Kiritimati');
+	test('Shows the due date of the draft in the tooltip', async () => {
+		const { dueDate, tooltip } = await renderOptions('Pacific/Kiritimati');
+		await dueDate.hover();
 
-		await expect.element(issueDate).toHaveTextContent('Jun 16, 2026');
-		await expect.element(issueDate).toBeDisabled();
-	});
-
-	test('Shows the due date of the draft', async () => {
-		const { dueDate } = await openOptions('Pacific/Kiritimati');
-		await expect.element(dueDate).toHaveTextContent('Jun 30, 2026');
+		await expect.element(tooltip('Due Jun 30')).toBeVisible();
 	});
 
 	test('Updates the due date when a different day is selected', async () => {
-		const { dueDate, day } = await openOptions('Pacific/Kiritimati');
+		const { dueDate, day, tooltip } = await renderOptions('Pacific/Kiritimati');
 		await dueDate.click();
 		await day('June 17th').click();
+		await dueDate.hover();
 
-		await expect.element(dueDate).toHaveTextContent('Jun 17, 2026');
+		await expect.element(tooltip('Due Jun 17')).toBeVisible();
 	});
 
 	test('Only allows due dates after today in the config timezone', async () => {
-		const { dueDate, day } = await openOptions('Pacific/Kiritimati');
+		const { dueDate, day } = await renderOptions('Pacific/Kiritimati');
 		await dueDate.click();
 
 		await expect.element(day('June 10th')).toBeDisabled();
 		await expect.element(day('June 16th')).toBeDisabled();
 		await expect.element(day('June 17th')).toBeEnabled();
 		await expect.element(day('June 20th')).toBeEnabled();
+	});
+});
+
+describe('Notes', () => {
+	test('Labels the button by whether notes exist', async () => {
+		const { notes, notesField, tooltip } = await renderOptions('UTC');
+		await notes.hover();
+		await expect.element(tooltip('Add notes')).toBeVisible();
+
+		await notes.click();
+		await notesField.fill('Net 30');
+		await notes.unhover();
+		await notes.hover();
+		await expect.element(tooltip('Edit notes')).toBeVisible();
 	});
 });
