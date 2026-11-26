@@ -81,7 +81,8 @@ function GlobalSearch() {
 				open={open}
 				onOpenChange={onOpenChange}
 				render={<nav />}
-				className='max-h-[calc(75%-(--spacing(12)))]'
+				// Pins the top where the full palette (input, max-h-84 list and footer) is centred
+				className='top-[calc((100%-min(75%-(--spacing(12)),26.5rem+2px))/2)] tall:mt-[-4vh] max-h-[calc(75%-(--spacing(12)))] self-start'
 			>
 				<Command>
 					<CommandInput
