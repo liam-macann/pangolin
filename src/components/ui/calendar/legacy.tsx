@@ -63,8 +63,8 @@ function Calendar({
 			}}
 			classNames={{
 				root: cn('w-fit', defaultClassNames.root),
-				months: cn('relative flex flex-col gap-4 md:flex-row', defaultClassNames.months),
-				month: cn('flex w-full flex-col gap-4', defaultClassNames.month),
+				months: cn('relative flex flex-col gap-2 md:flex-row', defaultClassNames.months),
+				month: cn('flex w-full flex-col gap-2', defaultClassNames.month),
 				nav: cn(
 					'absolute inset-x-0 top-0 flex w-full items-center justify-end',
 					defaultClassNames.nav,
@@ -193,9 +193,9 @@ function CalendarDayButton({
 			data-range-end={modifiers.range_end}
 			data-range-middle={modifiers.range_middle}
 			className={cn(
-				'rounded-none bg-transparent! font-[430] text-[0.8125rem] transition-none', // Button reset
+				'rounded-none bg-transparent! not-in-data-selected:font-normal text-[0.8125rem] transition-none', // Button reset
 				'flex aspect-square size-full flex-col gap-1 border-none leading-none', // Sizing
-				'isolate before:absolute before:inset-0.5 before:-z-10 before:rounded-full not-disabled:hover:before:bg-accent', // Hover and selection background
+				'isolate before:absolute before:inset-px before:-z-10 before:rounded-full not-disabled:hover:before:bg-accent', // Hover and selection background
 				'border-transparent! ring-0! group-data-[focused=true]/day:before:border-ring group-data-[focused=true]/day:before:ring-2', // Focus ring
 
 				'data-[range-end=true]:before:bg-primary! data-[range-start=true]:before:bg-primary! data-[selected-single=true]:before:bg-primary!',
