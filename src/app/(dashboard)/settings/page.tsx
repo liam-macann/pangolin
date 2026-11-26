@@ -25,14 +25,7 @@ export default async function Page() {
 				Settings
 			</h1>
 
-			<nav className='sticky top-8 -ml-3 flex flex-col items-start gap-1 self-start max-md:hidden'>
-				<Button
-					size='sm'
-					className='text-foreground text-sm'
-					variant='ghost'
-					nativeButton={false}
-					render={<Link href='#top'>General</Link>}
-				/>
+			<nav className='sticky top-8 -ml-3 flex flex-col items-start self-start max-md:hidden'>
 				<Button
 					size='sm'
 					className='text-foreground text-sm'
@@ -54,7 +47,15 @@ export default async function Page() {
 					nativeButton={false}
 					render={<Link href='#localisation'>Localisation</Link>}
 				/>
+				<Button
+					size='sm'
+					className='text-foreground text-sm'
+					variant='ghost'
+					nativeButton={false}
+					render={<Link href='#customisation'>Customisation</Link>}
+				/>
 			</nav>
+
 			<section className='mb-12 flex w-full flex-col gap-12'>
 				<div>
 					<div className='flex items-center gap-6 rounded-lg border bg-card p-6 px-8 sm:gap-10'>

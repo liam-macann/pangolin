@@ -135,11 +135,11 @@ export default function ConfigForm({ config }: { config: Config }) {
 					() => toast.warning('Please ensure all fields are filled correctly'),
 				)}
 			>
-				<Customization control={control} />
 				{/* Keys prevent form submission from triggering AnimatePresence */}
 				<Details key={`details_${formVersion}`} control={control} />
 				<Taxation key={`taxation_${formVersion}`} control={control} />
 				<Localization control={control} />
+				<Customization control={control} />
 
 				<div className='sticky bottom-0 -mx-2 mt-14 flex grid-cols-2 gap-2 border-t bg-background px-2 py-4 pb-6 max-sm:grid max-md:fixed max-md:right-0 max-md:left-0 max-md:px-8 sm:justify-end'>
 					<Button

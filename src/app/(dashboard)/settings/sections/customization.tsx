@@ -35,6 +35,9 @@ export function Customization<T extends Fields>({ control: _control }: { control
 
 	return (
 		<FieldGroup>
+			<h2 className='mt-5 flex items-baseline gap-3 font-bold text-2xl' id='customisation'>
+				Customisation
+			</h2>
 			<Controller
 				name='colorScheme'
 				control={control}
