@@ -187,7 +187,7 @@ export function NotesButton({
 					defaultValue={defaultValue}
 					maxLength={NOTES_MAX_LENGTH}
 					placeholder='Your private notes'
-					className='inset-shadow-xs rounded-sm border-border! shadow-none ring-0!'
+					className='inset-shadow-xs rounded-sm border-border! shadow-none ring-0! dark:bg-card'
 				/>
 			</PopoverContent>
 		</Popover>
