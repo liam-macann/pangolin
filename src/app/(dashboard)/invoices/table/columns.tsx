@@ -110,7 +110,7 @@ export const columns = columnHelper.columns([
 		maxSize: 200,
 	}),
 	columnHelper.accessor('issuedAt', {
-		header: ({ column }) => <ToggleHeader column={column} title='Date' />,
+		header: ({ column }) => <ToggleHeader column={column} title='Issued' />,
 		meta: { className: 'max-md:hidden' },
 		cell: ({ row }) => {
 			const { data: config } = useConfig();
