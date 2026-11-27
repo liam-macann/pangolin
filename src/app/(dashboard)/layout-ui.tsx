@@ -19,7 +19,7 @@ import { toast } from '@/ui/toast';
 export function TopNav({ links, className }: { links: Map<string, string>; className?: string }) {
 	return (
 		<nav className={cn('-mx-3 -my-1.5 flex items-baseline', className)}>
-			{links.entries().map(([name, href]) => (
+			{[...links.entries()].map(([name, href]) => (
 				<Suspense key={name} fallback={<NavLink name={name} href={href} active={false} />}>
 					<ActiveNavLink name={name} href={href} />
 				</Suspense>
