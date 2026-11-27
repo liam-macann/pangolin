@@ -127,12 +127,9 @@ export const columns = columnHelper.columns([
 	}),
 	columnHelper.accessor('grossTotal', {
 		id: 'amount',
-		header: ({ column }) => (
-			<div className='text-right'>
-				<ToggleHeader column={column} title='Amount' />
-			</div>
-		),
-		cell: ({ row }) => <FormatPrice className='text-right' row={row} />,
+		header: ({ column }) => <ToggleHeader column={column} title='Amount' align='end' />,
+		meta: { className: 'text-right' },
+		cell: ({ row }) => <FormatPrice row={row} />,
 		size: 150,
 	}),
 	columnHelper.accessor(row => row.client.id, {

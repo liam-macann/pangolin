@@ -4,6 +4,7 @@ export {
 	createDataTableColumnHelper,
 	type DataTableFeatures,
 	type DataTableOptions,
+	useColumnState,
 	useDataTable,
 	useDataTableContext,
 } from './hook';

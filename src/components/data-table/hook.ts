@@ -1,5 +1,6 @@
-import { useCreateAtom } from '@tanstack/react-store';
+import { shallow, useCreateAtom, useSelector } from '@tanstack/react-store';
 import {
+	type Column,
 	type ColumnFiltersState,
 	createTableHook,
 	type PaginationState,
@@ -154,6 +155,14 @@ export function useDataTable<TData extends RowData, TSelected = TableState<DataT
 	}, [pageCount, paginationAtom, table]);
 
 	return table as DataTable<TData, TSelected>;
+}
+
+/** Subscribes to column state, re-rendering when the table state it derives from changes. */
+export function useColumnState<TData extends RowData, TValue, TSelected>(
+	column: Column<DataTableFeatures, TData, TValue>,
+	select: (column: Column<DataTableFeatures, TData, TValue>) => TSelected,
+) {
+	return useSelector(column.table.store, () => select(column), { compare: shallow });
 }
 
 export type { DataTableFeatures } from './internal/features';
